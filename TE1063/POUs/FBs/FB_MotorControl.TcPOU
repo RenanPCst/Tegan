@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_MotorControl" Id="{5ab8d8f9-5e90-44d2-bb73-989aa2470e6f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorControl
+
+VAR_INPUT
+	bEnable 		: BOOL;        	//Ativa o motor
+    bResetError 	: BOOL;    		//Reseta falhas
+    bJogPos 		: BOOL;        	//Movimento manual positivo
+    bJogNeg 		: BOOL;  		//Movimento manual negativo
+    iTargetPosition : INT; 			//Posição desejada 
+    iTargetVelocity : INT; 			//Velocidade desejada
+END_VAR
+
+VAR_OUTPUT
+	bDriveReady 	: BOOL;    	//Drive pronto para operação 
+    bDriveFault 	: BOOL;  	//Falha no drive 
+    iActualPosition : INT; 		//Posição real do motor 
+    iActualVelocity : INT; 		//Velocidade real do motor 
+END_VAR
+
+VAR_IN_OUT
+	nCtrlWord 		: WORD;       (* Control Word do motor *)
+    nStatWord 		: WORD;       (* Status Word do motor *)
+    nTargetVelocity : INT;  (* Velocidade alvo do motor *)
+    nTargetPosition : INT;  (* Posição alvo do motor *)
+    nActualPosition : INT;  (* Posição real do motor *)
+    nActualVelocity : INT;  (* Velocidade real do motor *)
+END_VAR
+
+VAR
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Reset de erro
+IF bResetError THEN
+    nCtrlWord := 16#80;  //Fault Reset
+    RETURN;
+END_IF;
+
+//Monitorando status do drive
+bDriveReady := (nStatWord AND 16#0040) <> 0; //Ready to Switch On
+bDriveFault := (nStatWord AND 16#0008) <> 0;  //Fault
+
+
+//Controle de Movimento
+IF bEnable THEN
+    IF bJogPos THEN
+        nTargetVelocity := ABS(iTargetVelocity); //Movimento manual para frente
+    ELSIF bJogNeg THEN
+        nTargetVelocity := -ABS(iTargetVelocity); //Movimento manual para trás
+    ELSE
+        nTargetVelocity := 0; //Para o motor se nenhum comando for dado
+    END_IF;
+
+    //ontrole de posição se não estiver no modo Jog
+    IF (NOT bJogPos) AND (NOT bJogNeg) THEN
+        nTargetPosition := iTargetPosition;
+    END_IF;
+END_IF;
+
+//Atualiza os valores reais
+iActualPosition := nActualPosition;
+iActualVelocity := nActualVelocity;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MotorControl">
+      <LineId Id="29" Count="8" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="48" Count="17" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

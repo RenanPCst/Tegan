@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_ValveControl" Id="{f3c9e478-7fed-4378-b33f-d0b8f52ee1b9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ValveControl
+
+VAR_INPUT
+	ValveConfig : REFERENCE TO ST_ValveConfig; //Configuração da válvula
+    PositionRequest : INT;                     //Posição desejada: 1 a 6
+END_VAR
+
+VAR_OUTPUT
+	PositionReached : BOOL;                    //Indica se a posição foi alcançada
+END_VAR
+VAR
+	CurrentPosition : INT;                     //Posição atual da válvula
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF PositionRequest <> CurrentPosition THEN
+    CASE PositionRequest OF
+        1:
+            ValveConfig.Position1 := TRUE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := FALSE;
+        2:
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := TRUE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := FALSE;
+        3:
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := TRUE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := FALSE;
+        4:
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := TRUE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := FALSE;
+        5:
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := TRUE;
+            ValveConfig.Position6 := FALSE;
+        6:
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := TRUE;
+        ELSE
+            //Resetar todas as posições se a solicitação for inválida
+            ValveConfig.Position1 := FALSE;
+            ValveConfig.Position2 := FALSE;
+            ValveConfig.Position3 := FALSE;
+            ValveConfig.Position4 := FALSE;
+            ValveConfig.Position5 := FALSE;
+            ValveConfig.Position6 := FALSE;
+    END_CASE;
+
+    //Atualizar posição atual
+    CurrentPosition := PositionRequest;
+    PositionReached := FALSE; //Ainda não chegou na posição
+ELSE
+    //Posição já foi alcançada
+    PositionReached := TRUE;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ValveControl">
+      <LineId Id="84" Count="59" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

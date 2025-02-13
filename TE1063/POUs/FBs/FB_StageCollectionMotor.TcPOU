@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_StageCollectionMotor" Id="{553699f7-6d72-4d82-a670-30b19350a042}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_StageCollectionMotor
+VAR_INPUT
+    Axis : AXIS_REF;            			//Referência para o motor configurado no AX8108
+    Config : POINTER TO ST_SystemConfig;    //Ponteiro para a configuração do sistema
+    Execute : BOOL;             			//Inicia o movimento quando TRUE
+END_VAR
+VAR_OUTPUT
+    InPosition : BOOL;          			//Indica que o motor alcançou a posição alvo
+    Busy : BOOL;                			//Indica que o motor está em movimento
+    Error : BOOL;               			//Indica que ocorreu um erro
+    ErrorID : UDINT;            			//Código de erro do motor
+END_VAR
+VAR
+    MoveAbsolute : MC_MoveAbsolute; 		//Instância do comando de movimento absoluto
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF Execute AND Config <> 0 THEN
+    //Configurar e executar o comando de movimento absoluto
+    MoveAbsolute.Execute := TRUE;
+    MoveAbsolute(Axis := Axis); //Passar referência direta do eixo
+    MoveAbsolute.Position := Config^.MotorM1_TargetPosition;
+    MoveAbsolute.Velocity := Config^.MotorM1_Velocity;
+    MoveAbsolute.Acceleration := Config^.MotorM1_Acceleration;
+    MoveAbsolute.Deceleration := Config^.MotorM1_Deceleration;
+
+    //Chamar o bloco de função
+    MoveAbsolute(Axis := Axis);
+
+    //Atualizar os estados do motor
+    Busy := MoveAbsolute.Busy;
+    Error := MoveAbsolute.Error;
+    ErrorID := MoveAbsolute.ErrorID;
+
+    //Verificar se alcançou a posição alvo
+    IF MoveAbsolute.Done THEN
+        InPosition := TRUE;
+        MoveAbsolute.Execute := FALSE; //Resetar o comando para evitar reexecução
+    ELSE
+        InPosition := FALSE;
+    END_IF;
+ELSE
+    //Desabilitar o comando quando Execute for FALSE
+    MoveAbsolute.Execute := FALSE;
+    MoveAbsolute(Axis := Axis); //Resetar o bloco de função
+    InPosition := FALSE;
+    Busy := FALSE;
+    Error := FALSE;
+    ErrorID := 0;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_StageCollectionMotor">
+      <LineId Id="175" Count="31" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

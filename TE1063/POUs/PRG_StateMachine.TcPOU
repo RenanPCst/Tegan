@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_StateMachine" Id="{3698ba7e-335b-4575-b74b-b2c2009fcddd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_StateMachine
+VAR
+	Inputs_EL1809 : ST_EL1809; 
+    Outputs_EL2809 : ST_EL2809; 
+    AnalogInputs_EL3058 : ST_EL3058; 
+
+    CurrentState : E_MachineStates; 
+    bErrorFlag : BOOL; 
+	bPowerUpTimerComplete : BOOL;
+	
+	//Air Flow Variables
+	FB_AirFlowCheck 	: FB_AirFlowCheck;  //FB instance
+    bFlowStable 		: BOOL;             //stable flow flag
+    bAirFlowError 		: BOOL;             //flow error flag
+	
+	tonPowerUp		: 	Tc2_Standard.TON;
+	TON_Monitor 	: 	Tc2_Standard.TON;
+	ValveController : 	FB_ValveControl; 	//valve controller instance
+	ValveConfigs 	: 	ST_SystemConfig;
+    iLoopIndex 		: 	INT := 1; //Índice do loop atual)
+	iSolenoidIndex 	: 	INT;
+	
+	//Recovery Phase Variables
+	RecoveryPhaseFB 	: FB_RecoveryPhase;    				//recevory fb instance
+	aSolenoidSets 		: ARRAY [1..5] OF ST_SolenoidSet;	//solenoids sets
+    bRecoverySuccess 	: BOOL;               				//recovery sucess flag
+    bRecoveryError 		: BOOL;                 			//recovery error flag 
+	
+	MotorStageCollection 	: FB_StageCollectionMotor; 		//FB motors intance 
+    MotorAxis 				: AXIS_REF;                		//motor reference 
+    MotorInPosition 		: BOOL;                    		//motor in position flag
+    MotorBusy 				: BOOL;                         //motor moving flag
+    MotorError 				: BOOL;                         //motor error flag
+    MotorErrorID 			: UDINT;                        //motor error id
+	bSealSucess				: BOOL;							//seal sucess flag FB_SealStages
+	bSealError				: BOOL;							//seal error flag FB_SealStages
+	
+	//others FB Instances
+	FB_SealStages 	:	FB_SealStages;
+	FB_LeakTest		:	FB_LeakTest;
+	
+	E_MachineState			: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+//System Power Up Timer
+tonPowerUp( IN 	:= TRUE, 
+			PT 	:= T#2S,	
+			Q 	=> bPowerUpTimerComplete);
+
+IF bPowerUpTimerComplete THEN
+	CurrentState := E_MachineStates.INIT; 
+END_IF
+			
+//Sequence
+CASE CurrentState OF
+    E_MachineStates.INIT: //Initialization stage - checking powersuply 
+        IF GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOK THEN
+            CurrentState := E_MachineStates.CHECK_AIR_FLOW;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.CHECK_AIR_FLOW: //Checking if there is enough exaustion air flow on the system
+	
+        //Call FB responsible for checking the air flow
+        FB_AirFlowCheck(
+         	rPressureInput := GVL_IO.gAnalogInputs.rMainPressureSupply,
+            rPressureThreshold := ValveConfigs.rPressureThreshold,
+            tStabilizationTime := ST_MachineParameters.tCheckAirFlowTime,
+            bExecute := TRUE
+        );
+
+        //Flags updates
+        bFlowStable := FB_AirFlowCheck.bAirFlowOK;
+        bAirFlowError := FB_AirFlowCheck.bAirFlowError;
+
+        //state transitions
+        IF bAirFlowError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+            GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //Raise alarm/red light
+        ELSIF bFlowStable THEN
+            CurrentState := E_MachineStates.SEAL_STAGES; //step forward to step ahead
+        END_IF;
+
+    E_MachineStates.HARDWARE_INIT:
+        IF TRUE THEN //checking all hardware. testing pumps and valves etc.
+            CurrentState := E_MachineStates.SEAL_STAGES;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.SEAL_STAGES:
+
+		FB_SealStages(
+			Axis				:= GVL_IO.g_stAxis,
+			TargetPosition		:= GVL_IO.gParameters.rM1TargetPosition,
+			Velocity			:= GVL_IO.gParameters.rM1Velocity,
+			Acceleration		:= GVL_IO.gParameters.rM1Accleration,
+			Deceleration		:= GVL_IO.gParameters.rDeceleration,
+			Execute 			:= TRUE
+		);
+		
+		//error check
+		IF NOT FB_SealStages.bSealSucess AND FB_SealStages.bSealError THEN
+			//error dealing logic
+			CurrentState := E_MachineStates.ERROR_STATE;
+			GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
+		END_IF;
+
+		//step forward to step ahead
+		IF FB_SealStages.bSealSucess AND NOT FB_SealStages.bSealError THEN
+			CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
+		END_IF;
+
+    E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
+
+		//Call FB responsible for take the leak test on all loops.
+		FB_LeakTest(
+			aSolenoidSets 		:= ValveConfigs.aSolenoidSets,
+			aValveConfigs		:= ValveConfigs.aValvePositions,
+			rPressureThreshold 	:= ValveConfigs.rPressureThreshold,
+			tMonitoringTime 	:= ValveConfigs.tMonitoringTime,
+			rMainPressureSupply := GVL_IO.gAnalogInputs.rMainPressureSupply,
+			iLoopIndex 			:= iLoopIndex,
+			bExecute 			:= TRUE
+		);
+	
+		//check the results from FB_LeakTest
+		IF FB_LeakTest.bLeakTestError THEN
+			CurrentState := E_MachineStates.ERROR_STATE;
+		ELSIF FB_LeakTest.bLeakTestSucess THEN
+			IF iLoopIndex < 10 THEN
+				iLoopIndex := iLoopIndex + 1;
+				CurrentState := E_MachineStates.LEAK_TEST;
+			ELSE
+				CurrentState := E_MachineStates.RECOVERY_PHASE;
+				iLoopIndex := 1;
+			END_IF;
+		END_IF;
+
+
+    E_MachineStates.RECOVERY_PHASE:
+        //Setup and execute FB_RecoveryPhase
+        RecoveryPhaseFB(
+            RecipeParameters := GVL_RecipeParameters,  	//recipe parameters reference 
+            aValveConfigs := ValveConfigs,             	//6position valves reference
+            aSolenoidSets := aSolenoidSets,            	//passing solenoids sets 
+            bExecute := TRUE                           	//init trigger
+        );
+
+        //checking the RecoveryPhaseFB results
+        bRecoverySuccess := RecoveryPhaseFB.bSuccess;
+        bRecoveryError := RecoveryPhaseFB.bError;
+
+        //state transitions based oon fb returns
+        IF bRecoveryError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+            GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
+        ELSIF bRecoverySuccess THEN
+            CurrentState := E_MachineStates.DRYING_PHASE; //step forward to step ahead
+        END_IF;
+
+    E_MachineStates.WASHING_PHASE: //TODO
+        IF TRUE THEN //washing sequence
+            CurrentState := E_MachineStates.DRYING_PHASE;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.DRYING_PHASE: //TODO
+        IF TRUE THEN //drying sequence
+            CurrentState := E_MachineStates.POST_EXECUTION;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.POST_EXECUTION: //TODO
+        IF TRUE THEN //post execution sequence
+            CurrentState := E_MachineStates.INIT;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.ERROR_STATE: //TODO
+        GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //red light
+        IF GVL_IO.gDigInputs.bStopButton THEN
+            bErrorFlag := FALSE;
+            CurrentState := E_MachineStates.INIT;
+        END_IF;
+END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_StateMachine">
+      <LineId Id="296" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="300" Count="2" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="212" Count="9" />
+      <LineId Id="505" Count="0" />
+      <LineId Id="511" Count="17" />
+      <LineId Id="227" Count="10" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="594" Count="4" />
+      <LineId Id="592" Count="0" />
+      <LineId Id="433" Count="0" />
+      <LineId Id="394" Count="9" />
+      <LineId Id="243" Count="2" />
+      <LineId Id="444" Count="3" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="448" Count="18" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="530" Count="17" />
+      <LineId Id="259" Count="31" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

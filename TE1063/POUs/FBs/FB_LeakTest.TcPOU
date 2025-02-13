@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_LeakTest" Id="{21d6925c-1467-47b6-a1a0-80200f2aa3f7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_LeakTest
+
+VAR_INPUT
+	aSolenoidSets 		: ARRAY [1..5] OF ST_SolenoidSet;	//Conjuntos de válvulas solenoides
+	aValveConfigs		: ARRAY [1..5] OF ST_ValveConfig;	//Conjuntos de válvulas direcionais de 6 posicoes
+    rPressureThreshold 	: REAL;                     		//Threshold de pressão em psi
+    tMonitoringTime 	: TIME;                      		//Tempo de monitoramento
+    rMainPressureSupply : REAL;                    			//Pressão atual do sistema
+    iLoopIndex 			: INT;                         		//Índice do loop atual
+    bExecute 			: BOOL;                       		//Inicia o teste
+END_VAR
+
+VAR_OUTPUT
+	bLeakTestSucess : BOOL;	           						//Indica se o teste foi bem-sucedido
+    bLeakTestError 	: BOOL;            						//Indica se ocorreu um erro
+END_VAR
+
+VAR
+	TON_Monitor 		: TON;        						//Temporizador para monitoramento
+    iSolenoidIndex 		: INT;        						//Índice do conjunto de válvulas solenoides 
+	aValveControllers 	: ARRAY [1..5] OF FB_ValveControl; 	//Instâncias dos controles das válvulas *)
+	bAllValvesReady 	: BOOL := TRUE; (* Flag para indicar que todas as válvulas estão na posição correta *)
+    iValveIndex		 	: INT;                  (* Índice para iteração das válvulas *)
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bExecute THEN
+    //Configurar todas as válvulas para a posição 5
+    bAllValvesReady := TRUE; //Reiniciar a flag
+    FOR iValveIndex := 1 TO 5 DO
+        aValveControllers[iValveIndex](
+    		ValveConfig := aValveConfigs[iValveIndex],
+    		PositionRequest := 5
+		);
+
+        IF NOT aValveControllers[iValveIndex].PositionReached THEN
+    		bAllValvesReady := FALSE; //Uma válvula ainda não está pronta
+		END_IF;
+    END_FOR;
+
+    //Continuar somente se todas as válvulas estiverem prontas
+    IF bAllValvesReady THEN
+        //Determinar o conjunto de válvulas solenoides com base no loop
+        iSolenoidIndex := (iLoopIndex + 1) / 2;
+
+        //Pressurizar o sistema
+        aSolenoidSets[iSolenoidIndex].bSolenoidA := FALSE;
+        aSolenoidSets[iSolenoidIndex].bSolenoidB := TRUE;
+        aSolenoidSets[iSolenoidIndex].bSolenoidC := FALSE;
+
+        IF rMainPressureSupply >= rPressureThreshold THEN
+            //Isolar sistema para monitoramento
+            aSolenoidSets[iSolenoidIndex].bSolenoidA := TRUE;
+            aSolenoidSets[iSolenoidIndex].bSolenoidB := FALSE;
+            aSolenoidSets[iSolenoidIndex].bSolenoidC := FALSE;
+
+            //Iniciar monitoramento com TON
+            TON_Monitor(IN := TRUE, PT := tMonitoringTime);
+
+            IF TON_Monitor.Q THEN
+                //Verificar pressão após o tempo de monitoramento
+                IF rMainPressureSupply >= rPressureThreshold THEN
+                    bLeakTestSucess := TRUE;
+                    bLeakTestError := FALSE;
+                ELSE
+                    bLeakTestSucess := FALSE;
+                    bLeakTestError := TRUE;
+                END_IF;
+            END_IF;
+        ELSE
+            bLeakTestSucess := FALSE;
+            bLeakTestError := TRUE;
+        END_IF;
+    ELSE
+        //Se alguma válvula ainda não estiver pronta, retornar erro
+        bLeakTestSucess := FALSE;
+        bLeakTestError := TRUE;
+    END_IF;
+ELSE
+    //Resetar saídas quando não estiver em execução
+    bLeakTestSucess := FALSE;
+    bLeakTestError := FALSE;
+END_IF;
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_LeakTest">
+      <LineId Id="85" Count="2" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="147" Count="2" />
+      <LineId Id="92" Count="1" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="96" Count="45" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

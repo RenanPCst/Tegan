@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_HMIControl
+VAR
+	bHomeBlueLamp	:	BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+IF NOT bHomeBlueLamp THEN
+    bHomeBlueLamp := TRUE;
+ELSE
+    bHomeBlueLamp := FALSE;
+END_IF;
+
+GVL_HMIVariables.bHomeLampBlueState := bHomeBlueLamp;
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_HMIControl">
+      <LineId Id="15" Count="0" />
+      <LineId Id="11" Count="3" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

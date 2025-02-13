@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="MAIN" Id="{cebf6aa5-5e58-48d5-8759-1298446923a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+
+VAR
+	// Controle do Eixo
+    fbPower       	: MC_Power;         	// Habilita o motor
+	ResetAxis		: MC_Reset;				// Reset do drive
+    fbMoveAbs     	: MC_MoveAbsolute;  	// Movimento Absoluto
+	fbReadPosition	: MC_ReadActualPosition;	// Read the actual position of the motor
+
+    // Variáveis de Entrada
+    bEnable       : BOOL := FALSE;      	// Sinal para habilitar o eixo
+    nTargetPos    : LREAL := 14500.0;  		// Posição alvo
+    nVelocity     : LREAL := 100.0;   		// Velocidade de movimentação
+    nAcceleration : LREAL := 50.0;    		// Aceleração
+    nDeceleration : LREAL := 50.0;    		// Desaceleração
+
+    // Status e Erros
+    bPowerStatus  : BOOL;              		// Indica se o motor está habilitado
+    bBusy         : BOOL;              		// Indica se o eixo está em movimento
+    bDone         : BOOL;              		// Indica que a posição foi atingida
+    bError        : BOOL;              		// Indica erro
+    nErrorID      : UDINT;             		// Código do erro
+	
+	//miscelanious variable for testing purporses
+	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
+	bResetAxis 		: BOOL	:= FALSE;		//Variable for reseting the axis when needed
+	bResetDone		: BOOL;
+	bResetError		: BOOL;
+	iResetErrorID	: UDINT;
+	
+	//Instâncias do FB para dois motores
+	M1_Motor : FB_MotorControl;
+    M2_Motor : FB_MotorControl;
+    M3_Motor : FB_MotorControl;
+
+	//Variaveis para a leitura da posicao atual dos motores
+	bReadPosition 			: BOOL := FALSE;
+	bReadPosValidation		: BOOL;
+	bReadPosBusy			: BOOL;
+	bReadPositionError		: BOOL;
+	iReadPosErrorId			: UDINT;
+	rActualPosition			: LREAL;
+	
+	//Variarives de mudanca de posicao
+	bExecutePositionChange	:	BOOL := FALSE;
+	bDonePositionChange		:	BOOL;
+	bBusyPositionChange		:	BOOL;
+	bActivePositionChange	:	BOOL;
+	bCommandAborted			:	BOOL;
+	bErrorPositionChange	:	BOOL;
+	iErrorIDPositionChange	:	UDINT;
+	
+
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Call State Machine
+
+//PRG_StateMachine(); 
+PRG_UpdateVariablesMoving();
+
+
+//Safety
+GVL_IO.bInResetSignal := GVL_Safety.bResetButtonVISU;
+GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
+
+
+GVL_Safety.bSafetyRestart 			:= GVL_IO.bInResetSignal;
+GVL_Safety.bSafetyErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Motion.M1Motor.bTS_ErrorAck 	:= GVL_Safety.bSafetyErrorAck;
+GVL_Safety.bSafetyRun				:= TRUE;
+GVL_Motion.M1Motor.bTS_Run			:= TRUE;
+
+IF bLockDoors THEN
+	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
+	ELSE
+	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
+END_IF
+
+
+
+//GVL_Safety.SafetyInputs.bM1_STOActive := TRUE;
+
+
+// Habilita o eixo
+bEnable := TRUE;
+
+fbPower(
+    Enable := bEnable,
+    Axis := GVL_Motion.M1Motor.Axis,
+    Status => bPowerStatus,
+    Error => bError,
+    ErrorID => nErrorID
+);
+
+fbPower(
+    Enable := bEnable,
+    Axis := GVL_Motion.M2Motor.Axis,
+    Status => bPowerStatus,
+    Error => bError,
+    ErrorID => nErrorID
+);
+
+fbPower(
+    Enable := bEnable,
+    Axis := GVL_Motion.M3Motor.Axis,
+    Status => bPowerStatus,
+    Error => bError,
+    ErrorID => nErrorID
+);
+
+fbReadPosition(
+	Axis		:= GVL_Motion.M2Motor.Axis,
+	Enable 		:= bReadPosition,
+	Valid		=> bReadPosValidation,
+	Busy		=> bReadPosBusy,
+	Error		=> bReadPositionError,
+	ErrorID		=> iReadPosErrorId,
+	Position	=> rActualPosition
+);
+
+
+//Configuração da chamada do MC_Reset
+ResetAxis(
+	Execute := bResetAxis,
+	Axis 	:= GVL_Motion.M2Motor.Axis,
+	Done	=> bResetDone,
+	Error	=> bResetError,
+	ErrorID	=> iResetErrorID
+);
+
+GVL_Motion.M3Motor.iTargetPosition := 8210800;
+GVL_Motion.M2Motor.iTargetPosition := 14500;
+GVL_Motion.M3Motor.iTargetVelocity := 10;
+
+fbMoveAbs(
+	Axis := GVL_Motion.M3Motor.Axis,
+	Execute := bExecutePositionChange,
+	Position := GVL_Motion.M3Motor.iTargetPosition,
+	Velocity := GVL_Motion.M3Motor.iTargetVelocity,
+	Done => bDonePositionChange,
+	Busy => bBusyPositionChange,
+	Active => bActivePositionChange,
+	CommandAborted => bCommandAborted,
+	Error => bErrorPositionChange,
+	ErrorID => iErrorIDPositionChange);
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="744" Count="0" />
+      <LineId Id="751" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1388" Count="0" />
+      <LineId Id="1387" Count="0" />
+      <LineId Id="1386" Count="0" />
+      <LineId Id="865" Count="0" />
+      <LineId Id="976" Count="0" />
+      <LineId Id="872" Count="0" />
+      <LineId Id="895" Count="0" />
+      <LineId Id="871" Count="0" />
+      <LineId Id="868" Count="1" />
+      <LineId Id="1157" Count="0" />
+      <LineId Id="870" Count="0" />
+      <LineId Id="1158" Count="0" />
+      <LineId Id="1194" Count="0" />
+      <LineId Id="1193" Count="0" />
+      <LineId Id="1195" Count="0" />
+      <LineId Id="1197" Count="1" />
+      <LineId Id="1196" Count="0" />
+      <LineId Id="1114" Count="0" />
+      <LineId Id="1112" Count="0" />
+      <LineId Id="978" Count="0" />
+      <LineId Id="977" Count="0" />
+      <LineId Id="1007" Count="0" />
+      <LineId Id="866" Count="0" />
+      <LineId Id="821" Count="0" />
+      <LineId Id="860" Count="0" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="822" Count="6" />
+      <LineId Id="1305" Count="6" />
+      <LineId Id="1304" Count="0" />
+      <LineId Id="1313" Count="6" />
+      <LineId Id="1312" Count="0" />
+      <LineId Id="1325" Count="0" />
+      <LineId Id="1324" Count="0" />
+      <LineId Id="1330" Count="0" />
+      <LineId Id="1329" Count="0" />
+      <LineId Id="1334" Count="4" />
+      <LineId Id="1327" Count="0" />
+      <LineId Id="1242" Count="2" />
+      <LineId Id="1247" Count="0" />
+      <LineId Id="1257" Count="0" />
+      <LineId Id="1256" Count="0" />
+      <LineId Id="1258" Count="2" />
+      <LineId Id="1265" Count="0" />
+      <LineId Id="1320" Count="0" />
+      <LineId Id="1110" Count="0" />
+      <LineId Id="1321" Count="0" />
+      <LineId Id="1410" Count="0" />
+      <LineId Id="1390" Count="0" />
+      <LineId Id="1389" Count="0" />
+      <LineId Id="1391" Count="9" />
+      <LineId Id="1322" Count="0" />
+      <LineId Id="1078" Count="0" />
+      <LineId Id="951" Count="0" />
+      <LineId Id="767" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

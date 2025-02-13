@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
+
+VAR_INPUT
+	Axis : AXIS_REF;            //Referência para o motor configurado no AX8108
+    TargetPosition : LREAL;     //Posição alvo do motor
+    Velocity : LREAL;           //Velocidade do motor
+    Acceleration : LREAL;       //Aceleração do motor
+    Deceleration : LREAL;       //Desaceleração do motor
+    Execute : BOOL;             //Inicia o movimento
+END_VAR
+
+VAR_OUTPUT
+	bSealSucess 	: BOOL;             //Indica se o processo foi concluído com sucesso
+    bSealError 		: BOOL;             //Indica se houve erro durante a execução
+END_VAR
+
+VAR
+	MotorStageCollection 	: FB_StageCollectionMotor; 	//Instância do FB para o motor
+	MotorAxis 				: AXIS_REF;                 //Referência do motor configurado 
+    MotorInPosition 		: BOOL;                     //Flag para indicar posição atingida 
+    MotorBusy 				: BOOL;                     //Flag para indicar movimento em andamento 
+    MotorError 				: BOOL;                     //Flag para indicar erro 
+    MotorErrorID 			: UDINT; 
+	
+	ValveConfigs : ST_SystemConfig;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MotorStageCollection(
+			Axis := MotorAxis,
+			Config := ADR(ValveConfigs), //Passar o ponteiro para a configuração do sistema
+			Execute := TRUE
+		);
+
+//Monitorar o estado do motor
+MotorInPosition := MotorStageCollection.InPosition;
+MotorBusy := MotorStageCollection.Busy;
+MotorError := MotorStageCollection.Error;
+MotorErrorID := MotorStageCollection.ErrorID;
+		
+IF MotorStageCollection.Error THEN
+    (* Indicar erro *)
+    bSealError := TRUE;
+    bSealSucess := FALSE;
+ELSE
+    bSealError := FALSE;
+    IF MotorStageCollection.InPosition THEN
+        //Sucess return boolean
+        bSealSucess := TRUE;
+    ELSE
+        bSealSucess := FALSE;
+    END_IF;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SealStages">
+      <LineId Id="101" Count="3" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="109" Count="3" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="84" Count="11" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

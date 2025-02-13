@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_RecipeParameters" Id="{dea22a66-1424-457b-bb31-9cb7538a2d73}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	//Info Group 
+	sMethodName			: STRING;  	//Method/Recipe Name
+	iRevision			: INT; 		//Revision Number
+	screatedBy			: STRING;  	//Name of the perso responsible for the recipe creation
+	tcreateDate			: TIME; 	//Recipe creation date
+	
+	//Solvent AND Times Group [1..4] |Rinse 1|Rinse 2|Wash 1| Wash 2| 
+	aSolventN 			: ARRAY [1..4] OF INT; 	//Solvent number to be used on Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aTime 				: ARRAY [1..4] OF TIME; //time in seconds for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aVelocity 			: ARRAY [1..4] OF INT; 	//rpm number for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	
+	//Volumes Group [1..4] |Rinse 1|Rinse 2|Wash 1| Wash 2| 
+	aT_IC_Volume 		: ARRAY [1..4] OF REAL; //T/IC Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS0_Volume 			: ARRAY [1..4] OF REAL; //S0 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS1_Volume 			: ARRAY [1..4] OF REAL; //S1 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS2_Volume 			: ARRAY [1..4] OF REAL; //S2 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS3_Volume 			: ARRAY [1..4] OF REAL; //S3 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS4_Volume 			: ARRAY [1..4] OF REAL; //S4 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS5_Volume 			: ARRAY [1..4] OF REAL; //S5 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS6_Volume 			: ARRAY [1..4] OF REAL; //S6 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aS7_Volume 			: ARRAY [1..4] OF REAL; //S7 Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	aF_Volume 			: ARRAY [1..4] OF REAL; //F Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2 
+	
+	//Other Parameters Group 
+	tSoakTime 			: TIME; 	//Time in seconds for the soak step 
+	tAgitate1Time 		: TIME; 	//Time in seconds for the Rinse 1 recirculation  
+	tAgitade2Time 		: TIME; 	//Time in seconds for the Rinse 1 recirculation   
+	iVialsToFill 		: INT; 		//number 1 to 4 meaning the quantity of Vials line to be filled
+	rVialPrimeVol 		: REAL; 	//Volume to be wasted in the prime needle
+	rVial1FillVol 		: REAL; 	//Volume used to fill up the first line vials 
+	rVials2_4FillVol 	: REAL; 	//Volume used to fill up the second up to fourth line vials 
+	tAirDryTime 		: TIME; 	//Time in seconds in the dry step
+	
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
