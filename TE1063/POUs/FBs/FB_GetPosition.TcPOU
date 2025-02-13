@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GetPosition" Id="{68a6d836-e904-4f20-8ca3-04799987088a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GetPosition
+VAR_INPUT
+	bEnable		: BOOL;
+END_VAR
+
+VAR_IN_OUT
+	AxisRef	 	: AXIS_REF; // Referência ao eixo do motor
+END_VAR
+
+VAR_OUTPUT
+	bError		: BOOL;
+	nErrorID	: UDINT;
+	rPosition 	: LREAL; // Posição atual do motor
+END_VAR
+VAR
+	ReadStatus : MC_ReadActualPosition; // Comando para leitura da posição
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Configura o comando para ler a posição atual do motor
+ReadStatus(
+	Enable 		:= bEnable,
+	Axis 		:= AxisRef,
+    Error  		=> bError,
+    ErrorID  	=> nErrorID,
+    Position 	=> rPosition
+);
+	
+// Atualiza a variável de saída com a posição do motor
+rPosition := ReadStatus.Position;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_GetPosition">
+      <LineId Id="13" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

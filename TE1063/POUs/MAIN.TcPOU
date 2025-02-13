@@ -1,15 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="MAIN" Id="{cebf6aa5-5e58-48d5-8759-1298446923a5}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MAIN
 
 VAR
 	// Controle do Eixo
-    fbPower       	: MC_Power;         	// Habilita o motor
-	ResetAxis		: MC_Reset;				// Reset do drive
-    fbMoveAbs     	: MC_MoveAbsolute;  	// Movimento Absoluto
-	fbReadPosition	: MC_ReadActualPosition;	// Read the actual position of the motor
-
+    fbPower       		: MC_Power;         	// Habilita o motor
+	ResetAxis			: MC_Reset;				// Reset do drive
+    fbMoveAbs     		: MC_MoveAbsolute;  	// Movimento Absoluto
+	fbReadPosition		: MC_ReadActualPosition;	// Read the actual position of the motor
+	PosFB				: FB_GetPosition;
+	MoveFB				: FB_MotorControl;
+	rCurrentPosition 	: LREAL;
+	bGetPosition		: BOOL := FALSE;
+	bMoveStart			: BOOL := FALSE;
+	bMoveDone			: BOOL;
+	bPosError			: BOOL;
+	nPosErrorID			: UDINT;
+	
     // Variáveis de Entrada
     bEnable       : BOOL := FALSE;      	// Sinal para habilitar o eixo
     nTargetPos    : LREAL := 14500.0;  		// Posição alvo
@@ -69,12 +77,16 @@ PRG_UpdateVariablesMoving();
 GVL_IO.bInResetSignal := GVL_Safety.bResetButtonVISU;
 GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
 
-
 GVL_Safety.bSafetyRestart 			:= GVL_IO.bInResetSignal;
 GVL_Safety.bSafetyErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Motion.M1Motor.bTS_ErrorAck 	:= GVL_Safety.bSafetyErrorAck;
 GVL_Safety.bSafetyRun				:= TRUE;
 GVL_Motion.M1Motor.bTS_Run			:= TRUE;
+
+IF GVL_Safety.bM1STOErrorAck THEN
+	GVL_Motion.M1Motor.bTS_ErrorAck := TRUE;
+ELSE
+	GVL_Motion.M1Motor.bTS_ErrorAck := FALSE;
+END_IF
 
 IF bLockDoors THEN
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
@@ -82,49 +94,44 @@ IF bLockDoors THEN
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
 END_IF
 
+//teste de movimento do motor M1
+//bEnable := TRUE;
+
+//Obter a posição atual do motor
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M1Motor.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rCurrentPosition
+	);
+		
+	//rCurrentPosition := PosFB.rPosition;
+END_IF
+
+GVL_Motion.M1Motor.iPosition 		:= -8;
+GVL_Motion.M1Motor.qTargetVelocity	:= 5;
 
 
-//GVL_Safety.SafetyInputs.bM1_STOActive := TRUE;
 
 
-// Habilita o eixo
-bEnable := TRUE;
-
-fbPower(
-    Enable := bEnable,
-    Axis := GVL_Motion.M1Motor.Axis,
-    Status => bPowerStatus,
-    Error => bError,
-    ErrorID => nErrorID
-);
-
-fbPower(
-    Enable := bEnable,
-    Axis := GVL_Motion.M2Motor.Axis,
-    Status => bPowerStatus,
-    Error => bError,
-    ErrorID => nErrorID
-);
-
-fbPower(
-    Enable := bEnable,
-    Axis := GVL_Motion.M3Motor.Axis,
-    Status => bPowerStatus,
-    Error => bError,
-    ErrorID => nErrorID
-);
-
-fbReadPosition(
-	Axis		:= GVL_Motion.M2Motor.Axis,
-	Enable 		:= bReadPosition,
-	Valid		=> bReadPosValidation,
-	Busy		=> bReadPosBusy,
-	Error		=> bReadPositionError,
-	ErrorID		=> iReadPosErrorId,
-	Position	=> rActualPosition
-);
+// Acionar o movimento quando MoveStart for TRUE
+IF bMoveStart THEN
+	MoveFB(
+		bEnable 	:= bMoveStart,
+		AxisRef 	:= GVL_Motion.M1Motor.Axis, 
+		nPosition 	:= GVL_Motion.M1Motor.iPosition, 
+		nVelocity 	:= GVL_Motion.M1Motor.qTargetVelocity,
+		bDone		=> bMoveDone,
+		bError		=> bPosError,
+		nErrorID	=> nPosErrorID
+		);
+END_IF
 
 
+
+(*
 //Configuração da chamada do MC_Reset
 ResetAxis(
 	Execute := bResetAxis,
@@ -132,23 +139,11 @@ ResetAxis(
 	Done	=> bResetDone,
 	Error	=> bResetError,
 	ErrorID	=> iResetErrorID
-);
+); *)
 
 GVL_Motion.M3Motor.iTargetPosition := 8210800;
 GVL_Motion.M2Motor.iTargetPosition := 14500;
 GVL_Motion.M3Motor.iTargetVelocity := 10;
-
-fbMoveAbs(
-	Axis := GVL_Motion.M3Motor.Axis,
-	Execute := bExecutePositionChange,
-	Position := GVL_Motion.M3Motor.iTargetPosition,
-	Velocity := GVL_Motion.M3Motor.iTargetVelocity,
-	Done => bDonePositionChange,
-	Busy => bBusyPositionChange,
-	Active => bActivePositionChange,
-	CommandAborted => bCommandAborted,
-	Error => bErrorPositionChange,
-	ErrorID => iErrorIDPositionChange);
 
 
 
@@ -164,36 +159,46 @@ fbMoveAbs(
       <LineId Id="865" Count="0" />
       <LineId Id="976" Count="0" />
       <LineId Id="872" Count="0" />
-      <LineId Id="895" Count="0" />
       <LineId Id="871" Count="0" />
-      <LineId Id="868" Count="1" />
-      <LineId Id="1157" Count="0" />
-      <LineId Id="870" Count="0" />
+      <LineId Id="868" Count="2" />
       <LineId Id="1158" Count="0" />
+      <LineId Id="1467" Count="1" />
+      <LineId Id="1472" Count="0" />
+      <LineId Id="1469" Count="0" />
+      <LineId Id="1471" Count="0" />
+      <LineId Id="1470" Count="0" />
       <LineId Id="1194" Count="0" />
       <LineId Id="1193" Count="0" />
       <LineId Id="1195" Count="0" />
       <LineId Id="1197" Count="1" />
       <LineId Id="1196" Count="0" />
-      <LineId Id="1114" Count="0" />
-      <LineId Id="1112" Count="0" />
-      <LineId Id="978" Count="0" />
-      <LineId Id="977" Count="0" />
-      <LineId Id="1007" Count="0" />
       <LineId Id="866" Count="0" />
       <LineId Id="821" Count="0" />
       <LineId Id="860" Count="0" />
-      <LineId Id="859" Count="0" />
-      <LineId Id="822" Count="6" />
-      <LineId Id="1305" Count="6" />
-      <LineId Id="1304" Count="0" />
-      <LineId Id="1313" Count="6" />
+      <LineId Id="1538" Count="1" />
+      <LineId Id="1543" Count="1" />
+      <LineId Id="1569" Count="2" />
+      <LineId Id="1574" Count="2" />
+      <LineId Id="1573" Count="0" />
+      <LineId Id="1548" Count="0" />
+      <LineId Id="1545" Count="0" />
+      <LineId Id="1581" Count="0" />
+      <LineId Id="1579" Count="0" />
+      <LineId Id="1584" Count="0" />
+      <LineId Id="1583" Count="0" />
+      <LineId Id="1582" Count="0" />
+      <LineId Id="1580" Count="0" />
+      <LineId Id="1537" Count="0" />
+      <LineId Id="1549" Count="0" />
+      <LineId Id="1560" Count="0" />
+      <LineId Id="1550" Count="0" />
+      <LineId Id="1585" Count="0" />
+      <LineId Id="1554" Count="2" />
+      <LineId Id="1587" Count="0" />
+      <LineId Id="1589" Count="1" />
+      <LineId Id="1558" Count="0" />
       <LineId Id="1312" Count="0" />
       <LineId Id="1325" Count="0" />
-      <LineId Id="1324" Count="0" />
-      <LineId Id="1330" Count="0" />
-      <LineId Id="1329" Count="0" />
-      <LineId Id="1334" Count="4" />
       <LineId Id="1327" Count="0" />
       <LineId Id="1242" Count="2" />
       <LineId Id="1247" Count="0" />
@@ -205,9 +210,6 @@ fbMoveAbs(
       <LineId Id="1110" Count="0" />
       <LineId Id="1321" Count="0" />
       <LineId Id="1410" Count="0" />
-      <LineId Id="1390" Count="0" />
-      <LineId Id="1389" Count="0" />
-      <LineId Id="1391" Count="9" />
       <LineId Id="1322" Count="0" />
       <LineId Id="1078" Count="0" />
       <LineId Id="951" Count="0" />

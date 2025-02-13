@@ -1,73 +1,124 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_MotorControl" Id="{5ab8d8f9-5e90-44d2-bb73-989aa2470e6f}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorControl
 
 VAR_INPUT
-	bEnable 		: BOOL;        	//Ativa o motor
-    bResetError 	: BOOL;    		//Reseta falhas
-    bJogPos 		: BOOL;        	//Movimento manual positivo
-    bJogNeg 		: BOOL;  		//Movimento manual negativo
-    iTargetPosition : INT; 			//Posição desejada 
-    iTargetVelocity : INT; 			//Velocidade desejada
+	bEnable 		: BOOL;        				//FB Enable
+    
+    nPosition    	: LREAL;
+    nVelocity    	: LREAL;
 END_VAR
 
 VAR_OUTPUT
-	bDriveReady 	: BOOL;    	//Drive pronto para operação 
-    bDriveFault 	: BOOL;  	//Falha no drive 
-    iActualPosition : INT; 		//Posição real do motor 
-    iActualVelocity : INT; 		//Velocidade real do motor 
+	bDone        	: BOOL; 	//Moviment Done
+    bBusy        	: BOOL;
+	bPowerStatus 	: BOOL;
+    bError       	: BOOL;
+    nErrorID     	: UDINT;
 END_VAR
 
 VAR_IN_OUT
-	nCtrlWord 		: WORD;       (* Control Word do motor *)
-    nStatWord 		: WORD;       (* Status Word do motor *)
-    nTargetVelocity : INT;  (* Velocidade alvo do motor *)
-    nTargetPosition : INT;  (* Posição alvo do motor *)
-    nActualPosition : INT;  (* Posição real do motor *)
-    nActualVelocity : INT;  (* Velocidade real do motor *)
+	AxisRef        	: AXIS_REF;	//Axis to move
 END_VAR
 
 VAR
-	
+	fbPower       	: MC_Power;         	// Habilita o motor
+	MoveCommand 	: MC_MoveAbsolute; 		// Comando para movimento absoluto
+	nState			: INT := 1;
+	bMovDone		: BOOL := FALSE;
+	bMovBusy		: BOOL := FALSE;
+	bMovActive		: BOOL := FALSE;
+	bMovAborted		: BOOL := FALSE;
+	bMovError		: BOOL := FALSE;
+	nMovErrorID		: UDINT;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Reset de erro
-IF bResetError THEN
-    nCtrlWord := 16#80;  //Fault Reset
-    RETURN;
-END_IF;
+      <ST><![CDATA[//Powers up the axis
+CASE  nState OF
+	
+1:
+	fbPower(
+    	Enable 			:= bEnable,
+		Enable_Positive := bEnable,
+		Enable_Negative	:= bEnable,
+		Override        := 100,
+    	Axis 			:= AxisRef,
+    	Status 			=> bPowerStatus,
+    	Error			=> bError,
+    	ErrorID 		=> nErrorID
+	);
+	
+	IF bPowerStatus THEN
+		nState := 2;
+	END_IF
 
-//Monitorando status do drive
-bDriveReady := (nStatWord AND 16#0040) <> 0; //Ready to Switch On
-bDriveFault := (nStatWord AND 16#0008) <> 0;  //Fault
+2:
+	// Verifica se o comando Start foi acionado
+	IF bEnable THEN
+    	MoveCommand(
+			Execute 		:= TRUE,
+			Axis 			:= AxisRef,
+    		Position 		:= nPosition,
+    		Velocity 		:= nVelocity,
+    		Done 			=> bMovDone,
+			Busy      		=> bMovBusy,    
+    		Active     		=> bMovActive,    
+    		CommandAborted	=> bMovAborted,
+    		Error     		=> bMovError,     
+   			ErrorID       	=> nMovErrorID
+		);
+	ELSE
+    	MoveCommand.Execute := FALSE;
+	END_IF;
+	
+	IF bMovDone THEN
+		nState := 3;
+	END_IF
+
+3:
+
+	// Atualiza as variáveis de saída com o status do comando
+	bDone 		:= MoveCommand.Done;
+	bBusy 		:= MoveCommand.Busy;
+	bError 		:= MoveCommand.Error;
+	nErrorID 	:= MoveCommand.ErrorID;
 
 
-//Controle de Movimento
-IF bEnable THEN
-    IF bJogPos THEN
-        nTargetVelocity := ABS(iTargetVelocity); //Movimento manual para frente
-    ELSIF bJogNeg THEN
-        nTargetVelocity := -ABS(iTargetVelocity); //Movimento manual para trás
-    ELSE
-        nTargetVelocity := 0; //Para o motor se nenhum comando for dado
-    END_IF;
-
-    //ontrole de posição se não estiver no modo Jog
-    IF (NOT bJogPos) AND (NOT bJogNeg) THEN
-        nTargetPosition := iTargetPosition;
-    END_IF;
-END_IF;
-
-//Atualiza os valores reais
-iActualPosition := nActualPosition;
-iActualVelocity := nActualVelocity;]]></ST>
+END_CASE
+]]></ST>
     </Implementation>
     <LineIds Name="FB_MotorControl">
-      <LineId Id="29" Count="8" />
-      <LineId Id="96" Count="0" />
-      <LineId Id="95" Count="0" />
-      <LineId Id="48" Count="17" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="193" Count="1" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="211" Count="1" />
+      <LineId Id="258" Count="2" />
+      <LineId Id="213" Count="3" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="231" Count="3" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="217" Count="2" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="220" Count="2" />
+      <LineId Id="248" Count="3" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="223" Count="1" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="237" Count="1" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="227" Count="3" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="195" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
