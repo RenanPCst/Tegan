@@ -5,25 +5,15 @@
 
 VAR
 	// Controle do Eixo
-    fbPower       		: MC_Power;         		// Habilita o motor
-	ResetAxis			: MC_Reset;					// Reset do drive
-    fbMoveAbs     		: MC_MoveAbsolute;  		// Movimento Absoluto
-	fbReadPosition		: MC_ReadActualPosition;	// Read the actual position of the motor
 	PosFB				: FB_GetPosition;
 	MoveFB				: FB_MotorControl;
+	fbSetZero			: MC_SetPosition;
 	rCurrentPosition 	: LREAL;
 	bGetPosition		: BOOL := FALSE;
 	bMoveStart			: BOOL := FALSE;
 	bMoveDone			: BOOL;
 	bPosError			: BOOL;
 	nPosErrorID			: UDINT;
-	
-    // Variáveis de Entrada
-    bEnable       : BOOL := FALSE;      	// Sinal para habilitar o eixo
-    nTargetPos    : LREAL := 14500.0;  		// Posição alvo
-    nVelocity     : LREAL := 100.0;   		// Velocidade de movimentação
-    nAcceleration : LREAL := 50.0;    		// Aceleração
-    nDeceleration : LREAL := 50.0;    		// Desaceleração
 
     // Status e Erros
     bPowerStatus  : BOOL;              		// Indica se o motor está habilitado
@@ -31,10 +21,10 @@ VAR
     bDone         : BOOL;              		// Indica que a posição foi atingida
     bError        : BOOL;              		// Indica erro
     nErrorID      : UDINT;             		// Código do erro
+	sState		  : STRING;					// String contendo o estado do erro 
 	
 	//miscelanious variable for testing purporses
 	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
-	bResetAxis 		: BOOL	:= FALSE;		//Variable for reseting the axis when needed
 	bResetDone		: BOOL;
 	bResetError		: BOOL;
 	iResetErrorID	: UDINT;
@@ -61,8 +51,14 @@ VAR
 	bErrorPositionChange	:	BOOL;
 	iErrorIDPositionChange	:	UDINT;
 	
-
-
+	rM1Position				:	LREAL;
+	rM2Position				:	LREAL;
+	rM3Position				:	LREAL;
+	
+	bZeroDone				:	BOOL;
+	bZeroError				:	BOOL;
+	nZeroErrorID			:	UDINT;
+	bSetZero				:	BOOL := FALSE;
 	
 END_VAR
 ]]></Declaration>
@@ -93,43 +89,78 @@ IF bLockDoors THEN
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
 END_IF
 
-//teste de movimento do motor M1
-//bEnable := TRUE;
+//teste de movimento dos motores M1, M2 e M3
 
-//Obter a posição atual do motor
+//Obter a posição atual do motor M1
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M1Motor.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rCurrentPosition
+		rPosition		=>	rM1Position
 	);
-		
-	//rCurrentPosition := PosFB.rPosition;
 END_IF
 
-GVL_Motion.M1Motor.iPosition 		:= -3;
-GVL_Motion.M1Motor.qTargetVelocity	:= 5;
-
-
-// Acionar o movimento quando MoveStart for TRUE
-IF bMoveStart THEN
-	MoveFB(
-		bEnable 	:= bMoveStart,
-		AxisRef 	:= GVL_Motion.M1Motor.Axis, 
-		nPosition 	:= GVL_Motion.M1Motor.iPosition, 
-		nVelocity 	:= GVL_Motion.M1Motor.qTargetVelocity,
-		bDone		=> bMoveDone,
-		bError		=> bPosError,
-		nErrorID	=> nPosErrorID
-		);
+//Obter a posição atual do motor M2
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M2Motor.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM2Position
+	);
 END_IF
 
+//Obter a posição atual do motor M3
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M3Motor.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
 
-GVL_Motion.M3Motor.iTargetPosition := 8210800;
-GVL_Motion.M2Motor.iTargetPosition := 14500;
-GVL_Motion.M3Motor.iTargetVelocity := 10;
+GVL_Motion.M1Motor.iPosition 		:= 0;
+GVL_Motion.M1Motor.qTargetVelocity	:= 15;
+
+GVL_Motion.M3Motor.iTargetPosition	:= 0;
+GVL_Motion.M3Motor.iTargetVelocity	:= 5;
+
+GVL_Motion.M2Motor.iTargetPosition	:= 0;
+GVL_Motion.M2Motor.iTargetVelocity	:= 5;
+
+//Set position 0
+fbSetZero(
+    Execute := bSetZero,
+    Axis := GVL_Motion.M3Motor.Axis,
+    Position := 0.0,  // Define a posição atual como zero
+    Done => bZeroDone,
+    Error => bZeroError,
+    ErrorID => nZeroErrorID
+);
+
+//Moving the motor 3 for testing purposes
+IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
+    MoveFB(
+        bEnable 	:= TRUE,
+        AxisRef 	:= GVL_Motion.M2Motor.Axis, 
+        nPosition 	:= GVL_Motion.M2Motor.iTargetPosition, 
+        nVelocity 	:= GVL_Motion.M2Motor.iTargetVelocity,
+        bDone		=> bMoveDone,
+        bError		=> bPosError,
+        nErrorID	=> nPosErrorID,
+        sState		=> sState
+    );
+END_IF
+
+// Reset bMoveStart_M1 when move is completed
+IF bMoveDone THEN
+    bMoveStart := FALSE;
+END_IF
 
 
 
@@ -159,33 +190,29 @@ GVL_Motion.M3Motor.iTargetVelocity := 10;
       <LineId Id="1196" Count="0" />
       <LineId Id="866" Count="0" />
       <LineId Id="821" Count="0" />
-      <LineId Id="860" Count="0" />
-      <LineId Id="1538" Count="1" />
-      <LineId Id="1543" Count="1" />
-      <LineId Id="1569" Count="2" />
-      <LineId Id="1574" Count="2" />
-      <LineId Id="1573" Count="0" />
-      <LineId Id="1548" Count="0" />
-      <LineId Id="1545" Count="0" />
+      <LineId Id="1678" Count="0" />
+      <LineId Id="1667" Count="8" />
+      <LineId Id="1706" Count="0" />
+      <LineId Id="1685" Count="9" />
+      <LineId Id="1684" Count="0" />
+      <LineId Id="1696" Count="9" />
+      <LineId Id="1666" Count="0" />
       <LineId Id="1581" Count="0" />
       <LineId Id="1579" Count="0" />
       <LineId Id="1584" Count="0" />
+      <LineId Id="1745" Count="0" />
+      <LineId Id="1744" Count="0" />
+      <LineId Id="1746" Count="0" />
+      <LineId Id="1748" Count="0" />
+      <LineId Id="1747" Count="0" />
+      <LineId Id="1749" Count="0" />
+      <LineId Id="1707" Count="0" />
       <LineId Id="1580" Count="0" />
+      <LineId Id="1709" Count="7" />
+      <LineId Id="1708" Count="0" />
       <LineId Id="1537" Count="0" />
-      <LineId Id="1549" Count="0" />
-      <LineId Id="1560" Count="0" />
-      <LineId Id="1550" Count="0" />
-      <LineId Id="1585" Count="0" />
-      <LineId Id="1554" Count="2" />
-      <LineId Id="1587" Count="0" />
-      <LineId Id="1589" Count="1" />
-      <LineId Id="1558" Count="0" />
+      <LineId Id="1727" Count="15" />
       <LineId Id="1312" Count="0" />
-      <LineId Id="1325" Count="0" />
-      <LineId Id="1320" Count="0" />
-      <LineId Id="1110" Count="0" />
-      <LineId Id="1321" Count="0" />
-      <LineId Id="1410" Count="0" />
       <LineId Id="1322" Count="0" />
       <LineId Id="1078" Count="0" />
       <LineId Id="951" Count="0" />
