@@ -5,9 +5,9 @@
 
 VAR
 	// Controle do Eixo
-    fbPower       		: MC_Power;         	// Habilita o motor
-	ResetAxis			: MC_Reset;				// Reset do drive
-    fbMoveAbs     		: MC_MoveAbsolute;  	// Movimento Absoluto
+    fbPower       		: MC_Power;         		// Habilita o motor
+	ResetAxis			: MC_Reset;					// Reset do drive
+    fbMoveAbs     		: MC_MoveAbsolute;  		// Movimento Absoluto
 	fbReadPosition		: MC_ReadActualPosition;	// Read the actual position of the motor
 	PosFB				: FB_GetPosition;
 	MoveFB				: FB_MotorControl;
@@ -72,7 +72,6 @@ END_VAR
 //PRG_StateMachine(); 
 PRG_UpdateVariablesMoving();
 
-
 //Safety
 GVL_IO.bInResetSignal := GVL_Safety.bResetButtonVISU;
 GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
@@ -110,10 +109,8 @@ IF bGetPosition THEN
 	//rCurrentPosition := PosFB.rPosition;
 END_IF
 
-GVL_Motion.M1Motor.iPosition 		:= -8;
+GVL_Motion.M1Motor.iPosition 		:= -3;
 GVL_Motion.M1Motor.qTargetVelocity	:= 5;
-
-
 
 
 // Acionar o movimento quando MoveStart for TRUE
@@ -130,17 +127,6 @@ IF bMoveStart THEN
 END_IF
 
 
-
-(*
-//Configuração da chamada do MC_Reset
-ResetAxis(
-	Execute := bResetAxis,
-	Axis 	:= GVL_Motion.M2Motor.Axis,
-	Done	=> bResetDone,
-	Error	=> bResetError,
-	ErrorID	=> iResetErrorID
-); *)
-
 GVL_Motion.M3Motor.iTargetPosition := 8210800;
 GVL_Motion.M2Motor.iTargetPosition := 14500;
 GVL_Motion.M3Motor.iTargetVelocity := 10;
@@ -154,7 +140,6 @@ GVL_Motion.M3Motor.iTargetVelocity := 10;
       <LineId Id="751" Count="0" />
       <LineId Id="2" Count="0" />
       <LineId Id="1388" Count="0" />
-      <LineId Id="1387" Count="0" />
       <LineId Id="1386" Count="0" />
       <LineId Id="865" Count="0" />
       <LineId Id="976" Count="0" />
@@ -185,8 +170,6 @@ GVL_Motion.M3Motor.iTargetVelocity := 10;
       <LineId Id="1581" Count="0" />
       <LineId Id="1579" Count="0" />
       <LineId Id="1584" Count="0" />
-      <LineId Id="1583" Count="0" />
-      <LineId Id="1582" Count="0" />
       <LineId Id="1580" Count="0" />
       <LineId Id="1537" Count="0" />
       <LineId Id="1549" Count="0" />
@@ -199,13 +182,6 @@ GVL_Motion.M3Motor.iTargetVelocity := 10;
       <LineId Id="1558" Count="0" />
       <LineId Id="1312" Count="0" />
       <LineId Id="1325" Count="0" />
-      <LineId Id="1327" Count="0" />
-      <LineId Id="1242" Count="2" />
-      <LineId Id="1247" Count="0" />
-      <LineId Id="1257" Count="0" />
-      <LineId Id="1256" Count="0" />
-      <LineId Id="1258" Count="2" />
-      <LineId Id="1265" Count="0" />
       <LineId Id="1320" Count="0" />
       <LineId Id="1110" Count="0" />
       <LineId Id="1321" Count="0" />

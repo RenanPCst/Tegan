@@ -3095,13 +3095,11 @@ External Setpoint Generation:
 					<Name>M2 Motor - SC Vertical</Name>
 					<AxisPara>
 						<Dynamic AccelerationMaximum="15" DecelerationMaximum="15" Acceleration="15" Deceleration="15" Jerk="4915.476"/>
-						<Velo RefSearch="10.92328" RefSync="10.92328" SlowManual="0.25" FastManual="1.5" Fast="1092.328" Maximum="1092.328"/>
+						<Velo RefSearch="10.92328" RefSync="10.92328" SlowManual="4" FastManual="24" Fast="1092.328" Maximum="1092.328"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
 						<EncPara ScaleFactorNumerator="120" ScaleFactorDenominator="6291456" MaxCount="#xffffffff">
-							<SoftEndMinControl Enable="true"/>
-							<SoftEndMaxControl Enable="true"/>
 							<TimeComp TimeCompMode="1" EncDelayCycles="4"/>
 						</EncPara>
 						<Vars VarGrpType="1">
@@ -6303,32 +6301,36 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{F2D962B6-C5C7-86E4-BDD2-582161DD8B46}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{DDAAEAA2-8DF2-8F6A-B3A0-F3139F01A8E3}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>GVL_Motion.M1STOActiveMonitoring</Name>
+							<Type>BOOL</Type>
+						</Var>
 						<Var>
 							<Name>GVL_IO.bInAckSignal</Name>
 							<Comment><![CDATA[Safety]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M1STOActiveMonitoring</Name>
-							<Type>BOOL</Type>
+							<Name>GVL_Motion.M1Motor.iPosition</Name>
+							<Comment><![CDATA[M1 Motor Structure]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigInputs</Name>
-							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
-							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+							<Name>GVL_Motion.M1Motor.iStatusWord</Name>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gAnalogInputs</Name>
-							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
-							<Type GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}">ST_EL3058</Type>
+							<Name>GVL_Motion.M1Motor.nState</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.g_stAxis.NcToPlc</Name>
+							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
@@ -6394,6 +6396,20 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.gDigInputs</Name>
+							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
+							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gAnalogInputs</Name>
+							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
+							<Type GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}">ST_EL3058</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.g_stAxis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables ]]></Comment>
 							<Type>BOOL</Type>
@@ -6411,44 +6427,42 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Name>GVL_Safety.bAckButtonVISU</Name>
 							<Type>BOOL</Type>
 						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iPosition</Name>
-							<Comment><![CDATA[M1 Motor Structure]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iStatusWord</Name>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
 					</Vars>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
-						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
-						</Var>
 						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.g_stAxis.PlcToNc</Name>
+							<Name>GVL_Motion.M1Motor.qControlWord</Name>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.qTargetVelocity</Name>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.n_AxisTorqueLimitation</Name>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.bTS_Run</Name>
+							<Comment><![CDATA[M1 Motor Safety]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.bTS_ErrorAck</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M2Motor.nTargetPosition</Name>
@@ -6497,6 +6511,15 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.g_stAxis.PlcToNc</Name>
+							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bSafetyErrorAck</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -6511,31 +6534,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						<Var>
 							<Name>GVL_Safety.SafetyOutputs</Name>
 							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.qControlWord</Name>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.qTargetVelocity</Name>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.Axis.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.n_AxisTorqueLimitation</Name>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.bTS_Run</Name>
-							<Comment><![CDATA[M1 Motor Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.bTS_ErrorAck</Name>
-							<Type>BOOL</Type>
 						</Var>
 					</Vars>
 					<UnrestoredVarLinks ImportTime="2025-01-28T12:03:06">
@@ -15527,7 +15525,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>0100</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="0" MotorDataLevel="0" DisableMode="0">
-										<Data>03</Data>
+										<Data>05</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="1" MotorDataLevel="0" DisableMode="0">
 										<Data>0016</Data>
@@ -15536,13 +15534,13 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>0116</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="3" MotorDataLevel="0" DisableMode="0">
-										<Data>0616</Data>
+										<Data>0216</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="4" MotorDataLevel="0" DisableMode="0">
-										<Data>0000</Data>
+										<Data>0316</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="5" MotorDataLevel="0" DisableMode="0">
-										<Data>0000</Data>
+										<Data>0616</Data>
 									</InitCmd>
 									<InitCmd Index="7186" SubIndex="6" MotorDataLevel="0" DisableMode="0">
 										<Data>0000</Data>
@@ -15557,7 +15555,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>0000</Data>
 									</InitCmd>
 									<InitCmd Index="7187" SubIndex="0" MotorDataLevel="0" DisableMode="0">
-										<Data>03</Data>
+										<Data>04</Data>
 									</InitCmd>
 									<InitCmd Index="7187" SubIndex="1" MotorDataLevel="0" DisableMode="0">
 										<Data>001a</Data>
@@ -15566,10 +15564,10 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>011a</Data>
 									</InitCmd>
 									<InitCmd Index="7187" SubIndex="3" MotorDataLevel="0" DisableMode="0">
-										<Data>061a</Data>
+										<Data>031a</Data>
 									</InitCmd>
 									<InitCmd Index="7187" SubIndex="4" MotorDataLevel="0" DisableMode="0">
-										<Data>0000</Data>
+										<Data>061a</Data>
 									</InitCmd>
 									<InitCmd Index="7187" SubIndex="5" MotorDataLevel="0" DisableMode="0">
 										<Data>0000</Data>
@@ -15620,7 +15618,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>0000</Data>
 									</InitCmd>
 									<InitCmd Index="28688" SubIndex="3" MotorDataLevel="0" DisableMode="0">
-										<Data>09</Data>
+										<Data>08</Data>
 									</InitCmd>
 									<InitCmd Index="28688" SubIndex="11" MotorDataLevel="0" DisableMode="0">
 										<Data>d007</Data>
@@ -15680,7 +15678,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 										<Data>0500</Data>
 									</InitCmd>
 									<InitCmd Index="32784" SubIndex="19" MotorDataLevel="1" DisableMode="0">
-										<Data>4c01</Data>
+										<Data>f401</Data>
 									</InitCmd>
 									<InitCmd Index="32784" SubIndex="20" MotorDataLevel="1" DisableMode="0">
 										<Data>96000000</Data>
@@ -16466,7 +16464,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxMoveDistance</PropertyName>
-													<Value>5</Value>
+													<Value>80</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>LoadInertiaMass</PropertyName>
@@ -37753,20 +37751,21 @@ Bit 8 - 15 : reserved]]></Comment>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
 				<Link VarA="Term 1 (EK1100)^Term 19 (EL2904)^Module 1 (FSOES)^RxPDO^FSOE" VarB="ConnectionInputs^TwinSafeGroup1.Term 31 (EL2904) - Module 1 (FSOES)_32 TxPDO"/>
-				<Link VarA="Term 1 (EK1100)^Term 4 (EL1918)^Module 1 (FSOE)^FSoE Inputs^FSOE" VarB="ConnectionOutputs^TwinSafeGroup1.Term 16 (EL1918) - Module 1 (FSOE)_1 RxPDO"/>
 				<Link VarA="Term 1 (EK1100)^Term 4 (EL1918)^Module 1 (FSOE)^FSoE Outputs^FSOE" VarB="ConnectionInputs^TwinSafeGroup1.Term 16 (EL1918) - Module 1 (FSOE)_1 TxPDO"/>
-				<Link VarA="Term 1 (EK1100)^Term 5 (EL1918)^Module 1 (FSOE)^FSoE Inputs^FSOE" VarB="ConnectionOutputs^TwinSafeGroup1.Term 17 (EL1918) - Module 1 (FSOE)_3 RxPDO"/>
-				<Link VarA="Term 1 (EK1100)^Term 6 (EL1918)^Module 1 (FSOE)^FSoE Inputs^FSOE" VarB="ConnectionOutputs^TwinSafeGroup1.Term 18 (EL1918) - Module 1 (FSOE)_4 RxPDO"/>
+				<Link VarA="Term 1 (EK1100)^Term 5 (EL1918)^Module 1 (FSOE)^FSoE Outputs^FSOE" VarB="ConnectionInputs^TwinSafeGroup1.Term 17 (EL1918) - Module 1 (FSOE)_3 TxPDO"/>
+				<Link VarA="Term 1 (EK1100)^Term 6 (EL1918)^Module 1 (FSOE)^FSoE Outputs^FSOE" VarB="ConnectionInputs^TwinSafeGroup1.Term 18 (EL1918) - Module 1 (FSOE)_4 TxPDO"/>
 				<Link VarA="Term 1 (EK1100)^Term 7 (EL2904)^Module 1 (FSOES)^TxPDO^FSOE" VarB="ConnectionOutputs^TwinSafeGroup1.Term 19 (EL2904) - Module 1 (FSOES)_5 RxPDO"/>
 				<Link VarA="Term 1 (EK1100)^Term 8 (EL2904)^Module 1 (FSOES)^TxPDO^FSOE" VarB="ConnectionOutputs^TwinSafeGroup1.Term 20 (EL2904) - Module 1 (FSOES)_6 RxPDO"/>
 				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device (Safety)^FSoE Slave Connection 1 Master Message^ChA_Connection_Input.SAFEMOTION FSoE Connection_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 TxPDO"/>
-				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device (Safety)^FSoE Slave Connection 1 Slave Message^ChA_Connection_Input.SAFEMOTION FSoE Connection_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 RxPDO"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 4 (EL1918)">
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Term 16 (EL1918) - Module 1 (FSOE)_1 RxPDO" VarB="Module 1 (FSOE)^FSoE Inputs^FSOE"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 5 (EL1918)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Term 17 (EL1918) - Module 1 (FSOE)_3 TxPDO" VarB="Module 1 (FSOE)^FSoE Outputs^FSOE"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Term 17 (EL1918) - Module 1 (FSOE)_3 RxPDO" VarB="Module 1 (FSOE)^FSoE Inputs^FSOE"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 6 (EL1918)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Term 18 (EL1918) - Module 1 (FSOE)_4 TxPDO" VarB="Module 1 (FSOE)^FSoE Outputs^FSOE"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Term 18 (EL1918) - Module 1 (FSOE)_4 RxPDO" VarB="Module 1 (FSOE)^FSoE Inputs^FSOE"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 7 (EL2904)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Term 19 (EL2904) - Module 1 (FSOES)_5 TxPDO" VarB="Module 1 (FSOES)^RxPDO^FSOE"/>
@@ -37776,6 +37775,9 @@ Bit 8 - 15 : reserved]]></Comment>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 45 (AX8620-0000-0105)">
 				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device^DeviceMain Outputs^Power supply controlword" VarB="PSM Controlword for axis^Controlword for axis"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)">
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 RxPDO" VarB="Device (Safety)^FSoE Slave Connection 1 Slave Message^ChA_Connection_Input.SAFEMOTION FSoE Connection_1"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^Axis 10">
@@ -38157,6 +38159,9 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^InputToggle" Size="1" OffsA="1"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^WcState"/>
 			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
+				<Link VarA="Inputs^FromPlc^ControlDWord^Enable" VarB="StandardInputs^Standard Out Var 34"/>
+			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^M3 Motor - SC Horizontal">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 16 (EL7211-9014)">
@@ -38176,6 +38181,9 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="Enc^Inputs^In^nDcInputTime" VarB="InfoData^DcInputShift"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^InputToggle" Size="1" OffsA="1"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^WcState"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
+				<Link VarA="Inputs^FromPlc^ControlDWord^Enable" VarB="StandardInputs^Standard Out Var 35"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^M4 Motor - Loop1 Valve">
@@ -38377,14 +38385,6 @@ Bit 8 - 15 : reserved]]></Comment>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M1 Motor - SR Vertical">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
 				<Link VarA="PlcTask Outputs^GVL_Motion.M1Motor.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
-			</OwnerB>
-			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M2 Motor - SC Vertical">
-				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
-				<Link VarA="PlcTask Outputs^GVL_Motion.M2Motor.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
-			</OwnerB>
-			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M3 Motor - SC Horizontal">
-				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
-				<Link VarA="PlcTask Outputs^GVL_Motion.M3Motor.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
 			</OwnerB>
 		</OwnerA>
 	</Mappings>
