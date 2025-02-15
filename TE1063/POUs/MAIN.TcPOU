@@ -74,15 +74,20 @@ GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
 
 GVL_Safety.bSafetyRestart 			:= GVL_IO.bInResetSignal;
 GVL_Safety.bSafetyErrorAck			:= GVL_IO.bInResetSignal;
+GVL_safety.bAMI8000ErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Motion.M1Motor.bTS_ErrorAck		:= GVL_IO.bInResetSignal;
+
 GVL_Safety.bSafetyRun				:= TRUE;
 GVL_Motion.M1Motor.bTS_Run			:= TRUE;
+GVL_Safety.bAMI8000Run				:= TRUE;
 
+(*
 IF GVL_Safety.bM1STOErrorAck THEN
 	GVL_Motion.M1Motor.bTS_ErrorAck := TRUE;
 ELSE
 	GVL_Motion.M1Motor.bTS_ErrorAck := FALSE;
 END_IF
-
+*)
 IF bLockDoors THEN
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
 	ELSE
@@ -118,6 +123,71 @@ IF bGetPosition THEN
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M3Motor.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+//Obter a posição atual do motor M4
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+//Obter a posição atual do motor M5
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M5Valve2.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+//Obter a posição atual do motor M6
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M6Valve3.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+//Obter a posição atual do motor M7
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M7Valve4.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+//Obter a posição atual do motor M8
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M8Valve5.Axis,
+		bError			=>	bPosError,
+		nErrorID		=>	nPosErrorID,
+		rPosition		=>	rM3Position
+	);		
+END_IF
+
+IF bGetPosition THEN	
+	PosFB(
+		bEnable			:=	bGetPosition,
+		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
 		rPosition		=>	rM3Position
@@ -176,8 +246,13 @@ END_IF
       <LineId Id="976" Count="0" />
       <LineId Id="872" Count="0" />
       <LineId Id="871" Count="0" />
-      <LineId Id="868" Count="2" />
+      <LineId Id="868" Count="1" />
+      <LineId Id="1813" Count="1" />
+      <LineId Id="1810" Count="0" />
+      <LineId Id="870" Count="0" />
       <LineId Id="1158" Count="0" />
+      <LineId Id="1812" Count="0" />
+      <LineId Id="1815" Count="0" />
       <LineId Id="1467" Count="1" />
       <LineId Id="1472" Count="0" />
       <LineId Id="1469" Count="0" />
@@ -197,6 +272,24 @@ END_IF
       <LineId Id="1684" Count="0" />
       <LineId Id="1696" Count="9" />
       <LineId Id="1666" Count="0" />
+      <LineId Id="1876" Count="0" />
+      <LineId Id="1816" Count="0" />
+      <LineId Id="1818" Count="7" />
+      <LineId Id="1817" Count="0" />
+      <LineId Id="1877" Count="0" />
+      <LineId Id="1827" Count="8" />
+      <LineId Id="1826" Count="0" />
+      <LineId Id="1878" Count="0" />
+      <LineId Id="1837" Count="8" />
+      <LineId Id="1836" Count="0" />
+      <LineId Id="1879" Count="0" />
+      <LineId Id="1847" Count="8" />
+      <LineId Id="1846" Count="0" />
+      <LineId Id="1880" Count="0" />
+      <LineId Id="1857" Count="8" />
+      <LineId Id="1856" Count="0" />
+      <LineId Id="1867" Count="8" />
+      <LineId Id="1866" Count="0" />
       <LineId Id="1581" Count="0" />
       <LineId Id="1579" Count="0" />
       <LineId Id="1584" Count="0" />

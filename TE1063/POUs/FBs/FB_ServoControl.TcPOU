@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ServoControl" Id="{d9bea003-26a3-4105-acc7-2b10404ed24b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ServoControl
+VAR_INPUT
+	Enable          : BOOL;     // Ativar motor
+    TargetPos       : LREAL;    // Posição alvo em unidades do encoder
+    TargetVel       : LREAL;    // Velocidade alvo em unidades do encoder/s
+    ResetFaults     : BOOL;     // Reset de falhas do drive
+END_VAR
+
+VAR_OUTPUT
+	DriveStatus     : UINT;     // Status Word do drive
+    DriveReady      : BOOL;     // Indica se o drive está pronto
+    DriveError      : BOOL;     // Indica erro no drive
+END_VAR
+
+VAR
+	ControlWord     : UINT;     // Control Word para enviar ao drive
+    ModeOfOperation : BYTE;     // Define o modo do drive (posição ou velocidade)
+    StatusWord      : UINT;     // Status Word do drive
+    bReadyToSwitchOn  : BOOL;   // Bit 0 - Drive pronto para habilitação
+    bSwitchedOn       : BOOL;   // Bit 1 - Drive ligado
+    bOperationEnabled : BOOL;   // Bit 2 - Drive pronto para operação
+    bFault            : BOOL;   // Bit 3 - Indica erro
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Atualiza Status Word do drive
+StatusWord := ECAT_StatusWord;
+
+// Interpretação dos bits do Status Word
+bReadyToSwitchOn  := (StatusWord AND 16#01) <> 0; // Bit 0: Ready to Switch On
+bSwitchedOn       := (StatusWord AND 16#02) <> 0; // Bit 1: Switched On
+bOperationEnabled := (StatusWord AND 16#04) <> 0; // Bit 2: Operation Enabled
+bFault            := (StatusWord AND 16#08) <> 0; // Bit 3: Fault Active
+
+// Verifica se o drive está pronto
+DriveReady := bOperationEnabled;
+DriveError := bFault;
+DriveStatus := StatusWord;
+
+// Reseta falhas se necessário
+IF ResetFaults THEN
+    ControlWord := 16#80; // Reset de falha
+ELSE
+    IF Enable THEN
+        // Habilita o drive seguindo a sequência correta
+        IF NOT bReadyToSwitchOn THEN
+            ControlWord := 16#06; // Ready to Switch On
+        ELSIF NOT bSwitchedOn THEN
+            ControlWord := 16#07; // Switched On
+        ELSIF NOT bOperationEnabled THEN
+            ControlWord := 16#0F; // Operation Enabled
+        END_IF;
+    ELSE
+        ControlWord := 16#00; // Desliga o drive
+    END_IF;
+END_IF;
+
+// Define modo de operação
+ModeOfOperation := 16#01; // Position Mode
+
+// Envia comandos para o EtherCAT
+ECAT_ControlWord := ControlWord;
+ECAT_ModeOfOperation := ModeOfOperation;
+ECAT_TargetPosition := TargetPos;
+ECAT_TargetVelocity := TargetVel;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ServoControl">
+      <LineId Id="34" Count="38" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
