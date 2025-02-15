@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ValvePositionControl" Id="{9a366dfb-6783-408c-9907-1d3bb649c87c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ValvePositionControl
+VAR_INPUT
+	bEnable        : BOOL;  // Ativar motor
+    ValvePosition : INT;   // Posição desejada (1 a 6)
+END_VAR
+VAR_OUTPUT
+	ActualPosition : INT;  // Posição atual da válvula
+    MoveDone       : BOOL; // Indica se o movimento terminou
+	Busy		   : BOOL;
+    Error          : BOOL; // Indica erro no drive
+	ErrorID		   : UDINT;
+END_VAR
+VAR_IN_OUT
+	ServoAxis    : AXIS_REF;  // Referência do eixo
+END_VAR
+VAR
+    MC_Power     : MC_Power;
+    MC_MoveAbs   : MC_MoveAbsolute;
+    MC_Reset     : MC_Reset;
+    TargetPos    : LREAL; // Target position in degrees
+    State        : INT := 0; // State machine
+    ModeOfOperation : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Defines the valve positions within 0-360°
+CASE ValvePosition OF
+    1: TargetPos := 0.0;
+    2: TargetPos := 60.0;
+    3: TargetPos := 120.0;
+    4: TargetPos := 180.0;
+    5: TargetPos := 240.0;
+    6: TargetPos := 300.0;
+ELSE
+    TargetPos := 0.0; // Default position if input is invalid
+END_CASE
+
+// State machine to ensure the correct sequence of operations
+CASE State OF
+    0: // Checks if the drive needs to be enabled
+        MC_Power(
+            Axis := ServoAxis,
+            Enable := bEnable,
+            Enable_Positive := bEnable,
+            Enable_Negative := bEnable
+        );
+
+        IF MC_Power.Error THEN
+            State := 1; // If an error occurs, go to reset state
+        ELSIF MC_Power.Active THEN
+            State := 2; // If the drive is enabled, proceed to motion state
+        END_IF;
+
+    1: // Resets error before continuing
+        MC_Reset(
+            Axis := ServoAxis,
+            Execute := TRUE
+        );
+
+        IF NOT MC_Reset.Busy THEN
+            State := 0; // Return to drive enabling state
+        END_IF;
+
+    2: // Ensures the drive is in the correct mode before movement
+        ModeOfOperation := 1; // Profile Position Mode (PPM)
+
+        IF MC_Power.Active AND ModeOfOperation = 1 THEN
+            State := 3; // Proceed to movement state
+        END_IF;
+
+    3: // Executes the movement if the drive is enabled
+        MC_MoveAbs(
+            Axis := ServoAxis,
+            Position := TargetPos,   // Sets the target position within 0 to 360°
+            Velocity := 5.0,        // Movement velocity
+            Acceleration := 10.0,   // Acceleration
+            Deceleration := 10.0,   // Deceleration
+            Execute := bEnable
+        );
+
+        IF MC_MoveAbs.Done THEN
+            State := 4; // Once the movement is complete, update variables
+        END_IF;
+
+    4: // Updates status and returns to the initial state
+        Busy := MC_MoveAbs.Busy;
+        MoveDone := MC_MoveAbs.Done;
+        Error := MC_MoveAbs.Error;
+        ActualPosition := ValvePosition;
+
+        // Returns to the initial state, waiting for a new command
+        IF MoveDone THEN
+            State := 0;
+        END_IF;
+END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ValvePositionControl">
+      <LineId Id="204" Count="68" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

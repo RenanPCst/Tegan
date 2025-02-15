@@ -8,6 +8,7 @@ VAR
 	PosFB				: FB_GetPosition;
 	MoveFB				: FB_MotorControl;
 	fbSetZero			: MC_SetPosition;
+	fbReadStatus		: MC_ReadStatus;
 	rCurrentPosition 	: LREAL;
 	bGetPosition		: BOOL := FALSE;
 	bMoveStart			: BOOL := FALSE;
@@ -54,11 +55,47 @@ VAR
 	rM1Position				:	LREAL;
 	rM2Position				:	LREAL;
 	rM3Position				:	LREAL;
+	rM4Position				:	LREAL;
+	rM5Position				:	LREAL;
+	rM6Position				:	LREAL;
+	rM7Position				:	LREAL;
+	rM8Position				:	LREAL;
 	
 	bZeroDone				:	BOOL;
 	bZeroError				:	BOOL;
 	nZeroErrorID			:	UDINT;
 	bSetZero				:	BOOL := FALSE;
+	
+	//variaveis para ler o status do motor
+	bReadStatus				: 	BOOL := FALSE;
+	Busy					: 	BOOL;
+	Error					: 	BOOL;
+	ErrorID					: 	UDINT;
+	ErrorStop				: 	BOOL;
+	Disabled				: 	BOOL;
+	Stopping				: 	BOOL;
+	StandStill				: 	BOOL;
+	DiscreteMotion			: 	BOOL;
+	ContinuousMotion		: 	BOOL;
+	SynchronizedMotion		: 	BOOL;
+	Homing					: 	BOOL;
+	ConstantVelocity		: 	BOOL;
+	Accelerating			: 	BOOL;
+	Decelerating			: 	BOOL;
+	Status					: 	ST_AxisStatus;
+	
+	//teste de movimento da valvula m4
+	ValveController : FB_ValvePositionControl; // Instância do FB
+    EnableServo     : BOOL := FALSE;
+    DesiredPos      : INT := 3;   // Escolher posição (1 a 6)
+    MoveNow         : BOOL := FALSE;
+    ValveInPosition : BOOL;
+	
+	//mc power
+	fbMcPower : MC_Power;
+	bPowerEnable	: BOOL := FALSE;
+	PowerErrorID	: UDINT;
+	
 	
 END_VAR
 ]]></Declaration>
@@ -136,7 +173,7 @@ IF bGetPosition THEN
 		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	rM4Position
 	);		
 END_IF
 
@@ -147,7 +184,7 @@ IF bGetPosition THEN
 		AxisRef			:=	GVL_Motion.M5Valve2.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	rM5Position
 	);		
 END_IF
 
@@ -158,7 +195,7 @@ IF bGetPosition THEN
 		AxisRef			:=	GVL_Motion.M6Valve3.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	rM6Position
 	);		
 END_IF
 
@@ -169,7 +206,7 @@ IF bGetPosition THEN
 		AxisRef			:=	GVL_Motion.M7Valve4.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	rM7Position
 	);		
 END_IF
 
@@ -180,7 +217,7 @@ IF bGetPosition THEN
 		AxisRef			:=	GVL_Motion.M8Valve5.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	rM8Position
 	);		
 END_IF
 
@@ -194,6 +231,48 @@ IF bGetPosition THEN
 	);		
 END_IF
 
+fbMcPower(
+    Axis := GVL_Motion.M4Valve1.Axis,
+    Enable := bPowerEnable,
+    Enable_Positive := bPowerEnable, // Só habilita se o drive estiver pronto
+    Enable_Negative := bPowerEnable,
+	ErrorID	=>	PowerErrorID
+);
+
+//read status motor m4
+IF bReadStatus THEN	
+	fbReadStatus(
+		Enable := bReadStatus,
+		Axis	:= GVL_Motion.M4Valve1.Axis,
+		Busy	=> Busy,
+		Error				=> Error,
+		ErrorID				=> ErrorID,
+		ErrorStop			=> ErrorStop,
+		Disabled			=> Disabled,
+		Stopping			=> Stopping,
+		StandStill			=> StandStill,
+		DiscreteMotion		=> DiscreteMotion,
+		ContinuousMotion	=> ContinuousMotion,
+		SynchronizedMotion	=> SynchronizedMotion,
+		Homing				=> Homing,
+		ConstantVelocity	=> ConstantVelocity,
+		Accelerating		=> Accelerating,
+		Decelerating		=> Decelerating,
+		Status				=> Status
+		
+	);		
+END_IF
+	
+
+ValveController(
+    bEnable 		:= EnableServo,
+    ValvePosition 	:= DesiredPos,
+	MoveDone		=> ValveInPosition,
+	ServoAxis		:= GVL_Motion.M4Valve1.Axis
+);
+
+
+//target positions test for the motors
 GVL_Motion.M1Motor.iPosition 		:= 0;
 GVL_Motion.M1Motor.qTargetVelocity	:= 15;
 
@@ -290,6 +369,25 @@ END_IF
       <LineId Id="1856" Count="0" />
       <LineId Id="1867" Count="8" />
       <LineId Id="1866" Count="0" />
+      <LineId Id="2037" Count="0" />
+      <LineId Id="2039" Count="5" />
+      <LineId Id="2038" Count="0" />
+      <LineId Id="2001" Count="0" />
+      <LineId Id="1992" Count="2" />
+      <LineId Id="1999" Count="0" />
+      <LineId Id="2002" Count="0" />
+      <LineId Id="2004" Count="14" />
+      <LineId Id="2003" Count="0" />
+      <LineId Id="2000" Count="0" />
+      <LineId Id="1991" Count="0" />
+      <LineId Id="2072" Count="0" />
+      <LineId Id="2067" Count="0" />
+      <LineId Id="2028" Count="2" />
+      <LineId Id="2036" Count="0" />
+      <LineId Id="2056" Count="0" />
+      <LineId Id="2032" Count="0" />
+      <LineId Id="1882" Count="0" />
+      <LineId Id="1881" Count="0" />
       <LineId Id="1581" Count="0" />
       <LineId Id="1579" Count="0" />
       <LineId Id="1584" Count="0" />

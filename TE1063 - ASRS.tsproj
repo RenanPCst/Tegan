@@ -2394,7 +2394,10 @@ External Setpoint Generation:
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="360" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="360" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Enable="true"/>
+							<SoftEndMaxControl Enable="true" Range="360"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -6305,7 +6308,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{576F3A04-59F8-4CEE-7ECE-6FCF145E1151}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{946C940E-5319-A70A-7387-501ECCF48F4F}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6933,9 +6936,9 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{626D7FDE-2E7A-4A70-9EE5-555FDD838099}" Name="AMI8000_Valves" PrjFilePath="AMI8000_Valves\AMI8000_Valves.splcproj" TmcFilePath="AMI8000_Valves\AMI8000_Valves.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project GUID="{0F31A4F1-863E-4D68-8A0E-0C7C4AF01F26}" Name="AMI8XXXX_Valves" PrjFilePath="AMI8XXXX_Valves\AMI8XXXX_Valves.splcproj" TmcFilePath="AMI8XXXX_Valves\AMI8XXXX_Valves.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010030" KeepUnrestoredLinks="2">
-					<Name>AMI8000_Valves Instance</Name>
+					<Name>AMI8XXXX_Valves Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
 						<InitSequence>PO</InitSequence>
@@ -7441,7 +7444,7 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 											</Parameter>
 											<Parameter>
 												<PropertyName>MaxMoveDistance</PropertyName>
-												<Value>5</Value>
+												<Value>0</Value>
 											</Parameter>
 											<Parameter>
 												<PropertyName>LoadInertiaMass</PropertyName>
@@ -7543,7 +7546,8 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						<DcMode>53796e6368726f6e0000000000000000534d2d53796e6368726f6e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</DcMode>
 						<MBoxUserCmdData>004003000c0000000000000000000000000000000000000000000000000000002081f001040000006400120000</MBoxUserCmdData>
 						<MBoxUserCmdData>004003000a0000001f000000000000000000000000000000000000000000000020f31005020000000100456e61626c6520446961674d65737361676520617320656d657267656e637900</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000c000000300000000000000000000000000000000000000000000000201080190400000080bb000044525620416d706c69666965722053657474696e6773202f204e6f6d696e616c204443206c696e6b20766f6c7461676500</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020108015040000005f00000044525620416d706c69666965722053657474696e6773202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000c00000034000000000000000000000000000000000000000000000020108014040000009600000044525620416d706c69666965722053657474696e6773202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000c000000200000000000000000000000000000000000000000000000201180110400000068420000445256204d6f746f722053657474696e6773202f204d61782063757272656e7400</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000c0000002200000000000000000000000000000000000000000000002011801204000000a00f0000445256204d6f746f722053657474696e6773202f2052617465642063757272656e7400</MBoxUserCmdData>
 						<MBoxUserCmdData>0200030009000000250000000000000000000000000000000000000000000000201180130100000003445256204d6f746f722053657474696e6773202f204d6f746f7220706f6c6520706169727300</MBoxUserCmdData>
@@ -7560,8 +7564,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						<MBoxUserCmdData>020003000a0000001f00000000000000000000000000000000000000000000002010700b02000000640f445256204f757470757473202f20546f72717565206c696d69746174696f6e00</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000a00000037000000000000000000000000000000000000000000000020108013020000009d0044525620416d706c69666965722053657474696e6773202f2043757272656e74206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000a0000003300000000000000000000000000000000000000000000002010801202000000110044525620416d706c69666965722053657474696e6773202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020108015040000005f00000044525620416d706c69666965722053657474696e6773202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000c00000034000000000000000000000000000000000000000000000020108014040000009600000044525620416d706c69666965722053657474696e6773202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000900000023000000000000000000000000000000000000000000000020008015010000006446422053657474696e6773202f204f6273657276657220666565642d666f727761726400</MBoxUserCmdData>
 						<Pdo Name="FB Position" Index="#x1a00" Flags="#x0010" SyncMan="3">
 							<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
@@ -13950,19 +13952,19 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 TxPDO" Index="#x7000" Sub="#x07">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_74 TxPDO" Index="#x7000" Sub="#x08">
+								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_79 TxPDO" Index="#x7000" Sub="#x08">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_75 TxPDO" Index="#x7000" Sub="#x09">
+								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_80 TxPDO" Index="#x7000" Sub="#x09">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_76 TxPDO" Index="#x7000" Sub="#x0a">
+								<Entry Name="TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_81 TxPDO" Index="#x7000" Sub="#x0a">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_77 TxPDO" Index="#x7000" Sub="#x0b">
+								<Entry Name="TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_82 TxPDO" Index="#x7000" Sub="#x0b">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_78 TxPDO" Index="#x7000" Sub="#x0c">
+								<Entry Name="TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_83 TxPDO" Index="#x7000" Sub="#x0c">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
 							</Pdo>
@@ -13988,19 +13990,19 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 RxPDO" Index="#x6000" Sub="#x07">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_74 RxPDO" Index="#x6000" Sub="#x08">
+								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_79 RxPDO" Index="#x6000" Sub="#x08">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_75 RxPDO" Index="#x6000" Sub="#x09">
+								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_80 RxPDO" Index="#x6000" Sub="#x09">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_76 RxPDO" Index="#x6000" Sub="#x0a">
+								<Entry Name="TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_81 RxPDO" Index="#x6000" Sub="#x0a">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_77 RxPDO" Index="#x6000" Sub="#x0b">
+								<Entry Name="TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_82 RxPDO" Index="#x6000" Sub="#x0b">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_78 RxPDO" Index="#x6000" Sub="#x0c">
+								<Entry Name="TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_83 RxPDO" Index="#x6000" Sub="#x0c">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
 							</Pdo>
@@ -38042,24 +38044,26 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device^DeviceMain Outputs^Power supply controlword" VarB="PSM Controlword for axis^Controlword for axis"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_75 TxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 11 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_74 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_80 TxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_80 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 12 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_77 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_82 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 8 (AMI8000-0100)">
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_83 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 9 (AMI8000-0100)">
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_81 TxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TIID^Device 6 (EtherCAT)">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
-				<Link VarA="Box 10 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_75 RxPDO"/>
-				<Link VarA="Box 11 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_74 TxPDO"/>
-				<Link VarA="Box 12 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_77 TxPDO"/>
-				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_78 TxPDO"/>
-				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_78 RxPDO"/>
-				<Link VarA="Box 9 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_76 TxPDO"/>
-				<Link VarA="Box 9 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_76 RxPDO"/>
+				<Link VarA="Box 11 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_79 TxPDO"/>
+				<Link VarA="Box 11 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_79 RxPDO"/>
+				<Link VarA="Box 12 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_82 TxPDO"/>
+				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_83 TxPDO"/>
+				<Link VarA="Box 9 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_81 RxPDO"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^Axis 10">
@@ -38657,6 +38661,26 @@ Bit 8 - 15 : reserved]]></Comment>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M3 Motor - SC Horizontal">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
 				<Link VarA="PlcTask Outputs^GVL_Motion.M3Motor.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
+			</OwnerB>
+			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M4 Motor - Valve 1">
+				<Link VarA="PlcTask Inputs^GVL_Motion.M4Valve1.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Outputs^GVL_Motion.M4Valve1.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
+			</OwnerB>
+			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M5 Motor - Valve 2">
+				<Link VarA="PlcTask Inputs^GVL_Motion.M5Valve2.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Outputs^GVL_Motion.M5Valve2.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
+			</OwnerB>
+			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M6 Motor - Valve 3">
+				<Link VarA="PlcTask Inputs^GVL_Motion.M6Valve3.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Outputs^GVL_Motion.M6Valve3.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
+			</OwnerB>
+			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M7 Motor - Valve 4">
+				<Link VarA="PlcTask Inputs^GVL_Motion.M7Valve4.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Outputs^GVL_Motion.M7Valve4.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
+			</OwnerB>
+			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M8 Motor - Valve 5">
+				<Link VarA="PlcTask Inputs^GVL_Motion.M8Valve5.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Outputs^GVL_Motion.M8Valve5.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
 			</OwnerB>
 		</OwnerA>
 	</Mappings>
