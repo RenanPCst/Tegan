@@ -87,7 +87,7 @@ VAR
 	//teste de movimento da valvula m4
 	ValveController : FB_ValvePositionControl; // Instância do FB
     EnableServo     : BOOL := FALSE;
-    DesiredPos      : INT := 3;   // Escolher posição (1 a 6)
+    DesiredPos      : INT;   // Escolher posição (1 a 6)
     MoveNow         : BOOL := FALSE;
     ValveInPosition : BOOL;
 	
@@ -111,12 +111,20 @@ GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
 
 GVL_Safety.bSafetyRestart 			:= GVL_IO.bInResetSignal;
 GVL_Safety.bSafetyErrorAck			:= GVL_IO.bInResetSignal;
-GVL_safety.bAMI8000ErrorAck			:= GVL_IO.bInResetSignal;
 GVL_Motion.M1Motor.bTS_ErrorAck		:= GVL_IO.bInResetSignal;
+GVL_Safety.iM4STOErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Safety.iM5STOErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Safety.iM6STOErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Safety.iM7STOErrorAck			:= GVL_IO.bInResetSignal;
+GVL_Safety.iM8STOErrorAck			:= GVL_IO.bInResetSignal;
 
 GVL_Safety.bSafetyRun				:= TRUE;
 GVL_Motion.M1Motor.bTS_Run			:= TRUE;
-GVL_Safety.bAMI8000Run				:= TRUE;
+GVL_Safety.iM4STORun				:= TRUE;
+GVL_Safety.iM5STORun				:= TRUE;
+GVL_Safety.iM6STORun				:= TRUE;
+GVL_Safety.iM7STORun				:= TRUE;
+GVL_Safety.iM8STORun				:= TRUE;
 
 (*
 IF GVL_Safety.bM1STOErrorAck THEN
@@ -221,16 +229,6 @@ IF bGetPosition THEN
 	);		
 END_IF
 
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
-	);		
-END_IF
-
 fbMcPower(
     Axis := GVL_Motion.M4Valve1.Axis,
     Enable := bPowerEnable,
@@ -242,9 +240,9 @@ fbMcPower(
 //read status motor m4
 IF bReadStatus THEN	
 	fbReadStatus(
-		Enable := bReadStatus,
-		Axis	:= GVL_Motion.M4Valve1.Axis,
-		Busy	=> Busy,
+		Enable 				:= bReadStatus,
+		Axis				:= GVL_Motion.M4Valve1.Axis,
+		Busy				=> Busy,
 		Error				=> Error,
 		ErrorID				=> ErrorID,
 		ErrorStop			=> ErrorStop,
@@ -262,14 +260,17 @@ IF bReadStatus THEN
 		
 	);		
 END_IF
-	
 
+DesiredPos := 5;
+
+IF NOT ValveInPosition AND EnableServo THEN
 ValveController(
     bEnable 		:= EnableServo,
+	ServoAxis		:= GVL_Motion.M4Valve1.Axis,
     ValvePosition 	:= DesiredPos,
-	MoveDone		=> ValveInPosition,
-	ServoAxis		:= GVL_Motion.M4Valve1.Axis
+	MoveDone		=> ValveInPosition
 );
+END_IF
 
 
 //target positions test for the motors
@@ -326,11 +327,14 @@ END_IF
       <LineId Id="872" Count="0" />
       <LineId Id="871" Count="0" />
       <LineId Id="868" Count="1" />
-      <LineId Id="1813" Count="1" />
+      <LineId Id="1814" Count="0" />
+      <LineId Id="2073" Count="0" />
+      <LineId Id="2080" Count="3" />
       <LineId Id="1810" Count="0" />
       <LineId Id="870" Count="0" />
       <LineId Id="1158" Count="0" />
-      <LineId Id="1812" Count="0" />
+      <LineId Id="2074" Count="0" />
+      <LineId Id="2084" Count="3" />
       <LineId Id="1815" Count="0" />
       <LineId Id="1467" Count="1" />
       <LineId Id="1472" Count="0" />
@@ -367,8 +371,6 @@ END_IF
       <LineId Id="1880" Count="0" />
       <LineId Id="1857" Count="8" />
       <LineId Id="1856" Count="0" />
-      <LineId Id="1867" Count="8" />
-      <LineId Id="1866" Count="0" />
       <LineId Id="2037" Count="0" />
       <LineId Id="2039" Count="5" />
       <LineId Id="2038" Count="0" />
@@ -380,12 +382,16 @@ END_IF
       <LineId Id="2003" Count="0" />
       <LineId Id="2000" Count="0" />
       <LineId Id="1991" Count="0" />
+      <LineId Id="2077" Count="0" />
       <LineId Id="2072" Count="0" />
+      <LineId Id="2078" Count="0" />
       <LineId Id="2067" Count="0" />
-      <LineId Id="2028" Count="2" />
+      <LineId Id="2028" Count="1" />
+      <LineId Id="2079" Count="0" />
+      <LineId Id="2030" Count="0" />
       <LineId Id="2036" Count="0" />
-      <LineId Id="2056" Count="0" />
       <LineId Id="2032" Count="0" />
+      <LineId Id="2075" Count="0" />
       <LineId Id="1882" Count="0" />
       <LineId Id="1881" Count="0" />
       <LineId Id="1581" Count="0" />
