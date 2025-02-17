@@ -96,6 +96,9 @@ VAR
 	bPowerEnable	: BOOL := FALSE;
 	PowerErrorID	: UDINT;
 	
+	//Air Supply testing
+	bAirSupplyEnable	: BOOL	:= FALSE;
+	bAirSupplyReset		: BOOL	:= FALSE;
 	
 END_VAR
 ]]></Declaration>
@@ -125,6 +128,26 @@ GVL_Safety.iM5STORun				:= TRUE;
 GVL_Safety.iM6STORun				:= TRUE;
 GVL_Safety.iM7STORun				:= TRUE;
 GVL_Safety.iM8STORun				:= TRUE;
+
+
+IF bAirSupplyEnable THEN
+	GVL_Safety.bAirSupplyEnable := TRUE;
+ELSE
+	GVL_Safety.bAirSupplyEnable	:= FALSE;
+END_IF
+
+IF bAirSupplyReset THEN
+	GVL_Safety.bAirSupplyReset 	:= TRUE;
+ELSE
+	GVL_Safety.bAirSupplyReset	:= FALSE;
+END_IF
+
+//Alias signal for the reset button blinking
+IF GVL_Safety.bResetButtonBlink THEN
+	GVL_IO.gDigOutputs.bResetIndicator	:= TRUE;
+ELSE
+	GVL_IO.gDigOutputs.bResetIndicator	:= FALSE;
+END_IF
 
 (*
 IF GVL_Safety.bM1STOErrorAck THEN
@@ -325,7 +348,7 @@ END_IF
       <LineId Id="865" Count="0" />
       <LineId Id="976" Count="0" />
       <LineId Id="872" Count="0" />
-      <LineId Id="871" Count="0" />
+      <LineId Id="2186" Count="0" />
       <LineId Id="868" Count="1" />
       <LineId Id="1814" Count="0" />
       <LineId Id="2073" Count="0" />
@@ -335,6 +358,16 @@ END_IF
       <LineId Id="1158" Count="0" />
       <LineId Id="2074" Count="0" />
       <LineId Id="2084" Count="3" />
+      <LineId Id="2188" Count="2" />
+      <LineId Id="2196" Count="0" />
+      <LineId Id="2191" Count="0" />
+      <LineId Id="2197" Count="0" />
+      <LineId Id="2192" Count="0" />
+      <LineId Id="2199" Count="4" />
+      <LineId Id="2198" Count="0" />
+      <LineId Id="2210" Count="0" />
+      <LineId Id="2205" Count="4" />
+      <LineId Id="2204" Count="0" />
       <LineId Id="1815" Count="0" />
       <LineId Id="1467" Count="1" />
       <LineId Id="1472" Count="0" />

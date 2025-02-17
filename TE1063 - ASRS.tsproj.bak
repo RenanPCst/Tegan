@@ -1836,6 +1836,17 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
+			<Name GUID="{1B7E4997-A835-8004-8AB1-83A75388CFFD}" AutoDeleteType="true">ST_EL3022</Name>
+			<BitSize>64</BitSize>
+			<SubItem>
+				<Name>rPressureRegulator</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<Comment><![CDATA[Terminal 17 SMC low differential pressure sensor]]></Comment>
+				<BitSize>64</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}" AutoDeleteType="true">ST_SafetyOutputs</Name>
 			<BitSize>112</BitSize>
 			<SubItem>
@@ -2140,7 +2151,7 @@ External Setpoint Generation:
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
+			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
 			<BitSize>6</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
 			<ArrayInfo>
@@ -6307,34 +6318,11 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{10AAC68D-09FC-8CD0-CA53-AE525DCD4439}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{2C879241-0791-3885-78BA-17C9AEE61FB6}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{2ACC78BA-2115-8A37-59C3-8003E8355E7F}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bResetButtonVISU</Name>
-							<Comment><![CDATA[Temporary]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAckButtonVISU</Name>
-							<Type>BOOL</Type>
-						</Var>
 						<Var>
 							<Name>GVL_Motion.M1STOActiveMonitoring</Name>
 							<Type>BOOL</Type>
@@ -6417,25 +6405,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.gDigInputs</Name>
-							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
-							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.gAnalogInputs</Name>
-							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
-							<Type GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}">ST_EL3058</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.g_stAxis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
@@ -6583,6 +6552,58 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Name>GVL_Motion.M8Valve5.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bResetButtonBlink</Name>
+							<Comment><![CDATA[reset button blink signal]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{2ACC78BA-2115-8A37-59C3-8003E8355E7F}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bResetButtonVISU</Name>
+							<Comment><![CDATA[Temporary]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAckButtonVISU</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gDigInputs</Name>
+							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
+							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gAnalogInputs</Name>
+							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
+							<Type GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}">ST_EL3058</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gAnalogInputs2Ch</Name>
+							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
+							<Type GUID="{1B7E4997-A835-8004-8AB1-83A75388CFFD}">ST_EL3022</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.g_stAxis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
@@ -6590,18 +6611,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Name>GVL_Safety.bSafetyErrorAck</Name>
 							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyOutputs</Name>
-							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.qControlWord</Name>
@@ -6673,65 +6682,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						<Var>
 							<Name>GVL_Motion.M3Motor.n_Axis3TorqueLimitation</Name>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.gRelayOutputs</Name>
-							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
-							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.g_stAxis.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STOErrorAck</Name>
-							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STORun</Name>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M4Valve1.nTargetPosition</Name>
@@ -6847,6 +6797,86 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						<Var>
 							<Name>GVL_Motion.M8Valve5.n_Axis3TorqueLimitation</Name>
 							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STOErrorAck</Name>
+							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyOutputs</Name>
+							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gRelayOutputs</Name>
+							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
+							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.g_stAxis.PlcToNc</Name>
+							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyEnable</Name>
+							<Comment><![CDATA[Air Supply control variables and Alias changing]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyReset</Name>
+							<Type>BOOL</Type>
 						</Var>
 					</Vars>
 					<UnrestoredVarLinks ImportTime="2025-01-28T12:03:06">
@@ -14018,7 +14048,7 @@ Bit 8 - 15 : reserved]]></Comment>
 						<EtherCAT SlaveType="2" PdiType="#x0005" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="3" FoeType="1" VendorId="#x00000002" ProductCode="#x1afe3052" RevisionNo="#x00150000" InfoDataAddr="true" RepeatSupport="true" TimeoutStateChange1="5000" TimeoutMailbox2="10000" TComSupport="true" PortPhys="51" DebugMemory="8" SafetyLogicSupported="true" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL6910, TwinSAFE PLC" Desc="EL6910" PortABoxInfo="#x0100000e">
 							<SyncMan>001000012600010001000000000100010001001026010000</SyncMan>
 							<SyncMan>001100012200010002000000000100010001001122010000</SyncMan>
-							<SyncMan>00126c002400010003000000000000000200001224010000</SyncMan>
+							<SyncMan>00126d002400010003000000000000000200001224010000</SyncMan>
 							<SyncMan>001d6c002000010004000000000000000200001d20010000</SyncMan>
 							<SyncMan>002e00002400000003000000000000000000002e24000000</SyncMan>
 							<SyncMan>002f00002000000004000000000000000000002f20000000</SyncMan>
@@ -14160,8 +14190,11 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="Standard Out Var 73" Index="#x7000" Sub="#x12">
 									<Type>BIT</Type>
 								</Entry>
+								<Entry Name="Standard Out Var 95" Index="#x7000" Sub="#x13">
+									<Type>BIT</Type>
+								</Entry>
 								<Entry>
-									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
+									<Type GUID="{18071995-0000-0000-0000-002000000005}">ARRAY [0..4] OF BIT</Type>
 								</Entry>
 							</Pdo>
 							<Pdo Name="StandardOutputs" Index="#x17f0" InOut="1" Flags="#x2011" SyncMan="2">
@@ -14186,8 +14219,14 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="Standard In Var 43" Index="#x6000" Sub="#x07">
 									<Type>BIT</Type>
 								</Entry>
+								<Entry Name="Standard In Var 93" Index="#x6000" Sub="#x08">
+									<Type>BIT</Type>
+								</Entry>
+								<Entry Name="Standard In Var 94" Index="#x6000" Sub="#x09">
+									<Type>BIT</Type>
+								</Entry>
 								<Entry>
-									<Type GUID="{18071995-0000-0000-0000-002000000001}">ARRAY [0..0] OF BIT</Type>
+									<Type GUID="{18071995-0000-0000-0000-002000000007}">ARRAY [0..6] OF BIT</Type>
 								</Entry>
 							</Pdo>
 							<Pdo Name="Connection Info Data" Index="#x1bf9" Flags="#x2011" SyncMan="3">
@@ -14825,19 +14864,19 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="FSOE__OutputChannel1" Index="#x7001" Sub="#x01" Flags="#x00008020">
 									<Type>BIT</Type>
 								</Entry>
-								<Entry Name="FSOE__OutputChannel2" Index="#x7001" Sub="#x02">
+								<Entry Name="FSOE__OutputChannel2" Index="#x7001" Sub="#x02" Flags="#x00008020">
 									<Type>BIT</Type>
 								</Entry>
-								<Entry Name="FSOE__OutputChannel3" Index="#x7001" Sub="#x03">
+								<Entry Name="FSOE__OutputChannel3" Index="#x7001" Sub="#x03" Flags="#x00008020">
 									<Type>BIT</Type>
 								</Entry>
-								<Entry Name="FSOE__OutputChannel4" Index="#x7001" Sub="#x04">
+								<Entry Name="FSOE__OutputChannel4" Index="#x7001" Sub="#x04" Flags="#x00008020">
 									<Type>BIT</Type>
 								</Entry>
 								<Entry Name="FSOE__">
 									<Type GUID="{18071995-0000-0000-0000-002000000004}">ARRAY [0..3] OF BIT</Type>
 								</Entry>
-								<Entry Name="FSOE__FSoE Master CRC_0" Index="#x7000" Sub="#x03">
+								<Entry Name="FSOE__FSoE Master CRC_0" Index="#x7000" Sub="#x03" Flags="#x00008020">
 									<Type>UINT</Type>
 								</Entry>
 								<Entry Name="FSOE__FSoE Master ConnID" Index="#x7000" Sub="#x02">
@@ -16933,6 +16972,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 							<MBoxUserCmdData>020003000900000027000000000000000000000000000000000000000000000020008001010000000046422053657474696e6773202f20496e7665727420666565646261636b20646972656374696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>0200030009000000200000000000000000000000000000000000000000000000201070030100000008445256204f757470757473202f204d6f646573206f66206f7065726174696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c000000300000000000000000000000000000000000000000000000201080190400000080bb000044525620416d706c69666965722053657474696e6773202f204e6f6d696e616c204443206c696e6b20766f6c7461676500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000003100000000000000000000000000000000000000000000002000800d010000000146422053657474696e6773202f204f666673657420706f736974696f6e2061637475616c2076616c756520736f7572636500</MBoxUserCmdData>
 							<Pdo Name="FB Position" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -18848,6 +18888,7 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000900000027000000000000000000000000000000000000000000000020008001010000000046422053657474696e6773202f20496e7665727420666565646261636b20646972656374696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>0200030009000000200000000000000000000000000000000000000000000000201070030100000008445256204f757470757473202f204d6f646573206f66206f7065726174696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c000000300000000000000000000000000000000000000000000000201080190400000080bb000044525620416d706c69666965722053657474696e6773202f204e6f6d696e616c204443206c696e6b20766f6c7461676500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000003100000000000000000000000000000000000000000000002000800d010000000146422053657474696e6773202f204f666673657420706f736974696f6e2061637475616c2076616c756520736f7572636500</MBoxUserCmdData>
 							<Pdo Name="FB Position" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -38143,27 +38184,23 @@ Bit 8 - 15 : reserved]]></Comment>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 45 (AX8620-0000-0105)">
 				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device^DeviceMain Outputs^Power supply controlword" VarB="PSM Controlword for axis^Controlword for axis"/>
 			</OwnerB>
-			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_90 TxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1"/>
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_90 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
-			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 11 (AMI8000-0100)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_91 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
 			</OwnerB>
-			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 12 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_92 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 8 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_84 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 9 (AMI8000-0100)">
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_89 TxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_89 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TIID^Device 6 (EtherCAT)">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
+				<Link VarA="Box 10 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_90 TxPDO"/>
+				<Link VarA="Box 10 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_90 RxPDO"/>
 				<Link VarA="Box 11 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_91 TxPDO"/>
 				<Link VarA="Box 12 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_92 TxPDO"/>
+				<Link VarA="Box 12 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_92 RxPDO"/>
 				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_84 TxPDO"/>
-				<Link VarA="Box 9 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_89 TxPDO"/>
-				<Link VarA="Box 9 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 9 (AMI8000-0100)_89 RxPDO"/>
+				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_84 RxPDO"/>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^Axis 10">
@@ -38689,11 +38726,14 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="PlcTask Inputs^GVL_Safety.SafetyInputs^iSafetyEStop" VarB="StandardInputs^Standard Out Var 21"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.SafetyInputs^iSafetyOk2Doorlocked" VarB="StandardInputs^Standard Out Var 17"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.bM1STOErrorAck" VarB="StandardInputs^Standard Out Var 44"/>
+				<Link VarA="PlcTask Inputs^GVL_Safety.bResetButtonBlink" VarB="StandardInputs^Standard Out Var 95"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.iMotorsSTOEnabled" VarB="StandardInputs^Standard Out Var 73"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.SafetyOutputs^bAirPressureOK" VarB="StandardOutputs^Standard In Var 14"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.SafetyOutputs^bBelowDoorsFeedback" VarB="StandardOutputs^Standard In Var 43"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.SafetyOutputs^bLockDoorSafety" VarB="StandardOutputs^Standard In Var 12"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.SafetyOutputs^bResetAir" VarB="StandardOutputs^Standard In Var 15"/>
+				<Link VarA="PlcTask Outputs^GVL_Safety.bAirSupplyEnable" VarB="StandardOutputs^Standard In Var 93"/>
+				<Link VarA="PlcTask Outputs^GVL_Safety.bAirSupplyReset" VarB="StandardOutputs^Standard In Var 94"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.bSafetyErrorAck" VarB="StandardOutputs^Standard In Var 7"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.bSafetyRestart" VarB="StandardOutputs^Standard In Var 9"/>
 				<Link VarA="PlcTask Outputs^GVL_Safety.bSafetyRun" VarB="StandardOutputs^Standard In Var 8"/>
