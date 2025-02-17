@@ -112,14 +112,20 @@ PRG_UpdateVariablesMoving();
 GVL_IO.bInResetSignal := GVL_Safety.bResetButtonVISU;
 GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
 
-GVL_Safety.bSafetyRestart 			:= GVL_IO.bInResetSignal;
-GVL_Safety.bSafetyErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Motion.M1Motor.bTS_ErrorAck		:= GVL_IO.bInResetSignal;
-GVL_Safety.iM4STOErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Safety.iM5STOErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Safety.iM6STOErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Safety.iM7STOErrorAck			:= GVL_IO.bInResetSignal;
-GVL_Safety.iM8STOErrorAck			:= GVL_IO.bInResetSignal;
+//Safety Restart & Error Ack
+IF GVL_Safety.SafetyInputs.bMachineReset OR GVL_Safety.bM1STOErrorAck THEN
+	GVL_Safety.bSafetyErrorAck			:= TRUE;
+	GVL_Motion.M1Motor.bTS_ErrorAck		:= TRUE;
+ELSE
+	GVL_Safety.bSafetyErrorAck			:= FALSE;
+	GVL_Motion.M1Motor.bTS_ErrorAck		:= FALSE;
+END_IF
+
+GVL_Safety.iM4STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM5STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM6STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM7STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM8STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
 
 GVL_Safety.bSafetyRun				:= TRUE;
 GVL_Motion.M1Motor.bTS_Run			:= TRUE;
@@ -128,7 +134,6 @@ GVL_Safety.iM5STORun				:= TRUE;
 GVL_Safety.iM6STORun				:= TRUE;
 GVL_Safety.iM7STORun				:= TRUE;
 GVL_Safety.iM8STORun				:= TRUE;
-
 
 IF bAirSupplyEnable THEN
 	GVL_Safety.bAirSupplyEnable := TRUE;
@@ -349,16 +354,16 @@ END_IF
       <LineId Id="976" Count="0" />
       <LineId Id="872" Count="0" />
       <LineId Id="2186" Count="0" />
-      <LineId Id="868" Count="1" />
-      <LineId Id="1814" Count="0" />
-      <LineId Id="2073" Count="0" />
-      <LineId Id="2080" Count="3" />
+      <LineId Id="2235" Count="0" />
+      <LineId Id="2253" Count="1" />
+      <LineId Id="2256" Count="2" />
+      <LineId Id="2260" Count="0" />
+      <LineId Id="2255" Count="0" />
+      <LineId Id="2238" Count="5" />
+      <LineId Id="2251" Count="0" />
+      <LineId Id="2245" Count="5" />
       <LineId Id="1810" Count="0" />
-      <LineId Id="870" Count="0" />
-      <LineId Id="1158" Count="0" />
-      <LineId Id="2074" Count="0" />
-      <LineId Id="2084" Count="3" />
-      <LineId Id="2188" Count="2" />
+      <LineId Id="2189" Count="1" />
       <LineId Id="2196" Count="0" />
       <LineId Id="2191" Count="0" />
       <LineId Id="2197" Count="0" />
