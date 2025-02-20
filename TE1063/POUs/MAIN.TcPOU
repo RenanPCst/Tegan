@@ -104,8 +104,8 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Call State Machine
-
 //PRG_StateMachine(); 
+
 PRG_UpdateVariablesMoving();
 
 //Safety
@@ -265,30 +265,7 @@ fbMcPower(
 	ErrorID	=>	PowerErrorID
 );
 
-//read status motor m4
-IF bReadStatus THEN	
-	fbReadStatus(
-		Enable 				:= bReadStatus,
-		Axis				:= GVL_Motion.M4Valve1.Axis,
-		Busy				=> Busy,
-		Error				=> Error,
-		ErrorID				=> ErrorID,
-		ErrorStop			=> ErrorStop,
-		Disabled			=> Disabled,
-		Stopping			=> Stopping,
-		StandStill			=> StandStill,
-		DiscreteMotion		=> DiscreteMotion,
-		ContinuousMotion	=> ContinuousMotion,
-		SynchronizedMotion	=> SynchronizedMotion,
-		Homing				=> Homing,
-		ConstantVelocity	=> ConstantVelocity,
-		Accelerating		=> Accelerating,
-		Decelerating		=> Decelerating,
-		Status				=> Status
-		
-	);		
-END_IF
-
+//Valves servormotor testing [M4, M5, M6, M7, M8]
 DesiredPos := 5;
 
 IF NOT ValveInPosition AND EnableServo THEN
@@ -321,7 +298,7 @@ fbSetZero(
     ErrorID => nZeroErrorID
 );
 
-//Moving the motor 3 for testing purposes
+//Motors Moving testing [M1, M2, M3]
 IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
     MoveFB(
         bEnable 	:= TRUE,
@@ -335,7 +312,7 @@ IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
     );
 END_IF
 
-// Reset bMoveStart_M1 when move is completed
+// Reset bMoveStart when move is completed
 IF bMoveDone THEN
     bMoveStart := FALSE;
 END_IF
@@ -346,8 +323,8 @@ END_IF
     </Implementation>
     <LineIds Name="MAIN">
       <LineId Id="744" Count="0" />
-      <LineId Id="751" Count="0" />
       <LineId Id="2" Count="0" />
+      <LineId Id="2361" Count="0" />
       <LineId Id="1388" Count="0" />
       <LineId Id="1386" Count="0" />
       <LineId Id="865" Count="0" />
@@ -412,14 +389,7 @@ END_IF
       <LineId Id="2037" Count="0" />
       <LineId Id="2039" Count="5" />
       <LineId Id="2038" Count="0" />
-      <LineId Id="2001" Count="0" />
-      <LineId Id="1992" Count="2" />
-      <LineId Id="1999" Count="0" />
-      <LineId Id="2002" Count="0" />
-      <LineId Id="2004" Count="14" />
-      <LineId Id="2003" Count="0" />
-      <LineId Id="2000" Count="0" />
-      <LineId Id="1991" Count="0" />
+      <LineId Id="2362" Count="0" />
       <LineId Id="2077" Count="0" />
       <LineId Id="2072" Count="0" />
       <LineId Id="2078" Count="0" />

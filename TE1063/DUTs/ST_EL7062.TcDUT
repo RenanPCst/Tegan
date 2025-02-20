@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_EL7062" Id="{2e27b35d-596f-48e0-b292-3958049ff7df}">
+    <Declaration><![CDATA[TYPE ST_EL7062 :
+STRUCT
+	//EtherCAT Terminal, 2-channel motion interface, stepper motor, 48 V DC
+	//Pumps Control 2 Axis
+	//Axis 1 Linear Actuator - 1A
+	iLinearTargetPosition				AT %I*		:	UDINT;
+	iLinearTargetVelocity				AT %I*		:	UDINT;
+	nLinearAtualPosition				AT %I*		:   UDINT;
+	iLinearStatusWord					AT %I*		:	UINT;
+	qLinearControlWord					AT %Q*		:	WORD; //1
+	nLinearTargetVelocity				AT %Q*		:	INT; //3
+	nLinearActualVelocity				AT %I*	 	: 	INT;
+	nLinerState							AT %I*		:	WORD; //2			//Terminal State from IO Terminal Info Data
+	sLinearStatus									:	STRING(200);
+	LinearAxis	                            		:   AXIS_REF; 			//TC2_MC2.AXIS_REF;
+	nLinearAxis3TorqueLimitation		AT %Q*		:	UINT :=	32767;
+	nLinearAxis3ActualTorque						:	REAL;
+	
+	//Axis 2 Rotary Actuator - 2A
+	iRotaryTargetPosition				AT %I*		:	UDINT;
+	iRotaryTargetVelocity				AT %I*		:	UDINT;
+	nRotaryAtualPosition				AT %I*		:   UDINT;
+	iRotaryStatusWord					AT %I*		:	UINT;
+	qRotaryControlWord					AT %Q*		:	WORD; //1
+	nRotaryTargetVelocity				AT %Q*		:	INT; //3
+	nRotaryActualVelocity				AT %I*	 	: 	INT;
+	nRotaryState						AT %I*		:	WORD; //2			//Terminal State from IO Terminal Info Data
+	sRotaryStatus									:	STRING(200);
+	RotaryrAxis	                            		:   AXIS_REF; 			//TC2_MC2.AXIS_REF;
+	nRotaryAxis3TorqueLimitation		AT %Q*		:	UINT :=	32767;
+	nRotaryAxis3ActualTorque						:	REAL;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
