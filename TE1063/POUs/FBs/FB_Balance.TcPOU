@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Balance" Id="{52a6c133-05ec-4fa0-9c09-e040409887f6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Balance
+VAR_INPUT
+    sIpAddress  : STRING(15);   // Balance IP address
+    nPort       : UDINT;        // TCP port of the balance
+    bExecutar   : BOOL;         // Trigger to start reading
+END_VAR
+
+VAR_OUTPUT
+    fPesoAtual  : REAL;         // Weight value received from the balance
+    bSucesso    : BOOL;         // Indicates successful reading
+    bErro       : BOOL;         // Indicates communication error
+    sErroMsg    : STRING(50);   // Error message if any
+END_VAR
+
+VAR
+    fbTcpConnect  : FB_SocketConnect;  // Manages TCP connection
+    fbTcpSend     : FB_SocketSend;     // Sends MT-SICS command
+    fbTcpReceive  : FB_SocketReceive;  // Receives response from the balance
+    fbTcpClose    : FB_SocketClose;    // Closes the connection
+
+    hSocket       : T_HSOCKET;  // Socket handle for communication
+    sCommand      : STRING(10) := 'S\r\n';  // MT-SICS command for stable weight
+    sResponse     : STRING(50);  // Response from the balance
+    bConnected    : BOOL := FALSE;  // Connection status
+    bDataReady    : BOOL;  // Indicates if data has been received
+
+    // Status variables for each function block
+    bConnectBusy  : BOOL;
+    bConnectError : BOOL;
+    nConnectErrId : UDINT;
+
+    bSendBusy     : BOOL;
+    bSendError    : BOOL;
+    nSendErrId    : UDINT;
+
+    bReceiveBusy  : BOOL;
+    bReceiveError : BOOL;
+    nReceiveErrId : UDINT;
+
+    bCloseBusy    : BOOL;
+    bCloseError   : BOOL;
+    nCloseErrId   : UDINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// **Open TCP connection**
+IF bExecutar AND NOT bConnected THEN
+    fbTcpConnect(
+		sSrvNetId	:= '192.168.1.50.1.1',
+        bExecute 	:= TRUE,
+        sRemoteHost := sIpAddress,
+        nRemotePort := nPort,
+        tTimeout 	:= T#15S,
+        bBusy 		=> bConnectBusy,
+        bError 		=> bConnectError,
+        nErrId 		=> nConnectErrId,
+        hSocket 	=> hSocket,
+    );
+
+    IF NOT bConnectBusy THEN
+        IF NOT bConnectError THEN
+            bConnected := TRUE;
+            bErro := FALSE;
+        ELSE
+            bErro := TRUE;
+            sErroMsg := 'Connection error';
+        END_IF
+    END_IF
+	
+END_IF
+
+// **Send MT-SICS command "S"**
+IF bConnected THEN
+    fbTcpSend(
+        bExecute 	:= TRUE,
+        hSocket 	:= hSocket,
+        cbLen 		:= TO_UDINT(LEN(sCommand)),
+        pSrc 		:= ADR(sCommand),
+        tTimeout 	:= T#3S,
+        bBusy 		=> bSendBusy,
+        bError 		=> bSendError,
+        nErrId 		=> nSendErrId
+    );
+
+    IF NOT bSendBusy THEN
+        IF bSendError THEN
+            bErro := TRUE;
+            sErroMsg := 'Error sending data';
+        END_IF
+    END_IF
+END_IF
+
+// **Receive response from the balance**
+IF bConnected THEN
+    fbTcpReceive(
+        bExecute 	:= TRUE,
+        hSocket 	:= hSocket,
+        cbLen 		:= SIZEOF(sResponse),
+        pDest 		:= ADR(sResponse),
+        tTimeout 	:= T#5S,
+        bBusy 		=> bReceiveBusy,
+        bError 		=> bReceiveError,
+        nErrId 		=> nReceiveErrId
+    );
+
+    IF NOT bReceiveBusy THEN
+        IF NOT bReceiveError THEN
+            bDataReady := TRUE;
+        ELSE
+            bErro := TRUE;
+            sErroMsg := 'Error receiving response';
+        END_IF
+    END_IF
+END_IF
+
+// **Process the weight value**
+IF bDataReady THEN
+    bDataReady := FALSE;
+    // Example response: "S_S 123.45 g"
+    sResponse := MID(sResponse, 6, LEN(sResponse)-6);
+    fPesoAtual := STRING_TO_REAL(sResponse);
+    bSucesso := TRUE;
+END_IF
+
+// **Close connection after reading**
+IF bConnected THEN
+    fbTcpClose(
+        bExecute 	:= TRUE,
+        hSocket 	:= hSocket,
+        tTimeout 	:= T#2S,
+        bBusy 		=> bCloseBusy,
+        bError 		=> bCloseError,
+        nErrId 		=> nCloseErrId
+    );
+
+    IF NOT bCloseBusy THEN
+        bConnected := FALSE;
+    END_IF
+END_IF
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Balance">
+      <LineId Id="640" Count="2" />
+      <LineId Id="819" Count="0" />
+      <LineId Id="643" Count="18" />
+      <LineId Id="774" Count="0" />
+      <LineId Id="662" Count="69" />
+      <LineId Id="427" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

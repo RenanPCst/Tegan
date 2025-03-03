@@ -1,0 +1,322 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TCPClient" Id="{7dc52223-2265-4344-b3c9-7b0fe367e7e3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TCPClient
+VAR_INPUT
+    sRemoteHost	: T_IPv4Addr;
+    nRemotePort	: UDINT;
+    bTrigger	: BOOL;  				//Communication manual trigger
+    tStateDelay	: TIME 	:= T#100MS;  	//Adjustable time between the states
+END_VAR
+
+VAR_OUTPUT
+    bConnected		: BOOL;
+    sReceivedData	: STRING(255);
+    sParsedResponse	: STRING(255);  
+    fWeight			: REAL;  
+    bConnectionDone	: BOOL;
+    nErrorID		: UDINT;
+    bError			: BOOL;
+    bBusy			: BOOL;
+END_VAR
+
+VAR
+    iState			: INT;
+    fbSocketConnect	: FB_SocketConnect;
+    fbSocketSend	: FB_SocketSend;
+    fbSocketClose	: FB_SocketClose;
+    fbSocketCloseAll: FB_SocketCloseAll;
+    fbSocketReceive	: FB_SocketReceive;
+    hSocket			: T_HSOCKET;
+
+    sSendData		: STRING(10);
+    nRecBytes		: UDINT;
+    sCRLF			: STRING(2);
+    bTriggerPrev	: BOOL;
+
+    //Time controll variables
+    fbStateTimer			: TON;
+	TonCloseConnectionTimer	: TON;
+	TonOpenConnectionTimer	: TON;
+	TonSendCommandTimer		: TON;
+	TonReceivingTimer		: TON;
+	TonSocketCloseTimer		: TON;
+	
+	bCloseConnectionTimer	: BOOL := FALSE;
+	bOpenConnectionTimer	: BOOL := FALSE;
+	bSendCommandTimer		: BOOL := FALSE;
+	bReceivingTimer			: BOOL := FALSE;
+	bCloseSocketTimer		: BOOL := FALSE;
+	
+	tStepTimer				: TIME := T#500MS;
+	
+    receiveTimeout			: INT := 0;
+    MAX_TIMEOUT				: INT := 50;
+
+    //Weigth extraction variables
+    iStart 	: INT := 4;
+	iEnd	: INT := 5;
+    sWeightStr: STRING(10);
+
+    //Pulse generators to avoid infinity loops
+    fbConnectTrigger	: R_TRIG;
+    fbSendTrigger		: R_TRIG;
+    fbReceiveTrigger	: R_TRIG;
+    fbCloseTrigger		: R_TRIG;
+    fbCloseAllTrigger	: R_TRIG;
+	
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+    0:  //Initial State - Reset 
+        fbSocketConnect	(bExecute := FALSE);
+        fbSocketSend	(bExecute := FALSE);
+        fbSocketReceive	(bExecute := FALSE);
+        fbSocketClose	(bExecute := FALSE);
+        fbSocketCloseAll(bExecute := FALSE);
+		
+		fbStateTimer			(IN := FALSE);
+		bCloseConnectionTimer 	:= FALSE;
+		bOpenConnectionTimer 	:= FALSE;
+		bSendCommandTimer 		:= FALSE;
+		TonCloseConnectionTimer	(IN:=FALSE);
+		TonOpenConnectionTimer	(IN:=FALSE);
+		TonSendCommandTimer		(IN:=FALSE);
+		
+		fbConnectTrigger (CLK:=FALSE);
+		fbSendTrigger	 (CLK:=FALSE);
+		fbReceiveTrigger (CLK:=FALSE);
+		fbCloseTrigger	 (CLK:=FALSE);
+		fbCloseAllTrigger(CLK:=FALSE);
+		
+		bConnectionDone := FALSE;
+        bConnected 		:= FALSE;
+        bBusy 			:= FALSE;
+        bError 			:= FALSE;
+        
+        //Verify the bTrigger transition FALSE → TRUE
+        IF bTrigger AND NOT bTriggerPrev THEN
+            fbStateTimer(IN := TRUE, PT := tStateDelay);
+            iState := 5;
+            bBusy := TRUE;
+        END_IF
+        bTriggerPrev := bTrigger;  //Updates the trigger previous state
+    
+    5:  //Close all connection to start a new one
+		fWeight := 0;		
+		sParsedResponse := '';
+		
+		fbCloseAllTrigger(CLK := fbStateTimer.Q);  //Pulse to activate `bExecute` only once
+	
+		fbSocketCloseAll(
+			sSrvNetId 	:= '', 
+			bExecute 	:= fbCloseAllTrigger.Q,  
+			tTimeout 	:= T#3S,
+			bBusy 		=> bBusy,
+			bError 		=> bError,
+			nErrId 		=> nErrorID  //Gets to error code
+		);
+		
+		IF NOT bBusy AND NOT bError THEN
+			bCloseConnectionTimer := TRUE;
+			TonCloseConnectionTimer(in := bCloseConnectionTimer, pt:=tStepTimer);
+		END_IF
+	
+		IF NOT bBusy AND TonCloseConnectionTimer.Q THEN  
+			IF NOT bError THEN
+				fbStateTimer(IN := TRUE, PT := tStateDelay);
+				iState := 10;
+			ELSE
+				sParsedResponse := CONCAT('Error closing connections! Code: ', UDINT_TO_STRING(nErrorID));
+				iState := 50;  //Goes to Error state
+			END_IF
+		END_IF
+
+    10:  //Connect to the server
+		fbConnectTrigger(CLK := fbStateTimer.Q);  
+	
+		fbSocketConnect(
+			sSrvNetId	:= '', 
+			sRemoteHost	:= sRemoteHost, 
+			nRemotePort	:= nRemotePort, 
+			bExecute	:= fbConnectTrigger.Q,  
+			tTimeout	:= T#4S, 
+			bBusy 		=> bBusy, 
+			bError		=> bError, 
+			nErrId		=> nErrorID, 
+			hSocket		=> hSocket
+		);
+		
+		//Time delay to wait for FB's communication
+		IF NOT bBusy AND NOT bError THEN
+			bOpenConnectionTimer := TRUE;
+			TonOpenConnectionTimer(in := bOpenConnectionTimer, pt:=tStepTimer);
+		END_IF
+		
+		IF NOT bBusy AND TonOpenConnectionTimer.Q THEN  
+			IF hSocket.handle <> 0 THEN
+				bConnected 	:= TRUE;
+				fbStateTimer(IN := TRUE, PT := T#500MS);  //Time delay to wait before going to next state
+				iState 		:= 20;
+			ELSE
+				sParsedResponse := CONCAT('Connection Error! Code: ', UDINT_TO_STRING(nErrorID)); //Error message if connection gets error
+				iState			:= 50;
+			END_IF
+		END_IF
+
+    20: //Send the command 'S' - responsible the gets the weigth answer from the Balance
+        fbSendTrigger(CLK := fbStateTimer.Q);
+
+        sCRLF := CONCAT(CHR(13), CHR(10));  
+        sSendData := CONCAT('S', sCRLF);
+
+        fbSocketSend(
+            sSrvNetId:= '', 
+            hSocket:= hSocket, 
+            cbLen:= SIZEOF(sSendData), 
+            pSrc:= ADR(sSendData), 
+            bExecute:= fbSendTrigger.Q,  
+            tTimeout:= T#2S, 
+            bError=> bError, 
+            nErrId=> nErrorID
+        );
+		
+		//Time delay to wait for FB's communication
+		IF NOT bBusy AND NOT bError THEN
+			bSendCommandTimer := TRUE;
+			TonSendCommandTimer(in := bSendCommandTimer, pt:=tStepTimer);
+		END_IF
+
+        IF NOT bBusy AND TonSendCommandTimer.Q THEN  
+            IF NOT bError THEN
+                fbStateTimer(IN := TRUE, PT := tStateDelay);
+                iState := 30;
+            ELSE
+                sParsedResponse := 'Error sending command!';
+                iState := 50;
+            END_IF
+        END_IF
+
+    30: //Receive the Balance response (Cyclic, time adjustable)
+        fbReceiveTrigger(CLK := fbStateTimer.Q);
+
+        fbSocketReceive(
+            sSrvNetId:= '', 
+            hSocket:= hSocket, 
+            cbLen:= SIZEOF(sReceivedData), 
+            pDest:= ADR(sReceivedData), 
+            bExecute:= fbReceiveTrigger.Q,  
+            tTimeout:= T#3S, 
+            bError=> bError, 
+            nErrId=> nErrorID, 
+            nRecBytes=> nRecBytes
+        );
+		
+		//Time delay to wait for FB's communication
+		IF NOT bBusy AND NOT bError THEN
+			bReceivingTimer := TRUE;
+			TonReceivingTimer(in := bReceivingTimer, pt:=tStepTimer);
+		END_IF
+		
+        IF NOT fbSocketReceive.bBusy AND TonReceivingTimer.Q THEN  
+            IF nRecBytes > 0 THEN  
+                fbStateTimer(IN := TRUE, PT := tStateDelay);
+                iState := 40;
+            ELSE
+                receiveTimeout := receiveTimeout + 1;
+                IF receiveTimeout >= MAX_TIMEOUT THEN
+                    sParsedResponse := 'Timeout - No response from scale!';
+                    iState := 50;
+                END_IF
+            END_IF
+        END_IF
+
+    40: //Balance's response parse and intepretation
+		IF LEFT(sReceivedData, 3) = 'S S' THEN  //Check if the response is a acceptable weigth value
+			sParsedResponse := 'Weight received with success!';
+			
+			//Remove controll char of the end of the string (CR LF)
+			sReceivedData := LEFT(sReceivedData, LEN(sReceivedData) - 2);
+			
+			//Look up for the first numeric char (passing initial spaces)
+			//iStart := 4;  // To begin after the char "S S "
+			WHILE (iStart <= LEN(sReceivedData)) AND MID(sReceivedData, 1, iStart) = CHR(32) DO
+				iStart := iStart + 1;
+			END_WHILE;
+	
+			//Find ou the number ending (Before weight unit messure)
+			//iEnd := iStart;
+			WHILE (iEnd <= LEN(sReceivedData)) AND 
+			((MID(sReceivedData, 1, iEnd) <> 'k' OR MID(sReceivedData, 1, iEnd) <> 'g')) DO
+				iEnd := iEnd + 1;
+			END_WHILE
+	
+			//Back 1 char to not include the weight unit
+			iEnd := iEnd - 1;
+	
+			//Extract and weigth convertion
+			IF (iStart > 0) AND (iEnd >= iStart) THEN
+				sWeightStr := MID(sReceivedData, iEnd - iStart + 1, iStart);  //Extract the wegth without the meassure unit
+				fWeight := STRING_TO_REAL(sWeightStr);  //String to Real convertion
+			ELSE
+				sParsedResponse := 'Error extracting weight!';
+			END_IF
+	
+		//Error treatment
+		ELSIF LEFT(sReceivedData, 2) = 'ES' THEN
+			sParsedResponse := 'Syntax Error: Command not recognized!';
+		ELSIF LEFT(sReceivedData, 2) = 'ET' THEN
+			sParsedResponse := 'Transmission Error: Data corrupted!';
+		ELSIF LEFT(sReceivedData, 2) = 'EL' THEN
+			sParsedResponse := 'Logical Error: Command cannot be executed!';
+		ELSIF LEFT(sReceivedData, 3) = 'S +' THEN
+			sParsedResponse := 'Overload Error: Weight exceeds limit!';
+		ELSIF LEFT(sReceivedData, 3) = 'S I' THEN
+			sParsedResponse := 'Internal Error: Balance not ready!';
+		ELSE
+			sParsedResponse := 'Unknown response!';
+		END_IF
+	
+		fbStateTimer(IN := TRUE, PT := tStateDelay);
+		iState := 50;
+
+    50: //Close the connection ang get ready to the new cycle
+        fbCloseTrigger(CLK := fbStateTimer.Q);
+        fbSocketClose(
+            sSrvNetId:= '', 
+            hSocket:= hSocket, 
+            bExecute:= fbCloseTrigger.Q,  
+            tTimeout:= T#4S, 
+            bError=> bError, 
+            nErrId=> nErrorID
+        );
+		
+		IF NOT bBusy AND NOT bError THEN
+			bCloseSocketTimer := TRUE;
+			TonSocketCloseTimer(in := bCloseSocketTimer, pt:=tStepTimer);
+		END_IF
+
+        IF NOT bBusy AND TonSocketCloseTimer.Q THEN  
+            bConnected := FALSE;
+            bBusy := FALSE;
+            bConnectionDone := TRUE;
+            iState := 0;
+			bTrigger := FALSE;
+        END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TCPClient">
+      <LineId Id="74" Count="79" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="154" Count="31" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="186" Count="29" />
+      <LineId Id="310" Count="0" />
+      <LineId Id="216" Count="27" />
+      <LineId Id="245" Count="62" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

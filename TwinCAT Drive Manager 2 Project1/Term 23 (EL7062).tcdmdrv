@@ -49,7 +49,7 @@
           <TcLink>
             <TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
             <IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 23 (EL7062)</IoItemPathName>
-            <NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Axis 8</NcItemPathName>
+            <NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 1 - Linear</NcItemPathName>
           </TcLink>
           <SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
           <Block Id="0">
@@ -112,11 +112,63 @@
           <TcLink>
             <TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
             <IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 23 (EL7062)</IoItemPathName>
-            <NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Axis 9</NcItemPathName>
+            <NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 1 - Rotary</NcItemPathName>
           </TcLink>
           <SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
           <Block Id="0">
-            <Controller />
+            <Controller>
+              <Stepper>
+                <ControlMode>0</ControlMode>
+              </Stepper>
+              <Filter Id="0">
+                <Name>ControllerFilter</Name>
+                <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+                <Parameter>
+                  <PropertyName>Filter_Type</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+              </Filter>
+              <Filter Id="1">
+                <Name>ControllerFilter</Name>
+                <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+                <Parameter>
+                  <PropertyName>Filter_Type</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+              </Filter>
+            </Controller>
           </Block>
         </Channel>
       </Inverter>
@@ -3209,12 +3261,30 @@ Bit 8 - 15 : reserved</Comment>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
-              <Comment><![CDATA[DRV Motor Settings Ch.2 / Configured motor current]]></Comment>
+              <Comment><![CDATA[Configured motor current]]></Comment>
               <Timeout>0</Timeout>
               <Ccs>1</Ccs>
               <Index>33041</Index>
               <SubIndex>52</SubIndex>
+              <Data>d0070000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Rated current]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>18</SubIndex>
               <Data>e8030000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Rated current]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>18</SubIndex>
+              <Data>d0070000</Data>
             </InitCmd>
           </InitCmds>
           <CanOpenType>47</CanOpenType>
@@ -4006,6 +4076,6 @@ Bit 8 - 15 : reserved</Comment>
       <AmsNetId>192.168.0.162.4.1</AmsNetId>
       <AmsPort>1023</AmsPort>
     </AmsAddress>
-    <LinkedAxis Chn="0">TINC^NC-Task 1 SAF^Axes^Axis 8</LinkedAxis>
+    <LinkedAxis Chn="0">TINC^NC-Task 1 SAF^Axes^Pump 1 - Linear</LinkedAxis>
   </EtherCAT>
 </TreeItem>

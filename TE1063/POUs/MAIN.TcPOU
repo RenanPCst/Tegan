@@ -4,7 +4,7 @@
     <Declaration><![CDATA[PROGRAM MAIN
 
 VAR
-	// Controle do Eixo
+	// Axis Motion Controls
 	PosFB				: FB_GetPosition;
 	MoveFB				: FB_MotorControl;
 	fbSetZero			: MC_SetPosition;
@@ -16,253 +16,170 @@ VAR
 	bPosError			: BOOL;
 	nPosErrorID			: UDINT;
 
-    // Status e Erros
-    bPowerStatus  : BOOL;              		// Indica se o motor está habilitado
-    bBusy         : BOOL;              		// Indica se o eixo está em movimento
-    bDone         : BOOL;              		// Indica que a posição foi atingida
-    bError        : BOOL;              		// Indica erro
-    nErrorID      : UDINT;             		// Código do erro
-	sState		  : STRING;					// String contendo o estado do erro 
+    // Axis Motion Status and Errors
+    bPowerStatus  	: BOOL;              		// Indicates whether the engine is enabled
+    bBusy         	: BOOL;              		// Indicates whether the axis is moving
+    bDone         	: BOOL;              		// Indicates that the position has been reached
+    bError        	: BOOL;              		// Indicates error
+    nErrorID      	: UDINT;             		// Error code
+	sState		  	: STRING;					// String containing the error status
+		
+	bZeroDone		:	BOOL;
+	bZeroError		:	BOOL;
+	nZeroErrorID	:	UDINT;
+	bSetZero		:	BOOL := FALSE;
 	
-	//miscelanious variable for testing purporses
-	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
-	bResetDone		: BOOL;
-	bResetError		: BOOL;
-	iResetErrorID	: UDINT;
+	//Moviment testing Motos and Valves
+	ValveController : FB_ValvePositionControl; 	//FB Instance
+		EnableServo     : BOOL := FALSE;
+		DesiredPos      : INT;   				// Choose valve position(1 a 6)
+		MoveNow         : BOOL := FALSE;
+		ValveInPosition : BOOL;
 	
-	//Instâncias do FB para dois motores
-	M1_Motor : FB_MotorControl;
-    M2_Motor : FB_MotorControl;
-    M3_Motor : FB_MotorControl;
-
-	//Variaveis para a leitura da posicao atual dos motores
-	bReadPosition 			: BOOL := FALSE;
-	bReadPosValidation		: BOOL;
-	bReadPosBusy			: BOOL;
-	bReadPositionError		: BOOL;
-	iReadPosErrorId			: UDINT;
-	rActualPosition			: LREAL;
-	
-	//Variarives de mudanca de posicao
-	bExecutePositionChange	:	BOOL := FALSE;
-	bDonePositionChange		:	BOOL;
-	bBusyPositionChange		:	BOOL;
-	bActivePositionChange	:	BOOL;
-	bCommandAborted			:	BOOL;
-	bErrorPositionChange	:	BOOL;
-	iErrorIDPositionChange	:	UDINT;
-	
-	rM1Position				:	LREAL;
-	rM2Position				:	LREAL;
-	rM3Position				:	LREAL;
-	rM4Position				:	LREAL;
-	rM5Position				:	LREAL;
-	rM6Position				:	LREAL;
-	rM7Position				:	LREAL;
-	rM8Position				:	LREAL;
-	
-	bZeroDone				:	BOOL;
-	bZeroError				:	BOOL;
-	nZeroErrorID			:	UDINT;
-	bSetZero				:	BOOL := FALSE;
-	
-	//variaveis para ler o status do motor
-	bReadStatus				: 	BOOL := FALSE;
-	Busy					: 	BOOL;
-	Error					: 	BOOL;
-	ErrorID					: 	UDINT;
-	ErrorStop				: 	BOOL;
-	Disabled				: 	BOOL;
-	Stopping				: 	BOOL;
-	StandStill				: 	BOOL;
-	DiscreteMotion			: 	BOOL;
-	ContinuousMotion		: 	BOOL;
-	SynchronizedMotion		: 	BOOL;
-	Homing					: 	BOOL;
-	ConstantVelocity		: 	BOOL;
-	Accelerating			: 	BOOL;
-	Decelerating			: 	BOOL;
-	Status					: 	ST_AxisStatus;
-	
-	//teste de movimento da valvula m4
-	ValveController : FB_ValvePositionControl; // Instância do FB
-    EnableServo     : BOOL := FALSE;
-    DesiredPos      : INT;   // Escolher posição (1 a 6)
-    MoveNow         : BOOL := FALSE;
-    ValveInPosition : BOOL;
-	
-	//mc power
-	fbMcPower : MC_Power;
+	//MC_Power responsible to enable the motor
+	fbMcPower 		: MC_Power;
 	bPowerEnable	: BOOL := FALSE;
 	PowerErrorID	: UDINT;
 	
-	//Air Supply testing
-	bAirSupplyEnable	: BOOL	:= FALSE;
-	bAirSupplyReset		: BOOL	:= FALSE;
+	//Balance FB call and Testing
+	fbTcpClient						: FB_TCPClient;
+		sClient1SendData			: STRING(255);
+		nServerPort					: UDINT 		:= 8001;
+		sServerHost					: T_IPv4Addr 	:= '192.168.1.100';
+		bStartClient1Communication	: BOOL 			:= TRUE;
+		bConnectionDone				: BOOL 			:= FALSE;
+		fMeasuredWeight				: REAL;
+    	sResponseMessage			: STRING(255);
+    	bStartCommunication			: BOOL 			:= FALSE;  
+    	tAdjustableDelay			: TIME 			:= T#100MS;  //Configured time between the states.
 	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Call State Machine
+      <ST><![CDATA[//Call State Machine and peripheral programs
 //PRG_StateMachine(); 
-
 PRG_UpdateVariablesMoving();
+PRG_SafetyHandle();
 
-//Safety
-GVL_IO.bInResetSignal := GVL_Safety.bResetButtonVISU;
-GVL_IO.bInAckSignal   := GVL_Safety.bAckButtonVISU;
+//<Balance Test>---------------------------------------------------------------------------------------------------------------------------------
 
-//Safety Restart & Error Ack
-IF GVL_Safety.SafetyInputs.bMachineReset OR GVL_Safety.bM1STOErrorAck THEN
-	GVL_Safety.bSafetyErrorAck			:= TRUE;
-	GVL_Motion.M1Motor.bTS_ErrorAck		:= TRUE;
-ELSE
-	GVL_Safety.bSafetyErrorAck			:= FALSE;
-	GVL_Motion.M1Motor.bTS_ErrorAck		:= FALSE;
+// FB_TCPClient instance to handle the connection with the Balance and interpretate it's response
+fbTcpClient(
+    sRemoteHost 	:= sServerHost,			//Server Ip address
+    nRemotePort 	:= nServerPort,			//Server communication Port
+    bTrigger 		:= bStartCommunication,	//Triggers the communication
+    tStateDelay 	:= tAdjustableDelay,  	//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
+    sParsedResponse	=> sResponseMessage, 	//Personalized Resposse message
+    fWeight 		=> fMeasuredWeight, 	//Parsed LReal Weight meassured if eveything goes ok
+	bConnectionDone	=> bConnectionDone,		//Communication Finished
+    bBusy 			=> ,					//Busy status
+    bError 			=> ,					//Error status
+    nErrorID 		=> 						//Error ID if in error
+);
+
+// Reset Trigger after FB finished
+IF bConnectionDone THEN
+    bStartCommunication := FALSE;
 END_IF
 
-GVL_Safety.iM4STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
-GVL_Safety.iM5STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
-GVL_Safety.iM6STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
-GVL_Safety.iM7STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
-GVL_Safety.iM8STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+//</Balance Test>---------------------------------------------------------------------------------------------------------------------------------
 
-GVL_Safety.bSafetyRun				:= TRUE;
-GVL_Motion.M1Motor.bTS_Run			:= TRUE;
-GVL_Safety.iM4STORun				:= TRUE;
-GVL_Safety.iM5STORun				:= TRUE;
-GVL_Safety.iM6STORun				:= TRUE;
-GVL_Safety.iM7STORun				:= TRUE;
-GVL_Safety.iM8STORun				:= TRUE;
 
-IF bAirSupplyEnable THEN
-	GVL_Safety.bAirSupplyEnable := TRUE;
-ELSE
-	GVL_Safety.bAirSupplyEnable	:= FALSE;
-END_IF
-
-IF bAirSupplyReset THEN
-	GVL_Safety.bAirSupplyReset 	:= TRUE;
-ELSE
-	GVL_Safety.bAirSupplyReset	:= FALSE;
-END_IF
-
-//Alias signal for the reset button blinking
-IF GVL_Safety.bResetButtonBlink THEN
-	GVL_IO.gDigOutputs.bResetIndicator	:= TRUE;
-ELSE
-	GVL_IO.gDigOutputs.bResetIndicator	:= FALSE;
-END_IF
-
-(*
-IF GVL_Safety.bM1STOErrorAck THEN
-	GVL_Motion.M1Motor.bTS_ErrorAck := TRUE;
-ELSE
-	GVL_Motion.M1Motor.bTS_ErrorAck := FALSE;
-END_IF
-*)
-IF bLockDoors THEN
-	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
-	ELSE
-	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
-END_IF
-
-//teste de movimento dos motores M1, M2 e M3
-
-//Obter a posição atual do motor M1
+//Motors Moviment Test M1 >> M8 ------------------------------------------------------------------------------------------------------------------
+//Get actual position from Motor 1
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M1Motor.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM1Position
+		rPosition		=>	GVL_Motion.M1Motor.rActualPosition
 	);
 END_IF
 
-//Obter a posição atual do motor M2
+//Get actual position from motor M2
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M2Motor.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM2Position
+		rPosition		=>	GVL_Motion.M2Motor.rActualPosition
 	);
 END_IF
 
-//Obter a posição atual do motor M3
+//Get actual position from motor M3
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M3Motor.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM3Position
+		rPosition		=>	GVL_Motion.M3Motor.rActualPosition
 	);		
 END_IF
 
-//Obter a posição atual do motor M4
+//Get actual position from motor M4
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM4Position
+		rPosition		=>	GVL_Motion.M4Valve1.rAtualPosition
 	);		
 END_IF
 
-//Obter a posição atual do motor M5
+//Get actual position from motor M5
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M5Valve2.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM5Position
+		rPosition		=>	GVL_Motion.M5Valve2.rAtualPosition
 	);		
 END_IF
 
-//Obter a posição atual do motor M6
+//Get actual position from motor M6
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M6Valve3.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM6Position
+		rPosition		=>	GVL_Motion.M6Valve3.rAtualPosition
 	);		
 END_IF
 
-//Obter a posição atual do motor M7
+//Get actual position from motor M7
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
 		AxisRef			:=	GVL_Motion.M7Valve4.Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM7Position
+		rPosition		=>	GVL_Motion.M7Valve4.rAtualPosition
 	);		
 END_IF
 
-//Obter a posição atual do motor M8
+//Get actual position from motor M8
 IF bGetPosition THEN	
 	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M8Valve5.Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	rM8Position
+		bEnable		:=	bGetPosition,
+		AxisRef		:=	GVL_Motion.M8Valve5.Axis,
+		bError		=>	bPosError,
+		nErrorID	=>	nPosErrorID,
+		rPosition	=>	GVL_Motion.M8Valve5.rAtualPosition
 	);		
 END_IF
 
 fbMcPower(
-    Axis := GVL_Motion.M4Valve1.Axis,
-    Enable := bPowerEnable,
-    Enable_Positive := bPowerEnable, // Só habilita se o drive estiver pronto
-    Enable_Negative := bPowerEnable,
-	ErrorID	=>	PowerErrorID
+    Axis 			:= GVL_Motion.M4Valve1.Axis,
+    Enable 			:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
+    Enable_Positive := bPowerEnable, //Enable for positive moviments
+    Enable_Negative := bPowerEnable, //Enable for negative moviments
+	ErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
 );
 
 //Valves servormotor testing [M4, M5, M6, M7, M8]
@@ -276,7 +193,6 @@ ValveController(
 	MoveDone		=> ValveInPosition
 );
 END_IF
-
 
 //target positions test for the motors
 GVL_Motion.M1Motor.iPosition 		:= 0;
@@ -324,46 +240,17 @@ END_IF
     <LineIds Name="MAIN">
       <LineId Id="744" Count="0" />
       <LineId Id="2" Count="0" />
-      <LineId Id="2361" Count="0" />
       <LineId Id="1388" Count="0" />
-      <LineId Id="1386" Count="0" />
-      <LineId Id="865" Count="0" />
-      <LineId Id="976" Count="0" />
-      <LineId Id="872" Count="0" />
-      <LineId Id="2186" Count="0" />
-      <LineId Id="2235" Count="0" />
-      <LineId Id="2253" Count="1" />
-      <LineId Id="2256" Count="2" />
-      <LineId Id="2260" Count="0" />
-      <LineId Id="2255" Count="0" />
-      <LineId Id="2238" Count="5" />
-      <LineId Id="2251" Count="0" />
-      <LineId Id="2245" Count="5" />
-      <LineId Id="1810" Count="0" />
-      <LineId Id="2189" Count="1" />
-      <LineId Id="2196" Count="0" />
-      <LineId Id="2191" Count="0" />
-      <LineId Id="2197" Count="0" />
-      <LineId Id="2192" Count="0" />
-      <LineId Id="2199" Count="4" />
-      <LineId Id="2198" Count="0" />
-      <LineId Id="2210" Count="0" />
-      <LineId Id="2205" Count="4" />
-      <LineId Id="2204" Count="0" />
-      <LineId Id="1815" Count="0" />
-      <LineId Id="1467" Count="1" />
-      <LineId Id="1472" Count="0" />
-      <LineId Id="1469" Count="0" />
-      <LineId Id="1471" Count="0" />
-      <LineId Id="1470" Count="0" />
-      <LineId Id="1194" Count="0" />
-      <LineId Id="1193" Count="0" />
-      <LineId Id="1195" Count="0" />
-      <LineId Id="1197" Count="1" />
-      <LineId Id="1196" Count="0" />
+      <LineId Id="2749" Count="0" />
+      <LineId Id="2751" Count="1" />
+      <LineId Id="2789" Count="0" />
+      <LineId Id="2763" Count="16" />
+      <LineId Id="2761" Count="0" />
+      <LineId Id="2790" Count="0" />
+      <LineId Id="2750" Count="0" />
+      <LineId Id="2762" Count="0" />
       <LineId Id="866" Count="0" />
       <LineId Id="821" Count="0" />
-      <LineId Id="1678" Count="0" />
       <LineId Id="1667" Count="8" />
       <LineId Id="1706" Count="0" />
       <LineId Id="1685" Count="9" />
@@ -400,8 +287,7 @@ END_IF
       <LineId Id="2036" Count="0" />
       <LineId Id="2032" Count="0" />
       <LineId Id="2075" Count="0" />
-      <LineId Id="1882" Count="0" />
-      <LineId Id="1881" Count="0" />
+      <LineId Id="2368" Count="0" />
       <LineId Id="1581" Count="0" />
       <LineId Id="1579" Count="0" />
       <LineId Id="1584" Count="0" />
