@@ -1,69 +1,98 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
 
 VAR_INPUT
-	Axis : AXIS_REF;            //Referência para o motor configurado no AX8108
-    TargetPosition : LREAL;     //Posição alvo do motor
-    Velocity : LREAL;           //Velocidade do motor
-    Acceleration : LREAL;       //Aceleração do motor
-    Deceleration : LREAL;       //Desaceleração do motor
-    Execute : BOOL;             //Inicia o movimento
+	Axis 			: AXIS_REF; //Reference for the axis configured in the AX8108
+    iTargetPosition : INT; 		//Target motor position
+    rVelocity 		: LREAL; 	//Motor velocity
+    rAcceleration 	: LREAL; 	//Motor acceleration
+    rDeceleration 	: LREAL; 	//Motor deceleration
+    bExecute 		: BOOL;  	//Start the movement
 END_VAR
 
 VAR_OUTPUT
-	bSealSucess 	: BOOL;             //Indica se o processo foi concluído com sucesso
-    bSealError 		: BOOL;             //Indica se houve erro durante a execução
+	bSealSucess 	: BOOL; 	//Indicates whether the process was completed successfully
+    bSealError 		: BOOL;  	//Indicates whether there was an error during execution
 END_VAR
 
 VAR
-	MotorStageCollection 	: FB_StageCollectionMotor; 	//Instância do FB para o motor
-	MotorAxis 				: AXIS_REF;                 //Referência do motor configurado 
-    MotorInPosition 		: BOOL;                     //Flag para indicar posição atingida 
-    MotorBusy 				: BOOL;                     //Flag para indicar movimento em andamento 
-    MotorError 				: BOOL;                     //Flag para indicar erro 
+	MotorStageCollection 	: FB_StageCollectionMotor; 	
+	MotorAxis 				: AXIS_REF;                 //FB instance for the motor
+    MotorInPosition 		: BOOL;                     //Flag to indicate position reached
+    MotorBusy 				: BOOL;                     //Flag to indicate movement in progress
+    MotorError 				: BOOL;                     //Flag to indicate error
     MotorErrorID 			: UDINT; 
 	
-	ValveConfigs : ST_SystemConfig;
+	FB_GetPosition		: FB_GetPosition;
+		bGetPosition	: BOOL := FALSE;
+	
+	FB_MotorControl		: FB_MotorControl;
+		bMoveDone		: BOOL := FALSE;
+		bPosError		: BOOL := FALSE;
+		nPosErrorID		: UDINT;
+		sState			: STRING(256);
+				
+	fbSetZero			: MC_SetPosition;
+	
+	fbReadStatus		: MC_ReadStatus;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[MotorStageCollection(
-			Axis := MotorAxis,
-			Config := ADR(ValveConfigs), //Passar o ponteiro para a configuração do sistema
-			Execute := TRUE
-		);
+      <ST><![CDATA[//Geting the M1 Motor actual position
+IF bGetPosition THEN	
+	FB_GetPosition(
+		bEnable		:=	TRUE,
+		AxisRef		:=	Axis,
+		bError		=>	bPosError,
+		nErrorID	=>	nPosErrorID,
+		rPosition	=>	GVL_Motion.M1Motor.rActualPosition
+	);		
+END_IF
 
-//Monitorar o estado do motor
-MotorInPosition := MotorStageCollection.InPosition;
-MotorBusy := MotorStageCollection.Busy;
-MotorError := MotorStageCollection.Error;
-MotorErrorID := MotorStageCollection.ErrorID;
+IF GVL_Motion.M1Motor.rActualPosition <> iTargetPosition THEN
+	//Motor M1 Moving FB
+	IF bExecute AND GVL_Safety.iMotorsSTOEnabled THEN
+		FB_MotorControl(
+			bEnable 	:= TRUE,
+			AxisRef 	:= Axis, 
+			nPosition 	:= iTargetPosition, 
+			nVelocity 	:= rVelocity,
+			bDone		=> bMoveDone,
+			bError		=> bPosError,
+			nErrorID	=> nPosErrorID,
+			sState		=> sState
+		);
+	END_IF
 		
-IF MotorStageCollection.Error THEN
-    (* Indicar erro *)
-    bSealError := TRUE;
-    bSealSucess := FALSE;
-ELSE
-    bSealError := FALSE;
-    IF MotorStageCollection.InPosition THEN
-        //Sucess return boolean
-        bSealSucess := TRUE;
-    ELSE
-        bSealSucess := FALSE;
-    END_IF;
-END_IF;]]></ST>
+	IF MotorStageCollection.Error THEN
+		//Indicate Error
+		bSealError 	:= TRUE;
+		bSealSucess := FALSE;
+	ELSE
+		bSealError 	:= FALSE;
+		IF MotorStageCollection.InPosition THEN
+			//Sucess return boolean
+			bSealSucess := TRUE;
+		ELSE
+			bSealSucess := FALSE;
+		END_IF;
+	END_IF;
+END_IF]]></ST>
     </Implementation>
     <LineIds Name="FB_SealStages">
-      <LineId Id="101" Count="3" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="170" Count="7" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="141" Count="11" />
       <LineId Id="82" Count="0" />
-      <LineId Id="107" Count="0" />
-      <LineId Id="109" Count="3" />
-      <LineId Id="83" Count="0" />
       <LineId Id="108" Count="0" />
       <LineId Id="84" Count="11" />
       <LineId Id="9" Count="0" />
+      <LineId Id="181" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

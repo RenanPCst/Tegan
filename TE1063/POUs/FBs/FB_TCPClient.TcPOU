@@ -71,30 +71,7 @@ END_VAR
     <Implementation>
       <ST><![CDATA[CASE iState OF
     0:  //Initial State - Reset 
-        fbSocketConnect	(bExecute := FALSE);
-        fbSocketSend	(bExecute := FALSE);
-        fbSocketReceive	(bExecute := FALSE);
-        fbSocketClose	(bExecute := FALSE);
-        fbSocketCloseAll(bExecute := FALSE);
-		
-		fbStateTimer			(IN := FALSE);
-		bCloseConnectionTimer 	:= FALSE;
-		bOpenConnectionTimer 	:= FALSE;
-		bSendCommandTimer 		:= FALSE;
-		TonCloseConnectionTimer	(IN:=FALSE);
-		TonOpenConnectionTimer	(IN:=FALSE);
-		TonSendCommandTimer		(IN:=FALSE);
-		
-		fbConnectTrigger (CLK:=FALSE);
-		fbSendTrigger	 (CLK:=FALSE);
-		fbReceiveTrigger (CLK:=FALSE);
-		fbCloseTrigger	 (CLK:=FALSE);
-		fbCloseAllTrigger(CLK:=FALSE);
-		
-		bConnectionDone := FALSE;
-        bConnected 		:= FALSE;
-        bBusy 			:= FALSE;
-        bError 			:= FALSE;
+        ACT_Reset();
         
         //Verify the bTrigger transition FALSE → TRUE
         IF bTrigger AND NOT bTriggerPrev THEN
@@ -307,8 +284,38 @@ END_VAR
         END_IF
 END_CASE]]></ST>
     </Implementation>
+    <Action Name="ACT_Reset" Id="{23a2a9fa-f5e1-4aa7-831a-2b2f5c1911de}">
+      <Implementation>
+        <ST><![CDATA[//Initial State - Reset 
+fbSocketConnect	(bExecute := FALSE);
+fbSocketSend	(bExecute := FALSE);
+fbSocketReceive	(bExecute := FALSE);
+fbSocketClose	(bExecute := FALSE);
+fbSocketCloseAll(bExecute := FALSE);
+
+fbStateTimer			(IN := FALSE);
+bCloseConnectionTimer 	:= FALSE;
+bOpenConnectionTimer 	:= FALSE;
+bSendCommandTimer 		:= FALSE;
+TonCloseConnectionTimer	(IN:=FALSE);
+TonOpenConnectionTimer	(IN:=FALSE);
+TonSendCommandTimer		(IN:=FALSE);
+
+fbConnectTrigger (CLK:=FALSE);
+fbSendTrigger	 (CLK:=FALSE);
+fbReceiveTrigger (CLK:=FALSE);
+fbCloseTrigger	 (CLK:=FALSE);
+fbCloseAllTrigger(CLK:=FALSE);
+
+bConnectionDone := FALSE;
+bConnected 		:= FALSE;
+bBusy 			:= FALSE;
+bError 			:= FALSE;]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="FB_TCPClient">
-      <LineId Id="74" Count="79" />
+      <LineId Id="74" Count="1" />
+      <LineId Id="99" Count="54" />
       <LineId Id="308" Count="0" />
       <LineId Id="154" Count="31" />
       <LineId Id="309" Count="0" />
@@ -317,6 +324,10 @@ END_CASE]]></ST>
       <LineId Id="216" Count="27" />
       <LineId Id="245" Count="62" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TCPClient.ACT_Reset">
+      <LineId Id="2" Count="23" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

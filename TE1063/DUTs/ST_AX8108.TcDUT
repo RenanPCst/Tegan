@@ -12,7 +12,7 @@ STRUCT
 	nState									AT %I*		: UINT;						//Terminal State from IO Terminal Info Data
 	sStatus												: STRING(200);
 	Axis                                        	 	: AXIS_REF; 				//Motor M1 Seal Stage Vertical Axis
-	n_AxisTorqueLimitation					AT %Q*		: UINT		:=	32767;
+	n_AxisTorqueLimitation					AT %Q*		: UINT	:=	32767;
 	n_AxisActualTorque									: REAL; 					// now part of structured varaible axis_ref
 
 	//M1 Motor Safety
@@ -21,7 +21,11 @@ STRUCT
 	
 	//New variables
 	rActualPosition										: LREAL;
-
+	rTargetPosition										: LREAL;
+	rTargetVelocity										: LREAL;
+	rAccleration										: LREAL;
+	rDeceleration										: LREAL;
+	
 END_STRUCT
 END_TYPE
 ]]></Declaration>

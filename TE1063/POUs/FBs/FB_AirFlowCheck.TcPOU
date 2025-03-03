@@ -1,46 +1,46 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_AirFlowCheck" Id="{a48de8b8-7051-4c87-a9e3-464f1e624d2c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_AirFlowCheck
 
 VAR_INPUT
-	rPressureInput 		: REAL;     //Valor atual do sensor de pressão/fluxo de ar 
-    rPressureThreshold 	: REAL;  	//Limite mínimo de pressão/fluxo necessário 
-    tStabilizationTime 	: TIME; 	//Tempo necessário para estabilização 
-    bExecute 			: BOOL;     //Sinal para iniciar a verificação
+	rPressureInput 		: REAL; //Current value of the air pressure/flow sensor
+    rPressureThreshold 	: REAL; //Minimum required pressure/flow limit
+    tStabilizationTime 	: TIME; //Time needed for stabilization
+    bExecute 			: BOOL; //Signal to start verification
 END_VAR
 
 VAR_OUTPUT
-	bAirFlowOK 		: BOOL;		//Indica se correu tudo bem na checagem de fluxo
-	bAirFlowError 	: BOOL;     //Indica se houve falha no fluxo 
+	bAirFlowOK 		: BOOL;		//Indicates whether everything went well in the flow check
+	bAirFlowError 	: BOOL;     //Indicates whether there was a failure in the flow
 END_VAR
 
 VAR
-	TON_Stabilization : TON;    //Temporizador para estabilização do fluxo 
+	TON_Stabilization : TON;    //Timer for flow stabilization
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF bExecute THEN
     IF rPressureInput >= rPressureThreshold THEN
-        //Iniciar o temporizador de estabilização
+        //Start the stabilization timer
         TON_Stabilization(IN := TRUE, PT := tStabilizationTime);
 
         IF TON_Stabilization.Q THEN
-            //Fluxo estabilizado
-            bAirFlowOK := TRUE;
-            bAirFlowError := FALSE;
+            //Stabilized flow
+            bAirFlowOK 		:= TRUE;
+            bAirFlowError 	:= FALSE;
         END_IF;
     ELSE
-        //Fluxo insuficiente, resetar temporizador
+        //Insufficient flow, reset timer
         TON_Stabilization(IN := FALSE);
-        bAirFlowOK := FALSE;
-        bAirFlowError := TRUE; //Pressão abaixo do limite
+        bAirFlowOK 		:= FALSE;
+        bAirFlowError 	:= TRUE; //Pressure below limit
     END_IF;
 ELSE
-    //Resetar saídas quando não estiver em execução
+    //Reset outputs when not running
     TON_Stabilization(IN := FALSE);
-    bAirFlowOK := FALSE;
-    bAirFlowError := FALSE;
+    bAirFlowOK 		:= FALSE;
+    bAirFlowError 	:= FALSE;
 END_IF;
 ]]></ST>
     </Implementation>

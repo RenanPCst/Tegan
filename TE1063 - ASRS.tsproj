@@ -1424,6 +1424,38 @@ External Setpoint Generation:
 			</Relations>
 		</DataType>
 		<DataType>
+			<Name GUID="{2C3DFDAF-24D7-41BC-28CD-17D231002C31}" AutoDeleteType="true">ST_EL3058</Name>
+			<BitSize>64</BitSize>
+			<SubItem>
+				<Name>rMainPressureSupplyInput</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+				<Comment><![CDATA[ Main Pressure Supply (*AT %IW0*)]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bMainPressureSupplyError</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Main Pressure Supply Error Status]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>rPressureRegulatorInput</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+				<Comment><![CDATA[ Pressure Regulator (*AT %IW1*)]]></Comment>
+				<BitSize>16</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bPressureRegulatorError</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[ Pressure Regulator Error Status]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>48</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{2ACC78BA-2115-8A37-59C3-8003E8355E7F}" AutoDeleteType="true">ST_SafetyInputs</Name>
 			<BitSize>1936</BitSize>
 			<SubItem>
@@ -1815,24 +1847,6 @@ External Setpoint Generation:
 				<Comment><![CDATA[Term30_I.1 Keyence Access Door Interlock Feedback]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>128</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}" AutoDeleteType="true">ST_EL3058</Name>
-			<BitSize>64</BitSize>
-			<SubItem>
-				<Name>rMainPressureSupply</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
-				<Comment><![CDATA[ Main Pressure Supply (*AT %IW0*)]]></Comment>
-				<BitSize>32</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>rPressureRegulator</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
-				<Comment><![CDATA[ Pressure Regulator (*AT %IW1*)]]></Comment>
-				<BitSize>32</BitSize>
-				<BitOffs>32</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -6319,11 +6333,29 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{B2A54941-8C76-637A-4EC3-F5ED983785D5}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{2DE8AC37-6DE7-93F7-7BBA-4DAFCB2FAA27}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>GVL_Safety.bM1STOEnabled</Name>
+							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM2STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM3STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gAnalogInputs</Name>
+							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
+							<Type GUID="{2C3DFDAF-24D7-41BC-28CD-17D231002C31}">ST_EL3058</Type>
+						</Var>
 						<Var>
 							<Name>GVL_Motion.Pump1.iLinearTargetPosition</Name>
 							<Comment><![CDATA[EtherCAT Terminal, 2-channel motion interface, stepper motor, 48 V DC
@@ -6985,11 +7017,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Name>GVL_IO.bInAckSignal</Name>
 							<Comment><![CDATA[Safety]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.gAnalogInputs</Name>
-							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
-							<Type GUID="{5C8C9027-7152-742C-E2AA-18DFC2DCDF86}">ST_EL3058</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
@@ -16117,25 +16144,25 @@ Bit 8 - 15 : reserved]]></Comment>
 							<BootStrapData>0010f400f410f400</BootStrapData>
 							<Pdo Name="AI Standard Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<ExcludePdo>#x1a01</ExcludePdo>
-								<Entry Name="Status__Underrange" Index="#x6000" Sub="#x01">
+								<Entry Name="Status__Underrange" Index="#x6000" Sub="#x01" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Underrange event active]]></Comment>
 								</Entry>
-								<Entry Name="Status__Overrange" Index="#x6000" Sub="#x02">
+								<Entry Name="Status__Overrange" Index="#x6000" Sub="#x02" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Overrange event active]]></Comment>
 								</Entry>
-								<Entry Name="Status__Limit 1" Index="#x6000" Sub="#x03">
+								<Entry Name="Status__Limit 1" Index="#x6000" Sub="#x03" Flags="#x00008020">
 									<Type>BIT2</Type>
 									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
 Bit1: Value bigger/equal Limit1]]></Comment>
 								</Entry>
-								<Entry Name="Status__Limit 2" Index="#x6000" Sub="#x05">
+								<Entry Name="Status__Limit 2" Index="#x6000" Sub="#x05" Flags="#x00008020">
 									<Type>BIT2</Type>
 									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
 Bit1: Value bigger/equal Limit2]]></Comment>
 								</Entry>
-								<Entry Name="Status__Error" Index="#x6000" Sub="#x07">
+								<Entry Name="Status__Error" Index="#x6000" Sub="#x07" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
 								</Entry>
@@ -16145,11 +16172,11 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 								<Entry Name="Status__">
 									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
 								</Entry>
-								<Entry Name="Status__TxPDO State" Index="#x6000" Sub="#x0f">
+								<Entry Name="Status__TxPDO State" Index="#x6000" Sub="#x0f" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
 								</Entry>
-								<Entry Name="Status__TxPDO Toggle" Index="#x6000" Sub="#x10">
+								<Entry Name="Status__TxPDO Toggle" Index="#x6000" Sub="#x10" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
 								</Entry>
@@ -16165,25 +16192,25 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 							</Pdo>
 							<Pdo Name="AI Standard Channel 2" Index="#x1a02" Flags="#x0010" SyncMan="3">
 								<ExcludePdo>#x1a03</ExcludePdo>
-								<Entry Name="Status__Underrange" Index="#x6010" Sub="#x01">
+								<Entry Name="Status__Underrange" Index="#x6010" Sub="#x01" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Underrange event active]]></Comment>
 								</Entry>
-								<Entry Name="Status__Overrange" Index="#x6010" Sub="#x02">
+								<Entry Name="Status__Overrange" Index="#x6010" Sub="#x02" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Overrange event active]]></Comment>
 								</Entry>
-								<Entry Name="Status__Limit 1" Index="#x6010" Sub="#x03">
+								<Entry Name="Status__Limit 1" Index="#x6010" Sub="#x03" Flags="#x00008020">
 									<Type>BIT2</Type>
 									<Comment><![CDATA[Bit0: Value smaller/equal Limit1
 Bit1: Value bigger/equal Limit1]]></Comment>
 								</Entry>
-								<Entry Name="Status__Limit 2" Index="#x6010" Sub="#x05">
+								<Entry Name="Status__Limit 2" Index="#x6010" Sub="#x05" Flags="#x00008020">
 									<Type>BIT2</Type>
 									<Comment><![CDATA[Bit0: Value smaller/equal Limit2
 Bit1: Value bigger/equal Limit2]]></Comment>
 								</Entry>
-								<Entry Name="Status__Error" Index="#x6010" Sub="#x07">
+								<Entry Name="Status__Error" Index="#x6010" Sub="#x07" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Bit set when Over- or Underrange]]></Comment>
 								</Entry>
@@ -16193,11 +16220,11 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 								<Entry Name="Status__">
 									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
 								</Entry>
-								<Entry Name="Status__TxPDO State" Index="#x6010" Sub="#x0f">
+								<Entry Name="Status__TxPDO State" Index="#x6010" Sub="#x0f" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[TRUE when this TxPDO is not valid]]></Comment>
 								</Entry>
-								<Entry Name="Status__TxPDO Toggle" Index="#x6010" Sub="#x10">
+								<Entry Name="Status__TxPDO Toggle" Index="#x6010" Sub="#x10" Flags="#x00008020">
 									<Type>BIT</Type>
 									<Comment><![CDATA[Bit toggles everytime when new value available]]></Comment>
 								</Entry>
@@ -39627,6 +39654,12 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="PlcTask Outputs^GVL_IO.gRelayOutputs^bStageCollectionLeftLight" VarB="Channel 1^Output"/>
 				<Link VarA="PlcTask Outputs^GVL_IO.gRelayOutputs^bStageCollectionRightLight" VarB="Channel 3^Output"/>
 			</OwnerB>
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 13 (EL3058)">
+				<Link VarA="PlcTask Inputs^GVL_IO.gAnalogInputs^bMainPressureSupplyError" VarB="AI Standard Channel 1^Status^Error"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gAnalogInputs^bPressureRegulatorError" VarB="AI Standard Channel 2^Status^Error"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gAnalogInputs^rMainPressureSupplyInput" VarB="AI Standard Channel 1^Value"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gAnalogInputs^rPressureRegulatorInput" VarB="AI Standard Channel 2^Value"/>
+			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.nState" VarB="InfoData^State"/>
 			</OwnerB>
@@ -39646,6 +39679,7 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="PlcTask Inputs^GVL_Safety.SafetyInputs^iSafetyDoorLocked" VarB="StandardInputs^Standard Out Var 13"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.SafetyInputs^iSafetyEStop" VarB="StandardInputs^Standard Out Var 21"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.SafetyInputs^iSafetyOk2Doorlocked" VarB="StandardInputs^Standard Out Var 17"/>
+				<Link VarA="PlcTask Inputs^GVL_Safety.bM1STOEnabled" VarB="StandardInputs^Standard Out Var 25"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.bM1STOErrorAck" VarB="StandardInputs^Standard Out Var 44"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.bResetButtonBlink" VarB="StandardInputs^Standard Out Var 95"/>
 				<Link VarA="PlcTask Inputs^GVL_Safety.iMotorsSTOEnabled" VarB="StandardInputs^Standard Out Var 73"/>

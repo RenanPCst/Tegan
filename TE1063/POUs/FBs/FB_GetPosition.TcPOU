@@ -7,20 +7,20 @@ VAR_INPUT
 END_VAR
 
 VAR_IN_OUT
-	AxisRef	 	: AXIS_REF; // Referência ao eixo do motor
+	AxisRef	 	: AXIS_REF; // Reference to motor Axis
 END_VAR
 
 VAR_OUTPUT
 	bError		: BOOL;
 	nErrorID	: UDINT;
-	rPosition 	: LREAL; // Posição atual do motor
+	rPosition 	: LREAL; // Current engine position
 END_VAR
 VAR
-	ReadStatus : MC_ReadActualPosition; // Comando para leitura da posição
+	ReadStatus : MC_ReadActualPosition; // Command for reading the position
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Configura o comando para ler a posição atual do motor
+      <ST><![CDATA[// Configures the command to read the current motor position
 ReadStatus(
 	Enable 		:= bEnable,
 	Axis 		:= AxisRef,
@@ -29,7 +29,7 @@ ReadStatus(
     Position 	=> rPosition
 );
 	
-// Atualiza a variável de saída com a posição do motor
+// Updates the output variable with the motor position
 rPosition := ReadStatus.Position;]]></ST>
     </Implementation>
     <LineIds Name="FB_GetPosition">

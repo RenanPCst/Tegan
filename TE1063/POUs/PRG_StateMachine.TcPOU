@@ -3,12 +3,12 @@
   <POU Name="PRG_StateMachine" Id="{3698ba7e-335b-4575-b74b-b2c2009fcddd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_StateMachine
 VAR
-	Inputs_EL1809 : ST_EL1809; 
-    Outputs_EL2809 : ST_EL2809; 
+	Inputs_EL1809 		: ST_EL1809; 
+    Outputs_EL2809 		: ST_EL2809; 
     AnalogInputs_EL3058 : ST_EL3058; 
 
-    CurrentState : E_MachineStates; 
-    bErrorFlag : BOOL; 
+    CurrentState 	: E_MachineStates; 
+    bErrorFlag		: BOOL; 
 	bPowerUpTimerComplete : BOOL;
 	
 	//Air Flow Variables
@@ -18,9 +18,9 @@ VAR
 	
 	tonPowerUp		: 	Tc2_Standard.TON;
 	TON_Monitor 	: 	Tc2_Standard.TON;
-	ValveController : 	FB_ValveControl; 	//valve controller instance
+	ValveController : 	FB_ValvePositionControl;//valve controller instance
 	ValveConfigs 	: 	ST_SystemConfig;
-    iLoopIndex 		: 	INT := 1; //Índice do loop atual)
+    iLoopIndex 		: 	INT := 1; 				//Índice do loop atual)
 	iSolenoidIndex 	: 	INT;
 	
 	//Recovery Phase Variables
@@ -34,20 +34,20 @@ VAR
     MotorInPosition 		: BOOL;                    		//motor in position flag
     MotorBusy 				: BOOL;                         //motor moving flag
     MotorError 				: BOOL;                         //motor error flag
-    MotorErrorID 			: UDINT;                        //motor error id
-	bSealSucess				: BOOL;							//seal sucess flag FB_SealStages
-	bSealError				: BOOL;							//seal error flag FB_SealStages
+    MotorErrorID 			: UDINT;                        //motor error id						
 	
 	//others FB Instances
-	FB_SealStages 	:	FB_SealStages;
+	FB_SealStages 		: FB_SealStages;
+		bSealSuccess	: BOOL := FALSE; //seal sucess flag FB_SealStages
+		bSealError		: BOOL := FALSE; //seal error flag FB_SealStages
+		
 	FB_LeakTest		:	FB_LeakTest;
 	
 	E_MachineState			: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-//System Power Up Timer
+      <ST><![CDATA[//System Power Up Timer
 tonPowerUp( IN 	:= TRUE, 
 			PT 	:= T#2S,	
 			Q 	=> bPowerUpTimerComplete);
@@ -68,12 +68,13 @@ CASE CurrentState OF
 
     E_MachineStates.CHECK_AIR_FLOW: //Checking if there is enough exaustion air flow on the system
 	
+		GVL_Safety.bAirSupplyEnable := TRUE;
         //Call FB responsible for checking the air flow
         FB_AirFlowCheck(
-         	rPressureInput := GVL_IO.gAnalogInputs.rMainPressureSupply,
-            rPressureThreshold := ValveConfigs.rPressureThreshold,
-            tStabilizationTime := ST_HMIParameters.tCheckAirFlowTime,
-            bExecute := TRUE
+         	rPressureInput 		:= GVL_IO.gAnalogInputs.rMainPressureSupplyInput,
+            rPressureThreshold 	:= ValveConfigs.rPressureThreshold,
+            tStabilizationTime 	:= ST_HMIParameters.tCheckAirFlowTime,
+            bExecute			:= TRUE
         );
 
         //Flags updates
@@ -97,25 +98,32 @@ CASE CurrentState OF
         END_IF;
 
     E_MachineStates.SEAL_STAGES:
-
-		FB_SealStages(
-			Axis				:= GVL_IO.g_stAxis,
-			TargetPosition		:= GVL_IO.gParameters.rM1TargetPosition,
-			Velocity			:= GVL_IO.gParameters.rM1Velocity,
-			Acceleration		:= GVL_IO.gParameters.rM1Accleration,
-			Deceleration		:= GVL_IO.gParameters.rDeceleration,
-			Execute 			:= TRUE
-		);
+		//temporary until we are able to get this parameter from hmi
+		GVL_MachineParam.aM1Position[2] := 100;
+		
+		//calling the FB_SealStages
+		IF GVL_Safety.bM1STOEnabled THEN
+			FB_SealStages(
+				Axis				:= GVL_Motion.M1Motor.Axis,
+				iTargetPosition		:= GVL_MachineParam.aM1Position[2], //Seal Position
+				rVelocity			:= GVL_Motion.M1Motor.qTargetVelocity,
+				rAcceleration		:= GVL_Motion.M1Motor.rAccleration,
+				rDeceleration		:= GVL_Motion.M1Motor.rDeceleration,
+				bExecute 			:= TRUE,
+				bSealSucess			=> bSealSuccess,
+				bSealError			=> bSealError
+			);
+		END_IF
 		
 		//error check
-		IF NOT FB_SealStages.bSealSucess AND FB_SealStages.bSealError THEN
+		IF NOT bSealSuccess AND bSealError THEN
 			//error dealing logic
-			CurrentState := E_MachineStates.ERROR_STATE;
 			GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
+			CurrentState := E_MachineStates.ERROR_STATE;
 		END_IF;
 
 		//step forward to step ahead
-		IF FB_SealStages.bSealSucess AND NOT FB_SealStages.bSealError THEN
+		IF bSealSuccess AND NOT bSealError THEN
 			CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
 		END_IF;
 
@@ -127,7 +135,7 @@ CASE CurrentState OF
 			aValveConfigs		:= ValveConfigs.aValvePositions,
 			rPressureThreshold 	:= ValveConfigs.rPressureThreshold,
 			tMonitoringTime 	:= ValveConfigs.tMonitoringTime,
-			rMainPressureSupply := GVL_IO.gAnalogInputs.rMainPressureSupply,
+			rMainPressureSupply := GVL_IO.gAnalogInputs.rMainPressureSupplyInput,
 			iLoopIndex 			:= iLoopIndex,
 			bExecute 			:= TRUE
 		);
@@ -200,7 +208,6 @@ CASE CurrentState OF
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="PRG_StateMachine">
-      <LineId Id="296" Count="0" />
       <LineId Id="295" Count="0" />
       <LineId Id="293" Count="0" />
       <LineId Id="300" Count="2" />
@@ -210,15 +217,23 @@ END_CASE;]]></ST>
       <LineId Id="291" Count="0" />
       <LineId Id="212" Count="9" />
       <LineId Id="505" Count="0" />
+      <LineId Id="642" Count="0" />
       <LineId Id="511" Count="17" />
       <LineId Id="227" Count="10" />
+      <LineId Id="652" Count="2" />
+      <LineId Id="643" Count="0" />
       <LineId Id="440" Count="0" />
       <LineId Id="432" Count="0" />
       <LineId Id="591" Count="0" />
       <LineId Id="594" Count="4" />
+      <LineId Id="646" Count="1" />
       <LineId Id="592" Count="0" />
+      <LineId Id="644" Count="0" />
       <LineId Id="433" Count="0" />
-      <LineId Id="394" Count="9" />
+      <LineId Id="394" Count="2" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="399" Count="4" />
       <LineId Id="243" Count="2" />
       <LineId Id="444" Count="3" />
       <LineId Id="468" Count="0" />

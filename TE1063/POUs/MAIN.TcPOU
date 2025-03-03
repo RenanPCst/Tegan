@@ -175,7 +175,7 @@ IF bGetPosition THEN
 END_IF
 
 fbMcPower(
-    Axis 			:= GVL_Motion.M4Valve1.Axis,
+    Axis 			:= GVL_Motion.M1Motor.Axis,
     Enable 			:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
     Enable_Positive := bPowerEnable, //Enable for positive moviments
     Enable_Negative := bPowerEnable, //Enable for negative moviments
@@ -195,8 +195,8 @@ ValveController(
 END_IF
 
 //target positions test for the motors
-GVL_Motion.M1Motor.iPosition 		:= 0;
-GVL_Motion.M1Motor.qTargetVelocity	:= 15;
+GVL_Motion.M1Motor.rTargetPosition 	:= 0;
+GVL_Motion.M1Motor.rTargetVelocity	:= 15;
 
 GVL_Motion.M3Motor.iTargetPosition	:= 0;
 GVL_Motion.M3Motor.iTargetVelocity	:= 5;
@@ -218,9 +218,9 @@ fbSetZero(
 IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
     MoveFB(
         bEnable 	:= TRUE,
-        AxisRef 	:= GVL_Motion.M2Motor.Axis, 
-        nPosition 	:= GVL_Motion.M2Motor.iTargetPosition, 
-        nVelocity 	:= GVL_Motion.M2Motor.iTargetVelocity,
+        AxisRef 	:= GVL_Motion.M1Motor.Axis, 
+        nPosition 	:= GVL_Motion.M1Motor.rTargetPosition, 
+        nVelocity 	:= GVL_Motion.M1Motor.rTargetVelocity,
         bDone		=> bMoveDone,
         bError		=> bPosError,
         nErrorID	=> nPosErrorID,

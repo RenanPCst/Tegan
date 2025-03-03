@@ -3,9 +3,13 @@
   <DUT Name="ST_EL3058" Id="{dd510e53-85d2-4664-a123-0c4e400c197f}">
     <Declaration><![CDATA[TYPE ST_EL3058 :
 STRUCT
+	//FESTO Main Air Pressure Supply Indicator
+	rMainPressureSupplyInput 		: INT;  	// Main Pressure Supply (*AT %IW0*)
+	bMainPressureSupplyError		: BOOL;		// Main Pressure Supply Error Status
 	
-	rMainPressureSupply 			: REAL;  // Main Pressure Supply (*AT %IW0*)
-    rPressureRegulator 				: REAL;  // Pressure Regulator (*AT %IW1*)
+	//SMC Pressure Regulator [Leak Detection]
+    rPressureRegulatorInput			: INT;  	// Pressure Regulator (*AT %IW1*)
+	bPressureRegulatorError			: BOOL;		// Pressure Regulator Error Status
 	
 END_STRUCT
 END_TYPE
