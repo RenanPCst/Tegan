@@ -43,16 +43,22 @@ VAR
 	
 	//Balance FB call and Testing
 	fbTcpClient						: FB_TCPClient;
-		sClient1SendData			: STRING(255);
-		nServerPort					: UDINT 		:= 8001;
-		sServerHost					: T_IPv4Addr 	:= '192.168.1.100';
-		bStartClient1Communication	: BOOL 			:= TRUE;
 		bConnectionDone				: BOOL 			:= FALSE;
 		fMeasuredWeight				: REAL;
     	sResponseMessage			: STRING(255);
     	bStartCommunication			: BOOL 			:= FALSE;  
     	tAdjustableDelay			: TIME 			:= T#100MS;  //Configured time between the states.
+		
+	//Event Logger call and testing
+	fbEventHandler		: FB_EventHandler;
+		bExecuteEvent	: BOOL := FALSE;
+		bEventDone		: BOOL := FALSE;
 	
+	//Alarm Raise and Confirm Example
+	fbAlarm				: FB_AlarmHandler;
+		bAlarmEvent		: BOOL := FALSE;
+		bConfirm		: BOOL := FALSE;
+		bDoSomething	: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -61,20 +67,52 @@ END_VAR
 PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();
 
+//<Event Logger Test>----------------------------------------------------------------------------------------------------------------------------
+// Events call
+fbEventHandler(
+	bExecute 	:= bExecuteEvent,	// Triggers the event
+	eEventName 	:= E_Events.INFO,	// Selects the type of event to be triggered.
+	sSystem		:= 'Motor M1',		// System message
+	sMessage	:= 'STO Not Ready!',// Alarm Message
+	bDone		=> bEventDone		// Event Listed
+);
+
+IF bEventDone THEN
+	bExecuteEvent 	:= FALSE;
+	bEventDone		:= FALSE;	
+END_IF
+
+//Alarms Call
+fbAlarm(
+	evtEntry 	:= TC_Events.ASRS.Error,	// Selects the type of event to be triggered.
+	bEvt 		:= bAlarmEvent, 			// Triggers the alarm. If TRUE the alarm is raised and when turn into FALSE the alarm is cleared.
+	bConfirm 	:= bConfirm,				// Confirms the Alarm State
+	sSystem		:= 'Motor M1',				// System message
+	sMessage	:= 'Over Voltage!'			// Alarm Message
+);
+//Do something while the alarm is raised
+IF fbAlarm.eConfirmationState = TcEventConfirmationState.WaitForConfirmation THEN
+	bDoSomething 	:= TRUE;
+ELSE
+	bDoSomething 	:= FALSE;
+END_IF
+
+//<\Event Logger Test>---------------------------------------------------------------------------------------------------------------------------
+
 //<Balance Test>---------------------------------------------------------------------------------------------------------------------------------
 
 // FB_TCPClient instance to handle the connection with the Balance and interpretate it's response
 fbTcpClient(
-    sRemoteHost 	:= sServerHost,			//Server Ip address
-    nRemotePort 	:= nServerPort,			//Server communication Port
-    bTrigger 		:= bStartCommunication,	//Triggers the communication
-    tStateDelay 	:= tAdjustableDelay,  	//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
-    sParsedResponse	=> sResponseMessage, 	//Personalized Resposse message
-    fWeight 		=> fMeasuredWeight, 	//Parsed LReal Weight meassured if eveything goes ok
-	bConnectionDone	=> bConnectionDone,		//Communication Finished
-    bBusy 			=> ,					//Busy status
-    bError 			=> ,					//Error status
-    nErrorID 		=> 						//Error ID if in error
+    sRemoteHost 	:= GVL_MachineParam.aBalanceIP,		//Server Ip address
+    nRemotePort 	:= GVL_MachineParam.nBalancePort,	//Server communication Port
+    bTrigger 		:= bStartCommunication,				//Triggers the communication
+    tStateDelay 	:= tAdjustableDelay,  				//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
+    sParsedResponse	=> sResponseMessage, 				//Personalized Resposse message
+    fWeight 		=> fMeasuredWeight, 				//Parsed LReal Weight meassured if eveything goes ok
+	bConnectionDone	=> bConnectionDone,					//Communication Finished
+    bBusy 			=> ,								//Busy status
+    bError 			=> ,								//Error status
+    nErrorID 		=> 									//Error ID if in error
 );
 
 // Reset Trigger after FB finished
@@ -242,6 +280,31 @@ END_IF
       <LineId Id="2" Count="0" />
       <LineId Id="1388" Count="0" />
       <LineId Id="2749" Count="0" />
+      <LineId Id="2844" Count="1" />
+      <LineId Id="2858" Count="0" />
+      <LineId Id="2848" Count="0" />
+      <LineId Id="2855" Count="1" />
+      <LineId Id="2868" Count="1" />
+      <LineId Id="2860" Count="0" />
+      <LineId Id="2854" Count="0" />
+      <LineId Id="2863" Count="0" />
+      <LineId Id="2862" Count="0" />
+      <LineId Id="2866" Count="0" />
+      <LineId Id="2889" Count="0" />
+      <LineId Id="2865" Count="0" />
+      <LineId Id="2871" Count="0" />
+      <LineId Id="2870" Count="0" />
+      <LineId Id="2872" Count="0" />
+      <LineId Id="2878" Count="2" />
+      <LineId Id="2891" Count="1" />
+      <LineId Id="2881" Count="0" />
+      <LineId Id="2883" Count="0" />
+      <LineId Id="2882" Count="0" />
+      <LineId Id="2884" Count="0" />
+      <LineId Id="2887" Count="1" />
+      <LineId Id="2885" Count="0" />
+      <LineId Id="2847" Count="0" />
+      <LineId Id="2846" Count="0" />
       <LineId Id="2751" Count="1" />
       <LineId Id="2789" Count="0" />
       <LineId Id="2763" Count="16" />
