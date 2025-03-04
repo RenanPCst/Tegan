@@ -3,6 +3,9 @@
   <GVL Name="GVL_Safety" Id="{9ede18c0-9e8b-49e2-8d96-a4cc1a1d6e41}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
+	//Safety All set and enabled to run the machine	
+	bSafetyEnable			AT %I* : BOOL;
+	
 	//EL6910 Safety project Variables
 	bSafetyErrorAck			AT %Q* : BOOL;
 	bSafetyRun				AT %Q* : BOOL;
@@ -25,11 +28,8 @@ VAR_GLOBAL
 	iM8STOErrorAck			AT %Q* : BOOL;
 	iM8STORun				AT %Q* : BOOL;
 
-	//Air Supply control variables and Alias changing
-	bAirSupplyEnable		AT %Q*	: BOOL;
-	bAirSupplyReset			AT %Q*	: BOOL;
-	
-	bResetButtonBlink		AT %I*	: BOOL; //reset button blink signal
+	//reset button blink signal
+	bResetButtonBlink		AT %I*	: BOOL; 
 	
 	SafetyInputs			AT %I*	: ST_SafetyInputs;
 	SafetyOutputs			AT %Q*	: ST_SafetyOutputs;
@@ -39,6 +39,15 @@ VAR_GLOBAL
 	bM2STOEnabled			AT %I*	: BOOL;
 	bM3STOEnabled			AT %I*	: BOOL;
 
+	//Doors Logic Safety Alias Data exchange
+	bDoorClosedAlias		AT %I*	: BOOL;
+	bDoorLockedFeedback		AT %I*	: BOOL;
+	bDoorLockCommand		AT %Q*	: BOOL;
+	
+	//Air Supply Safety Alias Data exchange
+	bAirSupplyEnable		AT %Q*	: BOOL;
+	bAirSupplyReset			AT %Q*	: BOOL;
+	bAirEnabledFeedback		AT %I* 	: BOOL;
 	
 	//Temporary
 	bResetButtonVISU		AT %I*	: BOOL;

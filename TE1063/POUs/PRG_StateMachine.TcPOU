@@ -11,6 +11,10 @@ VAR
     bErrorFlag		: BOOL; 
 	bPowerUpTimerComplete : BOOL;
 	
+	//Initialization stage
+	fbInitChecks			: FB_InitChecks; //FB Reponsible for the Init state Logic
+		bPowerUpComplete	: BOOL := FALSE; //Flag response to the FB_InitChecks
+	
 	//Air Flow Variables
 	FB_AirFlowCheck 	: FB_AirFlowCheck;  //FB instance
     bFlowStable 		: BOOL;             //stable flow flag
@@ -58,13 +62,22 @@ END_IF
 			
 //Sequence
 CASE CurrentState OF
-    E_MachineStates.INIT: //Initialization stage - checking powersuply 
-        IF GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOK THEN
-            CurrentState := E_MachineStates.CHECK_AIR_FLOW;
-        ELSE
-            bErrorFlag := TRUE;
-            CurrentState := E_MachineStates.ERROR_STATE;
-        END_IF;
+    E_MachineStates.INIT: //Initialization stage - checking powersuply, doors and air supply
+        FB_InitChecks(
+		bPower24V_OK  := GVL_IO.gDigInputs.b24VPowerSupplyOK,
+		bPower48V_OK  := GVL_IO.gDigInputs.b48VPowerSupplyOK,
+		bDoorsClosed  := GVL_Safety.bDoorClosedAlias,
+		bDoorsLocked  := GVL_Safety.bDoorLockedFeedback,
+		bAirEnabled   := GVL_Safety.bAirEnabledFeedback,
+		bInitOK       => bPowerUpComplete,
+		bError        => bErrorFlag
+	);
+
+	IF bErrorFlag THEN
+		CurrentState := E_MachineStates.ERROR_STATE;
+	ELSIF bPowerUpComplete THEN
+		CurrentState := E_MachineStates.CHECK_AIR_FLOW;
+	END_IF;
 
     E_MachineStates.CHECK_AIR_FLOW: //Checking if there is enough exaustion air flow on the system
 	
@@ -129,6 +142,7 @@ CASE CurrentState OF
 
     E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
 
+		(*
 		//Call FB responsible for take the leak test on all loops.
 		FB_LeakTest(
 			aSolenoidSets 		:= ValveConfigs.aSolenoidSets,
@@ -152,7 +166,7 @@ CASE CurrentState OF
 				iLoopIndex := 1;
 			END_IF;
 		END_IF;
-
+	*)
 
     E_MachineStates.RECOVERY_PHASE:
         //Setup and execute FB_RecoveryPhase
@@ -215,7 +229,9 @@ END_CASE;]]></ST>
       <LineId Id="304" Count="1" />
       <LineId Id="303" Count="0" />
       <LineId Id="291" Count="0" />
-      <LineId Id="212" Count="9" />
+      <LineId Id="212" Count="1" />
+      <LineId Id="709" Count="13" />
+      <LineId Id="219" Count="2" />
       <LineId Id="505" Count="0" />
       <LineId Id="642" Count="0" />
       <LineId Id="511" Count="17" />
@@ -235,6 +251,7 @@ END_CASE;]]></ST>
       <LineId Id="397" Count="0" />
       <LineId Id="399" Count="4" />
       <LineId Id="243" Count="2" />
+      <LineId Id="699" Count="0" />
       <LineId Id="444" Count="3" />
       <LineId Id="468" Count="0" />
       <LineId Id="448" Count="18" />

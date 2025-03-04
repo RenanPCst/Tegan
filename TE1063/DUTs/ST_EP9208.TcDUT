@@ -4,22 +4,22 @@
     <Declaration><![CDATA[TYPE ST_EP9208 :
 STRUCT
 	//VICI Valves connected to EP9208-1035
-	ECAT_ControlWord      				: UINT;    // Control Word do EtherCAT
-    ECAT_TargetPosition   				: LREAL;   // Posição alvo
-    ECAT_TargetVelocity   				: LREAL;   // Velocidade alvo
-    ECAT_StatusWord       				: UINT;    // Status Word do EtherCAT
-    ECAT_ModeOfOperation  				: BYTE;    // Modo de operação
+	ECAT_ControlWord      				: UINT;    // EtherCAT Control Word 
+    ECAT_TargetPosition   				: LREAL;   // Target Position
+    ECAT_TargetVelocity   				: LREAL;   // Target Velocity
+    ECAT_StatusWord       				: UINT;    // EtherCAT Status Word 
+    ECAT_ModeOfOperation  				: BYTE;    // Operation Mode
 	
 	iTargetPosition			AT %I*		: UDINT;
 	iTargetVelocity			AT %I*		: UDINT;
-	nTargetPosition			AT %Q*		: UDINT; //4
+	nTargetPosition			AT %Q*		: UDINT; 			//
 	iStatusWord				AT %I*		: UINT;
-	qControlWord			AT %Q*		: WORD; //1
-	nTargetVelocity			AT %Q*		: INT; //3
+	qControlWord			AT %Q*		: WORD; 			//
+	nTargetVelocity			AT %Q*		: INT;  			//
 	nActualVelocity			AT %I*	 	: INT;
-	nState					AT %I*		: WORD; //2			//Terminal State from IO Terminal Info Data
+	nState					AT %I*		: WORD; 			//Terminal State from IO Terminal Info Data
 	sStatus								: STRING(200);
-	Axis	                    		: AXIS_REF; 		//TC2_MC2.AXIS_REF;
+	Axis	                    		: AXIS_REF; 		//TC2_MC2.AXIS_REF Axis reference for the motor;
 	n_Axis3TorqueLimitation	AT %Q*		: UINT	:=	32767;
 	n_Axis3ActualTorque					: REAL; 			//now part of structured varaible axis_ref
 	

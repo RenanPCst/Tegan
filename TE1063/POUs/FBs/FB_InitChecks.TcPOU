@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_InitChecks" Id="{ca2f8e73-30a6-41b7-a1d5-e28e096b5f8e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_InitChecks
+VAR_INPUT
+	bPower24V_OK : BOOL;
+    bPower48V_OK : BOOL;
+    bDoorsClosed : BOOL;
+    bDoorsLocked : BOOL;
+    bAirEnabled  : BOOL;
+END_VAR
+VAR_OUTPUT
+	bInitOK : BOOL; 	//Indicates whether you can advance from one state to another
+    bError  : BOOL;
+END_VAR
+VAR
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 1. Check the power supply
+IF NOT (bPower24V_OK AND bPower48V_OK) THEN
+    bError := TRUE;
+    bExecuteEvent := TRUE;
+    fbEventHandler(
+        bExecute  := bExecuteEvent,
+        eEventName := E_Events.WARNING,
+        sSystem    := 'Power Supply Check',
+        sMessage   := 'Power Supply 24/48Vdc are not ok!',
+        bDone      => bEventDone
+    );
+    ResetEventTrigger();
+    
+    //Reset air supply and door lock commands
+    GVL_Safety.bAirSupplyEnable := FALSE;
+    GVL_Safety.bDoorLockCommand := FALSE;
+
+// 2. Check if doors are closed
+ELSIF NOT bDoorsClosed THEN
+    bExecuteEvent := TRUE;
+    fbEventHandler(
+        bExecute  := bExecuteEvent,
+        eEventName := E_Events.WARNING,
+        sSystem    := 'Safety',
+        sMessage   := 'Doors not closed!',
+        bDone      => bEventDone
+    );
+    ResetEventTrigger();
+
+    //Reset air supply and door lock commands
+    GVL_Safety.bAirSupplyEnable := FALSE;
+    GVL_Safety.bDoorLockCommand := FALSE;
+
+// 3. Lock doors if they are not locked
+ELSIF NOT bDoorsLocked THEN
+    GVL_Safety.bDoorLockCommand := TRUE; //Lock the doors
+
+    //Reset air supply command
+    GVL_Safety.bAirSupplyEnable := FALSE;
+
+// 4. If doors are locked but air is not enabled, activate air supply
+ELSIF NOT bAirEnabled THEN
+    bExecuteEvent := TRUE;
+    fbEventHandler(
+        bExecute  := bExecuteEvent,
+        eEventName := E_Events.INFO,
+        sSystem    := 'Safety',
+        sMessage   := 'All Doors Locked!',
+        bDone      => bEventDone
+    );
+    ResetEventTrigger();
+    
+    GVL_Safety.bAirSupplyEnable := TRUE;
+
+// 5. If everything is OK, move to the next state
+ELSE
+    bExecuteEvent := TRUE;
+    fbEventHandler(
+        bExecute  := bExecuteEvent,
+        eEventName := E_Events.INFO,
+        sSystem    := 'Safety',
+        sMessage   := 'Air Supply Enabled!',
+        bDone      => bEventDone
+    );
+    ResetEventTrigger();
+    
+    bInitOK := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+    <Action Name="ResetEventTrigger" Id="{ddb8bc5a-944b-470b-9118-654fa8c992ef}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_InitChecks">
+      <LineId Id="220" Count="67" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_InitChecks.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
