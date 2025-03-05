@@ -59,6 +59,12 @@ VAR
 		bAlarmEvent		: BOOL := FALSE;
 		bConfirm		: BOOL := FALSE;
 		bDoSomething	: BOOL;
+		
+	//Pressure Scaling Value testing
+	fbSensorScaling		: FB_SensorScaling;
+		bPressureInput	: BOOL := FALSE;
+		rPressureSensor	: REAL;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -120,8 +126,17 @@ IF bConnectionDone THEN
     bStartCommunication := FALSE;
 END_IF
 
-//</Balance Test>---------------------------------------------------------------------------------------------------------------------------------
+//<\Balance Test>---------------------------------------------------------------------------------------------------------------------------------
 
+//<Pressure Testing>------------------------------------------------------------------------------------------------------------------------------
+IF bPressureInput THEN
+	fbSensorScaling(bExecute := TRUE, iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
+END_IF
+IF fbSensorScaling.bDone THEN
+	bPressureInput := FALSE;
+END_IF
+
+//<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------
 
 //Motors Moviment Test M1 >> M8 ------------------------------------------------------------------------------------------------------------------
 //Get actual position from Motor 1
@@ -311,7 +326,14 @@ END_IF
       <LineId Id="2761" Count="0" />
       <LineId Id="2790" Count="0" />
       <LineId Id="2750" Count="0" />
+      <LineId Id="2952" Count="0" />
       <LineId Id="2762" Count="0" />
+      <LineId Id="2965" Count="0" />
+      <LineId Id="2956" Count="0" />
+      <LineId Id="2964" Count="0" />
+      <LineId Id="2966" Count="2" />
+      <LineId Id="2954" Count="0" />
+      <LineId Id="2953" Count="0" />
       <LineId Id="866" Count="0" />
       <LineId Id="821" Count="0" />
       <LineId Id="1667" Count="8" />

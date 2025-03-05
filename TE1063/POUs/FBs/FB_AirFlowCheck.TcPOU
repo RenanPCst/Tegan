@@ -4,48 +4,65 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_AirFlowCheck
 
 VAR_INPUT
-	rPressureInput 		: REAL; //Current value of the air pressure/flow sensor
-    rPressureThreshold 	: REAL; //Minimum required pressure/flow limit
-    tStabilizationTime 	: TIME; //Time needed for stabilization
-    bExecute 			: BOOL; //Signal to start verification
+    iRawSensorValue     : INT;   // Raw sensor value (16-bit)
+    iSensorID           : INT;   // Sensor ID (1 = Festo, 2 = SMC)
+    rPressureThreshold  : REAL;  // Minimum air pressure threshold
+    tStabilizationTime  : TIME;  // Required stabilization time
+    bExecute            : BOOL;  // Signal to start verification
 END_VAR
 
 VAR_OUTPUT
-	bAirFlowOK 		: BOOL;		//Indicates whether everything went well in the flow check
-	bAirFlowError 	: BOOL;     //Indicates whether there was a failure in the flow
+    bAirFlowOK      : BOOL;  // Indicates if the airflow is within acceptable limits
+    bAirFlowError   : BOOL;  // Indicates if there was an airflow failure
 END_VAR
 
 VAR
-	TON_Stabilization : TON;    //Timer for flow stabilization
+    TON_Stabilization   : TON;              // Stabilization timer
+    FB_SensorScaling    : FB_SensorScaling; // Instance of FB to convert sensor data
+    rConvertedPressure  : REAL;             // Scaled pressure value
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF bExecute THEN
-    IF rPressureInput >= rPressureThreshold THEN
-        //Start the stabilization timer
+      <ST><![CDATA[// If execution is active, start verification
+IF bExecute THEN
+    
+    // 1. Convert the raw sensor value before checking airflow
+    FB_SensorScaling(
+        bExecute   := TRUE,
+        iRawValue  := iRawSensorValue,
+        iSensorID  := iSensorID,
+        bDone      => ,
+        rPressure  => rConvertedPressure
+    );
+
+    // 2. If converted pressure is above the threshold, start the stabilization timer
+    IF rConvertedPressure >= rPressureThreshold THEN
         TON_Stabilization(IN := TRUE, PT := tStabilizationTime);
 
+        // 3. If the stabilization time has been reached, consider airflow as OK
         IF TON_Stabilization.Q THEN
-            //Stabilized flow
-            bAirFlowOK 		:= TRUE;
-            bAirFlowError 	:= FALSE;
+            bAirFlowOK     := TRUE;
+            bAirFlowError  := FALSE;
         END_IF;
+
     ELSE
-        //Insufficient flow, reset timer
+        // 4. If the pressure is insufficient, reset the timer and generate an error
         TON_Stabilization(IN := FALSE);
-        bAirFlowOK 		:= FALSE;
-        bAirFlowError 	:= TRUE; //Pressure below limit
+        bAirFlowOK     := FALSE;
+        bAirFlowError  := TRUE;
     END_IF;
+
 ELSE
-    //Reset outputs when not running
+    // 5. Reset outputs when not running
     TON_Stabilization(IN := FALSE);
-    bAirFlowOK 		:= FALSE;
-    bAirFlowError 	:= FALSE;
-END_IF;
-]]></ST>
+    bAirFlowOK     := FALSE;
+    bAirFlowError  := FALSE;
+END_IF;]]></ST>
     </Implementation>
     <LineIds Name="FB_AirFlowCheck">
-      <LineId Id="27" Count="21" />
+      <LineId Id="117" Count="2" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="121" Count="29" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
