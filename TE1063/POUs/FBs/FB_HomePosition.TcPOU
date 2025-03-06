@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_HomePosition" Id="{a4f8c8e7-dddf-4a94-bcd4-7e3204ae2ea0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HomePosition
+VAR_INPUT
+    Axis         : AXIS_REF;    // Axis Reference
+    bHomeSensor  : BOOL;        // Homing Sensor Input
+    bStartHoming : BOOL;        // Command to start homing 
+	sAxisName	 : STRING(256);	// Axis name to fill the eventlogger
+END_VAR
+
+VAR_OUTPUT
+    bHomingDone   : BOOL;        // Indicates that homing is complete
+	bError        : BOOL;   	// Indicates error in homing process
+END_VAR
+
+VAR
+    HomeFB 			: MC_Home;     		// Homing FB
+	PowerFB			: MC_Power;			// FB to Enable and Power up the Axis
+	MoveFB			: MC_MoveVelocity;	// Moving by velocity FB
+		bMoveAxis	: BOOL := FALSE;
+    iState  		: INT  := 0;    	// Machine State indicator
+	
+	//Event Logger Variables
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Homing logic inside the function block
+CASE iState OF
+    
+    0: // Check if the axis is already at the sensor position
+        IF NOT bHomeSensor THEN  // Sensor already triggered? Skip directly to homing
+            iState := 2;
+        ELSE
+            iState := 1; // If not, enable the axis and move to the sensor
+        END_IF
+
+    1: // Enable the axis before moving to the sensor
+        PowerFB(
+            Enable := TRUE,  // Enable the drive
+            Axis   := Axis
+        );
+
+        IF PowerFB.Status THEN // Axis successfully enabled
+            iState := 2; // Next state: move the axis to the sensor
+        END_IF
+
+    2: // Moving the axis to the sensor		
+        MoveFB(
+            Execute   := bMoveAxis,
+            Axis      := Axis,
+            Velocity  := 10.0,	// Safe velocity to approach the sensor
+            Direction := 1		// Set the correct direction for your system
+        );
+
+        IF NOT bHomeSensor THEN  // Sensor triggered (reference position found)
+            bMoveAxis := FALSE; // Stop the movement
+            iState := 3; // Next state: execute homing
+        ELSE
+            IF iState = 2 THEN // Only activate bMoveAxis in state 2
+                bMoveAxis := TRUE;
+            END_IF
+        END_IF
+
+    3: // Executing Homing   
+        // Activate homing only if it has not been executed yet
+        IF NOT HomeFB.Execute THEN
+            bStartHoming := TRUE;
+        END_IF
+
+        // Call the MC_Home function block
+        HomeFB(
+            Execute := bStartHoming,
+            Axis := Axis,
+            Position := 0.0, // Set the reference position to zero
+            HomingMode := MC_DefaultHoming, // Uses the safest mode
+            bCalibrationCam := NOT bHomeSensor
+        );
+
+        IF HomeFB.Done THEN
+            bHomingDone := TRUE;
+            bStartHoming := FALSE; // Reset homing command
+            iState := 4;
+        END_IF
+
+        IF HomeFB.Error THEN
+            bHomingDone := FALSE;
+			bError		:= TRUE;
+            iState := 99; // Error state
+        END_IF
+
+    4: // Homing Completed
+        // The axis is now zeroed and can continue normal operation
+		bExecuteEvent := TRUE;
+		fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.INFO,
+			sSystem    := Concat('Home Position: ',sAxisName),
+			sMessage   := 'Axis in home position!',
+			bDone      => bEventDone
+		);
+		ResetEventTrigger();
+
+    99: // Error state
+        // Here you can add error handling, reset homing, or trigger an alarm
+		bExecuteEvent := TRUE;
+		fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.ERROR,
+			sSystem    := Concat('Home Position: ',sAxisName),
+			sMessage   := 'Error State!!',
+			bDone      => bEventDone
+		);
+		ResetEventTrigger();
+END_CASE]]></ST>
+    </Implementation>
+    <Action Name="ResetEventTrigger" Id="{dab3b4cb-7b2f-45f7-92d4-f0d47449c05c}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_HomePosition">
+      <LineId Id="343" Count="59" />
+      <LineId Id="437" Count="0" />
+      <LineId Id="403" Count="4" />
+      <LineId Id="413" Count="7" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="408" Count="2" />
+      <LineId Id="428" Count="7" />
+      <LineId Id="427" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HomePosition.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

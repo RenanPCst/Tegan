@@ -41,11 +41,13 @@ VAR
     MotorErrorID 			: UDINT;                        //motor error id						
 	
 	//others FB Instances
-	FB_SealStages 		: FB_SealStages;
+	fbSealStages 		: FB_SealStages;
 		bSealSuccess	: BOOL := FALSE; //seal sucess flag FB_SealStages
 		bSealError		: BOOL := FALSE; //seal error flag FB_SealStages
 		
-	FB_LeakTest		:	FB_LeakTest;
+	fbLeakTest		:	FB_LeakTest;
+	
+	fbHardwareInit :	FB_HardwareInit;
 	
 	E_MachineState			: INT;
 	
@@ -152,12 +154,27 @@ CASE CurrentState OF
 			END_IF;
 		END_IF;	
 
-    E_MachineStates.HARDWARE_INIT:
-        IF TRUE THEN //checking all hardware. testing pumps and valves etc.
-            CurrentState 	:= E_MachineStates.SEAL_STAGES;
-        ELSE
-            bErrorFlag 		:= TRUE;
-            CurrentState	:= E_MachineStates.ERROR_STATE;
+    E_MachineStates.HARDWARE_INIT: //Initiate the motors M1 - M3 going to home position sensor e then get zero position. M4 -> M8 valves going to position 1.
+        fbHardwareInit(
+            AxisM1 := GVL_Motion.M1Motor.Axis,
+            AxisM2 := GVL_Motion.M2Motor.Axis,
+            AxisM3 := GVL_Motion.M3Motor.Axis,
+            AxisM4 := GVL_Motion.M4Valve1.Axis,
+            AxisM5 := GVL_Motion.M5Valve2.Axis,
+            AxisM6 := GVL_Motion.M6Valve3.Axis,
+            AxisM7 := GVL_Motion.M7Valve4.Axis,
+            AxisM8 := GVL_Motion.M8Valve5.Axis,
+            bExecute := TRUE,
+            bHomeSensorM1 := GVL_IO.gDigInputs.bStageCollection_Home,
+            bHomeSensorM2 := GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home,
+            bHomeSensorM3 := GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home
+        );
+		//State Transition
+        IF fbHardwareInit.bError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+        IF fbHardwareInit.bDone THEN
+            CurrentState := E_MachineStates.SEAL_STAGES;
         END_IF;
 
     E_MachineStates.SEAL_STAGES:
@@ -166,7 +183,7 @@ CASE CurrentState OF
 		
 		//calling the FB_SealStages
 		IF GVL_Safety.bM1STOEnabled THEN
-			FB_SealStages(
+			fbSealStages(
 				Axis				:= GVL_Motion.M1Motor.Axis,
 				iTargetPosition		:= GVL_MachineParam.aM1Position[2], //Seal Position
 				rVelocity			:= GVL_Motion.M1Motor.qTargetVelocity,
@@ -194,7 +211,7 @@ CASE CurrentState OF
 
 		(*
 		//Call FB responsible for take the leak test on all loops.
-		FB_LeakTest(
+		fbLeakTest(
 			aSolenoidSets 		:= ValveConfigs.aSolenoidSets,
 			aValveConfigs		:= ValveConfigs.aValvePositions,
 			rPressureThreshold 	:= ValveConfigs.rPressureThreshold,
@@ -219,7 +236,8 @@ CASE CurrentState OF
 	*)
 
     E_MachineStates.RECOVERY_PHASE:
-        //Setup and execute FB_RecoveryPhase
+       (*
+		 //Setup and execute FB_RecoveryPhase
         RecoveryPhaseFB(
             RecipeParameters := GVL_RecipeParameters,  	//recipe parameters reference 
             aValveConfigs := ValveConfigs,             	//6position valves reference
@@ -238,7 +256,7 @@ CASE CurrentState OF
         ELSIF bRecoverySuccess THEN
             CurrentState := E_MachineStates.DRYING_PHASE; //step forward to step ahead
         END_IF;
-
+	*)
     E_MachineStates.WASHING_PHASE: //TODO
         IF TRUE THEN //washing sequence
             CurrentState := E_MachineStates.DRYING_PHASE;
@@ -324,7 +342,10 @@ END_IF;]]></ST>
       <LineId Id="945" Count="7" />
       <LineId Id="943" Count="0" />
       <LineId Id="923" Count="1" />
-      <LineId Id="227" Count="10" />
+      <LineId Id="227" Count="2" />
+      <LineId Id="1009" Count="17" />
+      <LineId Id="1028" Count="2" />
+      <LineId Id="236" Count="1" />
       <LineId Id="652" Count="2" />
       <LineId Id="643" Count="0" />
       <LineId Id="440" Count="0" />
@@ -345,7 +366,9 @@ END_IF;]]></ST>
       <LineId Id="468" Count="0" />
       <LineId Id="448" Count="18" />
       <LineId Id="251" Count="2" />
-      <LineId Id="530" Count="17" />
+      <LineId Id="530" Count="0" />
+      <LineId Id="1033" Count="0" />
+      <LineId Id="531" Count="16" />
       <LineId Id="259" Count="27" />
       <LineId Id="801" Count="0" />
       <LineId Id="804" Count="0" />

@@ -1,23 +1,136 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_HardwareInit" Id="{31780309-bb82-4307-91d5-5548f242181e}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_HardwareInit
 
 VAR_INPUT
+    AxisM1, AxisM2, AxisM3 : AXIS_REF;   				// DC Motors Axis instances
+    AxisM4, AxisM5, AxisM6, AxisM7, AxisM8 : AXIS_REF;  // Servomotors Axis instances
+    bExecute : BOOL;  									// Command to start the motors initialization
+    bHomeSensorM1, bHomeSensorM2, bHomeSensorM3 : BOOL; // DC Motors home position sensors
 END_VAR
 
 VAR_OUTPUT
-	bHardwareOK : BOOL;
+    bDone  : BOOL;  // Indicates that initialization was completed successfully
+    bError : BOOL;  // Indicates an error in the process
 END_VAR
 
 VAR
+	bMoveAxis 	: BOOL := FALSE;
+	bMoveServo 	: BOOL := FALSE;
+    fbHomeM1, fbHomeM2, fbHomeM3 : FB_HomePosition;
+    fbMoveM4, fbMoveM5, fbMoveM6, fbMoveM7, fbMoveM8 : FB_ValvePositionControl;
+	
+    iState : INT := 0;
+	
+	//Event Logger Variables
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[]]></ST>
+      <ST><![CDATA[CASE iState OF
+    0: // Initializing Homing DC Motors M1 -> M3
+        bError := FALSE;   // Error reset on startup
+        bMoveAxis := bExecute;
+
+        fbHomeM1(Axis := AxisM1, bHomeSensor := bHomeSensorM1, bStartHoming := bExecute, sAxisName := 'M1');
+        fbHomeM2(Axis := AxisM2, bHomeSensor := bHomeSensorM2, bStartHoming := bExecute, sAxisName := 'M2');
+        fbHomeM3(Axis := AxisM3, bHomeSensor := bHomeSensorM3, bStartHoming := bExecute, sAxisName := 'M3');
+
+        iState := 1;
+
+    1: // Check if M1 -> M3 motors have completed homing
+        IF fbHomeM1.bHomingDone AND fbHomeM2.bHomingDone AND fbHomeM3.bHomingDone THEN
+            bMoveAxis := FALSE;
+            
+            // Only move forward to home servos if there is no error in DC motors
+            IF NOT fbHomeM1.bError AND NOT fbHomeM2.bError AND NOT fbHomeM3.bError THEN
+                iState := 2;
+            ELSE
+                bError := TRUE;
+                iState := 99; // Error State
+            END_IF;
+        END_IF;
+
+    2: // Move servos to home position. Valve position 1.
+        bMoveServo := bExecute;
+
+        fbMoveM4(bEnable := bMoveServo, ServoAxis := AxisM4, iValvePosition := 1);
+        fbMoveM5(bEnable := bMoveServo, ServoAxis := AxisM5, iValvePosition := 1);
+        fbMoveM6(bEnable := bMoveServo, ServoAxis := AxisM6, iValvePosition := 1);
+        fbMoveM7(bEnable := bMoveServo, ServoAxis := AxisM7, iValvePosition := 1);
+        fbMoveM8(bEnable := bMoveServo, ServoAxis := AxisM8, iValvePosition := 1);
+
+        // Checks if all servos have reached the home position
+        IF fbMoveM4.bMoveDone AND fbMoveM5.bMoveDone AND fbMoveM6.bMoveDone AND fbMoveM7.bMoveDone AND fbMoveM8.bMoveDone THEN
+            bDone := TRUE;
+            bMoveServo := FALSE;
+            iState := 100; // End State
+        END_IF;
+        
+        // Check if any servo has an error
+        IF fbMoveM4.bError OR fbMoveM5.bError OR fbMoveM6.bError OR fbMoveM7.bError OR fbMoveM8.bError THEN
+            bError := TRUE;
+            iState := 99; // Error State
+        END_IF;
+
+    99: // Error State
+        bError 		:= TRUE;
+        bDone 		:= FALSE;
+        bMoveAxis 	:= FALSE;
+        bMoveServo 	:= FALSE;
+		
+		//Event Logger error message
+		bExecuteEvent := TRUE;
+		fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.ERROR,
+			sSystem    := 'Hardware Init: ',
+			sMessage   := 'Something got wrong with motors initialization!!',
+			bDone      => bEventDone
+		);
+		ResetEventTrigger();
+
+    100: // Hardware Init Completed
+		//Event Logger info message
+		bExecuteEvent := TRUE;
+		fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.INFO,
+			sSystem    := 'Hardware Init: ',
+			sMessage   := 'Hardware Initialized with success!!',
+			bDone      => bEventDone
+		);
+		ResetEventTrigger();
+        bDone := TRUE;
+END_CASE;
+]]></ST>
     </Implementation>
+    <Action Name="ResetEventTrigger" Id="{49b081fb-821b-4506-a920-a26eb4c501f1}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="FB_HardwareInit">
+      <LineId Id="94" Count="50" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="155" Count="7" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="145" Count="1" />
+      <LineId Id="165" Count="8" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="147" Count="1" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HardwareInit.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

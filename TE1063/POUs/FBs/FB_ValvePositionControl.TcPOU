@@ -4,42 +4,42 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_ValvePositionControl
 VAR_INPUT
 	bEnable      	: BOOL;			// Enables the FB
-    ValvePosition	: INT;   		// Desired Position to move the valve (1 a 6)
+    iValvePosition	: INT;   		// Desired Position to move the valve (1 a 6)
 END_VAR
 VAR_OUTPUT
-	ActualPosition 	: INT;  		// Actual valve position
-    MoveDone       	: BOOL; 		// 
-	Busy		   	: BOOL;
-    Error          	: BOOL; 		// Indicates whether the movement has finished
-	ErrorID		   	: UDINT;
+	iActualPosition : INT;  		// Actual valve position
+    bMoveDone       : BOOL; 		// 
+	bBusy		   	: BOOL;
+    bError          : BOOL; 		// Indicates whether the movement has finished
+	iErrorID		: UDINT;
 END_VAR
 VAR_IN_OUT
 	ServoAxis    	: AXIS_REF;  	// Axis Reference
 END_VAR
 VAR
-    MC_Power     	: MC_Power;
-    MC_MoveAbs   	: MC_MoveAbsolute;
-    MC_Reset     	: MC_Reset;
-    TargetPos    	: LREAL; 		// Target position in degrees
-    State        	: INT := 0; 	// State machine initializing in 0
-    ModeOfOperation : INT;
+    MC_Power     		: MC_Power;
+    MC_MoveAbs   		: MC_MoveAbsolute;
+    MC_Reset     		: MC_Reset;
+    rTargetPos    		: LREAL; 		// Target position in degrees
+    iState        		: INT := 0; 	// State machine initializing in 0
+    iModeOfOperation	: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Defines the valve positions within 0-360°
-CASE ValvePosition OF
-    1: TargetPos := 0.0;
-    2: TargetPos := 60.0;
-    3: TargetPos := 120.0;
-    4: TargetPos := 180.0;
-    5: TargetPos := 240.0;
-    6: TargetPos := 300.0;
+CASE iValvePosition OF
+    1: rTargetPos := 0.0;
+    2: rTargetPos := 60.0;
+    3: rTargetPos := 120.0;
+    4: rTargetPos := 180.0;
+    5: rTargetPos := 240.0;
+    6: rTargetPos := 300.0;
 ELSE
-    TargetPos := 0.0; // Default position if input is invalid
+    rTargetPos := 0.0; // Default position if input is invalid
 END_CASE
 
 // State machine to ensure the correct sequence of operations
-CASE State OF
+CASE iState OF
     0: // Checks if the drive needs to be enabled
         MC_Power(
             Axis := ServoAxis,
@@ -49,9 +49,9 @@ CASE State OF
         );
 
         IF MC_Power.Error THEN
-            State := 1; // If an error occurs, go to reset state
+            iState := 1; // If an error occurs, go to reset state
         ELSIF MC_Power.Active THEN
-            State := 2; // If the drive is enabled, proceed to motion state
+            iState := 2; // If the drive is enabled, proceed to motion state
         END_IF;
 
     1: // Resets error before continuing
@@ -61,20 +61,20 @@ CASE State OF
         );
 
         IF NOT MC_Reset.Busy THEN
-            State := 0; // Return to drive enabling state
+            iState := 0; // Return to drive enabling state
         END_IF;
 
     2: // Ensures the drive is in the correct mode before movement
         //ModeOfOperation := 1; // Profile Position Mode (PPM)
 
         IF MC_Power.Active THEN
-            State := 3; // Proceed to movement state
+            iState := 3; // Proceed to movement state
         END_IF;
 
     3: // Executes the movement if the drive is enabled
         MC_MoveAbs(
             Axis := ServoAxis,
-            Position := TargetPos,   // Sets the target position within 0 to 360°
+            Position := rTargetPos,   // Sets the target position within 0 to 360°
             Velocity := 5.0,        // Movement velocity
             Acceleration := 10.0,   // Acceleration
             Deceleration := 10.0,   // Deceleration
@@ -82,18 +82,18 @@ CASE State OF
         );
 
         IF MC_MoveAbs.Done THEN
-            State := 4; // Once the movement is complete, update variables
+            iState := 4; // Once the movement is complete, update variables
         END_IF;
 
     4: // Updates status and returns to the initial state
-        Busy 			:= MC_MoveAbs.Busy;
-        MoveDone 		:= MC_MoveAbs.Done;
-        Error 			:= MC_MoveAbs.Error;
-        ActualPosition 	:= ValvePosition;
+        bBusy 			:= MC_MoveAbs.Busy;
+        bMoveDone 		:= MC_MoveAbs.Done;
+        bError 			:= MC_MoveAbs.Error;
+        iActualPosition := iValvePosition;
 
         // Returns to the initial state, waiting for a new command
-        IF MoveDone THEN
-            State := 0;
+        IF bMoveDone THEN
+            iState := 0;
         END_IF;
 END_CASE;]]></ST>
     </Implementation>

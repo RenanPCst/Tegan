@@ -30,7 +30,7 @@ VAR
 	bSetZero		:	BOOL := FALSE;
 	
 	//Moviment testing Motos and Valves
-	ValveController : FB_ValvePositionControl; 	//FB Instance
+	fbValveController : FB_ValvePositionControl; 	//FB Instance
 		EnableServo     : BOOL := FALSE;
 		DesiredPos      : INT;   				// Choose valve position(1 a 6)
 		MoveNow         : BOOL := FALSE;
@@ -239,12 +239,13 @@ fbMcPower(
 DesiredPos := 5;
 
 IF NOT ValveInPosition AND EnableServo THEN
-ValveController(
+fbValveController(
     bEnable 		:= EnableServo,
 	ServoAxis		:= GVL_Motion.M4Valve1.Axis,
-    ValvePosition 	:= DesiredPos,
-	MoveDone		=> ValveInPosition
+    iValvePosition 	:= DesiredPos,
+	bMoveDone		=> ValveInPosition
 );
+
 END_IF
 
 //target positions test for the motors
@@ -371,6 +372,7 @@ END_IF
       <LineId Id="2030" Count="0" />
       <LineId Id="2036" Count="0" />
       <LineId Id="2032" Count="0" />
+      <LineId Id="3034" Count="0" />
       <LineId Id="2075" Count="0" />
       <LineId Id="2368" Count="0" />
       <LineId Id="1581" Count="0" />
