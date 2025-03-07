@@ -18,17 +18,10 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-	MotorStageCollection 	: FB_StageCollectionMotor; 	
-	MotorAxis 				: AXIS_REF;                 //FB instance for the motor
-    MotorInPosition 		: BOOL;                     //Flag to indicate position reached
-    MotorBusy 				: BOOL;                     //Flag to indicate movement in progress
-    MotorError 				: BOOL;                     //Flag to indicate error
-    MotorErrorID 			: UDINT; 
-	
 	FB_GetPosition		: FB_GetPosition;
 		bGetPosition	: BOOL := FALSE;
 	
-	FB_MotorControl		: FB_MotorControl;
+	fbMotorControl		: FB_MotorControl;
 		bMoveDone		: BOOL := FALSE;
 		bPosError		: BOOL := FALSE;
 		nPosErrorID		: UDINT;
@@ -37,6 +30,11 @@ VAR
 	fbSetZero			: MC_SetPosition;
 	
 	fbReadStatus		: MC_ReadStatus;
+	
+	//EventLogger Variables
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -54,7 +52,7 @@ END_IF
 IF GVL_Motion.M1Motor.rActualPosition <> iTargetPosition THEN
 	//Motor M1 Moving FB
 	IF bExecute AND GVL_Safety.iMotorsSTOEnabled THEN
-		FB_MotorControl(
+		fbMotorControl(
 			bEnable 	:= TRUE,
 			AxisRef 	:= Axis, 
 			nPosition 	:= iTargetPosition, 
@@ -66,13 +64,33 @@ IF GVL_Motion.M1Motor.rActualPosition <> iTargetPosition THEN
 		);
 	END_IF
 		
-	IF MotorStageCollection.Error THEN
+	IF bPosError THEN
 		//Indicate Error
 		bSealError 	:= TRUE;
 		bSealSucess := FALSE;
+		bExecuteEvent := TRUE;
+		//EventLogger Error
+    	fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.ERROR,
+			sSystem    := 'Seal Stage State',
+			sMessage   := concat('Error: ',sState),
+			bDone      => bEventDone
+    	);
+    	ResetEventTrigger();
+		
 	ELSE
 		bSealError 	:= FALSE;
-		IF MotorStageCollection.InPosition THEN
+		IF bMoveDone THEN
+			//Event Logger Info
+			fbEventHandler(
+				bExecute  := bExecuteEvent,
+				eEventName := E_Events.INFO,
+				sSystem    := 'Seal Stage',
+				sMessage   := 'Completed!',
+				bDone      => bEventDone
+    		);
+    		ResetEventTrigger();
 			//Sucess return boolean
 			bSealSucess := TRUE;
 		ELSE
@@ -81,6 +99,14 @@ IF GVL_Motion.M1Motor.rActualPosition <> iTargetPosition THEN
 	END_IF;
 END_IF]]></ST>
     </Implementation>
+    <Action Name="ResetEventTrigger" Id="{5e95a092-8b7d-48cb-95c9-b5f7292655e9}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="FB_SealStages">
       <LineId Id="167" Count="0" />
       <LineId Id="170" Count="7" />
@@ -90,9 +116,23 @@ END_IF]]></ST>
       <LineId Id="141" Count="11" />
       <LineId Id="82" Count="0" />
       <LineId Id="108" Count="0" />
-      <LineId Id="84" Count="11" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="227" Count="6" />
+      <LineId Id="224" Count="1" />
+      <LineId Id="88" Count="2" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="235" Count="6" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="92" Count="3" />
       <LineId Id="9" Count="0" />
       <LineId Id="181" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SealStages.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
