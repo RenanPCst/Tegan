@@ -4,8 +4,8 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RecoveryPhase
 
 VAR_INPUT
-	RecipeParameters 	: REFERENCE TO GVL_RecipeParameters;	//Parâmetros da receita 
-    aValveConfigs 		: ARRAY [1..5] OF ST_ValveConfig;       //Configuração das válvulas de 6 posições 
+	//RecipeParameters 	: REFERENCE TO GVL_RecipeParameters;	//Parâmetros da receita 
+    //aValveConfigs 		: ARRAY [1..5] OF ST_ValveConfig;       //Configuração das válvulas de 6 posições 
     aSolenoidSets 		: ARRAY [1..5] OF ST_SolenoidSet;       //Conjunto de válvulas solenoides 
     bExecute : BOOL; 
 END_VAR
@@ -17,7 +17,7 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-	aValveControllers 	: ARRAY [1..5] OF FB_ValveControl;  //Controle das válvulas de 6 posições 
+	//aValveControllers 	: ARRAY [1..5] OF FB_ValveControl;  //Controle das válvulas de 6 posições 
     aPumpControllers 	: ARRAY [1..10] OF FB_PumpControl;  //Controle das bombas 
     bStepSuccess 		: BOOL;         					//Sucesso da etapa atual 
     bStepError 			: BOOL;           					//Erro na etapa atual 
@@ -30,7 +30,8 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE iCurrentStep OF
+      <ST><![CDATA[(*
+CASE iCurrentStep OF
     0: 
         //Espera pelo comando Execute para iniciar 
         IF bExecute THEN
@@ -155,13 +156,16 @@ END_VAR
         //Finalizar com sucesso
         bSuccess := TRUE;
         iCurrentStep := 0; //Reset para o próximo ciclo 
-END_CASE;]]></ST>
+END_CASE;
+*)]]></ST>
     </Implementation>
     <LineIds Name="FB_RecoveryPhase">
+      <LineId Id="222" Count="0" />
       <LineId Id="42" Count="112" />
       <LineId Id="193" Count="1" />
       <LineId Id="155" Count="9" />
       <LineId Id="9" Count="0" />
+      <LineId Id="223" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
