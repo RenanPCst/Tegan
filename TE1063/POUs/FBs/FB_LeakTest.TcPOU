@@ -22,7 +22,8 @@ VAR
     fbValveControl4 	: FB_ValvePositionControl;
     fbValveControl5 	: FB_ValvePositionControl;
     fbSolenoidControl 	: FB_SolenoidControl;
-    fbSensorScale   	: FB_SensorScaling;
+    fbSensorScaling   	: FB_SensorScaling;
+		bPressureInput	: BOOL := FALSE;
     tStartTime      	: TIME;
     rScaledPressure 	: REAL;
     eState          	: (IDLE, POSITION_VALVES, SET_SOLENOIDS, PRESSURIZE, MONITOR, DONE, ERROR);
@@ -90,11 +91,14 @@ END_VAR]]></Declaration>
 
     MONITOR:
         // Reads and scales the pressure sensor value
-        fbSensorScale(bExecute := TRUE, iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rScaledPressure);
-        
+		bPressureInput := TRUE;
+		IF bPressureInput THEN
+        	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rScaledPressure);
+        END_IF
         // Verifies if the measured pressure meets the required limit
         IF rScaledPressure >= rPressureLimit THEN
             bLeakTestDone := TRUE;
+			
 			//Event looger message
 			fbEventHandler(
 				bExecute  := bExecuteEvent,
@@ -147,7 +151,11 @@ END_IF;]]></ST>
       <LineId Id="409" Count="0" />
       <LineId Id="333" Count="7" />
       <LineId Id="408" Count="0" />
-      <LineId Id="341" Count="20" />
+      <LineId Id="341" Count="15" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="357" Count="4" />
+      <LineId Id="413" Count="0" />
       <LineId Id="406" Count="0" />
       <LineId Id="399" Count="6" />
       <LineId Id="398" Count="0" />

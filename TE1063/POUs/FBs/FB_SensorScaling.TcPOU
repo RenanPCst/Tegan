@@ -3,12 +3,10 @@
   <POU Name="FB_SensorScaling" Id="{4c42e66e-2850-49c6-949b-9e520b1e950a}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SensorScaling
 VAR_INPUT
-	bExecute	: BOOL;
 	iRawValue 	: INT;  //EL3058 raw meassure 16bits
 	iSensorID	: INT;	//Sensor ID [1 for Festo | 2 for SMC Pressure Regulator]
 END_VAR
 VAR_OUTPUT
-	bDone	 	: BOOL := FALSE; 
 	rPressure 	: REAL; //Pressure output in Bar
 END_VAR
 VAR
@@ -17,39 +15,26 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Scaling definition for each sensor
+      <ST><![CDATA[// Scaling definition for each sensor
 CASE iSensorID OF
-    1:  //Festo MS6: 4-20mA → 0-6 bar
-        rScalingFactor := 6.0 / (16384 - 3277);
-        rOffset := -3277 * rScalingFactor;
+    1:  // Festo MS6: 4-20mA → 0-6 bar
+        rScalingFactor := 0.0003156;
+        rOffset := -0.115;
 		
-    2:  //SMC ISE/ZSE20: 4-20mA → -0.100 to 1.000 MPa [1.0 a 10.0 bar]
-        rScalingFactor := 11.0 / (16384 - 3277); //11 Bar Range
-        rOffset := -1.0; 						 //Starts at -1.0 Bar
+    2:  // SMC ISE/ZSE20: 4-20mA → -0.100 to 1.000 MPa [1.0 to 10.0 bar]
+        rScalingFactor := 11.0 / (16384 - 3277); // 11 Bar Range
+        rOffset := -1.0;  // Starts at -1.0 Bar
+
     ELSE
         rScalingFactor := 1.0;
         rOffset := 0.0;
 END_CASE
 
-
-//Applying the scaling
-IF bExecute AND NOT bDone THEN
-	rPressure 	:= rScalingFactor * TO_REAL(iRawValue) + rOffset;
-	bDone		:= TRUE;
-END_IF
-
-]]></ST>
+// Applying the scaling
+rPressure := rScalingFactor * TO_REAL(iRawValue) + rOffset;]]></ST>
     </Implementation>
     <LineIds Name="FB_SensorScaling">
-      <LineId Id="17" Count="4" />
-      <LineId Id="31" Count="0" />
-      <LineId Id="22" Count="6" />
-      <LineId Id="35" Count="0" />
-      <LineId Id="29" Count="1" />
-      <LineId Id="36" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="38" Count="1" />
-      <LineId Id="54" Count="0" />
+      <LineId Id="60" Count="15" />
       <LineId Id="37" Count="0" />
     </LineIds>
   </POU>

@@ -64,6 +64,7 @@ VAR
 	fbSensorScaling		: FB_SensorScaling;
 		bPressureInput	: BOOL := FALSE;
 		rPressureSensor	: REAL;
+		bPressureExecute: BOOL := FALSE;
 	
 END_VAR
 ]]></Declaration>
@@ -109,8 +110,8 @@ END_IF
 
 // FB_TCPClient instance to handle the connection with the Balance and interpretate it's response
 fbTcpClient(
-    sRemoteHost 	:= GVL_MachineParam.aBalanceIP,		//Server Ip address
-    nRemotePort 	:= GVL_MachineParam.nBalancePort,	//Server communication Port
+    sRemoteHost 	:= GVL_Settings.aBalanceIP,		//Server Ip address
+    nRemotePort 	:= GVL_Settings.nBalancePort,	//Server communication Port
     bTrigger 		:= bStartCommunication,				//Triggers the communication
     tStateDelay 	:= tAdjustableDelay,  				//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
     sParsedResponse	=> sResponseMessage, 				//Personalized Resposse message
@@ -130,10 +131,7 @@ END_IF
 
 //<Pressure Testing>------------------------------------------------------------------------------------------------------------------------------
 IF bPressureInput THEN
-	fbSensorScaling(bExecute := TRUE, iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
-END_IF
-IF fbSensorScaling.bDone THEN
-	bPressureInput := FALSE;
+	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
 END_IF
 
 
@@ -274,9 +272,9 @@ fbSetZero(
 IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
     MoveFB(
         bEnable 	:= TRUE,
-        AxisRef 	:= GVL_Motion.M1Motor.Axis, 
-        nPosition 	:= GVL_Motion.M1Motor.rTargetPosition, 
-        nVelocity 	:= GVL_Motion.M1Motor.rTargetVelocity,
+        AxisRef 	:= GVL_Motion.M2Motor.Axis, 
+        nPosition 	:= GVL_Motion.M2Motor.iTargetPosition, 
+        nVelocity 	:= GVL_Motion.M2Motor.iTargetVelocity,
         bDone		=> bMoveDone,
         bError		=> bPosError,
         nErrorID	=> nPosErrorID,
@@ -294,110 +292,8 @@ END_IF
 ]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
-      <LineId Id="744" Count="0" />
-      <LineId Id="2" Count="0" />
-      <LineId Id="1388" Count="0" />
-      <LineId Id="2749" Count="0" />
-      <LineId Id="2844" Count="1" />
-      <LineId Id="2858" Count="0" />
-      <LineId Id="2848" Count="0" />
-      <LineId Id="2855" Count="1" />
-      <LineId Id="2868" Count="1" />
-      <LineId Id="2860" Count="0" />
-      <LineId Id="2854" Count="0" />
-      <LineId Id="2863" Count="0" />
-      <LineId Id="2862" Count="0" />
-      <LineId Id="2866" Count="0" />
-      <LineId Id="2889" Count="0" />
-      <LineId Id="2865" Count="0" />
-      <LineId Id="2871" Count="0" />
-      <LineId Id="2870" Count="0" />
-      <LineId Id="2872" Count="0" />
-      <LineId Id="2878" Count="2" />
-      <LineId Id="2891" Count="1" />
-      <LineId Id="2881" Count="0" />
-      <LineId Id="2883" Count="0" />
-      <LineId Id="2882" Count="0" />
-      <LineId Id="2884" Count="0" />
-      <LineId Id="2887" Count="1" />
-      <LineId Id="2885" Count="0" />
-      <LineId Id="2847" Count="0" />
-      <LineId Id="2846" Count="0" />
-      <LineId Id="2751" Count="1" />
-      <LineId Id="2789" Count="0" />
-      <LineId Id="2763" Count="16" />
-      <LineId Id="2761" Count="0" />
-      <LineId Id="2790" Count="0" />
-      <LineId Id="2750" Count="0" />
-      <LineId Id="2952" Count="0" />
-      <LineId Id="2762" Count="0" />
-      <LineId Id="2965" Count="0" />
-      <LineId Id="2956" Count="0" />
-      <LineId Id="2964" Count="0" />
-      <LineId Id="2966" Count="2" />
-      <LineId Id="3101" Count="0" />
-      <LineId Id="3100" Count="0" />
-      <LineId Id="2954" Count="0" />
-      <LineId Id="2953" Count="0" />
-      <LineId Id="866" Count="0" />
-      <LineId Id="821" Count="0" />
-      <LineId Id="1667" Count="8" />
-      <LineId Id="1706" Count="0" />
-      <LineId Id="1685" Count="9" />
-      <LineId Id="1684" Count="0" />
-      <LineId Id="1696" Count="9" />
-      <LineId Id="1666" Count="0" />
-      <LineId Id="1876" Count="0" />
-      <LineId Id="1816" Count="0" />
-      <LineId Id="1818" Count="7" />
-      <LineId Id="1817" Count="0" />
-      <LineId Id="1877" Count="0" />
-      <LineId Id="1827" Count="8" />
-      <LineId Id="1826" Count="0" />
-      <LineId Id="1878" Count="0" />
-      <LineId Id="1837" Count="8" />
-      <LineId Id="1836" Count="0" />
-      <LineId Id="1879" Count="0" />
-      <LineId Id="1847" Count="8" />
-      <LineId Id="1846" Count="0" />
-      <LineId Id="1880" Count="0" />
-      <LineId Id="1857" Count="8" />
-      <LineId Id="1856" Count="0" />
-      <LineId Id="2037" Count="0" />
-      <LineId Id="2039" Count="5" />
-      <LineId Id="2038" Count="0" />
-      <LineId Id="2362" Count="0" />
-      <LineId Id="2077" Count="0" />
-      <LineId Id="2072" Count="0" />
-      <LineId Id="2078" Count="0" />
-      <LineId Id="2067" Count="0" />
-      <LineId Id="2028" Count="1" />
-      <LineId Id="2079" Count="0" />
-      <LineId Id="2030" Count="0" />
-      <LineId Id="2036" Count="0" />
-      <LineId Id="2032" Count="0" />
-      <LineId Id="3034" Count="0" />
-      <LineId Id="2075" Count="0" />
-      <LineId Id="2368" Count="0" />
-      <LineId Id="1581" Count="0" />
-      <LineId Id="1579" Count="0" />
-      <LineId Id="1584" Count="0" />
-      <LineId Id="1745" Count="0" />
-      <LineId Id="1744" Count="0" />
-      <LineId Id="1746" Count="0" />
-      <LineId Id="1748" Count="0" />
-      <LineId Id="1747" Count="0" />
-      <LineId Id="1749" Count="0" />
-      <LineId Id="1707" Count="0" />
-      <LineId Id="1580" Count="0" />
-      <LineId Id="1709" Count="7" />
-      <LineId Id="1708" Count="0" />
-      <LineId Id="1537" Count="0" />
-      <LineId Id="1727" Count="15" />
-      <LineId Id="1312" Count="0" />
-      <LineId Id="1322" Count="0" />
-      <LineId Id="1078" Count="0" />
-      <LineId Id="951" Count="0" />
+      <LineId Id="3102" Count="63" />
+      <LineId Id="3169" Count="155" />
       <LineId Id="767" Count="0" />
     </LineIds>
   </POU>
