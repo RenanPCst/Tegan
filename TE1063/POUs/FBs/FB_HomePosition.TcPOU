@@ -3,146 +3,171 @@
   <POU Name="FB_HomePosition" Id="{a4f8c8e7-dddf-4a94-bcd4-7e3204ae2ea0}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_HomePosition
 VAR_INPUT
-    Axis         : AXIS_REF;    // Axis Reference
-    bHomeSensor  : BOOL;        // Homing Sensor Input
-    bStartHoming : BOOL;        // Command to start homing 
-	sAxisName	 : STRING(256);	// Axis name to fill the eventlogger
+    eMotor       : E_Motors;   // Motor selecionado
+    bStartHoming : BOOL;       // Comando para iniciar o homing
 END_VAR
 
 VAR_OUTPUT
-    bHomingDone   : BOOL;        // Indicates that homing is complete
-	bError        : BOOL;   	// Indicates error in homing process
+    bHomingDone  : BOOL;       // Indica que o homing foi concluído
+    bError       : BOOL;       // Indica erro no processo de homing
 END_VAR
 
 VAR
-    HomeFB 			: MC_Home;     		// Homing FB
-	PowerFB			: MC_Power;			// FB to Enable and Power up the Axis
-	MoveFB			: MC_MoveVelocity;	// Moving by velocity FB
-		bMoveAxis	: BOOL := FALSE;
-    iState  		: INT  := 0;    	// Machine State indicator
-	
-	//Event Logger Variables
-	fbEventHandler : FB_EventHandler;
-    bExecuteEvent  : BOOL := FALSE;
-    bEventDone     : BOOL := FALSE;
+    axisPointer  : POINTER TO AXIS_REF;
+    bHomeSensor  : POINTER TO BOOL;
+    sAxisName    : STRING(256);
+    
+    fbMove       : FB_MoveVelocity;
+    fbHome       : MC_Home;
+    fbStop       : MC_Stop;
+		bStop	 : BOOL := TRUE;
+	fbReset		 : MC_Reset;
+
+    bMoveAxis    : BOOL := FALSE;
+    iState       : INT := 0;
+    
+    tTimer       : TON; // Temporizador para garantir tempo entre estados
+    bTimerDone   : BOOL := FALSE;
+	bHomeSensorNow: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Homing logic inside the function block
+      <ST><![CDATA[// ======== MÁQUINA DE ESTADOS COM RESET DO STOPFB =========
 CASE iState OF
-    
-    0: // Check if the axis is already at the sensor position
-        IF NOT bHomeSensor THEN  // Sensor already triggered? Skip directly to homing
-            iState := 2;
+
+    // Seleciona o eixo correto baseado no enum
+    0:  
+        CASE eMotor OF
+            E_Motors.M1StageCollection:
+                axisPointer := ADR(GVL_Motion.M1Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home);
+                sAxisName   := 'M1';
+            E_Motors.M2SampleRecVertical:
+                axisPointer := ADR(GVL_Motion.M2Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home);
+                sAxisName   := 'M2';
+            E_Motors.M3SampleRecHorizontal:
+                axisPointer := ADR(GVL_Motion.M3Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home);
+                sAxisName   := 'M3';
+            ELSE
+                bError := TRUE;
+                iState := 99; // Estado de erro
+        END_CASE;
+
+        IF NOT bError THEN
+            tTimer(IN := TRUE, PT := T#500MS); // Tempo antes de iniciar movimento
+            IF tTimer.Q THEN
+                iState := 1;
+            END_IF;
+        END_IF;
+
+    // Mover eixo até o sensor home
+    1:	
+		bHomeSensorNow := bHomeSensor^;
+        IF bHomeSensorNow THEN  // **Corrigido: Motor só move se o sensor NÃO estiver acionado**
+            fbMove(
+                Axis       := axisPointer^,
+                Velocity   := 10.0, // Velocidade segura para homing
+                bExecute   := TRUE,
+                iDirection := 1    // Defina a direção correta para cada motor
+            );
+            tTimer(IN := TRUE, PT := T#1S); // Aguarda antes de verificar o sensor
         ELSE
-            iState := 1; // If not, enable the axis and move to the sensor
-        END_IF
+            iState := 2; // Se já está no sensor, ir para o próximo estado
+        END_IF;
 
-    1: // Enable the axis before moving to the sensor
-        PowerFB(
-            Enable := TRUE,  // Enable the drive
-			Enable_Positive := TRUE,
-			Enable_Negative := TRUE,
-            Axis   := Axis
-        );
+    // Espera o eixo chegar no sensor e para o motor
+    2:
+		bHomeSensorNow := bHomeSensor^;
+        IF NOT bHomeSensorNow THEN
+			bStop := TRUE;
+		END_IF
+	
+		// **Chama StopFB para parar o eixo**
+		fbStop(
+			Axis         := axisPointer^,
+			Execute      := bStop,   // Para o eixo com desaceleração
+			Deceleration := 10.0  
+		);
+		IF fbStop.done AND bHomeSensorNow THEN
+			bStop := FALSE;
+		END_IF
+		
+		IF fbStop.done AND fbStop.Busy THEN
+			fbReset(Axis := axisPointer^ , Execute := TRUE);
+		END_IF
+		
+        IF NOT fbStop.Busy AND NOT bHomeSensorNow THEN
+		tTimer(IN := TRUE, PT := T#1S); // Tempo antes de resetar StopFB
+        iState := 3; 
+		END_IF
+        
 
-        IF PowerFB.Status THEN // Axis successfully enabled
-            iState := 2; // Next state: move the axis to the sensor
-        END_IF
-
-    2: // Moving the axis to the sensor		
-        MoveFB(
-            Execute   := bMoveAxis,
-            Axis      := Axis,
-            Velocity  := 10.0,	// Safe velocity to approach the sensor
-            Direction := 1		// Set the correct direction for your system
-        );
-
-        IF NOT bHomeSensor THEN  // Sensor triggered (reference position found)
-            bMoveAxis := FALSE; // Stop the movement
-            iState := 3; // Next state: execute homing
-        ELSE
-            IF iState = 2 THEN // Only activate bMoveAxis in state 2
-                bMoveAxis := TRUE;
-            END_IF
-        END_IF
-
-    3: // Executing Homing   
-        // Activate homing only if it has not been executed yet
-        IF NOT HomeFB.Execute THEN
-            bStartHoming := TRUE;
-        END_IF
-
-        // Call the MC_Home function block
-        HomeFB(
-            Execute := bStartHoming,
-            Axis := Axis,
-            Position := 0.0, // Set the reference position to zero
-            HomingMode := MC_DefaultHoming, // Uses the safest mode
-            bCalibrationCam := NOT bHomeSensor
-        );
-
-        IF HomeFB.Done THEN
-            bHomingDone := TRUE;
-            bStartHoming := FALSE; // Reset homing command
+    // **Resetar MC_Stop Antes de Iniciar o Homing**
+    3:
+        IF tTimer.Q THEN
+            fbStop.Execute := FALSE;  // **Resetamos StopFB antes de seguir**
+			
+            tTimer(IN := TRUE, PT := T#500MS); // Tempo antes de chamar o homing
             iState := 4;
-        END_IF
+        END_IF;
 
-        IF HomeFB.Error THEN
-            bHomingDone := FALSE;
-			bError		:= TRUE;
-            iState := 99; // Error state
-        END_IF
+    // Executar o homing do eixo
+    4:
+        IF tTimer.Q THEN // Aguarda tempo antes de iniciar o homing
+            fbHome(
+                Execute         := TRUE,
+                Axis            := axisPointer^,
+                Position        := 0.0,
+                HomingMode      := MC_Direct
+            );
 
-    4: // Homing Completed
-        // The axis is now zeroed and can continue normal operation
-		bExecuteEvent := TRUE;
-		fbEventHandler(
-			bExecute  := bExecuteEvent,
-			eEventName := E_Events.INFO,
-			sSystem    := Concat('Home Position: ',sAxisName),
-			sMessage   := 'Axis in home position!',
-			bDone      => bEventDone
-		);
-		ResetEventTrigger();
+            IF fbHome.Done THEN
+                bHomingDone := TRUE;
+                tTimer(IN := TRUE, PT := T#500MS); // Pequeno tempo antes de finalizar
+                IF tTimer.Q THEN
+                    iState := 5; 
+                END_IF;
+            END_IF;
 
-    99: // Error state
-        // Here you can add error handling, reset homing, or trigger an alarm
-		bExecuteEvent := TRUE;
-		fbEventHandler(
-			bExecute  := bExecuteEvent,
-			eEventName := E_Events.ERROR,
-			sSystem    := Concat('Home Position: ',sAxisName),
-			sMessage   := 'Error State!!',
-			bDone      => bEventDone
-		);
-		ResetEventTrigger();
-END_CASE]]></ST>
+            IF fbHome.Error THEN
+                bError := TRUE;
+                iState := 99; // Estado de erro
+            END_IF;
+        END_IF;
+
+    // Homing completo
+    5:
+        bHomingDone := TRUE; // Indica que o homing foi realizado
+        iState := 0; // Reinicia para permitir novo homing no futuro
+
+    // Estado de erro
+    99:
+        bError := TRUE; // Manter erro ativo para diagnóstico
+
+END_CASE;]]></ST>
     </Implementation>
-    <Action Name="ResetEventTrigger" Id="{dab3b4cb-7b2f-45f7-92d4-f0d47449c05c}">
-      <Implementation>
-        <ST><![CDATA[IF bEventDone THEN
-        bExecuteEvent := FALSE;
-        bEventDone := FALSE;
-END_IF;]]></ST>
-      </Implementation>
-    </Action>
     <LineIds Name="FB_HomePosition">
-      <LineId Id="343" Count="12" />
-      <LineId Id="464" Count="1" />
-      <LineId Id="356" Count="46" />
-      <LineId Id="437" Count="0" />
-      <LineId Id="403" Count="4" />
-      <LineId Id="413" Count="7" />
-      <LineId Id="412" Count="0" />
-      <LineId Id="408" Count="2" />
-      <LineId Id="428" Count="7" />
-      <LineId Id="427" Count="0" />
+      <LineId Id="992" Count="31" />
+      <LineId Id="1103" Count="0" />
+      <LineId Id="1024" Count="13" />
+      <LineId Id="1101" Count="0" />
+      <LineId Id="1038" Count="0" />
+      <LineId Id="1094" Count="0" />
+      <LineId Id="1097" Count="1" />
+      <LineId Id="1096" Count="0" />
+      <LineId Id="1042" Count="4" />
+      <LineId Id="1105" Count="2" />
+      <LineId Id="1047" Count="0" />
+      <LineId Id="1109" Count="2" />
+      <LineId Id="1108" Count="0" />
+      <LineId Id="1048" Count="0" />
+      <LineId Id="1099" Count="0" />
+      <LineId Id="1049" Count="0" />
+      <LineId Id="1100" Count="0" />
+      <LineId Id="1050" Count="43" />
       <LineId Id="9" Count="0" />
-    </LineIds>
-    <LineIds Name="FB_HomePosition.ResetEventTrigger">
-      <LineId Id="2" Count="2" />
-      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

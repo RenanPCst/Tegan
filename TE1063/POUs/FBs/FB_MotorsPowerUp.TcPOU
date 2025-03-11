@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MotorsPowerUp" Id="{2ede40b4-9170-4e3a-965e-058f9fe9c946}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorsPowerUp
+VAR_INPUT
+	bExecute : BOOL;
+END_VAR
+VAR_OUTPUT
+	bPowerUpError 	: BOOL := FALSE;
+	bPowerUpDone 	: BOOL := FALSE;
+END_VAR
+VAR
+	eState    	: (Reset, M1, M2, M3); 
+	fbMCPower 	: MC_Power;
+		PowerErrorID	: UDINT;
+		bPowerStatus	: BOOL := FALSE;
+		bM2 : BOOL := FALSE;
+		bM3 : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE eState OF
+	Reset:
+		bPowerUpDone := FALSE;
+		eState := M1;
+	M1:
+		IF bExecute THEN
+			fbMcPower(
+				Axis 			:= GVL_Motion.M1Motor.Axis,	//axisPointer^,
+				Enable 			:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				Enable_Positive := TRUE, 	//Enable for positive moviments
+				Enable_Negative := TRUE, 	//Enable for negative moviments
+				Error			=> bPowerUpError,
+				ErrorID			=> PowerErrorID,	 //Error ID if the power enter in error.
+				Status			=> bPowerStatus
+			);
+		END_IF
+		IF bPowerStatus THEN
+			eState := M2;
+			//bPowerUpDone := TRUE;
+		END_IF
+	M2:
+		IF bExecute THEN
+			fbMcPower(
+				Axis 			:= GVL_Motion.M2Motor.Axis,	//axisPointer^,
+				Enable 			:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				Enable_Positive := TRUE, 	//Enable for positive moviments
+				Enable_Negative := TRUE, 	//Enable for negative moviments
+				Error			=> bPowerUpError,
+				ErrorID			=> PowerErrorID,	 //Error ID if the power enter in error.
+				Status			=> bPowerStatus
+			);
+		END_IF
+		IF bPowerStatus THEN
+			eState := M3;
+			//bPowerUpDone := TRUE;
+		END_IF
+	
+	M3:
+		IF bExecute THEN
+			fbMcPower(
+				Axis 			:= GVL_Motion.M3Motor.Axis,	//axisPointer^,
+				Enable 			:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				Enable_Positive := TRUE, 	//Enable for positive moviments
+				Enable_Negative := TRUE, 	//Enable for negative moviments
+				Error			=> bPowerUpError,
+				ErrorID			=> PowerErrorID,	 //Error ID if the power enter in error.
+				Status			=> bPowerStatus
+			);
+		END_IF
+		IF bPowerStatus THEN
+			bPowerUpDone := TRUE;
+		END_IF
+	
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MotorsPowerUp">
+      <LineId Id="20" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="31" Count="4" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="61" Count="13" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="75" Count="11" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -65,7 +65,22 @@ VAR
 		bPressureInput	: BOOL := FALSE;
 		rPressureSensor	: REAL;
 		bPressureExecute: BOOL := FALSE;
+		
+	//Home Positioning M1
+	fbHomeM1		: FB_HomePosition;
+	fbHomeM2		: FB_HomePosition;
+	fbHomeM3		: FB_HomePosition;
+		
+	//testting
+	axisTest : POINTER TO AXIS_REF;
+	fbMotorsPowerUp : FB_MotorsPowerUP;
+		bPowerUp	: BOOL := FALSE;
 	
+	
+	fbStop : MC_Stop;
+
+	bPass1 : BOOL := FALSE;
+	testTon : TON;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -139,6 +154,30 @@ END_IF
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------
 
 //Motors Moviment Test M1 >> M8 ------------------------------------------------------------------------------------------------------------------
+//<Home Position> Motor M1------------------------------------------------------------------------------------------------------------------------
+(*
+IF bPowerUp THEN
+	fbMotorsPowerUp(
+		bExecute := TRUE
+	);
+END_IF
+
+testTon(IN := fbMotorsPowerUp.bPowerUpDone, PT:= T#2S); 
+
+IF testTon.Q AND NOT fbHomeM1.bHomingDone AND NOT fbHomeM1.bError THEN
+	fbHomeM1(eMotor := E_Motors.M1StageCollection, bStartHoming := TRUE);
+END_IF
+
+IF testTon.Q AND NOT fbHomeM2.bHomingDone AND NOT fbHomeM2.bError THEN
+	fbHomeM2(eMotor := E_Motors.M2SampleRecVertical, bStartHoming := TRUE);
+END_IF
+
+IF fbHomeM1.bHomingDone AND fbHomeM2.bHomingDone AND NOT fbHomeM3.bHomingDone AND NOT fbHomeM3.bError THEN
+	fbHomeM3(eMotor := E_Motors.M3SampleRecHorizontal, bStartHoming := TRUE);
+END_IF
+*)
+
+//<\Home Position> Motor M1-----------------------------------------------------------------------------------------------------------------------
 //Get actual position from Motor 1
 IF bGetPosition THEN	
 	PosFB(
@@ -226,14 +265,14 @@ IF bGetPosition THEN
 		rPosition	=>	GVL_Motion.M8Valve5.rAtualPosition
 	);		
 END_IF
-
+(**axisTest := ADR(GVL_Motion.M1Motor.Axis);
 fbMcPower(
-    Axis 			:= GVL_Motion.M1Motor.Axis,
+    Axis 			:= axisTest^,
     Enable 			:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
     Enable_Positive := bPowerEnable, //Enable for positive moviments
     Enable_Negative := bPowerEnable, //Enable for negative moviments
 	ErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
-);
+);*)
 
 //Valves servormotor testing [M4, M5, M6, M7, M8]
 DesiredPos := 5;
@@ -293,7 +332,25 @@ END_IF
     </Implementation>
     <LineIds Name="MAIN">
       <LineId Id="3102" Count="63" />
-      <LineId Id="3169" Count="155" />
+      <LineId Id="3169" Count="5" />
+      <LineId Id="3391" Count="0" />
+      <LineId Id="3485" Count="0" />
+      <LineId Id="3481" Count="3" />
+      <LineId Id="3394" Count="0" />
+      <LineId Id="3442" Count="0" />
+      <LineId Id="3438" Count="0" />
+      <LineId Id="3464" Count="0" />
+      <LineId Id="3462" Count="0" />
+      <LineId Id="3465" Count="1" />
+      <LineId Id="3470" Count="2" />
+      <LineId Id="3469" Count="0" />
+      <LineId Id="3478" Count="0" />
+      <LineId Id="3476" Count="0" />
+      <LineId Id="3479" Count="1" />
+      <LineId Id="3447" Count="0" />
+      <LineId Id="3412" Count="0" />
+      <LineId Id="3392" Count="0" />
+      <LineId Id="3175" Count="149" />
       <LineId Id="767" Count="0" />
     </LineIds>
   </POU>

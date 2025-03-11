@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MoveVelocity" Id="{7db658b2-80b8-4a5a-accc-99a6641d619e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MoveVelocity
+VAR_INPUT
+    Velocity  	: LREAL;
+    bExecute   	: BOOL;
+    iDirection 	: INT;  // 1 Moving Forward, -1 Moving Backwards
+END_VAR
+
+VAR_OUTPUT
+    bDone  : BOOL;
+    bError : BOOL;
+END_VAR
+
+VAR_IN_OUT
+	Axis      : AXIS_REF;
+END_VAR
+
+VAR
+    fbMoveVel : MC_MoveVelocity;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Move the motor by velocity
+fbMoveVel(
+    Axis      := Axis,
+    Velocity  := Velocity * iDirection,
+    Execute   := bExecute
+);
+
+bDone := fbMoveVel.InVelocity;
+bError := fbMoveVel.Error;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MoveVelocity">
+      <LineId Id="25" Count="7" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
