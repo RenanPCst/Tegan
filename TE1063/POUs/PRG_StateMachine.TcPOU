@@ -30,9 +30,13 @@ VAR
 		bRecoveryError 		: BOOL;                 			//recovery error flag 						
 		
 	//Seal Stages Instance
-	fbSealStages 		: FB_SealStages;	//FB instance
-		bSealSuccess	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
-		bSealError		: BOOL := FALSE; 	//seal error flag FB_SealStages
+	fbSealStagesP1 		: FB_SealStages;	//FB instance
+		bSealSuccessP1	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
+		bSealErrorP1	: BOOL := FALSE; 	//seal error flag FB_SealStages
+	fbSealStagesP2 		: FB_SealStages;	//FB instance
+		bSealSuccessP2	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
+		bSealErrorP2	: BOOL := FALSE; 	//seal error flag FB_SealStages
+		tonSealStages	: TON;
 		
 	//Leak Test Instance
 	fbLeakTest		:	FB_LeakTest;
@@ -189,39 +193,54 @@ CASE CurrentState OF
 		
     E_MachineStates.SEAL_STAGES:
 
-		IF bStatePass4 THEN//temporary Debug Manual variable ************************************************************************************
 			//temporary until we are able to get this parameter from hmi
-			GVL_Settings.aM1Position[2] 		:= -200;
-			GVL_Motion.M1Motor.qTargetVelocity 	:= 20;
-			GVL_Motion.M1Motor.rAccleration 	:= 10;
-			GVL_Motion.M1Motor.rDeceleration 	:= 10;
+			GVL_Settings.aM1Position[2] 			:= -300;
+			GVL_Settings.aM1Position[3] 			:= -330;
+			GVL_Motion.M1Motor.rTargetVelocityP1 	:= 20;
+			GVL_Motion.M1Motor.rTargetVelocityP2 	:= 5;
+			GVL_Motion.M1Motor.rAccleration 		:= 10;
+			GVL_Motion.M1Motor.rDeceleration 		:= 5;
 			
 			//calling the FB_SealStages
 			IF GVL_Safety.bM1STOEnabled THEN
-				fbSealStages(
+				fbSealStagesP1(
 					Axis				:= GVL_Motion.M1Motor.Axis,
 					iTargetPosition		:= GVL_Settings.aM1Position[2], //Seal Position
-					rVelocity			:= GVL_Motion.M1Motor.qTargetVelocity,
+					rVelocity			:= GVL_Motion.M1Motor.rTargetVelocityP1,
 					rAcceleration		:= GVL_Motion.M1Motor.rAccleration,
 					rDeceleration		:= GVL_Motion.M1Motor.rDeceleration,
 					bExecute 			:= TRUE,
-					bSealSucess			=> bSealSuccess,
-					bSealError			=> bSealError
+					bSealSucess			=> bSealSuccessP1,
+					bSealError			=> bSealErrorP1
+				);
+			END_IF
+			IF bSealSuccessP1 THEN
+				tonSealStages(IN := TRUE, PT := T#500MS);
+			END_IF
+			IF GVL_Safety.bM1STOEnabled AND tonSealStages.Q THEN
+				fbSealStagesP2(
+					Axis				:= GVL_Motion.M1Motor.Axis,
+					iTargetPosition		:= GVL_Settings.aM1Position[3], //Seal Position
+					rVelocity			:= GVL_Motion.M1Motor.rTargetVelocityP2,
+					rAcceleration		:= GVL_Motion.M1Motor.rAccleration,
+					rDeceleration		:= GVL_Motion.M1Motor.rDeceleration,
+					bExecute 			:= TRUE,
+					bSealSucess			=> bSealSuccessP2,
+					bSealError			=> bSealErrorP2
 				);
 			END_IF
 			
 			//error check
-			IF NOT bSealSuccess AND bSealError THEN
+			IF (NOT bSealSuccessP1 OR NOT bSealSuccessP2) AND (bSealErrorP1 OR bSealErrorP2)  THEN
 				//error dealing logic
 				GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
 				CurrentState := E_MachineStates.ERROR_STATE;
 			END_IF;
 	
 			//step forward to step ahead
-			IF bSealSuccess AND NOT bSealError THEN
+			IF bSealSuccessP1 AND bSealSuccessP2 AND NOT bSealErrorP1 AND NOT bSealErrorP2 THEN
 				CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
 			END_IF;
-		END_IF//temporary Debug Manual variable ************************************************************************************
 
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
 		(*// Call the Leak Test function block
@@ -342,13 +361,19 @@ END_IF;]]></ST>
       <LineId Id="1249" Count="2" />
       <LineId Id="1265" Count="7" />
       <LineId Id="1475" Count="0" />
-      <LineId Id="1273" Count="0" />
-      <LineId Id="1476" Count="0" />
-      <LineId Id="1274" Count="2" />
+      <LineId Id="1273" Count="3" />
+      <LineId Id="1550" Count="0" />
       <LineId Id="1477" Count="0" />
+      <LineId Id="1551" Count="0" />
       <LineId Id="1479" Count="1" />
       <LineId Id="1478" Count="0" />
-      <LineId Id="1278" Count="105" />
+      <LineId Id="1278" Count="12" />
+      <LineId Id="1537" Count="0" />
+      <LineId Id="1553" Count="1" />
+      <LineId Id="1539" Count="10" />
+      <LineId Id="1538" Count="0" />
+      <LineId Id="1291" Count="11" />
+      <LineId Id="1304" Count="79" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.ResetEventTrigger">
