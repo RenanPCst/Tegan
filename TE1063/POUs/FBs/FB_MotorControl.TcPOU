@@ -24,8 +24,8 @@ END_VAR
 
 VAR
     fbReset       	: MC_Reset;         // Function block to reset the axis in case of error
-    fbPower       	: MC_Power;         // Function block to enable the motor power
-    MoveCommand   	: MC_MoveAbsolute;  // Function block for absolute movement
+    fbPower       	: FB_MCPower;         // Function block to enable the motor power
+    fbMoveAbsolute 	: FB_MCMoveAbsolute;  // Function block for absolute movement
 
     nState        	: INT  := 1;         // Tracks the current state of the state machine
 
@@ -79,13 +79,11 @@ END_VAR
     // If an error occurs during power-up, it transitions back to State 0 for a reset attempt.
     1:
         fbPower(
-            Enable          := bEnable,
-            Enable_Positive := bEnable,
-            Enable_Negative := bEnable,
+            bEnable          := bEnable,
             Override        := 100,
             Axis            := AxisRef,
-            Status          => bPowerStatus,
-            Error           => bError,
+            bStatus          => bPowerStatus,
+            bError           => bError,
             ErrorID         => nErrorID
         );
 
@@ -105,17 +103,17 @@ END_VAR
     // If an error occurs during movement, it updates sState and transitions to State 0 to reset the drive.
     2:
         IF bPowerStatus THEN
-            MoveCommand(
-                Execute        := TRUE,
-                Axis           := AxisRef,
-                Position       := nPosition,
-                Velocity       := nVelocity,
-                Done           => bDone,
-                Busy           => bBusy,    
-                Active         => bActive,    
-                CommandAborted => bAborted,
-                Error          => bError,     
-                ErrorID        => nErrorID
+            fbMoveAbsolute(
+                bExecute        	:= TRUE,
+                Axis           	:= AxisRef,
+                fPosition       	:= nPosition,
+                fVelocity       	:= nVelocity,
+                bDone           	=> bDone,
+                bBusy           	=> bBusy,    
+                bActive         	=> bActive,    
+                bCommandAborted 	=> bAborted,
+                bError          	=> bError,     
+                iErrorID        	=> nErrorID
             );
 
             // If a movement error occurs, attempt to reset in State 0
@@ -125,7 +123,7 @@ END_VAR
             END_IF;
         ELSE
             // Stop the movement if bEnable is FALSE
-            MoveCommand.Execute := FALSE;
+            fbMoveAbsolute.bExecute := FALSE;
         END_IF;
 
     // State -1: Critical failure
@@ -140,7 +138,8 @@ END_CASE
     </Implementation>
     <LineIds Name="FB_MotorControl">
       <LineId Id="292" Count="0" />
-      <LineId Id="294" Count="94" />
+      <LineId Id="294" Count="39" />
+      <LineId Id="336" Count="52" />
       <LineId Id="195" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>

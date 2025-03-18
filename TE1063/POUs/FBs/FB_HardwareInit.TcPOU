@@ -2,92 +2,122 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_HardwareInit" Id="{31780309-bb82-4307-91d5-5548f242181e}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_HardwareInit
-
 VAR_INPUT
     bExecute : BOOL;  // Command to start the motors initialization
+    bReset   : BOOL;  // Command to reset the FB state
 END_VAR
-VAR_IN_OUT
 
-END_VAR
 VAR_OUTPUT
     bDone  : BOOL;  // Indicates that initialization was completed successfully
     bError : BOOL;  // Indicates an error in the process
 END_VAR
 
 VAR
-	bMoveAxis 		: BOOL := FALSE;
-	bMoveServo 		: BOOL := FALSE;
-	fbResetM1, fbResetM2, fbResetM3	: FB_MotorsReset;
-	fbMotorsPowerUp	: FB_MotorsPowerUp;
-		bPowerUp 	: BOOL := FALSE;
+    bMoveAxis    : BOOL := FALSE;
+    bMoveServo   : BOOL := FALSE;
+    
+    fbResetM1, fbResetM2, fbResetM3 : FB_MotorsReset;
+    fbMotorsPowerUp : FB_MotorsPowerUp;
+    bPowerUp    : BOOL := FALSE;
+    
     fbHomeM1, fbHomeM2, fbHomeM3 : FB_HomePosition;
     fbMoveM4, fbMoveM5, fbMoveM6, fbMoveM7, fbMoveM8 : FB_ValvePositionControl;
-	TonPowerUp		: TON;
-	
-    iState : INT := 0;
-	
-	//Event Logger Variables
-	fbEventHandler : FB_EventHandler;
+    TonPowerUp : TON;
+    
+    iState : INT := -1; // Default state is reset (-1)
+
+    // Event Logger Variables
+    fbEventHandler : FB_EventHandler;
+    fbEventTrigger : R_TRIG;  // Event Trigger
     bExecuteEvent  : BOOL := FALSE;
     bEventDone     : BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[CASE iState OF
-	0: //Reset the motors before enable them
-		fbResetM1(bExecute := bExecute, Axis := GVL_Motion.M1Motor.Axis);
-		fbResetM2(bExecute := bExecute, Axis := GVL_Motion.M2Motor.Axis);
-		fbResetM3(bExecute := bExecute, Axis := GVL_Motion.M3Motor.Axis);
-		IF fbResetM1.bResetDone AND fbResetM2.bResetDone AND fbResetM3.bResetDone THEN
-			iState := 1;
-		END_IF
-		IF fbResetM1.bResetError OR fbResetM2.bResetError OR fbResetM3.bResetError THEN
-			iState := 99;
-		END_IF
-		
-	1: //Power up the motors
-		fbMotorsPowerUp( bExecute := TRUE );
-		
-		IF fbMotorsPowerUp.bPowerUpDone THEN
-			iState := 2; //next step
-		END_IF
-		 
-    2: // Initializing Homing DC Motors M1 -> M2
-        bError := FALSE;   // Error reset on startup
-        bMoveAxis := bExecute;
-		TonPowerUp(IN := TRUE, PT:= T#2S);//Time necessary to powerup the motors before try to move them
-		
-		IF TonPowerUp.Q AND NOT fbHomeM1.bHomingDone AND NOT fbHomeM1.bError THEN
-			fbHomeM1(eMotor := E_Motors.M1StageCollection, bStartHoming := bMoveAxis);
-		END_IF
-		IF TonPowerUp.Q AND NOT fbHomeM2.bHomingDone AND NOT fbHomeM2.bError THEN
-			fbHomeM2(eMotor := E_Motors.M2SampleRecVertical, bStartHoming := bMoveAxis);
-		END_IF
-		//If homing was done, next state
-		IF fbHomeM1.bHomingDone AND fbHomeM2.bHomingDone THEN
-			iState := 3;
-		END_IF
-		// If there is an error in M1 or M2, stop the process
-		IF fbHomeM1.bError OR fbHomeM2.bError THEN
-			iState := 99;
-		END_IF
 
-	3: // Check if M1 and M2 have completed homing
-		IF NOT fbHomeM3.bHomingDone AND NOT fbHomeM3.bError THEN
-            // Now we can move M3., avoiding colisions
+    // State -1: Reset state
+    -1:
+        bDone := FALSE;
+        bError := FALSE;
+        bMoveAxis := FALSE;
+        bMoveServo := FALSE;
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+        
+        // Ensure all motors and actuators are reset
+        GVL_Safety.bAirSupplyEnable := FALSE;
+        GVL_Safety.bDoorLockCommand := FALSE;
+
+        IF bExecute AND NOT bReset THEN
+            iState := 0; // Proceed to initialization
+        END_IF;
+
+    // State 0: Reset motors before enabling them
+    0: 
+        fbResetM1(bExecute := bExecute, Axis := GVL_Motion.M1Motor.Axis);
+        fbResetM2(bExecute := bExecute, Axis := GVL_Motion.M2Motor.Axis);
+        fbResetM3(bExecute := bExecute, Axis := GVL_Motion.M3Motor.Axis);
+
+        IF fbResetM1.bResetDone AND fbResetM2.bResetDone AND fbResetM3.bResetDone THEN
+            iState := 1;
+        END_IF;
+        
+        IF fbResetM1.bResetError OR fbResetM2.bResetError OR fbResetM3.bResetError THEN
+            iState := 99;
+        END_IF;
+
+    // State 1: Power up the motors
+    1:
+        fbMotorsPowerUp(bExecute := TRUE);
+        
+        IF fbMotorsPowerUp.bPowerUpDone THEN
+            iState := 2; // Next step
+        END_IF;
+        
+    // State 2: Homing Motors M1 -> M2
+    2:
+        bError := FALSE;
+        bMoveAxis := bExecute;
+
+        TonPowerUp(IN := TRUE, PT := T#2S); // Time necessary to power up the motors before moving them
+        
+        IF TonPowerUp.Q AND NOT fbHomeM1.bHomingDone AND NOT fbHomeM1.bError THEN
+            fbHomeM1(eMotor := E_Motors.M1StageCollection, bStartHoming := bMoveAxis);
+        END_IF;
+        
+        IF TonPowerUp.Q AND NOT fbHomeM2.bHomingDone AND NOT fbHomeM2.bError THEN
+            fbHomeM2(eMotor := E_Motors.M2SampleRecVertical, bStartHoming := bMoveAxis);
+        END_IF;
+        
+        // If homing was done, next state
+        IF fbHomeM1.bHomingDone AND fbHomeM2.bHomingDone THEN
+            iState := 3;
+        END_IF;
+
+        // If there is an error in M1 or M2, stop the process
+        IF fbHomeM1.bError OR fbHomeM2.bError THEN
+            iState := 99;
+        END_IF;
+
+    // State 3: Homing M3
+    3:
+        IF NOT fbHomeM3.bHomingDone AND NOT fbHomeM3.bError THEN
             fbHomeM3(eMotor := E_Motors.M3SampleRecHorizontal, bStartHoming := bMoveAxis);
         END_IF;
-		IF fbHomeM3.bHomingDone AND NOT fbHomeM3.bError THEN
-			bMoveAxis := FALSE;
-			iState := 100; //#TODO Temporary testing
-		END_IF
-		IF fbHomeM3.bError THEN
-			// If there is an error in M3, stop the process
-			bError := TRUE;
-			iState := 99;
-		END_IF
-	
-    4: // Move servos to home position. Valve position 1.
+
+        IF fbHomeM3.bHomingDone AND NOT fbHomeM3.bError THEN
+            bMoveAxis := FALSE;
+            iState := 100;
+        END_IF;
+
+        IF fbHomeM3.bError THEN
+            bError := TRUE;
+            iState := 99;
+        END_IF;
+
+    // State 4: Move valves to home position
+    4:
         bMoveServo := bExecute;
 
         fbMoveM4(bEnable := bMoveServo, ServoAxis := GVL_Motion.M4Valve1.Axis, iValvePosition := 1);
@@ -96,7 +126,7 @@ END_VAR
         fbMoveM7(bEnable := bMoveServo, ServoAxis := GVL_Motion.M7Valve4.Axis, iValvePosition := 1);
         fbMoveM8(bEnable := bMoveServo, ServoAxis := GVL_Motion.M8Valve5.Axis, iValvePosition := 1);
 
-        // Checks if all servos have reached the home position
+        // Check if all servos have reached home position
         IF fbMoveM4.bMoveDone AND fbMoveM5.bMoveDone AND fbMoveM6.bMoveDone AND fbMoveM7.bMoveDone AND fbMoveM8.bMoveDone THEN
             bDone := TRUE;
             bMoveServo := FALSE;
@@ -106,41 +136,51 @@ END_VAR
         // Check if any servo has an error
         IF fbMoveM4.bError OR fbMoveM5.bError OR fbMoveM6.bError OR fbMoveM7.bError OR fbMoveM8.bError THEN
             bError := TRUE;
-            iState := 99; // Error State
+            iState := 99;
         END_IF;
 
-    99: // Error State
-        bError 		:= TRUE;
-        bDone 		:= FALSE;
-        bMoveAxis 	:= FALSE;
-        bMoveServo 	:= FALSE;
-		
-		//Event Logger error message
-		bExecuteEvent := TRUE;
-		fbEventHandler(
-			bExecute  := bExecuteEvent,
-			eEventName := E_Events.ERROR,
-			sSystem    := 'Hardware Init: ',
-			sMessage   := 'Something got wrong with motors initialization!!',
-			bDone      => bEventDone
-		);
-		ResetEventTrigger();
+    // State 99: Error State
+    99:
+        bError := TRUE;
+        bDone := FALSE;
+        bMoveAxis := FALSE;
+        bMoveServo := FALSE;
+        
+        // Event Logger error message
+        bExecuteEvent := TRUE;
+        fbEventTrigger(CLK := bExecuteEvent);
 
-    100: // Hardware Init Completed
-		//Event Logger info message
-		bExecuteEvent := TRUE;
-		fbEventHandler(
-			bExecute  := bExecuteEvent,
-			eEventName := E_Events.INFO,
-			sSystem    := 'Hardware Init: ',
-			sMessage   := 'Hardware Initialized with success!!',
-			bDone      => bEventDone
-		);
-		ResetEventTrigger();
+        IF fbEventTrigger.Q THEN
+            fbEventHandler(bExecute:= TRUE, eEventName:= E_Events.ERROR, sSystem:= 'Hardware Init', sMessage:= 'Initialization Failed!', bDone=> bEventDone);
+        END_IF;
+
+    // State 100: Hardware Init Completed
+    100:
+        // Event Logger success message
+        bExecuteEvent := TRUE;
+        IF NOT bEventDone THEN
+            fbEventHandler(bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := 'Hardware Init', sMessage := 'Hardware Initialized Successfully!', bDone => bEventDone);
+        END_IF;
+        
+        bExecuteEvent := FALSE;
         bDone := TRUE;
-END_CASE;
-]]></ST>
+        
+        // Reset state machine if reset is triggered
+        IF bReset THEN
+            iState := -1;
+        END_IF;
+
+END_CASE;]]></ST>
     </Implementation>
+    <Method Name="Reset" Id="{18d6fe1a-c7c5-4df1-bb63-009c872ad55c}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Action Name="ResetEventTrigger" Id="{49b081fb-821b-4506-a920-a26eb4c501f1}">
       <Implementation>
         <ST><![CDATA[IF bEventDone THEN
@@ -150,56 +190,12 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_HardwareInit">
-      <LineId Id="94" Count="0" />
-      <LineId Id="217" Count="1" />
-      <LineId Id="230" Count="1" />
-      <LineId Id="222" Count="0" />
-      <LineId Id="233" Count="4" />
-      <LineId Id="232" Count="0" />
-      <LineId Id="219" Count="0" />
-      <LineId Id="239" Count="0" />
-      <LineId Id="220" Count="0" />
-      <LineId Id="245" Count="0" />
-      <LineId Id="248" Count="0" />
-      <LineId Id="247" Count="0" />
-      <LineId Id="243" Count="0" />
-      <LineId Id="95" Count="2" />
-      <LineId Id="270" Count="1" />
-      <LineId Id="249" Count="1" />
-      <LineId Id="98" Count="0" />
-      <LineId Id="253" Count="1" />
-      <LineId Id="252" Count="0" />
-      <LineId Id="251" Count="0" />
-      <LineId Id="255" Count="0" />
-      <LineId Id="257" Count="0" />
-      <LineId Id="100" Count="0" />
-      <LineId Id="268" Count="0" />
-      <LineId Id="102" Count="0" />
-      <LineId Id="258" Count="1" />
-      <LineId Id="176" Count="0" />
-      <LineId Id="104" Count="0" />
-      <LineId Id="180" Count="2" />
-      <LineId Id="179" Count="0" />
-      <LineId Id="261" Count="0" />
-      <LineId Id="269" Count="0" />
-      <LineId Id="262" Count="0" />
-      <LineId Id="260" Count="0" />
-      <LineId Id="264" Count="0" />
-      <LineId Id="267" Count="0" />
-      <LineId Id="265" Count="1" />
-      <LineId Id="263" Count="0" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="116" Count="0" />
-      <LineId Id="119" Count="25" />
-      <LineId Id="174" Count="0" />
-      <LineId Id="163" Count="0" />
-      <LineId Id="155" Count="7" />
-      <LineId Id="154" Count="0" />
-      <LineId Id="145" Count="1" />
-      <LineId Id="165" Count="8" />
-      <LineId Id="164" Count="0" />
-      <LineId Id="147" Count="1" />
+      <LineId Id="390" Count="21" />
+      <LineId Id="414" Count="113" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_HardwareInit.Reset">
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_HardwareInit.ResetEventTrigger">
       <LineId Id="2" Count="2" />

@@ -1,28 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_HMIControl
 VAR
-	bHomeBlueLamp	:	BOOL;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-IF NOT bHomeBlueLamp THEN
-    bHomeBlueLamp := TRUE;
-ELSE
-    bHomeBlueLamp := FALSE;
-END_IF;
-
-GVL_HMIVariables.bHomeLampBlueState := bHomeBlueLamp;
-]]></ST>
+      <ST><![CDATA[//Buttons Indicators
+GVL_HMIVariables.HMIDigOuputs.bHMIResetButton 	:= GVL_IO.gDigOutputs.bResetIndicator;
+GVL_HMIVariables.HMIDigOuputs.bHMIStartButton	:= GVL_IO.gDigOutputs.bStartIndicator;
+GVL_HMIVariables.HMIDigOuputs.bHMIEStopSide		:= NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2);
+GVL_HMIVariables.HMIDigOuputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);]]></ST>
     </Implementation>
     <LineIds Name="PRG_HMIControl">
-      <LineId Id="15" Count="0" />
-      <LineId Id="11" Count="3" />
-      <LineId Id="5" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="16" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
       <LineId Id="18" Count="0" />
     </LineIds>
   </POU>

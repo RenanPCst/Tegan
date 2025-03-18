@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MCMoveAbsolute" Id="{e068eb31-ca6d-44ad-a0b1-2ef87ec453ed}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MCMoveAbsolute EXTENDS MC_MoveAbsolute
+VAR_INPUT
+    bExecute    : BOOL;    // Trigger to start movement
+    fPosition   : LREAL;   // Target position
+    fVelocity   : LREAL;   // Velocity of movement
+    fAcceleration : LREAL; // Acceleration value
+    fDeceleration : LREAL; // Deceleration value
+END_VAR
+VAR_OUTPUT
+    bDone       : BOOL;    // Movement complete
+    bBusy       : BOOL;    // Indicates movement in progress
+    bError      : BOOL;    // Error status
+    iErrorID    : UDINT;   // Error ID
+	bActive		: BOOL;
+	bCommandAborted	: BOOL;
+END_VAR
+VAR_IN_OUT
+END_VAR
+VAR
+    MC_MoveAbs  : MC_MoveAbsolute;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Move Absolute Execution
+MC_MoveAbs(
+    Axis := Axis,
+    Execute := bExecute,
+    Position := fPosition,
+    Velocity := fVelocity,
+    Acceleration := fAcceleration,
+    Deceleration := fDeceleration
+);
+
+// Outputs
+bDone   := MC_MoveAbs.Done;
+bBusy   := MC_MoveAbs.Busy;
+bError  := MC_MoveAbs.Error;
+iErrorID := MC_MoveAbs.ErrorID;
+bActive := MC_MoveAbs.Active;
+bCommandAborted := MC_MoveAbs.CommandAborted;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MCMoveAbsolute">
+      <LineId Id="28" Count="13" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

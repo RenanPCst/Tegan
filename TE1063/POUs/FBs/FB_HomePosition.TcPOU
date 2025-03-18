@@ -3,13 +3,13 @@
   <POU Name="FB_HomePosition" Id="{a4f8c8e7-dddf-4a94-bcd4-7e3204ae2ea0}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_HomePosition
 VAR_INPUT
-    eMotor       : E_Motors;   // Motor selecionado
-    bStartHoming : BOOL;       // Comando para iniciar o homing
+    eMotor       : E_Motors;   // Selected Axis Motor
+    bStartHoming : BOOL;       // Homing Start Command
 END_VAR
 
 VAR_OUTPUT
-    bHomingDone  : BOOL;       // Indica que o homing foi concluído
-    bError       : BOOL;       // Indica erro no processo de homing
+    bHomingDone  : BOOL;       // Indicates that the homing was concluded
+    bError       : BOOL;       // Indicates that an error occured
 END_VAR
 
 VAR
@@ -19,23 +19,23 @@ VAR
     
     fbMove       : FB_MoveVelocity;
     fbHome       : MC_Home;
-    fbStop       : MC_Stop;
+    fbStop       : FB_StopMotion;
 		bStop	 : BOOL := TRUE;
 	fbReset		 : MC_Reset;
 
     bMoveAxis    : BOOL := FALSE;
     iState       : INT := 0;
     
-    tTimer       : TON; // Temporizador para garantir tempo entre estados
+    tTimer       : TON; // Timer to ensure there is time between states
     bTimerDone   : BOOL := FALSE;
 	bHomeSensorNow: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// ======== MÁQUINA DE ESTADOS COM RESET DO STOPFB =========
+      <ST><![CDATA[
 CASE iState OF
 
-    // Seleciona o eixo correto baseado no enum
+    // Select the correct axis based on Enum
     0:  
         CASE eMotor OF
             E_Motors.M1StageCollection:
@@ -52,70 +52,70 @@ CASE iState OF
                 sAxisName   := 'M3';
             ELSE
                 bError := TRUE;
-                iState := 99; // Estado de erro
+                iState := 99; // Error State
         END_CASE;
 
         IF NOT bError THEN
-            tTimer(IN := TRUE, PT := T#500MS); // Tempo antes de iniciar movimento
+            tTimer(IN := TRUE, PT := T#500MS); // Time before starts the moviment
             IF tTimer.Q THEN
                 iState := 1;
             END_IF;
         END_IF;
 
-    // Mover eixo até o sensor home
+    // Move the axis till gets to home sensor
     1:	
 		bHomeSensorNow := bHomeSensor^;
-        IF bHomeSensorNow THEN  // **Corrigido: Motor só move se o sensor NÃO estiver acionado**
+        IF bHomeSensorNow THEN  // The Axis will only move if the sensor is not activated
             fbMove(
                 Axis       := axisPointer^,
-                Velocity   := 20.0, // Velocidade segura para homing
+                Velocity   := 15.0, // Safe speed for homing
                 bExecute   := TRUE,
-                iDirection := 1    // Defina a direção correta para cada motor
+                iDirection := 1    // Defines the axis correct direction 
             );
-            tTimer(IN := TRUE, PT := T#1S); // Aguarda antes de verificar o sensor
+            tTimer(IN := TRUE, PT := T#1S); // Waits before next state
         ELSE
-            iState := 2; // Se já está no sensor, ir para o próximo estado
+            iState := 2; // state transition
         END_IF;
 
-    // Espera o eixo chegar no sensor e para o motor
+    // Stops the axis moviment once it gets the sensor
     2:
 		bHomeSensorNow := bHomeSensor^;
         IF NOT bHomeSensorNow THEN
 			bStop := TRUE;
 		END_IF
 	
-		// **Chama StopFB para parar o eixo**
+		// FB_StopMotion calling 
 		fbStop(
-			Axis         := axisPointer^,
-			Execute      := bStop,   // Para o eixo com desaceleração
-			Deceleration := 10.0  
+			Axis          := axisPointer^,
+			bExecute      := bStop,  
+			rDeceleration := 10.0  
 		);
-		IF fbStop.done AND bHomeSensorNow THEN
+		IF fbStop.bStopDone AND bHomeSensorNow THEN
 			bStop := FALSE;
 		END_IF
 		
-		IF fbStop.done AND fbStop.Busy THEN
+		IF fbStop.bStopDone AND fbStop.bStopBusy THEN
 			fbReset(Axis := axisPointer^ , Execute := TRUE);
 		END_IF
 		
-        IF NOT fbStop.Busy AND NOT bHomeSensorNow THEN
-		tTimer(IN := TRUE, PT := T#1S); // Tempo antes de resetar StopFB
+        IF NOT fbStop.bStopBusy AND NOT bHomeSensorNow THEN
+		tTimer(IN := TRUE, PT := T#1S); // Waits before reset it
         iState := 3; 
 		END_IF
         
 
-    // **Resetar MC_Stop Antes de Iniciar o Homing**
+    // Reset MC_Stop before starting Home
     3:
         IF tTimer.Q THEN
-            fbStop.Execute := FALSE;  // **Resetamos StopFB antes de seguir**
+            fbStop.bExecute := FALSE; 
 			
-            tTimer(IN := TRUE, PT := T#500MS); // Tempo antes de chamar o homing
+            tTimer(IN := TRUE, PT := T#500MS); // Time before calling homing
             iState := 4;
         END_IF;
 
-    // Executar o homing do eixo
+    // Perform axis homing
     4:
-        IF tTimer.Q THEN // Aguarda tempo antes de iniciar o homing
+        IF tTimer.Q THEN // Waits before starting homing
             fbHome(
                 Execute         := TRUE,
                 Axis            := axisPointer^,
@@ -125,7 +125,7 @@ CASE iState OF
 
             IF fbHome.Done THEN
                 bHomingDone := TRUE;
-                tTimer(IN := TRUE, PT := T#500MS); // Pequeno tempo antes de finalizar
+                tTimer(IN := TRUE, PT := T#500MS);
                 IF tTimer.Q THEN
                     iState := 5; 
                 END_IF;
@@ -133,18 +133,18 @@ CASE iState OF
 
             IF fbHome.Error THEN
                 bError := TRUE;
-                iState := 99; // Estado de erro
+                iState := 99; // Error State
             END_IF;
         END_IF;
 
-    // Homing completo
+    // Homing finished
     5:
-        bHomingDone := TRUE; // Indica que o homing foi realizado
-        iState := 0; // Reinicia para permitir novo homing no futuro
+        bHomingDone := TRUE; // Indicates that homing was successful.
+        iState := 0; // Restart to allow future homing
 
-    // Estado de erro
+    // Error State
     99:
-        bError := TRUE; // Manter erro ativo para diagnóstico
+        bError := TRUE; // Keep error flag active
 
 END_CASE;]]></ST>
     </Implementation>
@@ -166,7 +166,9 @@ END_CASE;]]></ST>
       <LineId Id="1099" Count="0" />
       <LineId Id="1049" Count="0" />
       <LineId Id="1100" Count="0" />
-      <LineId Id="1050" Count="43" />
+      <LineId Id="1050" Count="0" />
+      <LineId Id="1141" Count="0" />
+      <LineId Id="1052" Count="41" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

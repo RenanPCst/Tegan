@@ -5,6 +5,7 @@
 VAR_INPUT
 	bEnable      	: BOOL;			// Enables the FB
     iValvePosition	: INT;   		// Desired Position to move the valve (1 a 6)
+	bResetCommand	: bool;			// Reset the block
 END_VAR
 VAR_OUTPUT
 	iActualPosition : INT;  		// Actual valve position
@@ -17,14 +18,13 @@ VAR_IN_OUT
 	ServoAxis    	: AXIS_REF;  	// Axis Reference
 END_VAR
 VAR
-    MC_Power     		: MC_Power;
-    MC_MoveAbs   		: MC_MoveAbsolute;
+    fbMCPower     		: FB_MCPower;
+    fbMCMoveAbs   		: FB_MCMoveAbsolute;
     MC_Reset     		: MC_Reset;
     rTargetPos    		: LREAL; 		// Target position in degrees
     iState        		: INT := 0; 	// State machine initializing in 0
     iModeOfOperation	: INT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Defines the valve positions within 0-360°
 CASE iValvePosition OF
@@ -40,65 +40,79 @@ END_CASE
 
 // State machine to ensure the correct sequence of operations
 CASE iState OF
-    0: // Checks if the drive needs to be enabled
-        MC_Power(
-            Axis := ServoAxis,
-            Enable := bEnable,
-            Enable_Positive := bEnable,
-            Enable_Negative := bEnable
-        );
+    0: // IDLE - Waiting for command
+        bBusy := FALSE;
+        bMoveDone := FALSE;
+        bError := FALSE;
 
-        IF MC_Power.Error THEN
-            iState := 1; // If an error occurs, go to reset state
-        ELSIF MC_Power.Active THEN
-            iState := 2; // If the drive is enabled, proceed to motion state
+        // If a reset command is triggered, go to reset state
+        IF bResetCommand THEN
+            iState := 1;
+        // If movement is required, go to enable state
+        ELSIF bEnable THEN
+            iState := 2;
         END_IF;
 
-    1: // Resets error before continuing
+    1: // RESET - Clears errors before continuing
         MC_Reset(
             Axis := ServoAxis,
             Execute := TRUE
         );
 
         IF NOT MC_Reset.Busy THEN
-            iState := 0; // Return to drive enabling state
+            bError := FALSE;  // Clear error flag
+            iState := 0;      // Return to idle state
         END_IF;
 
-    2: // Ensures the drive is in the correct mode before movement
-        //ModeOfOperation := 1; // Profile Position Mode (PPM)
-
-        IF MC_Power.Active THEN
-            iState := 3; // Proceed to movement state
-        END_IF;
-
-    3: // Executes the movement if the drive is enabled
-        MC_MoveAbs(
-            Axis := ServoAxis,
-            Position := rTargetPos,   // Sets the target position within 0 to 360°
-            Velocity := 5.0,        // Movement velocity
-            Acceleration := 10.0,   // Acceleration
-            Deceleration := 10.0,   // Deceleration
-            Execute := bEnable
+    2: // CHECK DRIVE POWER
+        fbMCPower(
+            bEnable := TRUE,
+            bReset  := FALSE,
+            Axis    := ServoAxis
         );
 
-        IF MC_MoveAbs.Done THEN
-            iState := 4; // Once the movement is complete, update variables
+        IF fbMCPower.Error THEN
+            bError := TRUE;
+            iState := 1; // If an error occurs, go to reset state
+        ELSIF fbMCPower.bActive THEN
+            iState := 3; // Proceed to motion state
         END_IF;
 
-    4: // Updates status and returns to the initial state
-        bBusy 			:= MC_MoveAbs.Busy;
-        bMoveDone 		:= MC_MoveAbs.Done;
-        bError 			:= MC_MoveAbs.Error;
+    3: // ENSURE PROPER MODE
+        //iModeOfOperation := 1; // Profile Position Mode (PPM)
+
+        IF fbMCPower.bActive THEN
+            iState := 4; // Proceed to movement state
+        END_IF;
+
+    4: // EXECUTE MOVEMENT
+        fbMCMoveAbs(
+            Axis := ServoAxis,
+            fPosition := rTargetPos,   // Sets the target position within 0 to 360°
+            fVelocity := 5.0,        // Movement velocity
+            fAcceleration := 2.0,   // Acceleration
+            fDeceleration := 2.0,   // Deceleration
+            bExecute := TRUE
+        );
+
+        IF fbMCMoveAbs.bDone THEN
+            iState := 5; // Once the movement is complete, update variables
+        END_IF;
+
+    5: // UPDATE STATUS AND RETURN TO IDLE
+        bBusy 			:= fbMCMoveAbs.bBusy;
+        bMoveDone 		:= fbMCMoveAbs.bDone;
+        bError 			:= fbMCMoveAbs.bError;
         iActualPosition := iValvePosition;
 
-        // Returns to the initial state, waiting for a new command
+        // Returns to the IDLE state after movement completes
         IF bMoveDone THEN
             iState := 0;
         END_IF;
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="FB_ValvePositionControl">
-      <LineId Id="204" Count="68" />
+      <LineId Id="559" Count="82" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
