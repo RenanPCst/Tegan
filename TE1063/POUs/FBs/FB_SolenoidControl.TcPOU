@@ -18,7 +18,7 @@ END_VAR
     <Implementation>
       <ST><![CDATA[CASE eState OF
     IDLE:
-        IF bExecute THEN
+        IF bExecute AND NOT bDone THEN
             eState := SET_VALVES;
         END_IF;
 
@@ -45,10 +45,17 @@ END_VAR
     
     DONE:
         bDone := TRUE;
+        IF NOT bExecute THEN
+            eState := IDLE;
+            bDone := FALSE;
+            eSolenoidSet := E_SolenoidSet.IDLE;
+        END_IF;
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="FB_SolenoidControl">
-      <LineId Id="21" Count="28" />
+      <LineId Id="21" Count="26" />
+      <LineId Id="64" Count="5" />
+      <LineId Id="48" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

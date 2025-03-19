@@ -4,12 +4,16 @@
     <Declaration><![CDATA[TYPE ST_EL3058 :
 STRUCT
 	//FESTO Main Air Pressure Supply Indicator
-	rMainPressureSupplyInput 		: INT;  	// Main Pressure Supply (*AT %IW0*)
+	rMainPressureSupplyInput 		: INT;  	// Main Pressure Supply (*AT I1*)
 	bMainPressureSupplyError		: BOOL;		// Main Pressure Supply Error Status
 	
 	//SMC Pressure Regulator [Leak Detection]
-    rPressureRegulatorInput			: INT;  	// Pressure Regulator (*AT %IW1*)
+    rPressureRegulatorInput			: INT;  	// Pressure Regulator (*AT I3*)
 	bPressureRegulatorError			: BOOL;		// Pressure Regulator Error Status
+	
+	//2-channel analog input
+	rLeakTestPressureSensor	:	INT; 	//SMC low differential pressure sensor (*AT I2*)
+	bLeakTestSensorError	:	BOOL;	//SMC low differential pressure sensor Error Flag
 	
 END_STRUCT
 END_TYPE

@@ -231,7 +231,7 @@ CASE CurrentState OF
 
 			//temporary until we are able to get this parameter from hmi
 			GVL_Settings.aM1Position[2] 			:= GVL_Settings.aM1Position[3] + 70;
-			GVL_Settings.aM1Position[3] 			:= -300;
+			GVL_Settings.aM1Position[3] 			:= -315;
 			GVL_Motion.M1Motor.rTargetVelocityP1 	:= 20;
 			GVL_Motion.M1Motor.rTargetVelocityP2 	:= 5;
 			GVL_Motion.M1Motor.rAccleration 		:= 10;   
@@ -287,15 +287,14 @@ CASE CurrentState OF
 			END_IF;
 
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
-		(*// Call the Leak Test function block
+		// Call the Leak Test function block
         fbLeakTest(
-            bExecute := TRUE,
-            eSolenoidPosition := E_SolenoidSet.LEAKTEST, // Set solenoids to leak test position
-            tMonitorTime := GVL_Settings.tLeakTestMonitorTime, // Configurable monitoring time
-            rPressureLimit := GVL_Settings.rLeakTestPressureLimit, // Minimum required pressure limit
-            bLeakTestDone => bTestCompleted,
-            bLeakTestError => bTestFailed,
-            sLTMessageError => sTestErrorMessage
+            bExecute 			:= TRUE,
+            eSolenoidPosition 	:= E_SolenoidSet.LEAKTEST, // Set solenoids to leak test position
+            tMonitorTime 		:= GVL_Settings.tLeakTestMonitorTime, // Configurable monitoring time
+            bLeakTestDone 		=> bTestCompleted,
+            bLeakTestError 		=> bTestFailed,
+            sLTMessageError 	=> sTestErrorMessage
         );
 
         // Transition to the next state if the test is completed successfully
@@ -306,7 +305,7 @@ CASE CurrentState OF
         ELSIF bTestFailed THEN
             CurrentState := E_MachineStates.ERROR_STATE;
         END_IF;
-	*)
+	
     E_MachineStates.RECOVERY_PHASE:
        (*
 		 //Setup and execute FB_RecoveryPhase
@@ -467,7 +466,8 @@ END_IF
       <LineId Id="1538" Count="0" />
       <LineId Id="1291" Count="3" />
       <LineId Id="1296" Count="6" />
-      <LineId Id="1304" Count="79" />
+      <LineId Id="1304" Count="6" />
+      <LineId Id="1312" Count="71" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.ResetEventTrigger">
