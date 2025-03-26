@@ -53,6 +53,196 @@
           </TcLink>
           <SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
           <Block Id="0">
+            <Motor IsManualInput="true" IsManualMFiInput="false">
+              <DatabaseType>
+                <SchemaVersion></SchemaVersion>
+                <DataVersion></DataVersion>
+                <OrderCode>1</OrderCode>
+                <GroupType></GroupType>
+                <ElectricMotorType>1</ElectricMotorType>
+                <MotorfeedbackType></MotorfeedbackType>
+                <MotorbrakeType></MotorbrakeType>
+                <AssemblyType></AssemblyType>
+                <VendorName>Polulo Robotics</VendorName>
+                <IsAc>false</IsAc>
+                <ConstructType>4</ConstructType>
+                <IsBeckhoffMotorShaftSpeicified>false</IsBeckhoffMotorShaftSpeicified>
+              </DatabaseType>
+              <DatabaseParameters>
+                <Parameter>
+                  <Comment LcId="1033">Vendor</Comment>
+                  <Name>Vendor</Name>
+                  <Data type="visibleString">Polulo Robotics</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Order code</Comment>
+                  <Name>OrderCode</Name>
+                  <Data type="visibleString">1</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Still stand torque/holding torque</Comment>
+                  <Name>M0</Name>
+                  <Data type="real64" unitSiNumerator="86">0.0896817080406707</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Pull out /break down torque</Comment>
+                  <Name>Mpullout</Name>
+                  <Data type="real64" unitSiNumerator="86">0.0896817080406707</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Rated voltage</Comment>
+                  <Name>Unrms</Name>
+                  <Data type="real64" unitSiNumerator="38">2.7</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Max. voltage</Comment>
+                  <Name>Umaxrms</Name>
+                  <Data type="real64" unitSiNumerator="38">24</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Rated current</Comment>
+                  <Name>Inrms</Name>
+                  <Data type="real64" unitSiNumerator="4">1</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Voltage constant</Comment>
+                  <Name>kErms</Name>
+                  <Data type="real64" unitSiNumerator="38" unitSiDenominator="225">0.1719</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Motor inertia with brake and encoder</Comment>
+                  <Name>J</Name>
+                  <Data type="real64" unitSiNumerator="224">8.96208938626925E-07</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Steps</Comment>
+                  <Name>SteppsPerRot</Name>
+                  <Data type="real64">200</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Electric motor type</Comment>
+                  <Name>ElecType</Name>
+                  <Data type="visibleString">1</Data>
+                </Parameter>
+                <Parameter>
+                  <Name>ConstrType</Name>
+                  <Data type="real64">4</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Winding resistance R Ph-Ph 20°C</Comment>
+                  <Name>R</Name>
+                  <Data type="real64" unitSiNumerator="40">2.7</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Winding inductance Lq Ph-Ph 20°C</Comment>
+                  <Name>Lq</Name>
+                  <Data type="real64" unitSiNumerator="44">0.0025</Data>
+                </Parameter>
+              </DatabaseParameters>
+              <Calc>
+                <CoE>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Motor Settings Ch.1 / Motor speed limitation</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32785</Index>
+                    <SubIndex>27</SubIndex>
+                    <Data>8C000000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Motor Settings Ch.1 / Configured motor current</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32785</Index>
+                    <SubIndex>52</SubIndex>
+                    <Data>E8030000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.1 / Current loop proportional gain</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32784</Index>
+                    <SubIndex>19</SubIndex>
+                    <Data>3200</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.1 / Current loop integral time</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32784</Index>
+                    <SubIndex>18</SubIndex>
+                    <Data>0900</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.1 / Velocity loop proportional gain</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32784</Index>
+                    <SubIndex>21</SubIndex>
+                    <Data>0B000000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.1 / Velocity loop integral time</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>32784</Index>
+                    <SubIndex>20</SubIndex>
+                    <Data>96000000</Data>
+                  </InitCmd>
+                </CoE>
+              </Calc>
+            </Motor>
+            <Load MoveStyle="Linear">
+              <IsMotorRotary>true</IsMotorRotary>
+              <Name>InverterChannelTypeBlockLoad</Name>
+              <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+              <Parameter>
+                <PropertyName>FeedConstantUnit</PropertyName>
+                <Value>mm</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>FeedConstant</PropertyName>
+                <Value>0.635</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearRatioMotorSide</PropertyName>
+                <Value>1</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearRatioLoadSide</PropertyName>
+                <Value>1</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearboxInertia</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>LoadInertiaMassReflectedOnGearbox</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxMoveDistance</PropertyName>
+                <Value>1</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>LoadInertiaMass</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxApplicationTorqueForce</PropertyName>
+                <Value>9.8301</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxApplicationSpeed</PropertyName>
+                <Value>14.66077</Value>
+              </Parameter>
+            </Load>
             <Controller>
               <Stepper>
                 <ControlMode>0</ControlMode>
@@ -116,10 +306,248 @@
           </TcLink>
           <SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
           <Block Id="0">
+            <Motor IsManualInput="true" IsManualMFiInput="false">
+              <DatabaseType>
+                <SchemaVersion />
+                <DataVersion />
+                <OrderCode>2</OrderCode>
+                <GroupType />
+                <ElectricMotorType>2</ElectricMotorType>
+                <MotorfeedbackType />
+                <MotorbrakeType />
+                <AssemblyType />
+                <VendorName>Polulo Robotics</VendorName>
+                <IsAc>false</IsAc>
+                <ConstructType>4</ConstructType>
+                <IsBeckhoffMotorShaftSpeicified>false</IsBeckhoffMotorShaftSpeicified>
+              </DatabaseType>
+              <DatabaseParameters>
+                <Parameter>
+                  <Comment LcId="1033">Vendor</Comment>
+                  <Name>Vendor</Name>
+                  <Data type="visibleString">Polulo Robotics</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Order code</Comment>
+                  <Name>OrderCode</Name>
+                  <Data type="visibleString">2</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Still stand torque/holding torque</Comment>
+                  <Name>M0</Name>
+                  <Data type="real64" unitSiNumerator="86">0.45</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Pull out /break down torque</Comment>
+                  <Name>Mpullout</Name>
+                  <Data type="real64" unitSiNumerator="86">0.4</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Rated voltage</Comment>
+                  <Name>Unrms</Name>
+                  <Data type="real64" unitSiNumerator="38">2.2</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Max. voltage</Comment>
+                  <Name>Umaxrms</Name>
+                  <Data type="real64" unitSiNumerator="38">24</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Rated current</Comment>
+                  <Name>Inrms</Name>
+                  <Data type="real64" unitSiNumerator="4">2</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Voltage constant</Comment>
+                  <Name>kErms</Name>
+                  <Data type="real64" unitSiNumerator="38" unitSiDenominator="225">0.15</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Motor inertia with brake and encoder</Comment>
+                  <Name>J</Name>
+                  <Data type="real64" unitSiNumerator="224">5.121193935011E-06</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Steps</Comment>
+                  <Name>SteppsPerRot</Name>
+                  <Data type="real64">200</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Electric motor type</Comment>
+                  <Name>ElecType</Name>
+                  <Data type="visibleString">2</Data>
+                </Parameter>
+                <Parameter>
+                  <Name>ConstrType</Name>
+                  <Data type="real64">4</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Winding resistance R Ph-Ph 20°C</Comment>
+                  <Name>R</Name>
+                  <Data type="real64" unitSiNumerator="40">1.1</Data>
+                </Parameter>
+                <Parameter>
+                  <Comment LcId="1033">Winding inductance Lq Ph-Ph 20°C</Comment>
+                  <Name>Lq</Name>
+                  <Data type="real64" unitSiNumerator="44">0.00223</Data>
+                </Parameter>
+              </DatabaseParameters>
+              <Calc>
+                <CoE>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Motor Settings Ch.2 / Motor speed limitation</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33041</Index>
+                    <SubIndex>27</SubIndex>
+                    <Data>A0000000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Motor Settings Ch.2 / Configured motor current</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33041</Index>
+                    <SubIndex>52</SubIndex>
+                    <Data>D0070000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.2 / Current loop proportional gain</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33040</Index>
+                    <SubIndex>19</SubIndex>
+                    <Data>2E00</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.2 / Current loop integral time</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33040</Index>
+                    <SubIndex>18</SubIndex>
+                    <Data>1400</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.2 / Velocity loop proportional gain</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33040</Index>
+                    <SubIndex>21</SubIndex>
+                    <Data>18000000</Data>
+                  </InitCmd>
+                  <InitCmd>
+                    <Transition>PS</Transition>
+                    <Comment>DRV Amplifier Settings Ch.2 / Velocity loop integral time</Comment>
+                    <Timeout>0</Timeout>
+                    <Ccs>1</Ccs>
+                    <Index>33040</Index>
+                    <SubIndex>20</SubIndex>
+                    <Data>96000000</Data>
+                  </InitCmd>
+                </CoE>
+              </Calc>
+            </Motor>
+            <Load MoveStyle="Rotary">
+              <IsMotorRotary>true</IsMotorRotary>
+              <Name>InverterChannelTypeBlockLoad</Name>
+              <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+              <Parameter>
+                <PropertyName>FeedConstantUnit</PropertyName>
+                <Value>°</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>FeedConstant</PropertyName>
+                <Value>360</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearRatioMotorSide</PropertyName>
+                <Value>1</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearRatioLoadSide</PropertyName>
+                <Value>1</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>GearboxInertia</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>LoadInertiaMassReflectedOnGearbox</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxMoveDistance</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>LoadInertiaMass</PropertyName>
+                <Value>0</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxApplicationTorqueForce</PropertyName>
+                <Value>19.6602</Value>
+              </Parameter>
+              <Parameter>
+                <PropertyName>MaxApplicationSpeed</PropertyName>
+                <Value>16.75516</Value>
+              </Parameter>
+            </Load>
             <Controller>
               <Stepper>
                 <ControlMode>0</ControlMode>
               </Stepper>
+              <Filter Id="0">
+                <Name>ControllerFilter</Name>
+                <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+                <Parameter>
+                  <PropertyName>Filter_Type</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+              </Filter>
+              <Filter Id="1">
+                <Name>ControllerFilter</Name>
+                <ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+                <Parameter>
+                  <PropertyName>Filter_Type</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_LowPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassFrequency</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+                <Parameter>
+                  <PropertyName>Filter_HighPassDamping</PropertyName>
+                  <Value>0</Value>
+                </Parameter>
+              </Filter>
             </Controller>
           </Block>
         </Channel>
@@ -127,7 +555,7 @@
     </TcDMDrive>
   </Xml>
   <BoxDef>
-    <FieldbusAddress>1029</FieldbusAddress>
+    <FieldbusAddress>1028</FieldbusAddress>
     <AmsAddress>
       <AmsPort>0</AmsPort>
       <AmsPortTimeout>5</AmsPortTimeout>
@@ -137,8 +565,8 @@
     <Slave>
       <Info>
         <Name><![CDATA[Term 29 (EL7062)]]></Name>
-        <PhysAddr>1029</PhysAddr>
-        <AutoIncAddr>65508</AutoIncAddr>
+        <PhysAddr>1028</PhysAddr>
+        <AutoIncAddr>65509</AutoIncAddr>
         <Physics>KK</Physics>
         <VendorId>2</VendorId>
         <ProductCode>462827602</ProductCode>
@@ -3084,7 +3512,7 @@ Bit 8 - 15 : reserved</Comment>
         <Recv StatusChange="true">
           <Start>4352</Start>
           <Length>256</Length>
-          <StatusBitAddr>21</StatusBitAddr>
+          <StatusBitAddr>20</StatusBitAddr>
         </Recv>
         <Timeout>
           <ReturningRequest>100</ReturningRequest>
@@ -3238,6 +3666,204 @@ Bit 8 - 15 : reserved</Comment>
               <SubIndex>18</SubIndex>
               <Data>d0070000</Data>
             </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[FB Touch probe Settings Ch.1 / Touch probe 1 source]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32769</Index>
+              <SubIndex>17</SubIndex>
+              <Data>0100</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[FB Touch probe Settings Ch.1 / Touch probe 1 position source]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32769</Index>
+              <SubIndex>21</SubIndex>
+              <Data>0000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Rotor moment of inertia]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>24</SubIndex>
+              <Data>09000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Winding inductance]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>25</SubIndex>
+              <Data>fa00</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Winding resistance]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>48</SubIndex>
+              <Data>8c0a0000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Voltage constant]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>49</SubIndex>
+              <Data>7c9f0200</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Motor fullsteps per revolution]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>51</SubIndex>
+              <Data>c8000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.1 / Motor speed limitation]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32785</Index>
+              <SubIndex>27</SubIndex>
+              <Data>8c000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.1 / Current loop proportional gain]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32784</Index>
+              <SubIndex>19</SubIndex>
+              <Data>3200</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.1 / Current loop integral time]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32784</Index>
+              <SubIndex>18</SubIndex>
+              <Data>0900</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.1 / Velocity loop proportional gain]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32784</Index>
+              <SubIndex>21</SubIndex>
+              <Data>0b000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.1 / Velocity loop integral time]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32784</Index>
+              <SubIndex>20</SubIndex>
+              <Data>96000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Rotor moment of inertia]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>24</SubIndex>
+              <Data>33000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Winding inductance]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>25</SubIndex>
+              <Data>df00</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Winding resistance]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>48</SubIndex>
+              <Data>4c040000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Voltage constant]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>49</SubIndex>
+              <Data>f0490200</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Motor fullsteps per revolution]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>51</SubIndex>
+              <Data>c8000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Motor Settings Ch.2 / Motor speed limitation]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33041</Index>
+              <SubIndex>27</SubIndex>
+              <Data>a0000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.2 / Current loop proportional gain]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33040</Index>
+              <SubIndex>19</SubIndex>
+              <Data>2e00</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.2 / Current loop integral time]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33040</Index>
+              <SubIndex>18</SubIndex>
+              <Data>1400</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.2 / Velocity loop proportional gain]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33040</Index>
+              <SubIndex>21</SubIndex>
+              <Data>18000000</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[DRV Amplifier Settings Ch.2 / Velocity loop integral time]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>33040</Index>
+              <SubIndex>20</SubIndex>
+              <Data>96000000</Data>
+            </InitCmd>
           </InitCmds>
           <CanOpenType>47</CanOpenType>
           <Profile>
@@ -3349,7 +3975,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to INIT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>288</Ado>
           <Data>1100</Data>
           <Retries>3</Retries>
@@ -3361,7 +3987,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[clear DC activation]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>2432</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3373,7 +3999,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for INIT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>304</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3388,7 +4014,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for INIT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>304</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3404,7 +4030,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to INIT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>288</Ado>
           <Data>1100</Data>
           <Cnt>1</Cnt>
@@ -3417,7 +4043,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for INIT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>304</Ado>
           <Data>0000</Data>
           <Cnt>1</Cnt>
@@ -3433,7 +4059,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[assign EEPROM to ECAT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1280</Ado>
           <Data>00</Data>
           <Cnt>1</Cnt>
@@ -3443,7 +4069,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IP</Transition>
           <Comment><![CDATA[check vendor id]]></Comment>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1282</Ado>
           <Data>000108000000</Data>
           <Cnt>1</Cnt>
@@ -3454,7 +4080,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check vendor id]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1288</Ado>
           <Data>00000000</Data>
           <Cnt>1</Cnt>
@@ -3468,7 +4094,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IP</Transition>
           <Comment><![CDATA[check product code]]></Comment>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1282</Ado>
           <Data>00010a000000</Data>
           <Cnt>1</Cnt>
@@ -3479,7 +4105,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check product code]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1288</Ado>
           <Data>00000000</Data>
           <Cnt>1</Cnt>
@@ -3493,7 +4119,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IP</Transition>
           <Comment><![CDATA[check revision number (lo word)]]></Comment>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1282</Ado>
           <Data>00010c000000</Data>
           <Cnt>1</Cnt>
@@ -3504,7 +4130,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check revision number (lo word)]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>1</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1288</Ado>
           <Data>0000</Data>
           <Cnt>1</Cnt>
@@ -3520,9 +4146,9 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set physical address]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>16</Ado>
-          <Data>0504</Data>
+          <Data>0404</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>
@@ -3534,7 +4160,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>OI</Transition>
           <Comment><![CDATA[clear sm 0/1 (mailbox out/in)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2048</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3543,7 +4169,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>BI</Transition>
           <Comment><![CDATA[clear sm 0/1 (mailbox out/in)]]></Comment>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>2048</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3552,7 +4178,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IP</Transition>
           <Comment><![CDATA[set sm 0 (mailbox out)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2048</Ado>
           <Data>0010000126000100</Data>
           <Cnt>1</Cnt>
@@ -3562,7 +4188,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IP</Transition>
           <Comment><![CDATA[set sm 1 (mailbox in)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2056</Ado>
           <Data>0011000122000100</Data>
           <Cnt>1</Cnt>
@@ -3572,7 +4198,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IB</Transition>
           <Comment><![CDATA[set sm 0 (bootstrap out)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2048</Ado>
           <Data>0010f40026000100</Data>
           <Cnt>1</Cnt>
@@ -3582,7 +4208,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IB</Transition>
           <Comment><![CDATA[set sm 1 (bootstrap in)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2056</Ado>
           <Data>f410f40022000100</Data>
           <Cnt>1</Cnt>
@@ -3593,7 +4219,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set DC cycle time]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2464</Ado>
           <Data>24f400005c901d00</Data>
           <Cnt>1</Cnt>
@@ -3604,7 +4230,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set DC start time]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2448</Ado>
           <Data>24f4000000000000</Data>
           <Cnt>1</Cnt>
@@ -3615,7 +4241,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set DC activation]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2432</Ado>
           <Data>0007</Data>
           <Cnt>1</Cnt>
@@ -3626,7 +4252,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set DC latch cfg]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2472</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3637,7 +4263,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[clear DC activation]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2432</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3648,7 +4274,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to PREOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>1200</Data>
           <Retries>300</Retries>
@@ -3662,7 +4288,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>OI</Transition>
           <Comment><![CDATA[clear sms]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2064</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3671,7 +4297,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>PS</Transition>
           <Comment><![CDATA[set sm 2 (outputs)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2064</Ado>
           <Data>00120c0024000100</Data>
           <Cnt>1</Cnt>
@@ -3681,7 +4307,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>PS</Transition>
           <Comment><![CDATA[set sm 3 (inputs)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2072</Ado>
           <Data>0019140020000100</Data>
           <Cnt>1</Cnt>
@@ -3691,7 +4317,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>PS</Transition>
           <Comment><![CDATA[set fmmu 0 (outputs)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1536</Ado>
           <Data>940000010c0000070012000201000000</Data>
           <Cnt>1</Cnt>
@@ -3701,7 +4327,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>PS</Transition>
           <Comment><![CDATA[set fmmu 1 (inputs)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1552</Ado>
           <Data>94000001140000070019000101000000</Data>
           <Cnt>1</Cnt>
@@ -3712,9 +4338,9 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>IB</Transition>
           <Comment><![CDATA[set fmmu 2 (mailbox state)]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1568</Ado>
-          <Data>02000009010005050d08000101000000</Data>
+          <Data>02000009010004040d08000101000000</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>
@@ -3723,7 +4349,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to SAFEOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>0400</Data>
           <Retries>3</Retries>
@@ -3736,7 +4362,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>OI</Transition>
           <Comment><![CDATA[clear fmmu 0]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1536</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3748,7 +4374,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>OI</Transition>
           <Comment><![CDATA[clear fmmu 1]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1552</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3760,7 +4386,7 @@ Bit 8 - 15 : reserved</Comment>
           <Transition>OI</Transition>
           <Comment><![CDATA[clear fmmu 2]]></Comment>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1568</Ado>
           <Data>00000000000000000000000000000000</Data>
           <Retries>3</Retries>
@@ -3771,7 +4397,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[clear DC activation]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>2432</Ado>
           <Data>0000</Data>
           <Retries>3</Retries>
@@ -3782,7 +4408,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for PREOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Retries>3</Retries>
@@ -3798,7 +4424,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[assign EEPROM to PDI]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>1280</Ado>
           <Data>01</Data>
           <Cnt>1</Cnt>
@@ -3809,7 +4435,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[assign EEPROM back to ECAT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1280</Ado>
           <Data>00</Data>
           <Retries>3</Retries>
@@ -3819,7 +4445,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to PREOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>1200</Data>
           <Cnt>1</Cnt>
@@ -3831,7 +4457,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for PREOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Cnt>1</Cnt>
@@ -3848,7 +4474,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[assign EEPROM back to ECAT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>2</Cmd>
-          <Adp>65508</Adp>
+          <Adp>65509</Adp>
           <Ado>1280</Ado>
           <Data>00</Data>
           <Retries>3</Retries>
@@ -3858,7 +4484,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to BOOT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>1300</Data>
           <Cnt>1</Cnt>
@@ -3870,7 +4496,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for BOOT]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Cnt>1</Cnt>
@@ -3886,7 +4512,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to SAFEOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>0400</Data>
           <Cnt>1</Cnt>
@@ -3898,7 +4524,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for SAFEOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Cnt>1</Cnt>
@@ -3914,7 +4540,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for SAFEOP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Retries>3</Retries>
@@ -3929,7 +4555,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[set device state to OP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>5</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>288</Ado>
           <Data>0800</Data>
           <Cnt>1</Cnt>
@@ -3941,7 +4567,7 @@ Bit 8 - 15 : reserved</Comment>
           <Comment><![CDATA[check device state for OP]]></Comment>
           <Requires>cycle</Requires>
           <Cmd>4</Cmd>
-          <Adp>1029</Adp>
+          <Adp>1028</Adp>
           <Ado>304</Ado>
           <Data>000000000000</Data>
           <Cnt>1</Cnt>
@@ -3955,7 +4581,7 @@ Bit 8 - 15 : reserved</Comment>
       </InitCmds>
       <PreviousPort Selected="true">
         <Port>B</Port>
-        <PhysAddr>1028</PhysAddr>
+        <PhysAddr>1027</PhysAddr>
       </PreviousPort>
       <DC>
         <PotentialReferenceClock>false</PotentialReferenceClock>
@@ -4026,7 +4652,7 @@ Bit 8 - 15 : reserved</Comment>
     </Slave>
     <AmsAddress>
       <AmsNetId>192.168.0.162.4.1</AmsNetId>
-      <AmsPort>1029</AmsPort>
+      <AmsPort>1028</AmsPort>
     </AmsAddress>
     <LinkedAxis Chn="0">TINC^NC-Task 1 SAF^Axes^Pump 7 - Linear</LinkedAxis>
   </EtherCAT>

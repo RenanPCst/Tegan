@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_RecoveryPhase" Id="{83f5ec5b-6c67-443f-8065-7a3e8ba1c7ee}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RecoveryPhase
+
+VAR_INPUT
+    bExecute : BOOL; 
+END_VAR
+
+VAR_OUTPUT
+	bSuccess 		: BOOL;	//Success Flag
+    bError 			: BOOL; //Error Flag
+    
+END_VAR
+
+VAR
+	eRecoveryState : E_RecoveryState := E_RecoveryState.Idle;
+    bInitComplete : BOOL := FALSE;
+
+    fbSolenoidControl : FB_SolenoidControl;
+    aValveController : ARRAY[1..5] OF FB_ValvePositionControl;
+    fbPumpLinear : ARRAY[1..10] OF FB_MCMoveAbsolute;
+    fbPumpRotary : ARRAY[1..10] OF FB_MCMoveRelative;
+
+    fbMotorM2 : FB_MCMoveAbsolute;
+    fbMotorM3 : FB_MCMoveAbsolute;
+
+    iStepCounter : INT := 0;
+    
+	// Control flags
+	bStart		: BOOL := FALSE;
+	bDone		: BOOL := FALSE;
+	bReset		: BOOL := FALSE;
+    bMoveServo 	: BOOL := TRUE;
+    bMovementComplete : BOOL := FALSE;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE eRecoveryState OF
+
+    E_RecoveryState.Idle:
+        IF bStart THEN
+            eRecoveryState := E_RecoveryState.Metering_Solvent1;
+            bInitComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Metering_Solvent1:
+        MeteringSolvent1(); //Action
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Recirculate_Solvent1;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Recirculate_Solvent1:
+        RecirculateSolvent1();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Solvent_Soak;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Solvent_Soak:
+        SolventSoak();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Cleaning_Lines_S1;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Cleaning_Lines_S1:
+        CleaningLinesSolvent1();
+        IF bMovementComplete THEN
+            IF GVL_RecipeParameters.aSolventN[2] <> 0 THEN
+                eRecoveryState := E_RecoveryState.Metering_Solvent2;
+            ELSE
+                eRecoveryState := E_RecoveryState.Cleaning_Lines_S1_S2; // Skip to next applicable state
+            END_IF;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Metering_Solvent2:
+        MeteringSolvent2();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Mix_Solvent1_2;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Mix_Solvent1_2:
+        MixSolvent1and2();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Cleaning_Lines_S1_S2;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Cleaning_Lines_S1_S2:
+        CleaningLinesSolvent1and2();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Prime_Needles;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Prime_Needles:
+        PrimeNeedles();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Move_to_Position1;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Move_to_Position1:
+        MoveToPosition();
+        IF bMovementComplete THEN
+            IF GVL_RecipeParameters.iVialsToFill > 1 THEN
+                eRecoveryState := E_RecoveryState.Fill_Vials;
+            ELSE
+                eRecoveryState := E_RecoveryState.Move_To_Waste;
+            END_IF;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Fill_Vials:
+        FillAdditionalVials();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Move_To_Waste;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Move_To_Waste:
+        MoveToWastePosition();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Dispose_Remaining_Solvent;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Dispose_Remaining_Solvent:
+        DisposeRemainingSolvent();
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Completed;
+            bMovementComplete := FALSE;
+        END_IF;
+
+    E_RecoveryState.Completed:
+        bDone := TRUE;
+        IF bReset THEN
+            eRecoveryState := E_RecoveryState.Idle;
+            bDone := FALSE;
+        END_IF;
+
+END_CASE;
+]]></ST>
+    </Implementation>
+    <Action Name="CleaningLinesSolvent1" Id="{9273111f-dd95-4702-809f-ba9c490b1159}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CleaningLinesSolvent1and2" Id="{87b6bc97-2d34-4577-b9ae-634c57593673}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="DisposeRemainingSolvent" Id="{a506e020-7a9f-47c0-ade1-266bb776f9c2}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="FillAdditionalVials" Id="{d24df81f-3d3e-477c-843f-8d6a95d22a6d}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MeteringSolvent1" Id="{043bbe9a-a49a-4e9b-8157-9bfa39662a89}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MeteringSolvent2" Id="{ab3c9a64-fa5a-49bd-80d9-c7e2f0aaf572}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MixSolvent1and2" Id="{be5d325a-d90b-476e-8b7a-b5a6c59989fc}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MoveToPosition" Id="{e91bc937-13f8-4d14-a3d2-4237e5f04640}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MoveToWastePosition" Id="{0d088b26-2d05-4186-b5b4-abd253dadf13}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="PrimeNeedles" Id="{40407892-18b3-49ae-adf9-38d07aae6967}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="RecirculateSolvent1" Id="{dd88b683-a3d6-421a-a9d9-04dab5a1112d}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SolventSoak" Id="{024c621c-c960-47f6-8737-9a73b1607501}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_RecoveryPhase">
+      <LineId Id="323" Count="107" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1and2">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.DisposeRemainingSolvent">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.FillAdditionalVials">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.MeteringSolvent1">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.MeteringSolvent2">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.MixSolvent1and2">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.MoveToPosition">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.MoveToWastePosition">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.PrimeNeedles">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.RecirculateSolvent1">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.SolventSoak">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

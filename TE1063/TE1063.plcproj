@@ -27,6 +27,9 @@
     <Compile Include="DUTs\E_Motors.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\E_RecoveryState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\E_SolenoidSet.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -108,13 +111,7 @@
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_AirFlowCheck.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\FBs\FB_AlarmHandler.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_DryingPhase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\FBs\FB_ErrorHandler.TcPOU">
@@ -123,64 +120,73 @@
     <Compile Include="POUs\FBs\FB_EventHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_GetPosition.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_HardwareInit.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_HomePosition.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_InitChecks.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_LeakTest.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MCMoveAbsolute.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MCPower.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MotorControl.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MotorsPowerUp.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MotorsReset.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_MoveVelocity.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_PumpControl.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_RecoveryPhase.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_SealStages.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\FBs\FB_SensorScaling.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_SolenoidControl.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\FB_StopMotion.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\FBs\FB_TCPClient.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_ValvePositionControl.TcPOU">
+    <Compile Include="POUs\FBs\Hardware Control\FB_HomePosition.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_WashingPhase.TcPOU">
+    <Compile Include="POUs\FBs\Hardware Control\FB_MotorsPowerUp.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Hardware Control\FB_PumpControl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Hardware Control\FB_SolenoidControl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Hardware Control\FB_ValvePositionControl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_GetPosition.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MCMoveAbsolute.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MCMoveRelative.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MCPower.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MotorControl.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MotorsReset.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_MoveVelocity.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Motion\FB_StopMotion.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_AirFlowCheck.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_DryingPhase.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_HardwareInit.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_InitChecks.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_LeakTest.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_RecoveryPhase.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_SealStages.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FBs\Stages\FB_WashingPhase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
@@ -213,6 +219,9 @@
     <Folder Include="DUTs" />
     <Folder Include="GVLs" />
     <Folder Include="POUs\FBs" />
+    <Folder Include="POUs\FBs\Motion" />
+    <Folder Include="POUs\FBs\Hardware Control" />
+    <Folder Include="POUs\FBs\Stages" />
     <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>

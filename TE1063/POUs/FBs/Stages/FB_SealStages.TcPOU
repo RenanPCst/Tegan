@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
+
+VAR_INPUT
+	Axis 			: AXIS_REF; //Reference for the axis configured in the AX8108
+    iTargetPosition : INT; 		//Target motor position
+    rVelocity 		: LREAL; 	//Motor velocity
+    rAcceleration 	: LREAL; 	//Motor acceleration
+    rDeceleration 	: LREAL; 	//Motor deceleration
+    bExecute 		: BOOL;  	//Start the movement
+END_VAR
+
+VAR_OUTPUT
+	bSealSucess 	: BOOL; 	//Indicates whether the process was completed successfully
+    bSealError 		: BOOL;  	//Indicates whether there was an error during execution
+END_VAR
+
+VAR
+	FB_GetPosition		: FB_GetPosition;
+		bGetPosition	: BOOL := FALSE;
+	
+	fbMotorControl		: FB_MotorControl;
+		bMoveDone		: BOOL := FALSE;
+		bPosError		: BOOL := FALSE;
+		nPosErrorID		: UDINT;
+		sState			: STRING(256);
+	
+	//EventLogger Variables
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Geting the M1 Motor actual position
+IF bGetPosition THEN	
+	FB_GetPosition(
+		bEnable		:=	TRUE,
+		AxisRef		:=	Axis,
+		bError		=>	bPosError,
+		nErrorID	=>	nPosErrorID,
+		rPosition	=>	GVL_Motion.M1Motor.rActualPosition
+	);		
+END_IF
+
+IF GVL_Motion.M1Motor.rActualPosition <> iTargetPosition THEN
+	//Motor M1 Moving FB
+	IF bExecute AND GVL_Safety.iMotorsSTOEnabled THEN
+		fbMotorControl(
+			bEnable 	:= TRUE,
+			AxisRef 	:= Axis, 
+			nPosition 	:= iTargetPosition, 
+			nVelocity 	:= rVelocity,
+			bDone		=> bMoveDone,
+			bError		=> bPosError,
+			nErrorID	=> nPosErrorID,
+			sState		=> sState
+		);
+	END_IF
+		
+	IF bPosError THEN
+		//Indicate Error
+		bSealError 	:= TRUE;
+		bSealSucess := FALSE;
+		bExecuteEvent := TRUE;
+		//EventLogger Error
+    	fbEventHandler(
+			bExecute  := bExecuteEvent,
+			eEventName := E_Events.ERROR,
+			sSystem    := 'Seal Stage State',
+			sMessage   := concat('Error: ',sState),
+			bDone      => bEventDone
+    	);
+    	ResetEventTrigger();
+		
+	ELSE
+		bSealError 	:= FALSE;
+		IF bMoveDone THEN
+			//Event Logger Info
+			fbEventHandler(
+				bExecute  := bExecuteEvent,
+				eEventName := E_Events.INFO,
+				sSystem    := 'Seal Stage',
+				sMessage   := 'Completed!',
+				bDone      => bEventDone
+    		);
+    		ResetEventTrigger();
+			//Sucess return boolean
+			bSealSucess := TRUE;
+		ELSE
+			bSealSucess := FALSE;
+		END_IF;
+	END_IF;
+END_IF]]></ST>
+    </Implementation>
+    <Action Name="ResetEventTrigger" Id="{5e95a092-8b7d-48cb-95c9-b5f7292655e9}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_SealStages">
+      <LineId Id="167" Count="0" />
+      <LineId Id="170" Count="7" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="141" Count="11" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="227" Count="6" />
+      <LineId Id="224" Count="1" />
+      <LineId Id="88" Count="2" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="235" Count="6" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="92" Count="3" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="181" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SealStages.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

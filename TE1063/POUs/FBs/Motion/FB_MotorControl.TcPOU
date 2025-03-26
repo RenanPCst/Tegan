@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MotorControl" Id="{5ab8d8f9-5e90-44d2-bb73-989aa2470e6f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorControl
+
+VAR_INPUT
+    bEnable       	: BOOL;     // FB Enable - Enables the function block execution
+    nPosition     	: LREAL;    // Target position for movement
+    nVelocity     	: LREAL;    // Target velocity for movement
+END_VAR
+
+VAR_OUTPUT
+    bDone         	: BOOL;     // Movement completed successfully
+    bBusy         	: BOOL;     // Indicates that the movement is in progress
+    bPowerStatus  	: BOOL;     // Indicates if the axis is powered on
+    bError        	: BOOL;     // Indicates if an error has occurred
+    nErrorID      	: UDINT;    // Stores the error code if an error occurs
+    sState        	: STRING;   // Stores the current state or error message
+END_VAR
+
+VAR_IN_OUT
+    AxisRef       	: AXIS_REF; // Reference to the axis to be controlled
+END_VAR
+
+VAR
+    fbReset       	: MC_Reset;         // Function block to reset the axis in case of error
+    fbPower       	: FB_MCPower;         // Function block to enable the motor power
+    fbMoveAbsolute 	: FB_MCMoveAbsolute;  // Function block for absolute movement
+
+    nState        	: INT  := 1;         // Tracks the current state of the state machine
+
+
+    bActive    		: BOOL := FALSE;     // Indicates that the movement command is active
+    bAborted   		: BOOL := FALSE;     // Indicates if the movement was aborted
+
+    bResetDone    	: BOOL := FALSE;     // Indicates if the reset was completed successfully
+    bResetError   	: BOOL := FALSE;     // Indicates if there was an error during reset
+    nResetErrorID 	: UDINT := 0;        // Stores the error code of the reset process
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE nState OF
+    // State 0: Check for errors and attempt to reset the drive
+    // -----------------------------------------------
+    // If an error is detected (bError = TRUE), the function block will attempt 
+    // to reset the drive using fbReset.
+    // If the reset is successful, it will proceed to power up the drive (State 1).
+    // If the reset fails, it updates sState with an error message and transitions 
+    // to State -1 (critical failure).
+    0:
+        IF bError THEN
+            fbReset(
+                Execute := TRUE,
+                Axis    := AxisRef,
+                Done    => bResetDone,
+                Error   => bResetError,
+                ErrorID => nResetErrorID
+            );
+            
+            // If reset was successful, disable reset command and proceed
+            IF bResetDone THEN
+                fbReset.Execute := FALSE;  
+                nState := 1;  
+            
+            // If reset failed, store error message and move to error state
+            ELSIF bResetError THEN
+                sState := 'Error resetting drive';
+                nState := -1;  
+            END_IF;
+        ELSE
+            // No errors detected, proceed to power up the drive
+            nState := 1;  
+        END_IF;
+
+    // State 1: Power up the axis
+    // -----------------------------------------------
+    // Attempts to enable the drive by calling fbPower.
+    // If power is successfully applied (bPowerStatus = TRUE), it proceeds to the movement stage.
+    // If an error occurs during power-up, it transitions back to State 0 for a reset attempt.
+    1:
+        fbPower(
+            bEnable          := bEnable,
+            Override        := 100,
+            Axis            := AxisRef,
+            bStatus          => bPowerStatus,
+            bError           => bError,
+            ErrorID         => nErrorID
+        );
+
+        // If power-up is successful, proceed to movement
+        IF bPowerStatus THEN
+            nState := 2;  
+        
+        // If an error occurs, attempt to reset in State 0
+        ELSIF bError THEN
+            sState := 'Error powering up drive';
+            nState := 0;  
+        END_IF;
+
+    // State 2: Move the axis if enabled
+    // -----------------------------------------------
+    // If bEnable is TRUE, it sends a move command to the axis.
+    // If an error occurs during movement, it updates sState and transitions to State 0 to reset the drive.
+    2:
+        IF bPowerStatus THEN
+            fbMoveAbsolute(
+                bExecute        	:= TRUE,
+                Axis           	:= AxisRef,
+                fPosition       	:= nPosition,
+                fVelocity       	:= nVelocity,
+                bDone           	=> bDone,
+                bBusy           	=> bBusy,    
+                bActive         	=> bActive,    
+                bCommandAborted 	=> bAborted,
+                bError          	=> bError,     
+                iErrorID        	=> nErrorID
+            );
+
+            // If a movement error occurs, attempt to reset in State 0
+            IF bError THEN
+                sState := 'Movement error';
+                nState := 0;  
+            END_IF;
+        ELSE
+            // Stop the movement if bEnable is FALSE
+            fbMoveAbsolute.bExecute := FALSE;
+        END_IF;
+
+    // State -1: Critical failure
+    // -----------------------------------------------
+    // If the reset process fails multiple times, the FB enters this error state.
+    // This prevents infinite reset attempts and requires external intervention.
+    -1:
+        sState := 'Critical error - check the drive';
+END_CASE
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MotorControl">
+      <LineId Id="292" Count="0" />
+      <LineId Id="294" Count="39" />
+      <LineId Id="336" Count="52" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

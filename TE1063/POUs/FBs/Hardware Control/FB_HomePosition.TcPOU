@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_HomePosition" Id="{a4f8c8e7-dddf-4a94-bcd4-7e3204ae2ea0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_HomePosition
+VAR_INPUT
+    eMotor       : E_Motors;   // Selected Axis Motor
+    bStartHoming : BOOL;       // Homing Start Command
+END_VAR
+
+VAR_OUTPUT
+    bHomingDone  : BOOL;       // Indicates that the homing was concluded
+    bError       : BOOL;       // Indicates that an error occured
+END_VAR
+
+VAR
+    axisPointer  : POINTER TO AXIS_REF;
+    bHomeSensor  : POINTER TO BOOL;
+    sAxisName    : STRING(256);
+    
+    fbMove       : FB_MoveVelocity;
+    fbHome       : MC_Home;
+    fbStop       : FB_StopMotion;
+		bStop	 : BOOL := TRUE;
+	fbReset		 : MC_Reset;
+
+    bMoveAxis    : BOOL := FALSE;
+    iState       : INT := 0;
+    
+    tTimer       : TON; // Timer to ensure there is time between states
+    bTimerDone   : BOOL := FALSE;
+	bHomeSensorNow: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+CASE iState OF
+
+    // Select the correct axis based on Enum
+    0:  
+        CASE eMotor OF
+            E_Motors.M1StageCollection:
+                axisPointer := ADR(GVL_Motion.M1Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home);
+                sAxisName   := 'M1';
+            E_Motors.M2SampleRecVertical:
+                axisPointer := ADR(GVL_Motion.M2Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home);
+                sAxisName   := 'M2';
+            E_Motors.M3SampleRecHorizontal:
+                axisPointer := ADR(GVL_Motion.M3Motor.Axis);
+                bHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home);
+                sAxisName   := 'M3';
+            ELSE
+                bError := TRUE;
+                iState := 99; // Error State
+        END_CASE;
+
+        IF NOT bError THEN
+            tTimer(IN := TRUE, PT := T#500MS); // Time before starts the moviment
+            IF tTimer.Q THEN
+                iState := 1;
+            END_IF;
+        END_IF;
+
+    // Move the axis till gets to home sensor
+    1:	
+		bHomeSensorNow := bHomeSensor^;
+        IF bHomeSensorNow THEN  // The Axis will only move if the sensor is not activated
+            fbMove(
+                Axis       := axisPointer^,
+                Velocity   := 15.0, // Safe speed for homing
+                bExecute   := TRUE,
+                iDirection := 1    // Defines the axis correct direction 
+            );
+            tTimer(IN := TRUE, PT := T#1S); // Waits before next state
+        ELSE
+            iState := 2; // state transition
+        END_IF;
+
+    // Stops the axis moviment once it gets the sensor
+    2:
+		bHomeSensorNow := bHomeSensor^;
+        IF NOT bHomeSensorNow THEN
+			bStop := TRUE;
+		END_IF
+	
+		// FB_StopMotion calling 
+		fbStop(
+			Axis          := axisPointer^,
+			bExecute      := bStop,  
+			rDeceleration := 10.0  
+		);
+		IF fbStop.bStopDone AND bHomeSensorNow THEN
+			bStop := FALSE;
+		END_IF
+		
+		IF fbStop.bStopDone AND fbStop.bStopBusy THEN
+			fbReset(Axis := axisPointer^ , Execute := TRUE);
+		END_IF
+		
+        IF NOT fbStop.bStopBusy AND NOT bHomeSensorNow THEN
+		tTimer(IN := TRUE, PT := T#1S); // Waits before reset it
+        iState := 3; 
+		END_IF
+        
+
+    // Reset MC_Stop before starting Home
+    3:
+        IF tTimer.Q THEN
+            fbStop.bExecute := FALSE; 
+			
+            tTimer(IN := TRUE, PT := T#500MS); // Time before calling homing
+            iState := 4;
+        END_IF;
+
+    // Perform axis homing
+    4:
+        IF tTimer.Q THEN // Waits before starting homing
+            fbHome(
+                Execute         := TRUE,
+                Axis            := axisPointer^,
+                Position        := 0.0,
+                HomingMode      := MC_Direct
+            );
+
+            IF fbHome.Done THEN
+                bHomingDone := TRUE;
+                tTimer(IN := TRUE, PT := T#500MS);
+                IF tTimer.Q THEN
+                    iState := 5; 
+                END_IF;
+            END_IF;
+
+            IF fbHome.Error THEN
+                bError := TRUE;
+                iState := 99; // Error State
+            END_IF;
+        END_IF;
+
+    // Homing finished
+    5:
+        bHomingDone := TRUE; // Indicates that homing was successful.
+        iState := 0; // Restart to allow future homing
+
+    // Error State
+    99:
+        bError := TRUE; // Keep error flag active
+
+END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_HomePosition">
+      <LineId Id="992" Count="31" />
+      <LineId Id="1103" Count="0" />
+      <LineId Id="1024" Count="13" />
+      <LineId Id="1101" Count="0" />
+      <LineId Id="1038" Count="0" />
+      <LineId Id="1094" Count="0" />
+      <LineId Id="1097" Count="1" />
+      <LineId Id="1096" Count="0" />
+      <LineId Id="1042" Count="4" />
+      <LineId Id="1105" Count="2" />
+      <LineId Id="1047" Count="0" />
+      <LineId Id="1109" Count="2" />
+      <LineId Id="1108" Count="0" />
+      <LineId Id="1048" Count="0" />
+      <LineId Id="1099" Count="0" />
+      <LineId Id="1049" Count="0" />
+      <LineId Id="1100" Count="0" />
+      <LineId Id="1050" Count="0" />
+      <LineId Id="1141" Count="0" />
+      <LineId Id="1052" Count="41" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MotorsPowerUp" Id="{2ede40b4-9170-4e3a-965e-058f9fe9c946}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorsPowerUp
+VAR_INPUT
+	bExecute : BOOL;
+END_VAR
+VAR_OUTPUT
+	bPowerUpError 	: BOOL := FALSE;
+	bPowerUpDone 	: BOOL := FALSE;
+END_VAR
+VAR
+	eState    	: (Reset, M1, M2, M3, M4, M5, M6, M7, M8); 
+	fbMCPowerM1, fbMCPowerM2, fbMCPowerM3, fbMCPowerM4, fbMCPowerM5, fbMCPowerM6, fbMCPowerM7, fbMCPowerM8	: FB_MCPower;
+		PowerErrorID	: UDINT;
+		bPowerStatus	: BOOL := FALSE;
+		bM2 : BOOL := FALSE;
+		bM3 : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE eState OF
+	Reset:
+		bPowerUpDone := FALSE;
+		eState := M1;
+	M1:
+		IF bExecute THEN
+			fbMcPowerM1(
+				Axis 			:= GVL_Motion.M1Motor.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM1.bActive THEN
+			eState := M2;
+			//bPowerUpDone := TRUE;
+		END_IF
+	M2:
+		IF bExecute THEN
+			fbMcPowerM2(
+				Axis 			:= GVL_Motion.M2Motor.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM2.bActive THEN
+			eState := M3;
+			//bPowerUpDone := TRUE;
+		END_IF
+	
+	M3:
+		IF bExecute THEN
+			fbMcPowerM3(
+				Axis 			:= GVL_Motion.M3Motor.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM3.bActive THEN
+			eState := M4;
+			//bPowerUpDone := TRUE;
+		END_IF
+		
+	M4:
+		IF bExecute THEN
+			fbMcPowerM4(
+				Axis 			:= GVL_Motion.M4Valve1.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM4.bActive THEN
+			eState := M5;
+			//bPowerUpDone := TRUE;
+		END_IF
+		
+	M5:
+		IF bExecute THEN
+			fbMcPowerM5(
+				Axis 			:= GVL_Motion.M5Valve2.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM5.bActive THEN
+			eState := M6;
+			//bPowerUpDone := TRUE;
+		END_IF
+		
+	M6:
+		IF bExecute THEN
+			fbMcPowerM6(
+				Axis 			:= GVL_Motion.M6Valve3.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM6.bActive THEN
+			eState := M7;
+			//bPowerUpDone := TRUE;
+		END_IF
+		
+	M7:
+		IF bExecute THEN
+			fbMcPowerM7(
+				Axis 			:= GVL_Motion.M7Valve4.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM7.bActive THEN
+			eState := M8;
+			//bPowerUpDone := TRUE;
+		END_IF
+		
+	M8:
+		IF bExecute THEN
+			fbMcPowerM8(
+				Axis 			:= GVL_Motion.M8Valve5.Axis,	//axisPointer^,
+				bEnable 		:= TRUE, 	//Enable the Axis if the driver is ready without safety fauls
+				bError			=> bPowerUpError,
+				iErrorID		=> PowerErrorID,	 //Error ID if the power enter in error.
+				bActive			=> bPowerStatus
+			);
+		END_IF
+		IF fbMCPowerM8.bActive THEN
+			bPowerUpDone := TRUE;
+		END_IF
+	
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MotorsPowerUp">
+      <LineId Id="20" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="61" Count="3" />
+      <LineId Id="67" Count="7" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="75" Count="3" />
+      <LineId Id="81" Count="5" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="107" Count="10" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="121" Count="10" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="135" Count="10" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="149" Count="10" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="163" Count="11" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="23" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
