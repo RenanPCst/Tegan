@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_Motor" Id="{2c3c1834-2f58-41c6-810f-8bd283ecb8c2}">
+    <Declaration><![CDATA[TYPE ST_Motor :
+STRUCT
+	Axis        : AXIS_REF;   // Axis reference (default to all motors)
+    bEnable     : BOOL;       // Enable command
+    bReset      : BOOL;       // Reset command
+    bError      : BOOL;       // Error flag
+    nErrorID    : UDINT;      // Error ID
+    bBusy       : BOOL;       // In moviment state
+    bInPosition : BOOL;       // Indicates when the position was reached
+	
+	// Additional variables to direct link (%I e %Q):
+    nState        	AT %I*	: UINT;	 //Actual State (Axis StatusWord)
+    nControlWord  	AT %Q*	: UINT;	 //Control Word (ControlWord send to axis)
+    fActualPos 		AT %I*	: LREAL; //Real Actual Axis Position (Position Actual Value)
+    fActualVel 		AT %I*	: REAL;  //Real Actual Axis Velocity (Velocity Actual Value)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

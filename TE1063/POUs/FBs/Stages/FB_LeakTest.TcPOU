@@ -16,11 +16,7 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-    fbValveControl1 		: FB_ValvePositionControl;
-    fbValveControl2 		: FB_ValvePositionControl;
-    fbValveControl3 		: FB_ValvePositionControl;
-    fbValveControl4 		: FB_ValvePositionControl;
-    fbValveControl5 		: FB_ValvePositionControl;
+    fbValveControl 			: ARRAY[1..5] OF FB_ValvePositionControl;
     fbSolenoidControl 		: FB_SolenoidControl;
     fbSensorScaling   		: FB_SensorScaling;
 		bPressureInput		: BOOL := FALSE;
@@ -50,18 +46,18 @@ END_VAR]]></Declaration>
     POSITION_VALVES:
 		bMoveValves := bExecute;
         // Moves all 6-position valves to position 5
-        fbValveControl1(bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.M4Valve1.Axis);
-        fbValveControl2(bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.M5Valve2.Axis);
-        fbValveControl3(bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.M6Valve3.Axis);
-        fbValveControl4(bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.M7Valve4.Axis);
-        fbValveControl5(bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.M8Valve5.Axis);
+        fbValveControl[1](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[1].Axis);
+        fbValveControl[2](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[2].Axis);
+        fbValveControl[3](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[3].Axis);
+        fbValveControl[4](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[4].Axis);
+        fbValveControl[5](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[5].Axis);
         
         // If all valves have moved successfully, proceed to setting solenoids
-        IF fbValveControl1.bMoveDone AND fbValveControl2.bMoveDone AND fbValveControl3.bMoveDone AND fbValveControl4.bMoveDone AND fbValveControl5.bMoveDone THEN
+        IF fbValveControl[1].bMoveDone AND fbValveControl[2].bMoveDone AND fbValveControl[3].bMoveDone AND fbValveControl[4].bMoveDone AND fbValveControl[5].bMoveDone THEN
 			bMoveValves := FALSE;
             eState := SET_SOLENOIDS;
         // If any valve encounters an error, transition to ERROR state
-        ELSIF fbValveControl1.bError OR fbValveControl2.bError OR fbValveControl3.bError OR fbValveControl4.bError OR fbValveControl5.bError THEN
+        ELSIF fbValveControl[1].bError OR fbValveControl[2].bError OR fbValveControl[3].bError OR fbValveControl[4].bError OR fbValveControl[5].bError THEN
             bLeakTestError := TRUE;
             sLTMessageError := 'Failed to position valves';
 			//Event Logger message

@@ -38,8 +38,10 @@ VAR
 	
 	//MC_Power responsible to enable the motor
 	fbMcPower 		: FB_MCPower;
-	bPowerEnable	: BOOL := FALSE;
-	PowerErrorID	: UDINT;
+		bPowerEnable	: BOOL := FALSE;
+		bPumpEnable		: BOOL := FALSE;
+		bPowerError		: BOOL := FALSE;
+		PowerErrorID	: UDINT;
 	
 	//Balance FB call and Testing
 	fbTcpClient						: FB_TCPClient;
@@ -76,6 +78,11 @@ VAR
 	fbMotorsPowerUp : FB_MotorsPowerUP;
 		bPowerUp	: BOOL := FALSE;
 	
+	fbMoveRelative		: FB_MCMoveRelative;
+		bStartRelMov	: BOOL := FALSE;
+		
+	fbSetPosition		: MC_SetPosition;
+		bSetPosition	: BOOL := FALSE;
 	
 	fbStop : MC_Stop;
 
@@ -90,6 +97,41 @@ PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();
 //Can be put into Low task event
 PRG_HMIControl();
+
+
+//################ TESTING AREA ################################
+
+//<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
+fbMcPower( //Enabling the axis - rotary pump 1
+    Axis 			:= GVL_Motion.aPumps[1].Rotary.Axis,
+    bEnable 		:= bPumpEnable, 	//Enable the Axis if the driver is ready without safety fauls
+	bReset			:= FALSE,		 	//Reset the Axis if the driver is ready without safety fauls
+	ErrorID			=> PowerErrorID,	//Error ID if the power enter in error.
+	Error			=> bPowerError
+);
+fbSetPosition(Axis := GVL_Motion.aPumps[1].Rotary.Axis, execute:= bSetPosition, position := 0.0);
+IF fbSetPosition.Done THEN
+	bSetPosition := FALSE;
+END_IF
+
+//9mm Linear pump opening – 0.079 µL/step
+//5mL Testing 
+GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
+
+fbMoveRelative(
+	Axis			:= GVL_Motion.aPumps[1].Rotary.Axis,
+	Execute			:= bStartRelMov,
+	Distance		:= GVL_Motion.aPumps[1].Rotary.fDistance,
+	Velocity		:= GVL_Motion.aPumps[1].Rotary.fRelVelocity,
+	Acceleration	:= GVL_Motion.aPumps[1].Rotary.fAcceleration,
+	Deceleration	:= GVL_Motion.aPumps[1].Rotary.fDeceleration,
+	Done			=> GVL_Motion.aPumps[1].Rotary.bInPosition,
+	Error			=> GVL_Motion.aPumps[1].Rotary.bError,
+	ErrorID			=> GVL_Motion.aPumps[1].Rotary.nErrorID
+);
+
+
+//<\pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 
 //<Event Logger Test>----------------------------------------------------------------------------------------------------------------------------
 // Events call
@@ -194,10 +236,10 @@ END_IF
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M4Valve1.Axis,
+		AxisRef			:=	GVL_Motion.aValves[1].Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M4Valve1.rAtualPosition
+		rPosition		=>	GVL_Motion.aValves[1].rAtualPosition
 	);		
 END_IF
 
@@ -205,10 +247,10 @@ END_IF
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M5Valve2.Axis,
+		AxisRef			:=	GVL_Motion.aValves[2].Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M5Valve2.rAtualPosition
+		rPosition		=>	GVL_Motion.aValves[2].rAtualPosition
 	);		
 END_IF
 
@@ -216,10 +258,10 @@ END_IF
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M6Valve3.Axis,
+		AxisRef			:=	GVL_Motion.aValves[3].Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M6Valve3.rAtualPosition
+		rPosition		=>	GVL_Motion.aValves[3].rAtualPosition
 	);		
 END_IF
 
@@ -227,10 +269,10 @@ END_IF
 IF bGetPosition THEN	
 	PosFB(
 		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M7Valve4.Axis,
+		AxisRef			:=	GVL_Motion.aValves[4].Axis,
 		bError			=>	bPosError,
 		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M7Valve4.rAtualPosition
+		rPosition		=>	GVL_Motion.aValves[4].rAtualPosition
 	);		
 END_IF
 
@@ -238,15 +280,15 @@ END_IF
 IF bGetPosition THEN	
 	PosFB(
 		bEnable		:=	bGetPosition,
-		AxisRef		:=	GVL_Motion.M8Valve5.Axis,
+		AxisRef		:=	GVL_Motion.aValves[5].Axis,
 		bError		=>	bPosError,
 		nErrorID	=>	nPosErrorID,
-		rPosition	=>	GVL_Motion.M8Valve5.rAtualPosition
+		rPosition	=>	GVL_Motion.aValves[5].rAtualPosition
 	);		
 END_IF
 
 fbMcPower(
-    Axis 			:= GVL_Motion.M5Valve2.Axis,
+    Axis 			:= GVL_Motion.aValves[2].Axis,
     bEnable 		:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
 	bReset			:= FALSE,		 //Reset the Axis if the driver is ready without safety fauls
 	ErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
@@ -258,7 +300,7 @@ DesiredPos := 5;
 IF NOT ValveInPosition AND EnableServo THEN
 fbValveController(
     bEnable 		:= EnableServo,
-	ServoAxis		:= GVL_Motion.M5Valve2.Axis,
+	ServoAxis		:= GVL_Motion.aValves[2].Axis,
     iValvePosition 	:= DesiredPos,
 	bMoveDone		=> ValveInPosition
 );
@@ -312,7 +354,28 @@ END_IF
       <LineId Id="3102" Count="3" />
       <LineId Id="3568" Count="0" />
       <LineId Id="3567" Count="0" />
-      <LineId Id="3106" Count="59" />
+      <LineId Id="3650" Count="1" />
+      <LineId Id="3106" Count="0" />
+      <LineId Id="3653" Count="1" />
+      <LineId Id="3658" Count="4" />
+      <LineId Id="3667" Count="0" />
+      <LineId Id="3655" Count="0" />
+      <LineId Id="3693" Count="0" />
+      <LineId Id="3692" Count="0" />
+      <LineId Id="3694" Count="1" />
+      <LineId Id="3673" Count="0" />
+      <LineId Id="3669" Count="0" />
+      <LineId Id="3674" Count="0" />
+      <LineId Id="3691" Count="0" />
+      <LineId Id="3690" Count="0" />
+      <LineId Id="3675" Count="2" />
+      <LineId Id="3681" Count="2" />
+      <LineId Id="3686" Count="3" />
+      <LineId Id="3678" Count="0" />
+      <LineId Id="3668" Count="0" />
+      <LineId Id="3656" Count="1" />
+      <LineId Id="3652" Count="0" />
+      <LineId Id="3107" Count="58" />
       <LineId Id="3169" Count="5" />
       <LineId Id="3392" Count="0" />
       <LineId Id="3175" Count="90" />

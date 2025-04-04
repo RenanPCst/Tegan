@@ -3,6 +3,13 @@
   <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_HMIControl
 VAR
+fbGetPosition   : ARRAY[1..5] OF FB_GetPosition; // Substitua pelo seu FB real
+	tonReadTimer    : TON;
+    bReadTrigger    : BOOL := TRUE;
+    bGetPosition    : BOOL;
+    bPosError       : ARRAY[1..5] OF BOOL;
+    nPosErrorID     : ARRAY[1..5] OF UDINT;
+	i				: INT := 0;
 
 END_VAR
 ]]></Declaration>
@@ -11,7 +18,57 @@ END_VAR
 GVL_HMIVariables.HMIDigOuputs.bHMIResetButton 	:= GVL_IO.gDigOutputs.bResetIndicator;
 GVL_HMIVariables.HMIDigOuputs.bHMIStartButton	:= GVL_IO.gDigOutputs.bStartIndicator;
 GVL_HMIVariables.HMIDigOuputs.bHMIEStopSide		:= NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2);
-GVL_HMIVariables.HMIDigOuputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);]]></ST>
+GVL_HMIVariables.HMIDigOuputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);
+
+GVL_HMIVariables.HMIDigOuputs.aValveAngle[1]	:= 240.5;
+GVL_HMIVariables.HMIDigOuputs.aValveAngle[2]	:= 239.8;
+GVL_HMIVariables.HMIDigOuputs.aValveAngle[3]	:= 240.1;
+GVL_HMIVariables.HMIDigOuputs.aValveAngle[4]	:= 240.3;
+GVL_HMIVariables.HMIDigOuputs.aValveAngle[5]	:= 249.7;
+
+GVL_HMIVariables.HMIDigOuputs.aValvePosition[1]	:= 5;
+GVL_HMIVariables.HMIDigOuputs.aValvePosition[2]	:= 5;
+GVL_HMIVariables.HMIDigOuputs.aValvePosition[3]	:= 5;
+GVL_HMIVariables.HMIDigOuputs.aValvePosition[4]	:= 5;
+GVL_HMIVariables.HMIDigOuputs.aValvePosition[5]	:= 5;
+
+GVL_HMIVariables.HMIDigOuputs.aRinseLevel[1]	:= 64;
+GVL_HMIVariables.HMIDigOuputs.aRinseLevel[2]	:= 47;
+GVL_HMIVariables.HMIDigOuputs.aRinseLevel[3]	:= 87;
+GVL_HMIVariables.HMIDigOuputs.aRinseLevel[4]	:= 14;
+
+GVL_HMIVariables.HMIDigOuputs.aWasteLevel		:= 82;
+
+
+
+(*
+//Get valves position to update hmi every 1sec
+tonReadTimer(IN := bReadTrigger, PT := T#1S);
+
+IF tonReadTimer.Q THEN
+    bGetPosition := TRUE;
+
+    FOR i := 1 TO 5 DO
+        fbGetPosition[i](
+            bEnable     := bGetPosition,
+            AxisRef     := GVL_Motion.aValves[i].Axis,
+            bError      => bPosError[i],
+            nErrorID    => nPosErrorID[i],
+            rPosition   => GVL_HMIVariables.HMIDigOuputs.aValveAngle[i]
+        );
+    END_FOR;
+
+    // Resets the timer
+    tonReadTimer(IN := FALSE);
+    bReadTrigger := FALSE;
+ELSE
+    // Reactivates timer after reset
+    IF NOT tonReadTimer.IN THEN
+        tonReadTimer(IN := TRUE);
+        bReadTrigger := TRUE;
+    END_IF;
+END_IF;
+*)]]></ST>
     </Implementation>
     <LineIds Name="PRG_HMIControl">
       <LineId Id="17" Count="0" />
@@ -19,6 +76,24 @@ GVL_HMIVariables.HMIDigOuputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bES
       <LineId Id="24" Count="0" />
       <LineId Id="23" Count="0" />
       <LineId Id="18" Count="0" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="89" Count="3" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="95" Count="3" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="101" Count="2" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="59" Count="23" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="85" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

@@ -21,10 +21,11 @@ VAR
     bPowerUp    : BOOL := FALSE;
     
     fbHomeM1, fbHomeM2, fbHomeM3 : FB_HomePosition;
-    fbMoveM4, fbMoveM5, fbMoveM6, fbMoveM7, fbMoveM8 : FB_ValvePositionControl;
+    fbMoveValves : ARRAY[1..5] OF FB_ValvePositionControl;
     TonPowerUp : TON;
     
     iState : INT := -1; // Default state is reset (-1)
+	i	   : INT; //loop for index
 
     // Event Logger Variables
     fbEventHandler : FB_EventHandler;
@@ -119,22 +120,20 @@ END_VAR
     // State 4: Move valves to home position
     4:
         bMoveServo := bExecute;
-
-        fbMoveM4(bEnable := bMoveServo, ServoAxis := GVL_Motion.M4Valve1.Axis, iValvePosition := 1);
-        fbMoveM5(bEnable := bMoveServo, ServoAxis := GVL_Motion.M5Valve2.Axis, iValvePosition := 1);
-        fbMoveM6(bEnable := bMoveServo, ServoAxis := GVL_Motion.M6Valve3.Axis, iValvePosition := 1);
-        fbMoveM7(bEnable := bMoveServo, ServoAxis := GVL_Motion.M7Valve4.Axis, iValvePosition := 1);
-        fbMoveM8(bEnable := bMoveServo, ServoAxis := GVL_Motion.M8Valve5.Axis, iValvePosition := 1);
+		
+		FOR i := 1 TO 10 DO
+        	fbMoveValves[i](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[i].Axis, iValvePosition := 1);
+        END_FOR
 
         // Check if all servos have reached home position
-        IF fbMoveM4.bMoveDone AND fbMoveM5.bMoveDone AND fbMoveM6.bMoveDone AND fbMoveM7.bMoveDone AND fbMoveM8.bMoveDone THEN
+        IF fbMoveValves[1].bMoveDone AND fbMoveValves[2].bMoveDone AND fbMoveValves[3].bMoveDone AND fbMoveValves[4].bMoveDone AND fbMoveValves[5].bMoveDone THEN
             bDone := TRUE;
             bMoveServo := FALSE;
             iState := 100; // End State
         END_IF;
         
         // Check if any servo has an error
-        IF fbMoveM4.bError OR fbMoveM5.bError OR fbMoveM6.bError OR fbMoveM7.bError OR fbMoveM8.bError THEN
+        IF fbMoveValves[1].bError OR fbMoveValves[2].bError OR fbMoveValves[3].bError OR fbMoveValves[4].bError OR fbMoveValves[5].bError THEN
             bError := TRUE;
             iState := 99;
         END_IF;
@@ -189,7 +188,10 @@ END_IF;]]></ST>
     </Action>
     <LineIds Name="FB_HardwareInit">
       <LineId Id="390" Count="21" />
-      <LineId Id="414" Count="92" />
+      <LineId Id="414" Count="63" />
+      <LineId Id="560" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="482" Count="24" />
       <LineId Id="508" Count="10" />
       <LineId Id="520" Count="7" />
       <LineId Id="9" Count="0" />

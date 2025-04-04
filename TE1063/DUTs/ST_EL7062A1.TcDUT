@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_EL7062A1" Id="{cdfcca9e-54b1-4405-a023-19d939f06504}">
+    <Declaration><![CDATA[TYPE ST_EL7062A1 EXTENDS ST_Motor :
+STRUCT
+	//Axis 1 - Pump Linear Actuator - 1A
+	bHome         : BOOL;    // Homing Command
+    bHomed        : BOOL;    // Homing status accomplished
+    fTargetPos    : LREAL;   // Absolute target position
+    fTargetVel    : REAL;    // Absolute target speed
+    fAcceleration : REAL;    // Default Acceleration for movements
+    fDeceleration : REAL;    // Default Deceleration for movements
+	(* 
+	Manufactor Info 
+	
+	The movement OF the linear actuator is linear, meaning each step changes the 
+	dispense volume BY a consistent amount. THIS volume change per step varies with 
+	the piston size, as listed below: 
+
+	- 3/16” – 0.013 µL/step  
+	- 1/4”  – 0.037 µL/step  
+	- 9mm   – 0.079 µL/step 
+	*)
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
