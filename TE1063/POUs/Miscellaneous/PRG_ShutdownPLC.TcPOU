@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_ShutdownPLC" Id="{71ae888e-9b37-420e-9d56-8353899fcb8d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ShutdownPLC
+VAR
+	fbReboot    : NT_Reboot;
+    fbShutdown  : NT_Shutdown;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Reboot commando condition
+IF GVL_HMI.HMIDigInputs.bRebootPLC THEN
+    fbReboot(Start:=TRUE);
+ELSE
+    fbReboot(Start:=FALSE);
+END_IF
+
+// Shutdown command condition
+IF GVL_HMI.HMIDigInputs.bShutdownPLC THEN
+    fbShutdown(Start:=TRUE);
+ELSE
+    fbShutdown(Start:=FALSE);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_ShutdownPLC">
+      <LineId Id="8" Count="11" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

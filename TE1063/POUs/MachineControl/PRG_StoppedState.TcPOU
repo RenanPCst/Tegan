@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_StoppedState" Id="{e1a020b0-65f1-4f8b-82e2-3f08dab3c53c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_StoppedState
+VAR
+	fbBlinkStartButton	:	FB_Blink;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Start Button Blink ------------------------------------------------
+IF GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN
+	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#500MS );
+ELSE
+	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#500MS );
+END_IF
+
+GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_StoppedState">
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="14" Count="3" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

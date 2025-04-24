@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_AX8108" Id="{27df3599-5884-4e9c-845c-1a13e5935d53}">
+    <Declaration><![CDATA[TYPE ST_AX8108 :
+STRUCT
+	
+	//M1 Motor Structure
+	iPosition								AT %I*		: LREAL;
+	iStatusWord								AT %I*		: UINT;
+	qControlWord							AT %Q*		: UINT;
+	qTargetVelocity							AT %Q*		: LREAL;
+	nState									AT %I*		: UINT;						//Terminal State from IO Terminal Info Data
+	sStatus												: STRING(200);
+	Axis                                        	 	: AXIS_REF; 				//Motor M1 Seal Stage Vertical Axis
+	n_AxisTorqueLimitation					AT %Q*		: UINT	:=	32767;
+	n_AxisActualTorque									: REAL; 					// now part of structured varaible axis_ref
+
+	//M1 Motor Safety
+	bTS_Run									AT %Q*		: BOOL;
+	bTS_ErrorAck							AT %Q*		: BOOL;
+	
+	//New variables
+	rActualPosition										: LREAL;
+	rTargetPosition										: LREAL;
+	rTargetVelocityP1									: LREAL;
+	rTargetVelocityP2									: LREAL;
+	rAccleration										: LREAL;
+	rDeceleration										: LREAL;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

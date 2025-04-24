@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Blink" Id="{2252363c-dbe1-4a37-984a-e77f414499c2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Blink
+VAR_INPUT
+	bEnable : BOOL := FALSE;         // Enables the blink
+    tPeriod : TIME := T#1S;       	// cycle total time (on + off)
+END_VAR
+VAR_OUTPUT
+	bBlink : BOOL;                   // blinking output
+END_VAR
+VAR
+	ton : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// State alternation every tPeriod/2
+IF bEnable THEN
+    ton(IN := NOT ton.Q, PT := tPeriod / 2);
+    ton(IN := TRUE);
+    
+    IF ton.Q THEN
+        bBlink := NOT bBlink;
+        ton(IN := FALSE);  // resets the cycle
+    END_IF;
+ELSE
+    ton(IN := FALSE);
+    bBlink := FALSE;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Blink">
+      <LineId Id="14" Count="11" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

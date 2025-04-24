@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMIParameters" Id="{615fc2f1-fbaf-4f88-aebf-fc5849c356b3}">
+    <Declaration><![CDATA[TYPE ST_HMIParameters :
+STRUCT
+	
+	tCheckAirFlowTime 	: TIME;					//Time in seconds to check air flow
+	
+	aM1Position : ARRAY [1..3] OF INT;		//M1 Motor - Stage Collection Vertical Axis  |1=HomePosition|2=SealPosition|3=DryPosition|
+	aM2Position : ARRAY [1..4] OF INT;		//M2 Motor - Sample Recovery Vertical Axis   |1=HomePosition|2=Waste|3=Fill Vials|4=Calibration|
+	aM3Position : ARRAY [1..6] OF INT;		//M3 Motor - Sample Recovery Horizontal Axis |1=HomePosition/Waste|2=VialLine1|3=VialLine2|4=VialLine3|5=VialLine4|6=Calibration|
+	fM1PositionDeceleration	: INT;			//M1 Motor - the amount of mm to start the precision slow moviment to seal stages
+	
+	
+	//Stage Collection Motor M1 - Vertical
+	rM1Velocity			 :	LREAL;
+	rM1PrecisionVelocity :	LREAL;
+	rM1Accleration		 :	LREAL;
+	rM1Deceleration		 :	LREAL;
+	
+	//Sample Recovey Motor M2 - Vertical
+	rM2Velocity			 :	LREAL;
+	rM2Accleration		 :	LREAL;
+	rM2Deceleration		 :	LREAL;
+	
+	//Sample Recovey Motor M3 - Horizontal
+	rM3Velocity			 :	LREAL;
+	rM3Accleration		 :	LREAL;
+	rM3Deceleration		 :	LREAL;
+	
+	
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

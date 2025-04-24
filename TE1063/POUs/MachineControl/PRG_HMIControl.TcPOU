@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_HMIControl
+VAR
+fbGetPosition   : ARRAY[1..5] OF FB_GetPosition; // Substitua pelo seu FB real
+	tonReadTimer    : TON;
+    bReadTrigger    : BOOL := TRUE;
+    bGetPosition    : BOOL;
+    bPosError       : ARRAY[1..5] OF BOOL;
+    nPosErrorID     : ARRAY[1..5] OF UDINT;
+	i				: INT := 0;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Buttons Indicators -------------------------------------------------------------------------------------------------
+GVL_HMI.HMIDigOutputs.bHMIResetButton 	:= GVL_IO.gDigOutputs.bResetIndicator;
+GVL_HMI.HMIDigOutputs.bHMIStartButton	:= GVL_IO.gDigOutputs.bStartIndicator;
+GVL_HMI.HMIDigOutputs.bHMIEStopSide		:= NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2);
+GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);
+
+//Alarm Lamp Indicator for HMI ---------------------------------------------------------------------------------------
+GVL_HMI.HMIDigOutputs.bAlarmLampRed 	:= GVL_IO.gDigOutputs.bTowerRedLight; 	//Red Light
+GVL_HMI.HMIDigOutputs.bAlarmLampAmbar 	:= GVL_IO.gDigOutputs.bTowerAmberLight; //Ambar Light
+GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; //Green Light
+
+//Temporary constants for testing purpose
+GVL_HMI.HMIDigOutputs.aValveAngle[1]	:= 240.5;
+GVL_HMI.HMIDigOutputs.aValveAngle[2]	:= 239.8;
+GVL_HMI.HMIDigOutputs.aValveAngle[3]	:= 240.1;
+GVL_HMI.HMIDigOutputs.aValveAngle[4]	:= 240.3;
+GVL_HMI.HMIDigOutputs.aValveAngle[5]	:= 249.7;
+
+GVL_HMI.HMIDigOutputs.aValvePosition[1]	:= 5;
+GVL_HMI.HMIDigOutputs.aValvePosition[2]	:= 5;
+GVL_HMI.HMIDigOutputs.aValvePosition[3]	:= 5;
+GVL_HMI.HMIDigOutputs.aValvePosition[4]	:= 5;
+GVL_HMI.HMIDigOutputs.aValvePosition[5]	:= 5;
+
+GVL_HMI.HMIDigOutputs.aRinseLevel[1]	:= 64;
+GVL_HMI.HMIDigOutputs.aRinseLevel[2]	:= 47;
+GVL_HMI.HMIDigOutputs.aRinseLevel[3]	:= 87;
+GVL_HMI.HMIDigOutputs.aRinseLevel[4]	:= 14;
+
+GVL_HMI.HMIDigOutputs.aWasteLevel		:= 82;
+
+
+
+(*
+//Get valves position to update hmi every 1sec
+tonReadTimer(IN := bReadTrigger, PT := T#1S);
+
+IF tonReadTimer.Q THEN
+    bGetPosition := TRUE;
+
+    FOR i := 1 TO 5 DO
+        fbGetPosition[i](
+            bEnable     := bGetPosition,
+            AxisRef     := GVL_Motion.aValves[i].Axis,
+            bError      => bPosError[i],
+            nErrorID    => nPosErrorID[i],
+            rPosition   => GVL_HMIVariables.HMIDigOuputs.aValveAngle[i]
+        );
+    END_FOR;
+
+    // Resets the timer
+    tonReadTimer(IN := FALSE);
+    bReadTrigger := FALSE;
+ELSE
+    // Reactivates timer after reset
+    IF NOT tonReadTimer.IN THEN
+        tonReadTimer(IN := TRUE);
+        bReadTrigger := TRUE;
+    END_IF;
+END_IF;
+*)]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_HMIControl">
+      <LineId Id="169" Count="59" />
+      <LineId Id="85" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
