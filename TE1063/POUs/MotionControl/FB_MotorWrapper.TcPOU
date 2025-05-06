@@ -1,0 +1,264 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_MotorWrapper" Id="{e1ed2152-e06a-419a-985a-88258f9f2422}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorWrapper IMPLEMENTS IF_Actuator
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR_IN_OUT
+	Axis : AXIS_REF;
+END_VAR
+
+VAR
+	
+	// MC2 Motion Function Blocks
+    fbPower    : MC_Power;
+    fbReset    : MC_Reset;
+    fbMoveAbs  : MC_MoveAbsolute;
+    fbMoveRel  : MC_MoveRelative;
+    fbHome     : MC_Home;
+	fbReadPos  : MC_ReadActualPosition;
+	
+	// Unified status struct for monitoring and HMI
+    status     : ST_ActuatorStatus;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Disable" Id="{1dc75d36-67d4-446b-8c6d-65221bad79c5}">
+      <Declaration><![CDATA[METHOD Disable : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Disable (Remove power from axis)
+fbPower(Axis := Axis, Enable := FALSE);
+status.bEnabled := FALSE;
+status.eState := E_ActuatorState.eDisabled;
+Disable := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enable" Id="{d67ddf43-bc97-4342-80c6-577e8cfb8a1b}">
+      <Declaration><![CDATA[METHOD Enable : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call MC_Power to enable axis
+fbPower(Axis := Axis, Enable := TRUE);
+status.bEnabled := fbPower.Status;
+status.bError := fbPower.Error;
+status.iErrorCode := fbPower.ErrorID;
+IF fbPower.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in PowerUp';
+ELSE
+	status.eState := E_ActuatorState.eActive;
+END_IF;
+
+Enable := fbPower.Status;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetPosition" Id="{4edb2a8e-f8bf-4431-b71c-db3c2d022d41}">
+      <Declaration><![CDATA[METHOD GetPosition : LREAL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Get Actual Position of the motor
+fbReadPos(Axis := Axis, Enable := TRUE);
+GetPosition := fbReadPos.Position;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetStatus" Id="{a9f2bdab-8820-4977-9409-a8793adba31f}">
+      <Declaration><![CDATA[METHOD GetStatus : ST_ActuatorStatus
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Get unified status struct with all feedback for HMI/diagnostics
+fbReadPos(Axis := Axis, Enable := TRUE);
+status.fPosition := fbReadPos.Position;
+status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy;
+status.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
+status.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error;
+// Prioritize error messages by source
+IF status.bError THEN
+	status.eState := E_ActuatorState.eError;
+	IF fbPower.Error THEN
+		status.sMessage := 'Error in PowerUp';
+	ELSIF fbMoveAbs.Error THEN
+		status.sMessage := 'Error in MoveAbsolute';
+	ELSIF fbMoveRel.Error THEN
+		status.sMessage := 'Error in MoveRelative';
+	ELSIF fbHome.Error THEN
+		status.sMessage := 'Error in Home';
+	END_IF
+END_IF;
+//return
+GetStatus := status;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Home" Id="{771f97a4-e7d4-481b-b233-9c33c798e61d}">
+      <Declaration><![CDATA[METHOD Home : BOOL
+VAR_INPUT
+	Execute : BOOL := TRUE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Homing procedure (infinite movement until home sensor triggers)
+
+fbHome(Axis := Axis, Execute := Execute);
+status.bBusy := fbHome.Busy;
+status.bDone := fbHome.Done;
+status.bError := fbHome.Error;
+status.iErrorCode := fbHome.ErrorID;
+IF fbHome.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in Home';
+	Home := FALSE; // homing Error
+END_IF;
+IF fbHome.Done THEN
+	status.eState := E_ActuatorState.eActive; // or eIdle depending on your convention
+	status.sMessage := 'Homing finished';
+	Home := TRUE; // Homing Done
+END_IF;
+Home := FALSE; // homing in progress
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveAbsolute" Id="{3c2d0047-9043-4f3b-b941-8126a4eab227}">
+      <Declaration><![CDATA[METHOD MoveAbsolute : BOOL
+VAR_INPUT
+	Position : LREAL;
+    Velocity : LREAL := 10.0;
+    Acc      : LREAL := 20.0;
+    Dec      : LREAL := 20.0;
+END_VAR
+VAR
+    Execute : BOOL := TRUE;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Absolute motion command (position, velocity, acceleration, deceleration)
+fbMoveAbs(Axis := Axis, Position := Position, Execute := Execute, Velocity := Velocity, Acceleration := Acc, Deceleration := Dec);
+status.bBusy := fbMoveAbs.Busy;
+status.bDone := fbMoveAbs.Done;
+status.bError := fbMoveAbs.Error;
+status.iErrorCode := fbMoveAbs.ErrorID;
+IF fbMoveAbs.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in MoveAbsolute';
+END_IF;
+
+//Return
+MoveAbsolute := fbMoveAbs.Done;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveRelative" Id="{f57948ef-5e1c-4cbd-b496-9bd6108f8456}">
+      <Declaration><![CDATA[METHOD MoveRelative : BOOL
+VAR_INPUT
+	Distance : LREAL;
+    Velocity : LREAL := 10.0;
+    Acc      : LREAL := 20.0;
+    Dec      : LREAL := 20.0;
+END_VAR
+VAR
+    Execute : BOOL := TRUE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Relative motion command (distance, velocity, acceleration, deceleration)
+fbMoveRel(Axis := Axis, Distance := Distance, Execute := Execute, Velocity := Velocity, Acceleration := Acc, Deceleration := Dec);
+status.bBusy := fbMoveRel.Busy;
+status.bDone := fbMoveRel.Done;
+status.bError := fbMoveRel.Error;
+status.iErrorCode := fbMoveRel.ErrorID;
+IF fbMoveRel.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in MoveRelative';
+END_IF;
+
+//Return
+MoveRelative := fbMoveRel.Done;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{55ea212e-113c-4739-bf54-01562c1314f2}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset errors on the axis and motion FBs
+fbReset(Axis := Axis, Execute := TRUE);
+status.bError := fbReset.Error;
+status.iErrorCode := fbReset.ErrorID;
+IF fbReset.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in Reset';
+	Reset := FALSE;
+ELSE
+	status.bError := FALSE;
+	status.iErrorCode := 0;
+	status.eState := E_ActuatorState.eIdle;
+	status.sMessage := '';
+	Reset := TRUE;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_MotorWrapper">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.Disable">
+      <LineId Id="9" Count="0" />
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.Enable">
+      <LineId Id="6" Count="11" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.GetPosition">
+      <LineId Id="9" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.GetStatus">
+      <LineId Id="6" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="8" Count="16" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.Home">
+      <LineId Id="6" Count="0" />
+      <LineId Id="10" Count="16" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.MoveAbsolute">
+      <LineId Id="6" Count="0" />
+      <LineId Id="17" Count="8" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.MoveRelative">
+      <LineId Id="6" Count="0" />
+      <LineId Id="17" Count="8" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="33" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.Reset">
+      <LineId Id="6" Count="0" />
+      <LineId Id="8" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

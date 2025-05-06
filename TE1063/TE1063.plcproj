@@ -81,6 +81,21 @@
     <Compile Include="DUTs\IO\ST_EP9208.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\MotionControl\E_ActuatorState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\MotionControl\E_MotorType.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\MotionControl\ST_ActuatorStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Recipe\ST_Recipe.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Recipe\ST_RecipeFileInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\Recipe\ST_RecipeInfo.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -232,9 +247,6 @@
     <Compile Include="POUs\Functions\F_VolumeToSteps.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\MAIN.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="POUs\MachineControl\PRG_Calibration.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -256,13 +268,40 @@
     <Compile Include="POUs\MachineControl\PRG_StoppedState.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Miscellaneous\FB_Blink.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Miscellaneous\PRG_ShutdownPLC.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Miscellaneous\PRG_TowerAlarmLamps.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Miscellaneous\PRG_UpdateVariablesMoving.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MotionControl\FB_MotorWrapper.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MotionControl\IF_Actuator.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MotionControl\PRG_AxisAssignment.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\RecipeHandle\FB_ListRecipeFiles.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\RecipeHandle\FB_LoadRecipe.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\RecipeHandle\FB_RecipeHeaderHandler.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\RecipeHandle\PRG_RecipeManager.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Visualization Manager.TcVMO">
@@ -280,6 +319,8 @@
     <Folder Include="DUTs" />
     <Folder Include="DUTs\IO" />
     <Folder Include="DUTs\HMI" />
+    <Folder Include="DUTs\MotionControl" />
+    <Folder Include="DUTs\Report" />
     <Folder Include="DUTs\Safety" />
     <Folder Include="DUTs\Recipe" />
     <Folder Include="GVLs" />
@@ -290,6 +331,9 @@
     <Folder Include="POUs\Functions" />
     <Folder Include="POUs\Miscellaneous" />
     <Folder Include="POUs\MachineControl" />
+    <Folder Include="POUs\MotionControl" />
+    <Folder Include="POUs\Reports" />
+    <Folder Include="POUs\RecipeHandle" />
     <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>
@@ -362,10 +406,15 @@
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Utilities">
       <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Utilities</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc3_EventLogger">
       <DefaultResolution>Tc3_EventLogger, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc3_EventLogger</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_JsonXml">
+      <DefaultResolution>Tc3_JsonXml, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_JsonXml</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc3_Module">
       <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
@@ -373,6 +422,9 @@
     </PlaceholderReference>
   </ItemGroup>
   <ItemGroup>
+    <LibraryReference Include="Base Interfaces,newest,System">
+      <Namespace>IBaseLibrary</Namespace>
+    </LibraryReference>
     <LibraryReference Include="VisuSymbols,3.5.10.0,System">
       <Namespace>VisuSymbols</Namespace>
     </LibraryReference>

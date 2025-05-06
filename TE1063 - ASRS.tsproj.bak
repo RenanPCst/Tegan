@@ -6421,7 +6421,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{A11952E3-589D-B942-3B48-6F508B70D7A3}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3602A3B1-7E7B-0719-AA78-6FE7FD5BEC1F}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6457,12 +6457,6 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Safety.bSafetyEnable</Name>
 							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7043,6 +7037,12 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -7056,13 +7056,13 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -7108,19 +7108,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7473,6 +7460,19 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.iM4STOErrorAck</Name>
@@ -41529,26 +41529,11 @@ Bit 8 - 15 : reserved]]></Comment>
 					<EtherCAT SlaveType="3" AdsServerAddress="c0a800a2044b0a04" PdiType="#x0006" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="15" FoeType="1" VendorId="#x00000622" ProductCode="#x00001333" RevisionNo="#x00000001" InfoDataAddr="true" InfoDataNetId="true" GenerateOwnNetId="true" InitializeOwnNetId="true" DownloadSlotCfg="true" PortPhys="17" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="ifm IO-Link Master AL1333" Desc="ifm IO-Link Master AL1333" PortABoxInfo="#x0200002d">
 						<SyncMan>001080003600010001000000800080008000001036010000</SyncMan>
 						<SyncMan>801080003200010002000000800080008000801032010000</SyncMan>
-						<SyncMan>00112000740001000300000000000004c800001174010000</SyncMan>
+						<SyncMan>00110c00740001000300000000000004c800001174010000</SyncMan>
 						<SyncMan>001d3c003000010004000000000000041c00001d30010000</SyncMan>
 						<Fmmu>0000000000000000001100020100000001000000000000000000000000000000</Fmmu>
 						<Fmmu>0000000000000000001d00010100000002000000000000000000000000000000</Fmmu>
 						<Fmmu>00000000000000000d0800010100000003000000000000000000000000000000</Fmmu>
-						<MBoxUserCmdData>020003000900000000000000030000009100090300000000000000000000000020008024010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009100090300000000000000000000000020008025010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000a0000000000000003000000910009030000000000000000000000002000802802000000030000</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009200090300000000000000000000000020108024010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009200090300000000000000000000000020108025010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000a0000000000000003000000920009030000000000000000000000002010802802000000030000</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009300090300000000000000000000000020208024010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009300090300000000000000000000000020208025010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000a0000000000000003000000930009030000000000000000000000002020802802000000030000</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009400090300000000000000000000000020308024010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009400090300000000000000000000000020308025010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000a0000000000000003000000940009030000000000000000000000002030802802000000030000</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009500090300000000000000000000000020408024010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000900000000000000030000009500090300000000000000000000000020408025010000008300</MBoxUserCmdData>
-						<MBoxUserCmdData>020003000a0000000000000003000000950009030000000000000000000000002040802802000000030000</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000900000000000000030000009600090300000000000000000000000020508024010000008300</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000900000000000000030000009600090300000000000000000000000020508025010000008300</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000a0000000000000003000000960009030000000000000000000000002050802802000000030000</MBoxUserCmdData>
@@ -41558,6 +41543,21 @@ Bit 8 - 15 : reserved]]></Comment>
 						<MBoxUserCmdData>020003000900000000000000030000009800090300000000000000000000000020708024010000008300</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000900000000000000030000009800090300000000000000000000000020708025010000008300</MBoxUserCmdData>
 						<MBoxUserCmdData>020003000a0000000000000003000000980009030000000000000000000000002070802802000000030000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004c00090300000000000000000000000020008024010000008300</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004c00090300000000000000000000000020008025010000000000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000a00000000000000030000004c0009030000000000000000000000002000802802000000030000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004d00090300000000000000000000000020108024010000008300</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004d00090300000000000000000000000020108025010000000000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000a00000000000000030000004d0009030000000000000000000000002010802802000000030000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004e00090300000000000000000000000020208024010000008300</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004e00090300000000000000000000000020208025010000000000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000a00000000000000030000004e0009030000000000000000000000002020802802000000030000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004f00090300000000000000000000000020308024010000008300</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000004f00090300000000000000000000000020308025010000000000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000a00000000000000030000004f0009030000000000000000000000002030802802000000030000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000005000090300000000000000000000000020408024010000008300</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000900000000000000030000005000090300000000000000000000000020408025010000000000</MBoxUserCmdData>
+						<MBoxUserCmdData>020003000a0000000000000003000000500009030000000000000000000000002040802802000000030000</MBoxUserCmdData>
 						<Pdo Name="TxPDO IO-Link Device Status" Index="#x1a81" Flags="#x0010" SyncMan="3">
 							<Entry Name="State of IO-Link Ch.1" Index="#xf100" Sub="#x01">
 								<Type>USINT</Type>
@@ -41643,20 +41643,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Type>USINT</Type>
 							</Entry>
 						</Pdo>
-						<Pdo Name="RxPDO" Index="#x1600" InOut="1" Flags="#x0280" SyncMan="2">
-							<Entry Name="output byte 0" Index="#x7000" Sub="#x01" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 1" Index="#x7000" Sub="#x02" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 2" Index="#x7000" Sub="#x03" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 3" Index="#x7000" Sub="#x04" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-						</Pdo>
 						<Pdo Name="TxPDO" Index="#x1a01" Flags="#x0280" SyncMan="3">
 							<Entry Name="input byte 0" Index="#x6010" Sub="#x01" Flags="#x00001000">
 								<Type>USINT</Type>
@@ -41668,20 +41654,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Type>USINT</Type>
 							</Entry>
 							<Entry Name="input byte 3" Index="#x6010" Sub="#x04" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-						</Pdo>
-						<Pdo Name="RxPDO" Index="#x1601" InOut="1" Flags="#x0280" SyncMan="2">
-							<Entry Name="output byte 0" Index="#x7010" Sub="#x01" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 1" Index="#x7010" Sub="#x02" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 2" Index="#x7010" Sub="#x03" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 3" Index="#x7010" Sub="#x04" Flags="#x00001000">
 								<Type>USINT</Type>
 							</Entry>
 						</Pdo>
@@ -41699,20 +41671,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Type>USINT</Type>
 							</Entry>
 						</Pdo>
-						<Pdo Name="RxPDO" Index="#x1602" InOut="1" Flags="#x0280" SyncMan="2">
-							<Entry Name="output byte 0" Index="#x7020" Sub="#x01" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 1" Index="#x7020" Sub="#x02" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 2" Index="#x7020" Sub="#x03" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 3" Index="#x7020" Sub="#x04" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-						</Pdo>
 						<Pdo Name="TxPDO" Index="#x1a03" Flags="#x0280" SyncMan="3">
 							<Entry Name="input byte 0" Index="#x6030" Sub="#x01" Flags="#x00001000">
 								<Type>USINT</Type>
@@ -41727,20 +41685,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Type>USINT</Type>
 							</Entry>
 						</Pdo>
-						<Pdo Name="RxPDO" Index="#x1603" InOut="1" Flags="#x0280" SyncMan="2">
-							<Entry Name="output byte 0" Index="#x7030" Sub="#x01" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 1" Index="#x7030" Sub="#x02" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 2" Index="#x7030" Sub="#x03" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 3" Index="#x7030" Sub="#x04" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-						</Pdo>
 						<Pdo Name="TxPDO" Index="#x1a04" Flags="#x0280" SyncMan="3">
 							<Entry Name="input byte 0" Index="#x6040" Sub="#x01" Flags="#x00001000">
 								<Type>USINT</Type>
@@ -41752,20 +41696,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Type>USINT</Type>
 							</Entry>
 							<Entry Name="input byte 3" Index="#x6040" Sub="#x04" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-						</Pdo>
-						<Pdo Name="RxPDO" Index="#x1604" InOut="1" Flags="#x0280" SyncMan="2">
-							<Entry Name="output byte 0" Index="#x7040" Sub="#x01" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 1" Index="#x7040" Sub="#x02" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 2" Index="#x7040" Sub="#x03" Flags="#x00001000">
-								<Type>USINT</Type>
-							</Entry>
-							<Entry Name="output byte 3" Index="#x7040" Sub="#x04" Flags="#x00001000">
 								<Type>USINT</Type>
 							</Entry>
 						</Pdo>
@@ -41880,12 +41810,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<ModuleIdent>4877</ModuleIdent>
 							<ModuleIdent>4878</ModuleIdent>
 							<ModuleIdent>4882</ModuleIdent>
-							<Module Id="#x03090091" Type="IOL_4/4_I/O-Bytes" Class="">
-								<Name>Module 1 (IOL_4/4_I/O-Bytes)</Name>
+							<Module Id="#x0309004c" Type="IOL_In_4Byte" Class="">
+								<Name>Module 1 (IOL_In_4Byte)</Name>
 								<ImageId>1013</ImageId>
-								<ModuleData>2206000005130000000000000000000000000000000000000000000000000000</ModuleData>
+								<ModuleData>2206000004110000000000000000000000000000000000000000000000000000</ModuleData>
 								<PdoIndex>6656</PdoIndex>
-								<PdoIndex>5632</PdoIndex>
 								<CoeProfile ProfileNo="#x184c1389"/>
 							</Module>
 						</Slot>
@@ -41908,12 +41837,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<ModuleIdent>4877</ModuleIdent>
 							<ModuleIdent>4878</ModuleIdent>
 							<ModuleIdent>4882</ModuleIdent>
-							<Module Id="#x03090092" Type="IOL_4/4_I/O-Bytes" Class="">
-								<Name>Module 2 (IOL_4/4_I/O-Bytes)</Name>
+							<Module Id="#x0309004d" Type="IOL_In_4Byte" Class="">
+								<Name>Module 2 (IOL_In_4Byte)</Name>
 								<ImageId>1013</ImageId>
-								<ModuleData>2206000005130000000000000000000000000000000000000000000000000000</ModuleData>
+								<ModuleData>2206000004110000000000000000000000000000000000000000000000000000</ModuleData>
 								<PdoIndex>6657</PdoIndex>
-								<PdoIndex>5633</PdoIndex>
 								<CoeProfile ProfileNo="#x184c1389"/>
 							</Module>
 						</Slot>
@@ -41936,12 +41864,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<ModuleIdent>4877</ModuleIdent>
 							<ModuleIdent>4878</ModuleIdent>
 							<ModuleIdent>4882</ModuleIdent>
-							<Module Id="#x03090093" Type="IOL_4/4_I/O-Bytes" Class="">
-								<Name>Module 3 (IOL_4/4_I/O-Bytes)</Name>
+							<Module Id="#x0309004e" Type="IOL_In_4Byte" Class="">
+								<Name>Module 3 (IOL_In_4Byte)</Name>
 								<ImageId>1013</ImageId>
-								<ModuleData>2206000005130000000000000000000000000000000000000000000000000000</ModuleData>
+								<ModuleData>2206000004110000000000000000000000000000000000000000000000000000</ModuleData>
 								<PdoIndex>6658</PdoIndex>
-								<PdoIndex>5634</PdoIndex>
 								<CoeProfile ProfileNo="#x184c1389"/>
 							</Module>
 						</Slot>
@@ -41964,12 +41891,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<ModuleIdent>4877</ModuleIdent>
 							<ModuleIdent>4878</ModuleIdent>
 							<ModuleIdent>4882</ModuleIdent>
-							<Module Id="#x03090094" Type="IOL_4/4_I/O-Bytes" Class="">
-								<Name>Module 4 (IOL_4/4_I/O-Bytes)</Name>
+							<Module Id="#x0309004f" Type="IOL_In_4Byte" Class="">
+								<Name>Module 4 (IOL_In_4Byte)</Name>
 								<ImageId>1013</ImageId>
-								<ModuleData>2206000005130000000000000000000000000000000000000000000000000000</ModuleData>
+								<ModuleData>2206000004110000000000000000000000000000000000000000000000000000</ModuleData>
 								<PdoIndex>6659</PdoIndex>
-								<PdoIndex>5635</PdoIndex>
 								<CoeProfile ProfileNo="#x184c1389"/>
 							</Module>
 						</Slot>
@@ -41992,12 +41918,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<ModuleIdent>4877</ModuleIdent>
 							<ModuleIdent>4878</ModuleIdent>
 							<ModuleIdent>4882</ModuleIdent>
-							<Module Id="#x03090095" Type="IOL_4/4_I/O-Bytes" Class="">
-								<Name>Module 5 (IOL_4/4_I/O-Bytes)</Name>
+							<Module Id="#x03090050" Type="IOL_In_4Byte" Class="">
+								<Name>Module 5 (IOL_In_4Byte)</Name>
 								<ImageId>1013</ImageId>
-								<ModuleData>2206000005130000000000000000000000000000000000000000000000000000</ModuleData>
+								<ModuleData>2206000004110000000000000000000000000000000000000000000000000000</ModuleData>
 								<PdoIndex>6660</PdoIndex>
-								<PdoIndex>5636</PdoIndex>
 								<CoeProfile ProfileNo="#x184c1389"/>
 							</Module>
 						</Slot>

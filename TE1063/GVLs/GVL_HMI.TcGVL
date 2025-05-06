@@ -2,6 +2,7 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <GVL Name="GVL_HMI" Id="{0409f918-eea3-4325-9608-40b83ff788af}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'TcHmiSymbol' := 'true'}
 VAR_GLOBAL
 	//Controls I/O
 	bHomeLampBlueState 	: BOOL;
@@ -22,11 +23,20 @@ VAR_GLOBAL
 	
 	HMIAnimation		 : ST_HMIAnimation; //Variables needed to animate the HMI
 	
-	eMachineMode		 : E_MachineMode := E_MachineMode.STOPPED; //Machine mode selection from HMI
+	eMachineMode		 : E_MachineMode; //Machine mode selection from HMI
 	
 	HMIStartAnimation	 : BOOL := TRUE;
 	
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
+	
+	//Recipe Handle
+	aAvailableFiles         : ARRAY[1..50] OF ST_RecipeInfo;
+    iFileCount              : INT;
+
+    bRefreshRecipeList      : BOOL; // List the recipe files from HMI
+    bRecipeLoadFromFile	 	: BOOL := FALSE; //load recipe button from HMI
+	bRecipeLoaded			: BOOL;
+    sSelectedRecipeName     : STRING(255); // Selected name from hmi list popup
 	
 END_VAR]]></Declaration>
   </GVL>

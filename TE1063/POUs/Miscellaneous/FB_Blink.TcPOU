@@ -14,22 +14,21 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// State alternation every tPeriod/2
+      <ST><![CDATA[// Blink logic: toggles bBlink every tPeriod/2 while enabled
 IF bEnable THEN
-    ton(IN := NOT ton.Q, PT := tPeriod / 2);
-    ton(IN := TRUE);
-    
+    // Start or keep running the timer for half the period
+    ton(IN := TRUE, PT := tPeriod / 2);
     IF ton.Q THEN
-        bBlink := NOT bBlink;
-        ton(IN := FALSE);  // resets the cycle
-    END_IF;
+        bBlink := NOT bBlink;    // Toggle the blink output
+        ton(IN := FALSE);        // Reset the timer for the next half period
+    END_IF
 ELSE
-    ton(IN := FALSE);
-    bBlink := FALSE;
-END_IF;]]></ST>
+    ton(IN := FALSE);            // Make sure the timer is stopped
+    bBlink := FALSE;             // Output stays OFF when not enabled
+END_IF]]></ST>
     </Implementation>
     <LineIds Name="FB_Blink">
-      <LineId Id="14" Count="11" />
+      <LineId Id="37" Count="10" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

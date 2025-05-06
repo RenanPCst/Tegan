@@ -9,9 +9,9 @@ END_VAR
     <Implementation>
       <ST><![CDATA[//Start Button Blink ------------------------------------------------
 IF GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN
-	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#500MS );
+	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
 ELSE
-	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#500MS );
+	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
 END_IF
 
 GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;

@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_TowerAlarmLamps" Id="{13dec4c3-beec-4677-96c1-18beb378ca78}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_TowerAlarmLamps
+VAR
+	fbBlinkRedLight, fbBlinkAmbarLight, fbBlinkGreenLight	: FB_Blink; //Flashing lights FB
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Reset all tower lights and blinkers to a safe state before setting according to mode
+GVL_IO.gDigOutputs.bTowerGreenLight := FALSE;
+GVL_IO.gDigOutputs.bTowerAmberLight := FALSE;
+GVL_IO.gDigOutputs.bTowerRedLight := FALSE;
+//fbBlinkRedLight(bEnable := FALSE, tPeriod := T#500MS);
+//fbBlinkAmbarLight(bEnable := FALSE, tPeriod := T#500MS);
+
+CASE GVL_HMI.eMachineMode OF
+
+    E_MachineMode.AUTO_CYCLE:
+        // Green steady
+        GVL_IO.gDigOutputs.bTowerGreenLight := TRUE;
+
+    E_MachineMode.CALIBRATION:
+        // Amber steady
+        GVL_IO.gDigOutputs.bTowerAmberLight := TRUE;
+
+    E_MachineMode.IMEDIATE_FAULT:
+        // Red flashing
+        fbBlinkRedLight(bEnable := TRUE, tPeriod := T#1S);
+        GVL_IO.gDigOutputs.bTowerRedLight := fbBlinkRedLight.bBlink;
+
+    E_MachineMode.MANUAL:
+        // Amber flashing
+        fbBlinkAmbarLight(bEnable := TRUE, tPeriod := T#1S);
+        GVL_IO.gDigOutputs.bTowerAmberLight := fbBlinkAmbarLight.bBlink;
+
+    E_MachineMode.STOPPED:
+        // Red steady
+        GVL_IO.gDigOutputs.bTowerRedLight := TRUE;
+
+    ELSE
+        // Unknown state - All lights off
+        GVL_IO.gDigOutputs.bTowerGreenLight := FALSE;
+        GVL_IO.gDigOutputs.bTowerAmberLight := FALSE;
+        GVL_IO.gDigOutputs.bTowerRedLight := FALSE;
+        fbBlinkRedLight(bEnable := FALSE, tPeriod := T#500MS);
+        fbBlinkAmbarLight(bEnable := FALSE, tPeriod := T#500MS);
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_TowerAlarmLamps">
+      <LineId Id="62" Count="31" />
+      <LineId Id="97" Count="5" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

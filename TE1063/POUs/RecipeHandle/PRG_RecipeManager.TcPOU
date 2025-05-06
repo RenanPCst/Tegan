@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_RecipeManager" Id="{f4641f87-7b16-4bb3-8169-d73676afbb75}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_RecipeManager
+VAR
+	fbLoadRecipe : FB_LoadRecipe;
+    fbListFiles  : FB_ListRecipeFiles;
+
+    sPrefix      : STRING(64) := 'C:\TwinCAT\Recipes\';
+    sFileName    : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Execução controlada (ex: estado STOPPED, botão carregado, etc.)
+IF GVL_HMI.bRefreshRecipeList THEN
+    fbListFiles(bExecute := TRUE);
+ELSE
+    fbListFiles(bExecute := FALSE);
+END_IF
+
+IF fbListFiles.bDone THEN
+	GVL_HMI.bRefreshRecipeList := FALSE;
+END_IF
+
+// Monta o nome do arquivo selecionado
+sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json'));
+
+// Executa o carregamento da receita se solicitado pela HMI
+fbLoadRecipe(
+    sFileName := sFileName,
+    bExecute := GVL_HMI.bRecipeLoadFromFile
+);
+
+// Após carregamento, acione o flag de receita carregada ou prossiga com a ativação
+IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFromFile THEN
+    GVL_Recipe.stActiveRecipe := GVL_Recipe.stCurrentRecipe;
+    GVL_HMI.bRecipeLoadFromFile := FALSE;
+    GVL_HMI.bRecipeLoaded := TRUE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_RecipeManager">
+      <LineId Id="58" Count="5" />
+      <LineId Id="87" Count="3" />
+      <LineId Id="64" Count="14" />
+      <LineId Id="43" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

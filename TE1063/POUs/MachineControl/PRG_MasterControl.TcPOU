@@ -40,6 +40,11 @@ bResetStateMachine := bModeChanged AND (GVL_HMI.eMachineMode = E_MachineMode.AUT
 rTriggerStartButton(CLK := GVL_IO.gDigInputs.bStartButton);
 rTriggerStopButton(CLK := GVL_IO.gDigInputs.bStopButton);
 
+//Reset Button Blinking
+IF (GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT) AND NOT GVL_Safety. bSafetyEnable THEN
+	GVL_IO.gDigOutputs.bResetIndicator := GVL_Safety.bResetButtonBlink;
+END_IF
+
 // Stop Button monitoring
 IF rTriggerStopButton.Q THEN
 	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
@@ -106,6 +111,9 @@ END_CASE
       <LineId Id="27" Count="0" />
       <LineId Id="133" Count="0" />
       <LineId Id="114" Count="0" />
+      <LineId Id="199" Count="1" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="201" Count="0" />
       <LineId Id="134" Count="0" />
       <LineId Id="132" Count="0" />
       <LineId Id="115" Count="2" />
