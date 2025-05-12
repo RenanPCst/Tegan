@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_SystemInit" Id="{de7516f5-b372-4654-9a26-44141ec2f79b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SystemInit
+VAR_OUTPUT
+	bDone           : BOOL := FALSE;
+END_VAR
+VAR
+	i               : INT;
+    bAllDone        : BOOL := FALSE;
+    bStartedAction  : BOOL := FALSE;
+    bInitComplete   : BOOL := FALSE;
+	bVerticalMotorsDone		: BOOL := FALSE;   
+	bLinearMotorsHomingDone	: BOOL := FALSE; 
+	bValvesHomingDone 		: BOOL := FALSE;
+	bLinearPumpsDone		: BOOL := FALSE;
+	bPerformHoming		: BOOL := FALSE;
+	
+	bResetDone		: BOOL := FALSE;
+	bEnableDone		: BOOL := FALSE;
+	
+	aMotorsEnabled : ARRAY[1..3] OF BOOL;
+	aValvesEnabled : ARRAY[1..5] OF BOOL;
+	
+	
+	bHomeMotor1Done : BOOL := FALSE;
+	bHomeMotor2Done : BOOL := FALSE;
+	bHomeMotor3Done : BOOL := FALSE;
+	
+	bHomeValve1Done	: BOOL := FALSE;
+	bHomeValve2Done	: BOOL := FALSE;
+	bHomeValve3Done	: BOOL := FALSE;
+	bHomeValve4Done	: BOOL := FALSE;
+	bHomeValve5Done	: BOOL := FALSE;
+	
+	stStatus : ST_ActuatorStatus;
+	
+END_VAR
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Step 1: Enable all motors and valves
+IF NOT bEnableDone THEN
+	FOR i := 1 TO 3 DO
+		aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
+	END_FOR
+
+	FOR i := 1 TO 2 DO
+		aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
+	END_FOR
+	
+	IF aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3] AND aValvesEnabled[1] AND aValvesEnabled[2] (*AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5]*) THEN
+		bEnableDone := TRUE;
+	END_IF
+END_IF
+
+// Step 2: Reset all motors and valves
+IF NOT bResetDone AND bEnableDone THEN
+	FOR i := 1 TO 3 DO
+		GVL_Motion.aMotors[i].Reset();
+	END_FOR
+	FOR i := 1 TO 2 DO
+		GVL_Motion.aValvesObj[i].Reset();
+	END_FOR
+	bResetDone := TRUE;
+END_IF
+
+// Step 3: If the process hasn't started yet
+IF NOT bStartedAction AND bResetDone THEN
+    // If the system hasn't performed homing yet
+    IF NOT GVL_Motion.bInitialHomingDone THEN
+        bPerformHoming := TRUE;
+
+        // Start homing for vertical motors (Stage Collection and Sample Recovery Vertical)
+        bHomeMotor1Done := GVL_Motion.aMotors[1].Home(
+            pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home),
+            bHomeRequest := bPerformHoming
+        );
+        bHomeMotor2Done := GVL_Motion.aMotors[2].Home(
+            pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home),
+            bHomeRequest := bPerformHoming
+        );
+
+        // If both vertical motors finished homing
+        IF bHomeMotor1Done AND bHomeMotor2Done THEN
+            bVerticalMotorsDone := TRUE;
+        END_IF
+
+        // Start homing for the linear horizontal motor if vertical ones are done
+        IF bVerticalMotorsDone THEN
+            bHomeMotor3Done := GVL_Motion.aMotors[3].Home(
+                pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home),
+                bHomeRequest := bPerformHoming
+            );
+        END_IF
+
+        // Confirm linear motor 3 is done
+        IF bHomeMotor3Done THEN
+            bLinearMotorsHomingDone := TRUE;
+        END_IF
+
+        // Move all valves to position 1 (home position)
+		
+        bHomeValve1Done := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        bHomeValve2Done := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        //bHomeValve3Done := GVL_Motion.aValvesObj[3].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        //bHomeValve4Done := GVL_Motion.aValvesObj[4].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        //bHomeValve5Done := GVL_Motion.aValvesObj[5].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+
+        // Check if all valves completed their move
+        bValvesHomingDone := bHomeValve1Done AND bHomeValve2Done (*AND bHomeValve3Done AND bHomeValve4Done AND bHomeValve5Done*);
+
+        // If all motors and valves completed their homing, finalize
+        IF bLinearMotorsHomingDone AND bValvesHomingDone THEN
+            bPerformHoming := FALSE;
+            bStartedAction := TRUE;
+        END_IF
+		
+		//TODO: Linear pumps should be homing here as well! **************************************************************************************
+		
+    ELSE
+        // If homing has already been done, move motors and valves to zero/default position
+        FOR i := 1 TO 3 DO
+            GVL_Motion.aMotors[i].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+        END_FOR
+
+        FOR i := 1 TO 5 DO
+            GVL_Motion.aValvesObj[i].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        END_FOR
+
+        bStartedAction := TRUE;
+    END_IF
+END_IF
+
+// Step 4: Check if all motors completed their action
+IF bStartedAction THEN
+	bAllDone := TRUE;
+	
+	FOR i := 1 TO 3 DO
+		stStatus := GVL_Motion.aMotors[i].GetStatus();
+	
+		// If any motor is not done yet
+		IF NOT stStatus.bDone THEN
+			bAllDone := FALSE;
+		END_IF
+	
+		// If any motor returned an error, abort with immediate fault
+		IF stStatus.bError THEN
+			GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+			RETURN;
+		END_IF
+	END_FOR
+	
+	// Step 5: Check if all valves completed their action
+	FOR i := 1 TO 5 DO
+		stStatus := GVL_Motion.aValvesObj[i].GetStatus();
+	
+		// If any valve is not done yet
+		IF NOT stStatus.bDone THEN
+			bAllDone := FALSE;
+		END_IF
+	
+		// If any valve returned an error, abort with immediate fault
+		IF stStatus.bError THEN
+			GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+			RETURN;
+		END_IF
+	END_FOR
+	
+END_IF
+
+
+
+// Step 6: Finalize the initialization process if everything is done
+IF bAllDone AND bEnableDone AND bResetDone AND NOT bInitComplete THEN
+    // Mark that homing has been done, so it won’t run again on next power-up
+    IF NOT GVL_Motion.bInitialHomingDone THEN
+        GVL_Motion.bInitialHomingDone := TRUE;
+    END_IF
+
+    bInitComplete := TRUE;
+    bDone := TRUE;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SystemInit">
+      <LineId Id="264" Count="9" />
+      <LineId Id="280" Count="2" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="284" Count="9" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="139" Count="34" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="174" Count="13" />
+      <LineId Id="246" Count="2" />
+      <LineId Id="188" Count="14" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="329" Count="1" />
+      <LineId Id="297" Count="28" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="234" Count="11" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

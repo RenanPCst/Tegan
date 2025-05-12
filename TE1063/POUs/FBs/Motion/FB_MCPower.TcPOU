@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="FB_MCPower" Id="{b4d6b702-951d-459e-b23b-a23416a86e07}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_MCPower EXTENDS MC_Power
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MCPower
 VAR_INPUT
     bEnable   : BOOL;      // Enable signal
     bReset    : BOOL;      // Manual reset to clear errors
@@ -13,6 +13,7 @@ VAR_OUTPUT
 	bStatus	  : BOOL;	   // MC_Power Status
 END_VAR
 VAR_IN_OUT
+	Axis	  :	AXIS_REF;
 END_VAR
 VAR
     MC_PowerFB  : MC_Power;
@@ -35,7 +36,8 @@ ELSIF bEnable THEN
             Axis := Axis,
             Enable := TRUE,
             Enable_Positive := TRUE,
-            Enable_Negative := TRUE
+            Enable_Negative := TRUE,
+			override := 100
         );
     END_IF;
 END_IF;
@@ -47,7 +49,9 @@ bError := MC_PowerFB.Error;
 iErrorID := MC_PowerFB.ErrorID;]]></ST>
     </Implementation>
     <LineIds Name="FB_MCPower">
-      <LineId Id="25" Count="21" />
+      <LineId Id="25" Count="15" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="41" Count="5" />
       <LineId Id="48" Count="0" />
       <LineId Id="47" Count="0" />
       <LineId Id="9" Count="0" />

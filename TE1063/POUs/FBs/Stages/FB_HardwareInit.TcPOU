@@ -45,10 +45,14 @@ END_VAR
         bMoveServo := FALSE;
         bExecuteEvent := FALSE;
         bEventDone := FALSE;
+		fbResetM1.Reset();
+		fbResetM2.Reset();
+		fbResetM3.Reset();
+		
         
         // Ensure all motors and actuators are reset
-        GVL_Safety.bAirSupplyEnable := FALSE;
-        GVL_Safety.bDoorLockCommand := FALSE;
+        //GVL_Safety.bAirSupplyEnable := FALSE;
+        //GVL_Safety.bDoorLockCommand := FALSE;
 
         IF bExecute AND NOT bReset THEN
             iState := 0; // Proceed to initialization
@@ -60,11 +64,11 @@ END_VAR
         fbResetM2(bExecute := bExecute, Axis := GVL_Motion.M2Motor.Axis);
         fbResetM3(bExecute := bExecute, Axis := GVL_Motion.M3Motor.Axis);
 
-        IF fbResetM1.bResetDone AND fbResetM2.bResetDone AND fbResetM3.bResetDone THEN
+        IF fbResetM1.bDone AND fbResetM2.bDone AND fbResetM3.bDone THEN
             iState := 1;
         END_IF;
         
-        IF fbResetM1.bResetError OR fbResetM2.bResetError OR fbResetM3.bResetError THEN
+        IF fbResetM1.bError OR fbResetM2.bError OR fbResetM3.bError THEN
             iState := 99;
         END_IF;
 
@@ -120,20 +124,26 @@ END_VAR
     // State 4: Move valves to home position
     4:
         bMoveServo := bExecute;
-		
-		FOR i := 1 TO 10 DO
+		//TODO - M6 Valve 4 motor is damage and because of that was taken out of the logic to keep working until it is replaced
+		(*FOR i := 1 TO 3 DO
         	fbMoveValves[i](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[i].Axis, iValvePosition := 1);
         END_FOR
-
+		*)
+		fbMoveValves[1](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[1].Axis, iValvePosition := 1);
+		fbMoveValves[2](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[2].Axis, iValvePosition := 1);
+		fbMoveValves[4](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[4].Axis, iValvePosition := 1);
+		fbMoveValves[5](bEnable := bMoveServo, ServoAxis := GVL_Motion.aValves[5].Axis, iValvePosition := 1);
+		
+		
         // Check if all servos have reached home position
-        IF fbMoveValves[1].bMoveDone AND fbMoveValves[2].bMoveDone AND fbMoveValves[3].bMoveDone AND fbMoveValves[4].bMoveDone AND fbMoveValves[5].bMoveDone THEN
+        IF fbMoveValves[1].bMoveDone AND fbMoveValves[2].bMoveDone (* AND fbMoveValves[3].bMoveDone *) AND fbMoveValves[4].bMoveDone AND fbMoveValves[5].bMoveDone THEN
             bDone := TRUE;
             bMoveServo := FALSE;
             iState := 100; // End State
         END_IF;
         
         // Check if any servo has an error
-        IF fbMoveValves[1].bError OR fbMoveValves[2].bError OR fbMoveValves[3].bError OR fbMoveValves[4].bError OR fbMoveValves[5].bError THEN
+        IF fbMoveValves[1].bError OR fbMoveValves[2].bError (* OR fbMoveValves[3].bError *) OR fbMoveValves[4].bError OR fbMoveValves[5].bError  THEN
             bError := TRUE;
             iState := 99;
         END_IF;
@@ -187,11 +197,19 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_HardwareInit">
-      <LineId Id="390" Count="21" />
+      <LineId Id="390" Count="9" />
+      <LineId Id="599" Count="0" />
+      <LineId Id="601" Count="1" />
+      <LineId Id="600" Count="0" />
+      <LineId Id="400" Count="11" />
       <LineId Id="414" Count="63" />
       <LineId Id="560" Count="0" />
       <LineId Id="478" Count="0" />
-      <LineId Id="482" Count="24" />
+      <LineId Id="482" Count="1" />
+      <LineId Id="593" Count="1" />
+      <LineId Id="597" Count="1" />
+      <LineId Id="595" Count="1" />
+      <LineId Id="484" Count="22" />
       <LineId Id="508" Count="10" />
       <LineId Id="520" Count="7" />
       <LineId Id="9" Count="0" />

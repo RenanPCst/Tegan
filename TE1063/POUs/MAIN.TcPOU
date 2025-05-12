@@ -86,12 +86,19 @@ VAR
 	
 	fbStop : MC_Stop;
 
-	bPass1 : BOOL := FALSE;
+	bDebug1 : BOOL := FALSE;
+	bDebug2 : BOOL := FALSE;
+	bDebug3 : BOOL := FALSE;
+	bDebug4 : BOOL := FALSE;
+	bDebug5 : BOOL := FALSE;
+	bDebug6 : BOOL := FALSE;
+	bDebug7 : BOOL := FALSE;
 	testTon : TON;
+	bEnableDone, bHomeDone : BOOL := FALSE;
 	
 	rM1Position : LREAL;
-	rM2Position : LREAL;
-	rM3Position : LREAL;
+	rValve1Position : LREAL;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -107,20 +114,43 @@ PRG_AxisAssignment();
 PRG_RecipeManager();
 
 //################ TESTING AREA ################################
-IF bPass1 THEN
-	rM1Position := GVL_Motion.aMotors[1].GetPosition();
-	rM2Position	:= GVL_Motion.aMotors[2].GetPosition();
-	rM3Position := GVL_Motion.aMotors[3].GetPosition();
+IF bDebug1 THEN
+	GVL_Motion.aMotors[1].Enable();
+	GVL_Motion.aValvesObj[1].Enable();
 END_IF
 
+IF bHomeDone THEN
+	bHomeDone := NOT GVL_Motion.aMotors[1].Home(pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home), bHomeRequest := bHomeDone);
+END_IF
+	
+IF bDebug3 THEN
+	rM1Position 	:= GVL_Motion.aMotors[1].GetPosition();
+	rValve1Position	:= GVL_Motion.aValvesObj[1].GetPosition();
+END_IF
+
+IF bDebug4 THEN
+	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -100, Velocity := 10, Acc := 10, Dec := 10);
+END_IF
+
+IF bDebug5 THEN
+	bDebug5 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -150, Velocity := 10, Acc := 10, Dec := 10);
+END_IF
+
+IF bDebug6 THEN
+	bDebug6 := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
+END_IF
+
+IF bDebug7 THEN
+	bDebug7 := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+END_IF
 
 //<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 fbMcPower( //Enabling the axis - rotary pump 1
     Axis 			:= GVL_Motion.aPumps[1].Rotary.Axis,
     bEnable 		:= bPumpEnable, 	//Enable the Axis if the driver is ready without safety fauls
 	bReset			:= FALSE,		 	//Reset the Axis if the driver is ready without safety fauls
-	ErrorID			=> PowerErrorID,	//Error ID if the power enter in error.
-	Error			=> bPowerError
+	iErrorID			=> PowerErrorID,	//Error ID if the power enter in error.
+	bError			=> bPowerError
 );
 fbSetPosition(Axis := GVL_Motion.aPumps[1].Rotary.Axis, execute:= bSetPosition, position := 0.0);
 IF fbSetPosition.Done THEN
@@ -304,7 +334,7 @@ fbMcPower(
     Axis 			:= GVL_Motion.aValves[2].Axis,
     bEnable 		:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
 	bReset			:= FALSE,		 //Reset the Axis if the driver is ready without safety fauls
-	ErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
+	iErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
 );
 
 //Valves servormotor testing [M4, M5, M6, M7, M8]
@@ -372,10 +402,28 @@ END_IF
       <LineId Id="4065" Count="0" />
       <LineId Id="3651" Count="0" />
       <LineId Id="3106" Count="0" />
-      <LineId Id="3875" Count="1" />
-      <LineId Id="3968" Count="0" />
-      <LineId Id="3971" Count="1" />
+      <LineId Id="4161" Count="0" />
+      <LineId Id="4163" Count="0" />
+      <LineId Id="4184" Count="0" />
+      <LineId Id="4164" Count="0" />
+      <LineId Id="4377" Count="0" />
+      <LineId Id="3875" Count="0" />
+      <LineId Id="4379" Count="0" />
+      <LineId Id="4183" Count="0" />
+      <LineId Id="4165" Count="0" />
       <LineId Id="3967" Count="0" />
+      <LineId Id="4172" Count="1" />
+      <LineId Id="4171" Count="0" />
+      <LineId Id="4177" Count="0" />
+      <LineId Id="4176" Count="0" />
+      <LineId Id="4280" Count="0" />
+      <LineId Id="4179" Count="0" />
+      <LineId Id="4382" Count="2" />
+      <LineId Id="4381" Count="0" />
+      <LineId Id="4388" Count="2" />
+      <LineId Id="4387" Count="0" />
+      <LineId Id="4395" Count="2" />
+      <LineId Id="4394" Count="0" />
       <LineId Id="3653" Count="1" />
       <LineId Id="3658" Count="4" />
       <LineId Id="3667" Count="0" />

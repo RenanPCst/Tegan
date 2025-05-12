@@ -6,8 +6,9 @@ VAR_INPUT
 	bExecute : BOOL;
 END_VAR
 VAR_OUTPUT
-	bResetDone : BOOL;
-	bResetError: BOOL;
+	bDone : BOOL;
+	bError: BOOL;
+	bBusy : BOOL;
 END_VAR
 VAR_IN_OUT
 	Axis : AXIS_REF;
@@ -15,23 +16,38 @@ END_VAR
 VAR
 	fbReset	: MC_Reset;
 	bReset	: BOOL := TRUE;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Axis Reset
 IF bExecute THEN
-	fbReset(Axis := Axis, Execute := bReset, Done => bResetDone, Error => bResetError);
+	fbReset(Axis := Axis, Execute := bReset, Done => bDone, Error => bError, Busy => bBusy);
 END_IF
-IF bResetDone THEN
+IF bDone THEN
 	bReset := FALSE;
-END_IF]]></ST>
+END_IF
+]]></ST>
     </Implementation>
+    <Method Name="Reset" Id="{b9304837-371d-411d-8cb8-12a541f16836}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bReset := TRUE;
+Reset := bReset;
+]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="FB_MotorsReset">
-      <LineId Id="9" Count="0" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="16" Count="0" />
-      <LineId Id="19" Count="0" />
-      <LineId Id="22" Count="2" />
+      <LineId Id="58" Count="5" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorsReset.Reset">
+      <LineId Id="5" Count="1" />
+      <LineId Id="8" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

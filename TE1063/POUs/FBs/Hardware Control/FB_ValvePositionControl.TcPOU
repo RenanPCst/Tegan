@@ -20,7 +20,7 @@ END_VAR
 VAR
     fbMCPower     		: FB_MCPower;
     fbMCMoveAbs   		: FB_MCMoveAbsolute;
-    MC_Reset     		: MC_Reset;
+    fbReset     		: FB_MotorsReset;
     rTargetPos    		: LREAL; 		// Target position in degrees
     iState        		: INT := 0; 	// State machine initializing in 0
     iModeOfOperation	: INT;
@@ -54,12 +54,9 @@ CASE iState OF
         END_IF;
 
     1: // RESET - Clears errors before continuing
-        MC_Reset(
-            Axis := ServoAxis,
-            Execute := TRUE
-        );
+        fbReset(bExecute := TRUE, Axis := ServoAxis);
 
-        IF NOT MC_Reset.Busy THEN
+        IF NOT fbReset.bBusy THEN
             bError := FALSE;  // Clear error flag
             iState := 0;      // Return to idle state
         END_IF;
@@ -71,7 +68,7 @@ CASE iState OF
             Axis    := ServoAxis
         );
 
-        IF fbMCPower.Error THEN
+        IF fbMCPower.bError THEN
             bError := TRUE;
             iState := 1; // If an error occurs, go to reset state
         ELSIF fbMCPower.bActive THEN
@@ -89,9 +86,9 @@ CASE iState OF
         fbMCMoveAbs(
             Axis := ServoAxis,
             fPosition := rTargetPos,   // Sets the target position within 0 to 360°
-            fVelocity := 5.0,        // Movement velocity
-            fAcceleration := 2.0,   // Acceleration
-            fDeceleration := 2.0,   // Deceleration
+            fVelocity := 20.0,        // Movement velocity
+            fAcceleration := 10.0,   // Acceleration
+            fDeceleration := 10.0,   // Deceleration
             bExecute := TRUE
         );
 
@@ -112,7 +109,8 @@ CASE iState OF
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="FB_ValvePositionControl">
-      <LineId Id="559" Count="82" />
+      <LineId Id="559" Count="28" />
+      <LineId Id="591" Count="50" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

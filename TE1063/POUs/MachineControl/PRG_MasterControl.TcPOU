@@ -16,6 +16,9 @@ VAR
 	tonPowerUp				: ton;
 	bPowerUpTimerComplete	: BOOL := FALSE;
 	bPowerUpDone			: BOOL := FALSE;
+	
+	//System Initializing Variables
+	tonSystemInitialize		: ton;
 
 END_VAR
 ]]></Declaration>
@@ -60,6 +63,11 @@ IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
 	bResetSMDone := FALSE;
 END_IF
 
+//Reset timer every time is not in System Initializing
+IF NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
+	tonSystemInitialize(in := FALSE);
+END_IF
+
 // Main Master controll logic
 CASE GVL_HMI.eMachineMode OF
 
@@ -69,7 +77,7 @@ CASE GVL_HMI.eMachineMode OF
 		END_IF; 
 		
 		IF bResetSMDone THEN
-    		PRG_StateMachine(); //calls the state machine
+    		//PRG_StateMachine(); //calls the state machine
 		END_IF
 
     E_MachineMode.MANUAL:		// Entry from HMI Selection
@@ -87,15 +95,35 @@ CASE GVL_HMI.eMachineMode OF
         //PRG_SafetyHandle();
 
         IF GVL_Safety.bSafetyEnable THEN
-            GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+            GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
         END_IF
 
     E_MachineMode.STOPPED:		// Entry from Stop Button or Imediate Fault
         PRG_StoppedState();
 
-        IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN
-            GVL_HMI.eMachineMode := E_MachineMode.AUTO_CYCLE;
+        IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable THEN
+            GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
         END_IF
+	
+	E_MachineMode.SYSTEM_INITIALIZING: // Entry when the machine is first power up to do the homing of the motors
+	
+		tonSystemInitialize(in := TRUE, pt := T#500MS);
+		
+		IF GVL_Safety.bSafetyEnable AND tonSystemInitialize.Q THEN
+			PRG_SystemInit(); // Run init procedure
+		END_IF
+		// Transition to SYSTEM_READY when initialization completes
+		IF PRG_SystemInit.bDone THEN
+			GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_READY;
+		END_IF
+		
+	E_MachineMode.SYSTEM_READY:	// Entry when the start button was pressed on Stop State.
+	
+		PRG_SystemReady();		
+		IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN
+				GVL_HMI.eMachineMode := E_MachineMode.AUTO_CYCLE;
+        END_IF
+		
 
 END_CASE
 ]]></ST>
@@ -124,6 +152,8 @@ END_CASE
       <LineId Id="178" Count="0" />
       <LineId Id="177" Count="0" />
       <LineId Id="179" Count="1" />
+      <LineId Id="266" Count="3" />
+      <LineId Id="265" Count="0" />
       <LineId Id="120" Count="0" />
       <LineId Id="28" Count="0" />
       <LineId Id="50" Count="2" />
@@ -139,7 +169,20 @@ END_CASE
       <LineId Id="84" Count="3" />
       <LineId Id="126" Count="2" />
       <LineId Id="91" Count="6" />
-      <LineId Id="105" Count="2" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="262" Count="2" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="254" Count="4" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="224" Count="1" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="233" Count="1" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="106" Count="1" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
