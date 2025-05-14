@@ -16,8 +16,9 @@ VAR
 	bLinearPumpsDone		: BOOL := FALSE;
 	bPerformHoming		: BOOL := FALSE;
 	
-	bResetDone		: BOOL := FALSE;
+	bAllResetDone	: BOOL := FALSE;
 	bEnableDone		: BOOL := FALSE;
+	bResetCheck		: ARRAY[1..8] OF BOOL;
 	
 	aMotorsEnabled : ARRAY[1..3] OF BOOL;
 	aValvesEnabled : ARRAY[1..5] OF BOOL;
@@ -33,6 +34,14 @@ VAR
 	bHomeValve4Done	: BOOL := FALSE;
 	bHomeValve5Done	: BOOL := FALSE;
 	
+	bMoveValve1Request	: BOOL := TRUE;
+	bMoveValve2Request	: BOOL := TRUE;
+	
+	bMoveMotorsRequest	: ARRAY[1..3] OF BOOL;
+	bMoveMotorDone		: ARRAY[1..3] OF BOOL;
+	
+	tonResetDelay	: ton;
+	
 	stStatus : ST_ActuatorStatus;
 	
 END_VAR
@@ -40,34 +49,70 @@ END_VAR
 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Step 1: Enable all motors and valves
-IF NOT bEnableDone THEN
-	FOR i := 1 TO 3 DO
-		aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
-	END_FOR
+      <ST><![CDATA[//Timer to delay time between reset and move command
+IF NOT bAllResetDone THEN
+	tonResetDelay(IN := FALSE, PT := T#1S);
+ELSE
+	tonResetDelay(IN := TRUE, PT := T#1S);
+END_IF
 
-	FOR i := 1 TO 2 DO
-		aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
-	END_FOR
+// Step 1: Enable all motors and valves ##############################################################################
+IF NOT bEnableDone THEN
+	IF NOT GVL_Motion.bInitialHomingDone THEN
+		FOR i := 1 TO 3 DO
+			aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
+		END_FOR
 	
-	IF aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3] AND aValvesEnabled[1] AND aValvesEnabled[2] (*AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5]*) THEN
+		FOR i := 1 TO 2 DO
+			aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
+		END_FOR
+		
+		IF aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3] AND aValvesEnabled[1] AND aValvesEnabled[2] (*AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5]*) THEN
+			bEnableDone := TRUE;
+		END_IF
+	ELSE
 		bEnableDone := TRUE;
 	END_IF
 END_IF
 
-// Step 2: Reset all motors and valves
-IF NOT bResetDone AND bEnableDone THEN
-	FOR i := 1 TO 3 DO
-		GVL_Motion.aMotors[i].Reset();
-	END_FOR
-	FOR i := 1 TO 2 DO
-		GVL_Motion.aValvesObj[i].Reset();
-	END_FOR
-	bResetDone := TRUE;
+// Step 2: Reset all motors and valves ##############################################################################
+IF NOT bAllResetDone AND bEnableDone THEN
+	
+
+	IF NOT bResetCheck[1] THEN
+		bResetCheck[1] := GVL_Motion.aMotors[1].Reset();
+	END_IF
+	IF NOT bResetCheck[2] THEN
+			bResetCheck[2] := GVL_Motion.aMotors[2].Reset();
+	END_IF
+	IF NOT bResetCheck[3] THEN
+			bResetCheck[3] := GVL_Motion.aMotors[3].Reset();
+	END_IF
+	IF NOT bResetCheck[4] THEN
+			bResetCheck[4] := GVL_Motion.aValvesObj[1].Reset();
+	END_IF
+	IF NOT bResetCheck[5] THEN
+			bResetCheck[5] := GVL_Motion.aValvesObj[2].Reset();
+	END_IF
+	(*
+	IF NOT bResetCheck[6] THEN
+			bResetCheck[6] := GVL_Motion.aValvesObj[3].Reset();
+	END_IF
+	IF NOT bResetCheck[7] THEN
+			bResetCheck[7] := GVL_Motion.aValvesObj[4].Reset();
+	END_IF
+	IF NOT bResetCheck[8] THEN
+			bResetCheck[8] := GVL_Motion.aValvesObj[5].Reset();
+	END_IF
+	*)
+	IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND bResetCheck[4] AND bResetCheck[5] (* AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] *) THEN
+		bAllResetDone := TRUE;
+	END_IF
+	
 END_IF
 
-// Step 3: If the process hasn't started yet
-IF NOT bStartedAction AND bResetDone THEN
+// Step 3: If the process hasn't started yet ##########################################################################
+IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
     // If the system hasn't performed homing yet
     IF NOT GVL_Motion.bInitialHomingDone THEN
         bPerformHoming := TRUE;
@@ -99,11 +144,22 @@ IF NOT bStartedAction AND bResetDone THEN
         IF bHomeMotor3Done THEN
             bLinearMotorsHomingDone := TRUE;
         END_IF
-
-        // Move all valves to position 1 (home position)
 		
-        bHomeValve1Done := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
-        bHomeValve2Done := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+        // Move all valves to position 1 (home position)
+		IF bMoveValve1Request THEN
+			bHomeValve1Done := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			IF bHomeValve1Done THEN
+				bMoveValve1Request := FALSE;
+			END_IF
+		END_IF
+        
+		IF bMoveValve2Request THEN
+			bHomeValve2Done := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			IF bHomeValve2Done THEN
+				bMoveValve2Request := FALSE;
+			END_IF
+		END_IF
+		
         //bHomeValve3Done := GVL_Motion.aValvesObj[3].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
         //bHomeValve4Done := GVL_Motion.aValvesObj[4].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
         //bHomeValve5Done := GVL_Motion.aValvesObj[5].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
@@ -121,15 +177,46 @@ IF NOT bStartedAction AND bResetDone THEN
 		
     ELSE
         // If homing has already been done, move motors and valves to zero/default position
-        FOR i := 1 TO 3 DO
-            GVL_Motion.aMotors[i].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
-        END_FOR
-
-        FOR i := 1 TO 5 DO
-            GVL_Motion.aValvesObj[i].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
-        END_FOR
-
-        bStartedAction := TRUE;
+        IF bMoveMotorsRequest[1] THEN //Move Motor 1
+			bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			IF bMoveMotorDone[1] THEN
+				bMoveMotorsRequest[1] := FALSE;
+			END_IF
+        END_IF
+		
+		IF bMoveMotorsRequest[2] THEN //Move Motor 2
+			bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			IF bMoveMotorDone[2] THEN
+				bMoveMotorsRequest[2] := FALSE;
+			END_IF
+        END_IF
+		
+		IF bMoveMotorsRequest[3] AND bMoveMotorDone[2] THEN //Move Motor 3 after motor 2 is done
+			bMoveMotorDone[3] := GVL_Motion.aMotors[1].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			IF bMoveMotorDone[3] THEN
+				bMoveMotorsRequest[3] := FALSE;
+			END_IF
+        END_IF
+		
+        // Move all valves to position 1 (home position)
+		IF bMoveValve1Request THEN
+			bHomeValve1Done := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			IF bHomeValve1Done THEN
+				bMoveValve1Request := FALSE;
+			END_IF
+		END_IF
+        
+		IF bMoveValve2Request THEN
+			bHomeValve2Done := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			IF bHomeValve2Done THEN
+				bMoveValve2Request := FALSE;
+			END_IF
+		END_IF
+		
+		IF bHomeValve1Done AND bHomeValve2Done AND bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3] THEN
+			bStartedAction := TRUE;
+		END_IF
+        
     END_IF
 END_IF
 
@@ -153,7 +240,7 @@ IF bStartedAction THEN
 	END_FOR
 	
 	// Step 5: Check if all valves completed their action
-	FOR i := 1 TO 5 DO
+	FOR i := 1 TO 2 DO
 		stStatus := GVL_Motion.aValvesObj[i].GetStatus();
 	
 		// If any valve is not done yet
@@ -173,7 +260,7 @@ END_IF
 
 
 // Step 6: Finalize the initialization process if everything is done
-IF bAllDone AND bEnableDone AND bResetDone AND NOT bInitComplete THEN
+IF bAllDone AND bEnableDone AND bAllResetDone AND NOT bInitComplete THEN
     // Mark that homing has been done, so it won’t run again on next power-up
     IF NOT GVL_Motion.bInitialHomingDone THEN
         GVL_Motion.bInitialHomingDone := TRUE;
@@ -184,18 +271,136 @@ IF bAllDone AND bEnableDone AND bResetDone AND NOT bInitComplete THEN
 END_IF
 ]]></ST>
     </Implementation>
+    <Method Name="Reset" Id="{9d292ea2-dd87-459a-a476-a8e8f5acf2de}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT	
+END_VAR
+VAR
+	bResetRequest 	: BOOL := FALSE;
+	bResetExecute 	: BOOL := FALSE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bResetRequest THEN
+    bResetExecute := TRUE;
+    bResetRequest := TRUE;
+	Reset := FALSE;
+END_IF
+
+IF bResetExecute THEN
+	bDone	:= FALSE;
+
+	bAllDone         		:= FALSE;
+	bStartedAction  		:= FALSE;
+	bInitComplete    		:= FALSE;
+	bVerticalMotorsDone		:= FALSE;   
+	bLinearMotorsHomingDone	:= FALSE; 
+	bValvesHomingDone 		:= FALSE;
+	bLinearPumpsDone		:= FALSE;
+	bPerformHoming		 	:= FALSE;
+	
+	bAllResetDone	 := FALSE;
+	bEnableDone		 := FALSE;
+		
+	FOR i := 1 TO 8 DO
+		bResetCheck[i] := FALSE;
+	END_FOR
+	
+	bHomeMotor1Done  := FALSE;
+	bHomeMotor2Done  := FALSE;
+	bHomeMotor3Done  := FALSE;
+	
+	bMoveMotorDone[1] := FALSE;
+	bMoveMotorDone[2] := FALSE;
+	bMoveMotorDone[3] := FALSE;
+	
+	bHomeValve1Done	 := FALSE;
+	bHomeValve2Done	 := FALSE;
+	bHomeValve3Done	 := FALSE;
+	bHomeValve4Done	 := FALSE;
+	bHomeValve5Done	 := FALSE;
+	
+	bMoveValve1Request	 := TRUE;
+	bMoveValve2Request	 := TRUE;
+	bMoveMotorsRequest[1] := TRUE;
+	bMoveMotorsRequest[2] := TRUE;
+	bMoveMotorsRequest[3] := TRUE;
+	
+	IF bResetRequest THEN
+		bResetExecute := FALSE;
+		bResetRequest := FALSE;
+		Reset := TRUE;
+		RETURN;
+	ELSE
+		Reset := FALSE;
+	END_IF
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="PRG_SystemInit">
-      <LineId Id="264" Count="9" />
+      <LineId Id="530" Count="0" />
+      <LineId Id="526" Count="3" />
+      <LineId Id="524" Count="1" />
+      <LineId Id="264" Count="1" />
+      <LineId Id="427" Count="0" />
+      <LineId Id="266" Count="7" />
       <LineId Id="280" Count="2" />
+      <LineId Id="428" Count="2" />
       <LineId Id="262" Count="0" />
-      <LineId Id="284" Count="9" />
+      <LineId Id="284" Count="2" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="287" Count="1" />
+      <LineId Id="475" Count="1" />
+      <LineId Id="551" Count="1" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="554" Count="1" />
+      <LineId Id="553" Count="0" />
+      <LineId Id="557" Count="1" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="560" Count="1" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="571" Count="0" />
+      <LineId Id="563" Count="1" />
+      <LineId Id="562" Count="0" />
+      <LineId Id="566" Count="1" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="569" Count="1" />
+      <LineId Id="568" Count="0" />
+      <LineId Id="481" Count="0" />
+      <LineId Id="487" Count="0" />
+      <LineId Id="489" Count="1" />
+      <LineId Id="488" Count="0" />
       <LineId Id="283" Count="0" />
-      <LineId Id="250" Count="0" />
-      <LineId Id="139" Count="34" />
+      <LineId Id="515" Count="0" />
+      <LineId Id="139" Count="32" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="173" Count="0" />
       <LineId Id="331" Count="0" />
-      <LineId Id="174" Count="13" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="374" Count="2" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="382" Count="4" />
+      <LineId Id="380" Count="1" />
+      <LineId Id="176" Count="11" />
       <LineId Id="246" Count="2" />
-      <LineId Id="188" Count="14" />
+      <LineId Id="188" Count="2" />
+      <LineId Id="531" Count="0" />
+      <LineId Id="534" Count="2" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="539" Count="4" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="546" Count="4" />
+      <LineId Id="545" Count="0" />
+      <LineId Id="533" Count="0" />
+      <LineId Id="491" Count="12" />
+      <LineId Id="196" Count="1" />
+      <LineId Id="505" Count="2" />
+      <LineId Id="198" Count="4" />
       <LineId Id="294" Count="0" />
       <LineId Id="329" Count="1" />
       <LineId Id="297" Count="28" />
@@ -204,6 +409,31 @@ END_IF
       <LineId Id="296" Count="0" />
       <LineId Id="204" Count="0" />
       <LineId Id="234" Count="11" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_SystemInit.Reset">
+      <LineId Id="65" Count="2" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="79" Count="1" />
+      <LineId Id="41" Count="11" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="93" Count="2" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="99" Count="3" />
+      <LineId Id="56" Count="7" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="96" Count="2" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="74" Count="3" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="38" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

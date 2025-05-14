@@ -19,6 +19,9 @@ VAR
 	
 	//System Initializing Variables
 	tonSystemInitialize		: ton;
+	rTrigEnterSystemInit 	: R_TRIG;
+	bSystemInitTimerStart	: BOOL := FALSE;
+	bSystemInitReseted		: BOOL := FALSE;
 
 END_VAR
 ]]></Declaration>
@@ -58,14 +61,17 @@ IF NOT GVL_Safety.bSafetyEnable THEN
 	GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
 END_IF
 
-//Reset the Reset flag every time gets out of auto cycle
+//Reset the Reset flags every time gets out of auto cycle
 IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
 	bResetSMDone := FALSE;
 END_IF
 
-//Reset timer every time is not in System Initializing
+//Reset the Reset flags every time gets out of auto cycle
 IF NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
-	tonSystemInitialize(in := FALSE);
+	bSystemInitReseted := PRG_SystemInit.Reset();
+	bSystemInitTimerStart := FALSE; //Reset timer every time is not in System Initializing
+ELSE
+	bSystemInitReseted := FALSE;
 END_IF
 
 // Main Master controll logic
@@ -107,7 +113,7 @@ CASE GVL_HMI.eMachineMode OF
 	
 	E_MachineMode.SYSTEM_INITIALIZING: // Entry when the machine is first power up to do the homing of the motors
 	
-		tonSystemInitialize(in := TRUE, pt := T#500MS);
+        tonSystemInitialize(IN := bSystemInitTimerStart, PT := T#2S);
 		
 		IF GVL_Safety.bSafetyEnable AND tonSystemInitialize.Q THEN
 			PRG_SystemInit(); // Run init procedure
@@ -116,6 +122,8 @@ CASE GVL_HMI.eMachineMode OF
 		IF PRG_SystemInit.bDone THEN
 			GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_READY;
 		END_IF
+		
+		bSystemInitTimerStart := TRUE;
 		
 	E_MachineMode.SYSTEM_READY:	// Entry when the start button was pressed on Stop State.
 	
@@ -152,9 +160,10 @@ END_CASE
       <LineId Id="178" Count="0" />
       <LineId Id="177" Count="0" />
       <LineId Id="179" Count="1" />
-      <LineId Id="266" Count="3" />
-      <LineId Id="265" Count="0" />
-      <LineId Id="120" Count="0" />
+      <LineId Id="291" Count="3" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="339" Count="1" />
+      <LineId Id="342" Count="1" />
       <LineId Id="28" Count="0" />
       <LineId Id="50" Count="2" />
       <LineId Id="168" Count="1" />
@@ -172,11 +181,16 @@ END_CASE
       <LineId Id="105" Count="0" />
       <LineId Id="221" Count="0" />
       <LineId Id="247" Count="0" />
-      <LineId Id="262" Count="2" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="264" Count="0" />
       <LineId Id="248" Count="0" />
       <LineId Id="254" Count="4" />
       <LineId Id="229" Count="0" />
-      <LineId Id="224" Count="1" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="225" Count="0" />
       <LineId Id="236" Count="0" />
       <LineId Id="235" Count="0" />
       <LineId Id="233" Count="1" />

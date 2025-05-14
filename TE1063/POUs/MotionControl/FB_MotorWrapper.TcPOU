@@ -57,6 +57,14 @@ VAR
 	
 	//MoveValve
 	rTargetAngle		: LREAL;
+	bMoveValveExecute 	: BOOL;
+    bMoveValveRequested : BOOL;
+	
+	//Reset()
+	bResetExecute 		: BOOL;
+    bResetRequested 	: BOOL;
+	bResetDone			: BOOL;
+	
 	
 END_VAR
 ]]></Declaration>
@@ -290,7 +298,6 @@ END_IF
 
 IF bMoveAbsRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
     bMoveAbsRequested := FALSE;
-	bMoveAbsDone := FALSE;
     MoveAbsolute := TRUE;
 	RETURN;
 ELSE
@@ -341,7 +348,7 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Converte posição para ângulo
+        <ST><![CDATA[// Map logical valve position to angular position
 CASE iPosition OF
     1: rTargetAngle := 0.0;
     2: rTargetAngle := 60.0;
@@ -350,11 +357,47 @@ CASE iPosition OF
     5: rTargetAngle := 240.0;
     6: rTargetAngle := 300.0;
 ELSE
-    rTargetAngle := 0;
+    rTargetAngle := 0.0;
 END_CASE
 
-// Usa o mesmo mecanismo de MoveAbsolute, mas para válvula
-MoveValve := THIS^.MoveAbsolute(Position := rTargetAngle, Velocity := rVelocity, Acc := rAcc, Dec := rDec);]]></ST>
+// Reuse the same logic from MoveAbsolute
+IF NOT bMoveValveRequested THEN
+    bMoveValveExecute := TRUE;
+    bMoveValveRequested := TRUE;
+END_IF
+
+// Call the internal motion block
+fbMoveAbs(
+    Axis := Axis,
+    Position := rTargetAngle,
+    Execute := bMoveValveExecute,
+    Velocity := rVelocity,
+    Acceleration := rAcc,
+    Deceleration := rDec
+);
+
+// Update actuator status
+status.bBusy := fbMoveAbs.Busy;
+status.bDone := fbMoveAbs.Done;
+status.bError := fbMoveAbs.Error;
+status.iErrorCode := fbMoveAbs.ErrorID;
+
+IF fbMoveAbs.Busy THEN
+    bMoveValveExecute := FALSE;
+END_IF
+
+IF fbMoveAbs.Error THEN
+    status.eState := E_ActuatorState.eError;
+    status.sMessage := 'Error in MoveValve';
+END_IF
+
+IF bMoveValveRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
+    bMoveValveRequested := FALSE;
+    MoveValve := TRUE;
+    RETURN;
+ELSE
+    MoveValve := FALSE;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="Reset" Id="{55ea212e-113c-4739-bf54-01562c1314f2}">
@@ -363,21 +406,47 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Reset errors on the axis and motion FBs
-fbReset(Axis := Axis, Execute := TRUE);
-status.bError := fbReset.Error;
-status.iErrorCode := fbReset.ErrorID;
-IF fbReset.Error THEN
-	status.eState := E_ActuatorState.eError;
-	status.sMessage := 'Error in Reset';
-	Reset := FALSE;
-ELSE
-	status.bError := FALSE;
-	status.iErrorCode := 0;
-	status.eState := E_ActuatorState.eIdle;
-	status.sMessage := '';
-	Reset := TRUE;
-END_IF;
+        <ST><![CDATA[// Generates the pulse just once when it's called
+IF NOT bResetRequested THEN
+    bResetExecute := TRUE;
+    bResetRequested := TRUE;
+END_IF
+
+// Reset errors on the axis and motion FBs
+IF bResetRequested THEN
+    fbReset(Axis := Axis, Execute := bResetExecute);
+
+    status.bError := fbReset.Error;
+    status.iErrorCode := fbReset.ErrorID;
+
+    IF fbReset.Error THEN
+        status.eState := E_ActuatorState.eError;
+        status.sMessage := 'Error in Reset';
+        Reset := FALSE;
+    ELSE
+        status.bError := FALSE;
+        status.iErrorCode := 0;
+        status.eState := E_ActuatorState.eIdle;
+        status.sMessage := '';
+    END_IF;
+	
+	IF bResetDone THEN
+        // Flags clearing  
+        bResetRequested := FALSE;
+        bResetDone := FALSE;
+        Reset := TRUE;
+        RETURN;
+    END_IF
+	
+    IF fbReset.Done THEN
+        bResetExecute := FALSE;
+        bResetDone := TRUE;
+    END_IF
+    
+END_IF
+
+Reset := FALSE;
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -489,9 +558,7 @@ END_VAR
       <LineId Id="128" Count="2" />
       <LineId Id="107" Count="0" />
       <LineId Id="99" Count="0" />
-      <LineId Id="79" Count="6" />
-      <LineId Id="123" Count="0" />
-      <LineId Id="86" Count="0" />
+      <LineId Id="79" Count="7" />
       <LineId Id="124" Count="0" />
       <LineId Id="87" Count="1" />
       <LineId Id="32" Count="0" />
@@ -509,12 +576,19 @@ END_VAR
       <LineId Id="33" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
-      <LineId Id="6" Count="12" />
+      <LineId Id="31" Count="44" />
+      <LineId Id="77" Count="3" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
-      <LineId Id="6" Count="0" />
-      <LineId Id="8" Count="13" />
+      <LineId Id="36" Count="22" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="77" Count="5" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="60" Count="3" />
+      <LineId Id="71" Count="3" />
+      <LineId Id="21" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
