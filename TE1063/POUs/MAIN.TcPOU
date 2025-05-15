@@ -95,6 +95,7 @@ VAR
 	bDebug7 : BOOL := FALSE;
 	bDebug8 : BOOL := FALSE;
 	bDebug9 : BOOL := FALSE;
+	bDebug10: BOOL := FALSE;
 	testTon : TON;
 	bEnableDone, bHomeDone : BOOL := FALSE;
 	
@@ -117,8 +118,7 @@ PRG_RecipeManager();
 
 //################ TESTING AREA ################################
 IF bDebug1 THEN
-	GVL_Motion.aMotors[1].Enable();
-	GVL_Motion.aValvesObj[1].Enable();
+	bDebug1 := NOT (GVL_Motion.aMotors[1].Enable() AND GVL_Motion.aValvesObj[1].Enable());
 END_IF
 
 IF bHomeDone THEN
@@ -131,7 +131,7 @@ IF bDebug3 THEN
 END_IF
 
 IF bDebug4 THEN
-	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -100, Velocity := 10, Acc := 10, Dec := 10);
+	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -50, Velocity := 10, Acc := 10, Dec := 10);
 END_IF
 
 IF bDebug5 THEN
@@ -150,6 +150,13 @@ IF bDebug8 THEN
 	bDebug8 := NOT GVL_Motion.aMotors[1].Reset();
 END_IF
 
+IF bDebug9 THEN
+	bDebug9 := NOT GVL_Motion.aMotors[1].Stop();
+END_IF
+
+IF bDebug10 THEN
+	bDebug10 := NOT GVL_Motion.aValvesObj[1].Stop();
+END_IF
 //<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 fbMcPower( //Enabling the axis - rotary pump 1
     Axis 			:= GVL_Motion.aPumps[1].Rotary.Axis,
@@ -409,9 +416,7 @@ END_IF
       <LineId Id="3651" Count="0" />
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
-      <LineId Id="4163" Count="0" />
-      <LineId Id="4184" Count="0" />
-      <LineId Id="4164" Count="0" />
+      <LineId Id="4163" Count="1" />
       <LineId Id="4377" Count="0" />
       <LineId Id="3875" Count="0" />
       <LineId Id="4379" Count="0" />
@@ -432,6 +437,9 @@ END_IF
       <LineId Id="4394" Count="0" />
       <LineId Id="4499" Count="2" />
       <LineId Id="4498" Count="0" />
+      <LineId Id="4604" Count="2" />
+      <LineId Id="4603" Count="0" />
+      <LineId Id="4607" Count="2" />
       <LineId Id="3653" Count="1" />
       <LineId Id="3658" Count="4" />
       <LineId Id="3667" Count="0" />

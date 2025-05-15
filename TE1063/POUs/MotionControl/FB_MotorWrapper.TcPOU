@@ -30,9 +30,11 @@ VAR
     bPowerRequest : BOOL;
     bResetRequest : BOOL;
     bDisableReq   : BOOL;
-
+	
+	//Stop()
     bStopExecute     : BOOL;
     bStopRequested   : BOOL;
+	bStopDone		 : BOOL;
 
     status        	 : ST_ActuatorStatus;
     debugSensorValue : BOOL;
@@ -55,7 +57,7 @@ VAR
     bMoveAbsRequested 	: BOOL;
 	bMoveAbsDone		: BOOL;
 	
-	//MoveValve
+	//MoveValve()
 	rTargetAngle		: LREAL;
 	bMoveValveExecute 	: BOOL;
     bMoveValveRequested : BOOL;
@@ -460,33 +462,43 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF NOT bStopRequested THEN
-        bStopExecute := TRUE;
-        bStopRequested := TRUE;
-    END_IF
+	bStopExecute := TRUE;
+	bStopRequested := TRUE;
+END_IF
 
-    fbStop(Axis := Axis, Execute := bStopExecute);
+IF bStopRequested THEN
+	fbStop(Axis := Axis, Execute := bStopExecute);
+END_IF
 
-    IF fbStop.Busy THEN
-        bStopExecute := FALSE;
-    END_IF
+IF bStopDone AND NOT fbStop.Busy THEN
+	bStopRequested := FALSE;
+END_IF
 
-    status.bError := fbStop.Error;
-    status.iErrorCode := fbStop.ErrorID;
+IF fbStop.Done THEN
+	bStopExecute := FALSE;
+	bStopDone := TRUE;
+END_IF
 
-    IF fbStop.Error THEN
-        status.eState := E_ActuatorState.eError;
-        status.sMessage := 'Error in Stop';
-        Stop := FALSE;
-    ELSIF fbStop.Done AND NOT fbStop.Busy THEN
-        status.bError := FALSE;
-        status.iErrorCode := 0;
-        status.eState := E_ActuatorState.eIdle;
-        status.sMessage := 'Axis Stopped';
-        bStopRequested := FALSE;
-        Stop := TRUE;
-    ELSE
-        Stop := FALSE;
-    END_IF
+status.bError := fbStop.Error;
+status.iErrorCode := fbStop.ErrorID;
+
+IF fbStop.Error THEN
+	status.eState := E_ActuatorState.eError;
+	status.sMessage := 'Error in Stop';
+	Stop := FALSE;
+END_IF
+
+IF bStopDone AND NOT fbStop.Busy AND NOT bStopRequested THEN
+	status.bError := FALSE;
+	status.iErrorCode := 0;
+	status.eState := E_ActuatorState.eIdle;
+	status.sMessage := 'Axis Stopped';
+	bStopDone := FALSE;
+	Stop := TRUE;
+	RETURN;
+ELSE
+	Stop := FALSE;
+END_IF
 ]]></ST>
       </Implementation>
     </Method>
@@ -592,7 +604,18 @@ END_VAR
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
-      <LineId Id="85" Count="26" />
+      <LineId Id="85" Count="3" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="119" Count="1" />
+      <LineId Id="122" Count="3" />
+      <LineId Id="91" Count="2" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="94" Count="8" />
+      <LineId Id="127" Count="1" />
+      <LineId Id="103" Count="6" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="110" Count="1" />
       <LineId Id="27" Count="0" />
       <LineId Id="7" Count="0" />
     </LineIds>

@@ -7,6 +7,7 @@ VAR
 	bModeChanged	 	: BOOL := FALSE;
 	bResetStateMachine	: BOOL := FALSE;
 	bResetSMDone		: BOOL := FALSE;
+	bStoppedResetDone	: BOOL := FALSE;
 	
 	//Triggers
 	rTriggerStopButton	: R_TRIG;
@@ -52,7 +53,7 @@ IF (GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT) AND NOT GVL_Safety. bSa
 END_IF
 
 // Stop Button monitoring
-IF rTriggerStopButton.Q THEN
+IF rTriggerStopButton.Q AND NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
 	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
 END_IF
 
@@ -72,6 +73,11 @@ IF NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
 	bSystemInitTimerStart := FALSE; //Reset timer every time is not in System Initializing
 ELSE
 	bSystemInitReseted := FALSE;
+END_IF
+
+//Reset the Stopped state flags every time gets out of Stopped State
+IF NOT (GVL_HMI.eMachineMode = E_MachineMode.STOPPED) THEN
+	bStoppedResetDone := PRG_StoppedState.Reset();
 END_IF
 
 // Main Master controll logic
@@ -105,9 +111,12 @@ CASE GVL_HMI.eMachineMode OF
         END_IF
 
     E_MachineMode.STOPPED:		// Entry from Stop Button or Imediate Fault
-        PRG_StoppedState();
-
-        IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable THEN
+        IF bStoppedResetDone THEN
+			PRG_StoppedState();
+		END_IF
+		
+        IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable AND PRG_StoppedState.bStopAllMotorsDone THEN //only change the state if all motors were stopped
+			bStoppedResetDone := FALSE;
             GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
         END_IF
 	
@@ -163,7 +172,10 @@ END_CASE
       <LineId Id="291" Count="3" />
       <LineId Id="341" Count="0" />
       <LineId Id="339" Count="1" />
-      <LineId Id="342" Count="1" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="368" Count="3" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="343" Count="0" />
       <LineId Id="28" Count="0" />
       <LineId Id="50" Count="2" />
       <LineId Id="168" Count="1" />
@@ -177,7 +189,12 @@ END_CASE
       <LineId Id="135" Count="0" />
       <LineId Id="84" Count="3" />
       <LineId Id="126" Count="2" />
-      <LineId Id="91" Count="6" />
+      <LineId Id="91" Count="3" />
+      <LineId Id="378" Count="1" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="97" Count="0" />
       <LineId Id="105" Count="0" />
       <LineId Id="221" Count="0" />
       <LineId Id="247" Count="0" />
