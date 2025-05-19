@@ -6421,19 +6421,11 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{ADA4A056-57A9-99F6-BDD4-70E918FEF2F7}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{E8CA8E7B-F6ED-319D-6E4B-9F3769E3A3F5}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
-						<Var>
-							<Name>PRG_StateMachine.fbSealStagesP1.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>PRG_StateMachine.fbSealStagesP2.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
 						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
@@ -6453,11 +6445,6 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.iPosition</Name>
@@ -7037,6 +7024,11 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -7093,14 +7085,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
 						<Var>
-							<Name>PRG_StateMachine.fbSealStagesP1.Axis.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>PRG_StateMachine.fbSealStagesP2.Axis.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gDigOutputs</Name>
 							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
 							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
@@ -7112,15 +7096,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7473,6 +7448,15 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyRestart</Name>

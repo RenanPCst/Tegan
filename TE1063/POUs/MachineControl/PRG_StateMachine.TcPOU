@@ -9,7 +9,6 @@ VAR
 	tonPowerUp		: Tc2_Standard.TON;
 	bPowerUpTimerComplete : BOOL; //Initialization timer
 	
-	
 	//Initialization stage
 	fbInitChecks			: FB_InitChecks; 	//FB Reponsible for the Init state Logic
 		bInitCheckDone		: BOOL := FALSE; 	//Flag response to the FB_InitChecks
@@ -33,16 +32,11 @@ VAR
 		bRecoveryError 		: BOOL;                 			//recovery error flag 						
 		
 	//Seal Stages Instance
-	fbSealStagesP1 		: FB_SealStages;	//FB instance
+	fbSealStages 		: FB_SealStages;	//FB instance
 		bSealStages		: BOOL := FALSE;
-		bSealSuccessP1	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
-		bSealErrorP1	: BOOL := FALSE; 	//seal error flag FB_SealStages
-	fbSealStagesP2 		: FB_SealStages;	//FB instance
-		bSealExecute	: BOOL := FALSE;
-		bSealSuccessP2	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
-		bSealErrorP2	: BOOL := FALSE; 	//seal error flag FB_SealStages
-		tonSealStages	: TON;
-		
+		bSealSuccess	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
+		bSealError		: BOOL := FALSE; 	//seal error flag FB_SealStages
+
 	//Leak Test Instance
 	fbLeakTest		:	FB_LeakTest;
 		bTestCompleted		: BOOL 	 := FALSE;
@@ -62,11 +56,11 @@ VAR
 	bStatePass3	: BOOL := FALSE;
 	bStatePass4	: BOOL := FALSE;
 	
-	tonTest	: TON;
-	fbStop, fbStopM1, fbStopM2, fbStopM3	: FB_StopMotion;
+	//tonTest	: TON;
+	//fbStop, fbStopM1, fbStopM2, fbStopM3	: FB_StopMotion;
 		bStopMotion 	: BOOL := FALSE;
 		bStopTrigger	: BOOL := FALSE;
-	fbHaltM1, fbHaltM2, fbHaltM3  : MC_Halt;
+	//fbHaltM1, fbHaltM2, fbHaltM3  : MC_Halt;
 	
 END_VAR
 ]]></Declaration>
@@ -83,41 +77,40 @@ CASE CurrentState OF
 	
 		GVL_IO.gDigOutputs.bStartIndicator := TRUE; //Turn on the start indicator once the system already started
 		
-			//Event Trigger Info State - Checking Initialization
-			sSystem := 'StateMachine.INIT'; sMessage := 'Cheking Safe Conditions!';
+		//Event Trigger Info State - Checking Initialization
+		sSystem := 'StateMachine.INIT'; sMessage := 'Cheking Safe Conditions!';
+		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+		ResetEventTrigger();
+		
+		//Calling the FB responsible for check all condition for initial operation	
+		fbInitChecks(
+			bPower24V_OK  := GVL_IO.gDigInputs.b24VPowerSupplyOK,
+			bPower48V_OK  := GVL_IO.gDigInputs.b48VPowerSupplyOK,
+			bDoorsClosed  := GVL_Safety.bDoorClosedAlias,
+			bDoorsLocked  := GVL_Safety.bDoorLockedFeedback,
+			bAirEnabled   := GVL_Safety.SafetyOutputs.bBelowDoorsFeedback,//#TODO GVL_Safety.bAirEnabledFeedback, AirSupply not working implemented valve feedback no working
+			bExecute	  := TRUE,
+			bReset		  := FALSE,
+			bInitOK       => bInitCheckDone,
+			bError        => bInitError
+		);
+		//State Transition
+		IF bInitError THEN
+			//Event Trigger Info State - Initialization Done
+			sSystem := 'StateMachine.INIT'; sMessage := 'Initialization fail - Going to Error State!';
+			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+			ResetEventTrigger();
+			//State Trasition to ERROR_STATE
+			CurrentState := E_MachineStates.ERROR_STATE;
+		ELSIF bInitCheckDone THEN
+			//Event Trigger Info State - Initialization Done
+			sSystem := 'StateMachine.INIT'; sMessage := 'Initialization Successful!';
 			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
 			ResetEventTrigger();
-			
-			//Calling the FB responsible for check all condition for initial operation	
-			fbInitChecks(
-				bPower24V_OK  := GVL_IO.gDigInputs.b24VPowerSupplyOK,
-				bPower48V_OK  := GVL_IO.gDigInputs.b48VPowerSupplyOK,
-				bDoorsClosed  := GVL_Safety.bDoorClosedAlias,
-				bDoorsLocked  := GVL_Safety.bDoorLockedFeedback,
-				bAirEnabled   := GVL_Safety.SafetyOutputs.bBelowDoorsFeedback,//#TODO GVL_Safety.bAirEnabledFeedback, AirSupply not working implemented valve feedback no working
-				bExecute	  := TRUE,
-				bReset		  := FALSE,
-				bInitOK       => bInitCheckDone,
-				bError        => bInitError
-			);
-			//State Transition
-			IF bInitError THEN
-				//Event Trigger Info State - Initialization Done
-				sSystem := 'StateMachine.INIT'; sMessage := 'Initialization fail - Going to Error State!';
-				fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
-				ResetEventTrigger();
-				//State Trasition to ERROR_STATE
-				CurrentState := E_MachineStates.ERROR_STATE;
-			ELSIF bInitCheckDone THEN
-				//Event Trigger Info State - Initialization Done
-				sSystem := 'StateMachine.INIT'; sMessage := 'Initialization Successful!';
-				fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
-				ResetEventTrigger();
-				//State Trasition to CHECK_AIR_FLOW
-				CurrentState := E_MachineStates.CHECK_AIR_FLOW;
-			END_IF;
-		
-    
+			//State Trasition to CHECK_AIR_FLOW
+			CurrentState := E_MachineStates.CHECK_AIR_FLOW;
+		END_IF;
+
 	E_MachineStates.CHECK_AIR_FLOW: //Checking is the air supply is higher than the air supply threshold
 	
 		//IF bStatePass2 THEN//temporary Debug Manual variable ************************************************************************************
@@ -163,7 +156,7 @@ CASE CurrentState OF
 						bDone      	=> bEventDone
 					);
 					ResetEventTrigger(); //Reset the Error Event
-					CurrentState := E_MachineStates.HARDWARE_INIT; // Move to the next state
+					CurrentState := E_MachineStates.SEAL_STAGES; // Move to the next state jumping Hardware Init because it was done by Master control System Initializing state. 
 				END_IF;
 			END_IF;	
 		//END_IF//temporary Debug Manual variable ************************************************************************************
@@ -181,7 +174,7 @@ CASE CurrentState OF
 		//END_IF//temporary Debug Manual variable ************************************************************************************
 		
     E_MachineStates.SEAL_STAGES:
-
+	
 			//calling the FB_SealStages
 			IF GVL_Safety.bM1STOEnabled THEN
 				bSealStages := TRUE;
@@ -189,50 +182,21 @@ CASE CurrentState OF
 				bSealStages := FALSE;
 			END_IF
 			
-			fbSealStagesP1(
-					Axis				:= GVL_Motion.M1Motor.Axis,
-					iTargetPosition		:= GVL_HMI.HMIParameters.aM1Position[2] + GVL_HMI.HMIParameters.fM1PositionDeceleration, //Seal Position
-					rVelocity			:= GVL_Motion.M1Motor.rTargetVelocityP1,
-					rAcceleration		:= GVL_Motion.M1Motor.rAccleration,
-					rDeceleration		:= GVL_Motion.M1Motor.rDeceleration,
-					bExecute 			:= bSealStages,
-					bSealSucess			=> bSealSuccessP1,
-					bSealError			=> bSealErrorP1
-				);
-			//testing
-			(*tonTest(IN := bSealStages, PT := T#2S);
-			IF tonTest.Q THEN
-			 fbStop(bExecute := TRUE, rDeceleration := 20, Axis := GVL_Motion.M1Motor.Axis);
-			END_IF*)
-			
-			IF bSealSuccessP1 AND NOT tonTest.Q THEN
-				tonSealStages(IN := TRUE, PT := T#500MS);
-			END_IF
-			IF GVL_Safety.bM1STOEnabled AND tonSealStages.Q THEN
-				fbSealStagesP2(
-					Axis				:= GVL_Motion.M1Motor.Axis,
-					iTargetPosition		:= GVL_HMI.HMIParameters.aM1Position[2], //Seal Position
-					rVelocity			:= GVL_Motion.M1Motor.rTargetVelocityP2,
-					rAcceleration		:= GVL_Motion.M1Motor.rAccleration,
-					rDeceleration		:= GVL_Motion.M1Motor.rDeceleration,
-					bExecute 			:= TRUE,
-					bSealSucess			=> bSealSuccessP2,
-					bSealError			=> bSealErrorP2
-				);
-			END_IF
-			
+			fbSealStages( bExecute := bSealStages);
+				
 			//error check
-			IF (NOT bSealSuccessP1 OR NOT bSealSuccessP2) AND (bSealErrorP1 OR bSealErrorP2)  THEN
+			IF fbSealStages.bSealError THEN
 				//error dealing logic
 				CurrentState := E_MachineStates.ERROR_STATE;
 			END_IF;
 	
 			//step forward to step ahead
-			IF bSealSuccessP1 AND bSealSuccessP2 AND NOT bSealErrorP1 AND NOT bSealErrorP2 THEN
+			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
 				CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
 			END_IF;
-
+	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
+	IF bStatePass1 THEN
 		// Call the Leak Test function block
         fbLeakTest(
             bExecute 			:= TRUE,
@@ -251,6 +215,7 @@ CASE CurrentState OF
         ELSIF bTestFailed THEN
             CurrentState := E_MachineStates.ERROR_STATE;
         END_IF;
+	END_IF
 	
     E_MachineStates.RECOVERY_PHASE:
        (*
@@ -305,6 +270,7 @@ CASE CurrentState OF
 		sSystem := 'StateMachine.Error'; sMessage := 'Error State!';
 		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
 		ResetEventTrigger();
+		GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT; 
 		
         IF GVL_IO.gDigInputs.bStopButton THEN
             bErrorFlag := FALSE;
@@ -319,6 +285,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//Reset the flags and FB's
+//CurrentState := E_MachineStates.INIT;
+
 bInitCheckDone 		:= FALSE;
 bInitError			:= FALSE;
 fbInitChecks   (bExecute  := FALSE, bReset := TRUE);
@@ -328,8 +296,15 @@ fbAirFlowCheck (bExecute  := FALSE, bReset := TRUE);
 fbHardwareInit (bExecute  := FALSE, bReset := TRUE);
 	bHwInitDone			  := FALSE;
 	bHwInitError		  := FALSE;
-	
-Reset := TRUE;
+//fbSealStages.Reset();
+
+// Send Reset Return
+IF fbSealStages.Reset() THEN
+	Reset := TRUE;
+	RETURN;
+ELSE
+	Reset := FALSE;
+END_IF
 
 ]]></ST>
       </Implementation>
@@ -342,86 +317,22 @@ Reset := TRUE;
 END_IF;]]></ST>
       </Implementation>
     </Action>
-    <Action Name="StopAllMotors" Id="{ccfe4f57-2eca-48c9-a86a-71a9de21d926}">
-      <Implementation>
-        <ST><![CDATA[//Stop All the motors
-bStopMotion := TRUE;
-
-fbStopM1(bExecute := bStopMotion, rDeceleration := 20, Axis := GVL_Motion.M1Motor.Axis);
-fbStopM2(bExecute := bStopMotion, rDeceleration := 20, Axis := GVL_Motion.M2Motor.Axis);
-fbStopM3(bExecute := bStopMotion, rDeceleration := 20, Axis := GVL_Motion.M3Motor.Axis);
-
-IF fbStopM1.bStopDone AND fbStopM2.bStopDone AND fbStopM3.bStopDone THEN
-	bStopMotion := FALSE;
-END_IF
-		]]></ST>
-      </Implementation>
-    </Action>
     <LineIds Name="PRG_StateMachine">
-      <LineId Id="1757" Count="0" />
-      <LineId Id="1393" Count="1" />
-      <LineId Id="1390" Count="1" />
-      <LineId Id="1165" Count="1" />
-      <LineId Id="1384" Count="0" />
-      <LineId Id="1167" Count="0" />
-      <LineId Id="1472" Count="0" />
-      <LineId Id="1416" Count="0" />
-      <LineId Id="1168" Count="12" />
-      <LineId Id="1668" Count="0" />
-      <LineId Id="1688" Count="0" />
-      <LineId Id="1181" Count="20" />
-      <LineId Id="1470" Count="0" />
-      <LineId Id="1202" Count="0" />
-      <LineId Id="1471" Count="0" />
-      <LineId Id="1203" Count="13" />
-      <LineId Id="1218" Count="8" />
-      <LineId Id="1667" Count="0" />
-      <LineId Id="1227" Count="21" />
-      <LineId Id="1474" Count="0" />
-      <LineId Id="1249" Count="2" />
-      <LineId Id="1265" Count="7" />
-      <LineId Id="1475" Count="0" />
-      <LineId Id="1273" Count="0" />
-      <LineId Id="1478" Count="0" />
-      <LineId Id="1278" Count="1" />
-      <LineId Id="1616" Count="0" />
-      <LineId Id="1680" Count="1" />
-      <LineId Id="1290" Count="0" />
-      <LineId Id="1679" Count="0" />
-      <LineId Id="1670" Count="8" />
-      <LineId Id="1669" Count="0" />
-      <LineId Id="1577" Count="0" />
-      <LineId Id="1685" Count="1" />
-      <LineId Id="1683" Count="1" />
-      <LineId Id="1687" Count="0" />
-      <LineId Id="1537" Count="0" />
-      <LineId Id="1553" Count="1" />
-      <LineId Id="1539" Count="10" />
-      <LineId Id="1538" Count="0" />
-      <LineId Id="1291" Count="3" />
-      <LineId Id="1296" Count="6" />
-      <LineId Id="1304" Count="6" />
-      <LineId Id="1312" Count="71" />
+      <LineId Id="1826" Count="44" />
+      <LineId Id="1898" Count="73" />
+      <LineId Id="2002" Count="91" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.Reset">
-      <LineId Id="6" Count="8" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="18" Count="1" />
+      <LineId Id="25" Count="12" />
+      <LineId Id="40" Count="6" />
+      <LineId Id="19" Count="0" />
       <LineId Id="21" Count="0" />
       <LineId Id="20" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.ResetEventTrigger">
       <LineId Id="2" Count="2" />
       <LineId Id="1" Count="0" />
-    </LineIds>
-    <LineIds Name="PRG_StateMachine.StopAllMotors">
-      <LineId Id="2" Count="1" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="6" Count="2" />
-      <LineId Id="4" Count="0" />
-      <LineId Id="9" Count="2" />
-      <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

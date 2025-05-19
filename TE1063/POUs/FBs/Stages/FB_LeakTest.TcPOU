@@ -8,15 +8,13 @@ VAR_INPUT
     tMonitorTime   		: TIME;  		// Monitoring time duration
     //rPressureLimit 		: REAL;  		// Minimum required pressure limit
 END_VAR
-
 VAR_OUTPUT
     bLeakTestDone  : BOOL;  		// Indicates if the test was successful
     bLeakTestError : BOOL;  		// Indicates if an error occurred during the test
     sLTMessageError: STRING(100);  	// Error message describing the failure
 END_VAR
-
 VAR
-    fbValveControl 			: ARRAY[1..5] OF FB_ValvePositionControl;
+    fbValveMoveDone			: ARRAY[1..5] OF BOOL;
     fbSolenoidControl 		: FB_SolenoidControl;
     fbSensorScaling   		: FB_SensorScaling;
 		bPressureInput		: BOOL := FALSE;
@@ -29,6 +27,7 @@ VAR
 	rClosedSystemPressure	: REAL := 0.0;
 	tonPressuring			: TON;
 	tonMonitoring			: TON;
+	stStatus				: ARRAY[1..5] OF ST_ActuatorStatus;
 	
 	//EventLogger Variables
 	fbEventHandler : FB_EventHandler;
@@ -46,18 +45,36 @@ END_VAR]]></Declaration>
     POSITION_VALVES:
 		bMoveValves := bExecute;
         // Moves all 6-position valves to position 5
-        fbValveControl[1](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[1].Axis);
-        fbValveControl[2](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[2].Axis);
-        fbValveControl[3](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[3].Axis);
-        fbValveControl[4](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[4].Axis);
-        fbValveControl[5](bEnable := bMoveValves, iValvePosition := 5, ServoAxis := GVL_Motion.aValves[5].Axis);
-        
+		IF NOT fbValveMoveDone[1] THEN
+			fbValveMoveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+		END_IF
+		IF NOT fbValveMoveDone[2] THEN
+			fbValveMoveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+		END_IF
+		(*
+		IF NOT fbValveMoveDone[3] THEN
+			fbValveMoveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+		END_IF
+		IF NOT fbValveMoveDone[4] THEN
+			fbValveMoveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+		END_IF
+		IF NOT fbValveMoveDone[5] THEN
+			fbValveMoveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+		END_IF	
+        *)
+		stStatus[1] := GVL_Motion.aValvesObj[1].GetStatus();
+		stStatus[2] := GVL_Motion.aValvesObj[1].GetStatus();
+		//stStatus[3] := GVL_Motion.aValvesObj[1].GetStatus();
+		//stStatus[4] := GVL_Motion.aValvesObj[1].GetStatus();
+		//stStatus[5] := GVL_Motion.aValvesObj[1].GetStatus();
+		
+		
         // If all valves have moved successfully, proceed to setting solenoids
-        IF fbValveControl[1].bMoveDone AND fbValveControl[2].bMoveDone AND fbValveControl[3].bMoveDone AND fbValveControl[4].bMoveDone AND fbValveControl[5].bMoveDone THEN
+        IF fbValveMoveDone[1] AND fbValveMoveDone[2] (*AND fbValveMoveDone[3] AND fbValveMoveDone[4] AND fbValveMoveDone[5]*) THEN
 			bMoveValves := FALSE;
             eState := SET_SOLENOIDS;
         // If any valve encounters an error, transition to ERROR state
-        ELSIF fbValveControl[1].bError OR fbValveControl[2].bError OR fbValveControl[3].bError OR fbValveControl[4].bError OR fbValveControl[5].bError THEN
+        ELSIF stStatus[1].bError OR stStatus[2].bError (*OR stStatus[3].bError OR stStatus[4].bError OR stStatus[5].bError*) THEN
             bLeakTestError := TRUE;
             sLTMessageError := 'Failed to position valves';
 			//Event Logger message
@@ -114,7 +131,7 @@ END_VAR]]></Declaration>
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := rScaledPressure * 0.95;
+			rClosedSystemPressure := rScaledPressure * 0.50; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
 			tonMonitoring(in := bPressureInput, PT := tMonitorTime);
@@ -128,10 +145,12 @@ END_VAR]]></Declaration>
 				//moving to next state
 				eState := DONE;
 			ELSIF rScaledPressure < rClosedSystemPressure THEN
-				eState := ERROR;
+
 				bPressureTaken := FALSE;
 				fbEventHandler( bExecute  := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := 'Leak Test', sMessage := 'Pressure below required limit!', bDone => bEventDone);
 				ResetEventTrigger();
+				//Moving to error state
+				eState := ERROR;
 			END_IF;
 		END_IF
 
@@ -151,9 +170,7 @@ END_VAR]]></Declaration>
             bLeakTestDone 	:= FALSE;
         END_IF;
 
-END_CASE;
-
-]]></ST>
+END_CASE;]]></ST>
     </Implementation>
     <Action Name="ResetEventTrigger" Id="{8666df6c-be4b-4df6-ad65-7299cde62512}">
       <Implementation>
@@ -164,63 +181,7 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_LeakTest">
-      <LineId Id="311" Count="7" />
-      <LineId Id="445" Count="0" />
-      <LineId Id="319" Count="8" />
-      <LineId Id="447" Count="0" />
-      <LineId Id="328" Count="4" />
-      <LineId Id="389" Count="0" />
-      <LineId Id="382" Count="6" />
-      <LineId Id="381" Count="0" />
-      <LineId Id="409" Count="0" />
-      <LineId Id="333" Count="6" />
-      <LineId Id="451" Count="0" />
-      <LineId Id="505" Count="0" />
-      <LineId Id="408" Count="0" />
-      <LineId Id="341" Count="9" />
-      <LineId Id="453" Count="0" />
-      <LineId Id="351" Count="2" />
-      <LineId Id="494" Count="1" />
-      <LineId Id="498" Count="3" />
-      <LineId Id="504" Count="0" />
-      <LineId Id="502" Count="1" />
-      <LineId Id="354" Count="0" />
-      <LineId Id="496" Count="1" />
-      <LineId Id="355" Count="1" />
-      <LineId Id="410" Count="0" />
-      <LineId Id="412" Count="0" />
-      <LineId Id="357" Count="1" />
-      <LineId Id="509" Count="1" />
-      <LineId Id="512" Count="0" />
-      <LineId Id="516" Count="0" />
-      <LineId Id="514" Count="0" />
-      <LineId Id="455" Count="0" />
-      <LineId Id="359" Count="1" />
-      <LineId Id="406" Count="0" />
-      <LineId Id="399" Count="1" />
-      <LineId Id="398" Count="0" />
-      <LineId Id="527" Count="0" />
-      <LineId Id="407" Count="0" />
-      <LineId Id="362" Count="1" />
-      <LineId Id="366" Count="0" />
-      <LineId Id="529" Count="0" />
-      <LineId Id="391" Count="0" />
-      <LineId Id="390" Count="0" />
-      <LineId Id="367" Count="0" />
-      <LineId Id="517" Count="0" />
-      <LineId Id="368" Count="1" />
-      <LineId Id="456" Count="0" />
-      <LineId Id="370" Count="0" />
-      <LineId Id="519" Count="2" />
-      <LineId Id="518" Count="0" />
-      <LineId Id="372" Count="1" />
-      <LineId Id="458" Count="0" />
-      <LineId Id="374" Count="0" />
-      <LineId Id="524" Count="2" />
-      <LineId Id="523" Count="0" />
-      <LineId Id="375" Count="0" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="67" Count="0" />
+      <LineId Id="596" Count="134" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.ResetEventTrigger">

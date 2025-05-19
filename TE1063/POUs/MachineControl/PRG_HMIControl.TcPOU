@@ -3,13 +3,17 @@
   <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_HMIControl
 VAR
-fbGetPosition   : ARRAY[1..5] OF FB_GetPosition; // Substitua pelo seu FB real
-	tonReadTimer    : TON;
-    bReadTrigger    : BOOL := TRUE;
-    bGetPosition    : BOOL;
-    bPosError       : ARRAY[1..5] OF BOOL;
-    nPosErrorID     : ARRAY[1..5] OF UDINT;
-	i				: INT := 0;
+//Motor 1 Animation
+rM1MotorPosition     : LREAL;  // Real Motor Actual position
+rM1MotorPositionPerc : LREAL;  // Motor Actual Position Scaled 0-100
+cM1MinPosition       : LREAL := 0.0; // Minimum expected Value
+cM1MaxPosition       : LREAL := -320.0; // Maximum expected Value (Default Value)
+
+//Motor 2 Animation
+rM2MotorPosition     : LREAL;  // Real Motor Actual position
+rM2MotorPositionPerc : LREAL;  // Motor Actual Position Scaled 0-100
+cM2MinPosition       : LREAL := 0.0; // Minimum expected Value
+cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value)
 
 END_VAR
 ]]></Declaration>
@@ -24,6 +28,11 @@ GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh
 GVL_HMI.HMIDigOutputs.bAlarmLampRed 	:= GVL_IO.gDigOutputs.bTowerRedLight; 	//Red Light
 GVL_HMI.HMIDigOutputs.bAlarmLampAmbar 	:= GVL_IO.gDigOutputs.bTowerAmberLight; //Ambar Light
 GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; //Green Light
+
+(* <Controls Animation> ************************************************************************************************ *)
+ACT_M1Animation();
+ACT_M2Animation();
+(* </Controls Animation> *********************************************************************************************** *)
 
 //Temporary constants for testing purpose
 GVL_HMI.HMIDigOutputs.aValveAngle[1]	:= 240.5;
@@ -43,42 +52,72 @@ GVL_HMI.HMIDigOutputs.aRinseLevel[2]	:= 47;
 GVL_HMI.HMIDigOutputs.aRinseLevel[3]	:= 87;
 GVL_HMI.HMIDigOutputs.aRinseLevel[4]	:= 14;
 
-GVL_HMI.HMIDigOutputs.aWasteLevel		:= 82;
-
-
-
-(*
-//Get valves position to update hmi every 1sec
-tonReadTimer(IN := bReadTrigger, PT := T#1S);
-
-IF tonReadTimer.Q THEN
-    bGetPosition := TRUE;
-
-    FOR i := 1 TO 5 DO
-        fbGetPosition[i](
-            bEnable     := bGetPosition,
-            AxisRef     := GVL_Motion.aValves[i].Axis,
-            bError      => bPosError[i],
-            nErrorID    => nPosErrorID[i],
-            rPosition   => GVL_HMIVariables.HMIDigOuputs.aValveAngle[i]
-        );
-    END_FOR;
-
-    // Resets the timer
-    tonReadTimer(IN := FALSE);
-    bReadTrigger := FALSE;
-ELSE
-    // Reactivates timer after reset
-    IF NOT tonReadTimer.IN THEN
-        tonReadTimer(IN := TRUE);
-        bReadTrigger := TRUE;
-    END_IF;
-END_IF;
-*)]]></ST>
+GVL_HMI.HMIDigOutputs.aWasteLevel		:= 82;]]></ST>
     </Implementation>
+    <Action Name="ACT_M1Animation" Id="{5ca7e550-b195-4047-b743-192dee895467}">
+      <Implementation>
+        <ST><![CDATA[//M1 Motor vertical Axis Animation
+IF GVL_Motion.bInitialHomingDone THEN
+	// Read the end of scale value
+	cM1MaxPosition := GVL_HMI.HMIParameters.aM1Position[2];	
+
+	// Ler posição do motor
+	rM1MotorPosition := GVL_Motion.aMotors[1].GetPosition();
+	
+	// Scaling the motor position (0 = 0%, -320 = 100%)
+	rM1MotorPositionPerc := ((rM1MotorPosition - cM1MinPosition) / (cM1MaxPosition - cM1MinPosition)) * 100.0;
+	
+	// Limita valor entre 0 e 100%
+	IF rM1MotorPositionPerc < 0 THEN
+		rM1MotorPositionPerc := 0;
+	ELSIF rM1MotorPositionPerc > 100 THEN
+		rM1MotorPositionPerc := 100;
+	END_IF
+	
+	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 455 + (TO_REAL(rM1MotorPositionPerc)*1.35); //Adding y pixel home and sending the scaled value throug GVL_HMI
+ELSE
+	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 455; //Default Value
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_M2Animation" Id="{2010a8e8-186b-452d-a6f4-adbd9f915f7d}">
+      <Implementation>
+        <ST><![CDATA[//M2 HMI object moves from pixel 455 (0 Position) up to 555 (Max position = -170mm)
+//M2 Motor vertical Axis Animation
+IF GVL_Motion.bInitialHomingDone THEN
+	// Read the end of scale value
+	cM2MaxPosition := GVL_HMI.HMIParameters.aM2Position[4]; //Calibration Position witch is the most away position the motor will reach	
+
+	// Ler posição do motor
+	rM2MotorPosition := GVL_Motion.aMotors[2].GetPosition();
+	
+	// Scaling the motor position (0 = 0%, -320 = 100%)
+	rM2MotorPositionPerc := ((rM2MotorPosition - cM2MinPosition) / (cM2MaxPosition - cM2MinPosition)) * 100.0;
+	
+	// Limita valor entre 0 e 100%
+	IF rM2MotorPositionPerc < 0 THEN
+		rM2MotorPositionPerc := 0;
+	ELSIF rM2MotorPositionPerc > 100 THEN
+		rM2MotorPositionPerc := 100;
+	END_IF
+	
+	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 455 + TO_REAL(rM2MotorPositionPerc); //Adding y pixel home and sending the scaled value throug GVL_HMI
+ELSE
+	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 455; //Default Value
+END_IF]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="PRG_HMIControl">
-      <LineId Id="169" Count="59" />
+      <LineId Id="252" Count="33" />
       <LineId Id="85" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_HMIControl.ACT_M1Animation">
+      <LineId Id="2" Count="20" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_HMIControl.ACT_M2Animation">
+      <LineId Id="2" Count="21" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

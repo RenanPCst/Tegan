@@ -139,11 +139,11 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 		
         // Move all valves to position 1 (home position)
 		IF NOT bHomeValveDone[1] THEN
-			bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 15, rAcc := 10, rDec := 10);
 		END_IF
         
 		IF NOT bHomeValveDone[2] THEN
-			bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 15, rAcc := 10, rDec := 10);
 		END_IF
 		(*
         IF NOT bHomeValveDone[3] THEN
@@ -173,24 +173,25 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
     ELSE
         // If homing has already been done, move motors and valves to zero/default position
         IF NOT bMoveMotorDone[1] THEN //Move Motor 1
-			bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(Position := 0, Velocity := 15, Acc := 10, Dec := 10);
         END_IF
 		
 		IF NOT bMoveMotorDone[2] THEN //Move Motor 2
-			bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(Position := 0, Velocity := 15, Acc := 10, Dec := 10);
         END_IF
 		
+		
 		IF NOT bMoveMotorDone[3] AND bMoveMotorDone[2] THEN //Move Motor 3 after motor 2 is done
-			bMoveMotorDone[3] := GVL_Motion.aMotors[1].MoveAbsolute(Position := 0, Velocity := 10, Acc := 10, Dec := 10);
+			bMoveMotorDone[3] := GVL_Motion.aMotors[3].MoveAbsolute(Position := 0, Velocity := 15, Acc := 10, Dec := 10);
         END_IF
 		
         // Move all valves to position 1 (home position)
 		IF NOT bHomeValveDone[1] THEN
-			bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(iPosition := 1, rVelocity := 15, rAcc := 10, rDec := 10);
 		END_IF
         
 		IF NOT bHomeValveDone[2] THEN
-			bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+			bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(iPosition := 1, rVelocity := 15, rAcc := 10, rDec := 10);
 		END_IF
 		//*** Include other 3 valves when the motor M6 is replaced
 		
@@ -315,83 +316,7 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="PRG_SystemInit">
-      <LineId Id="530" Count="0" />
-      <LineId Id="526" Count="3" />
-      <LineId Id="524" Count="1" />
-      <LineId Id="264" Count="1" />
-      <LineId Id="427" Count="0" />
-      <LineId Id="266" Count="7" />
-      <LineId Id="280" Count="2" />
-      <LineId Id="428" Count="2" />
-      <LineId Id="262" Count="0" />
-      <LineId Id="284" Count="2" />
-      <LineId Id="480" Count="0" />
-      <LineId Id="287" Count="1" />
-      <LineId Id="475" Count="1" />
-      <LineId Id="551" Count="1" />
-      <LineId Id="289" Count="0" />
-      <LineId Id="554" Count="1" />
-      <LineId Id="553" Count="0" />
-      <LineId Id="557" Count="1" />
-      <LineId Id="556" Count="0" />
-      <LineId Id="560" Count="1" />
-      <LineId Id="559" Count="0" />
-      <LineId Id="571" Count="0" />
-      <LineId Id="563" Count="1" />
-      <LineId Id="562" Count="0" />
-      <LineId Id="566" Count="1" />
-      <LineId Id="565" Count="0" />
-      <LineId Id="569" Count="1" />
-      <LineId Id="568" Count="0" />
-      <LineId Id="481" Count="0" />
-      <LineId Id="487" Count="0" />
-      <LineId Id="489" Count="1" />
-      <LineId Id="488" Count="0" />
-      <LineId Id="283" Count="0" />
-      <LineId Id="515" Count="0" />
-      <LineId Id="139" Count="32" />
-      <LineId Id="378" Count="0" />
-      <LineId Id="173" Count="0" />
-      <LineId Id="331" Count="0" />
-      <LineId Id="369" Count="1" />
-      <LineId Id="174" Count="0" />
-      <LineId Id="382" Count="1" />
-      <LineId Id="380" Count="1" />
-      <LineId Id="623" Count="1" />
-      <LineId Id="176" Count="1" />
-      <LineId Id="627" Count="1" />
-      <LineId Id="626" Count="0" />
-      <LineId Id="630" Count="2" />
-      <LineId Id="629" Count="0" />
-      <LineId Id="179" Count="0" />
-      <LineId Id="633" Count="0" />
-      <LineId Id="180" Count="7" />
-      <LineId Id="246" Count="2" />
-      <LineId Id="188" Count="2" />
-      <LineId Id="531" Count="0" />
-      <LineId Id="192" Count="0" />
-      <LineId Id="537" Count="0" />
-      <LineId Id="539" Count="1" />
-      <LineId Id="538" Count="0" />
-      <LineId Id="544" Count="0" />
-      <LineId Id="546" Count="1" />
-      <LineId Id="545" Count="0" />
-      <LineId Id="533" Count="0" />
-      <LineId Id="491" Count="2" />
-      <LineId Id="497" Count="3" />
-      <LineId Id="196" Count="0" />
-      <LineId Id="620" Count="0" />
-      <LineId Id="618" Count="1" />
-      <LineId Id="197" Count="0" />
-      <LineId Id="505" Count="2" />
-      <LineId Id="198" Count="4" />
-      <LineId Id="294" Count="0" />
-      <LineId Id="329" Count="1" />
-      <LineId Id="297" Count="28" />
-      <LineId Id="295" Count="0" />
-      <LineId Id="328" Count="0" />
-      <LineId Id="296" Count="0" />
-      <LineId Id="235" Count="10" />
+      <LineId Id="672" Count="209" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_SystemInit.Reset">

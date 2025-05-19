@@ -41,7 +41,7 @@ END_IF
 bModeChanged := (GVL_HMI.eMachineMode <> eMachineModePrev);
 eMachineModePrev := GVL_HMI.eMachineMode;
 
-bResetStateMachine := bModeChanged AND (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE);
+//bResetStateMachine := bModeChanged AND (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE);
 
 // Buttons Triggers
 rTriggerStartButton(CLK := GVL_IO.gDigInputs.bStartButton);
@@ -65,6 +65,7 @@ END_IF
 //Reset the Reset flags every time gets out of auto cycle
 IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
 	bResetSMDone := FALSE;
+	bResetStateMachine := TRUE;
 END_IF
 
 //Reset the Reset flags every time gets out of auto cycle
@@ -89,7 +90,8 @@ CASE GVL_HMI.eMachineMode OF
 		END_IF; 
 		
 		IF bResetSMDone THEN
-    		//PRG_StateMachine(); //calls the state machine
+			bResetStateMachine := FALSE;
+    		PRG_StateMachine(); //calls the state machine
 		END_IF
 
     E_MachineMode.MANUAL:		// Entry from HMI Selection
@@ -169,7 +171,9 @@ END_CASE
       <LineId Id="181" Count="0" />
       <LineId Id="178" Count="0" />
       <LineId Id="177" Count="0" />
-      <LineId Id="179" Count="1" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="409" Count="0" />
+      <LineId Id="180" Count="0" />
       <LineId Id="291" Count="3" />
       <LineId Id="341" Count="0" />
       <LineId Id="339" Count="1" />
@@ -182,7 +186,9 @@ END_CASE
       <LineId Id="168" Count="1" />
       <LineId Id="53" Count="0" />
       <LineId Id="172" Count="0" />
-      <LineId Id="174" Count="1" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="175" Count="0" />
       <LineId Id="173" Count="0" />
       <LineId Id="63" Count="2" />
       <LineId Id="74" Count="3" />

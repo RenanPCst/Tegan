@@ -121,6 +121,11 @@ IF bDebug1 THEN
 	bDebug1 := NOT (GVL_Motion.aMotors[1].Enable() AND GVL_Motion.aValvesObj[1].Enable());
 END_IF
 
+IF bDebug2 THEN
+	GVL_Motion.aPumpsRotary[1].Enable();
+	GVL_Motion.aPumpsLinear[1].Enable();
+END_IF
+
 IF bHomeDone THEN
 	bHomeDone := NOT GVL_Motion.aMotors[1].Home(pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home), bHomeRequest := bHomeDone);
 END_IF
@@ -417,6 +422,8 @@ END_IF
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
       <LineId Id="4163" Count="1" />
+      <LineId Id="4713" Count="3" />
+      <LineId Id="4712" Count="0" />
       <LineId Id="4377" Count="0" />
       <LineId Id="3875" Count="0" />
       <LineId Id="4379" Count="0" />

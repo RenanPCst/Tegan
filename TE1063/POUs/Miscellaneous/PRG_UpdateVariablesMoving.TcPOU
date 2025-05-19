@@ -12,40 +12,37 @@ ELSE
 	GVL_Safety.SafetyOutputs.bBelowDoorsFeedback := FALSE;
 END_IF
 
-
-// Temporary variables that will be filled in HMI
-// Default Motors Parameters
-GVL_HMI.HMIParameters.aM1Position[1] 	:= 0; 	// [mm] M1 Motor Home Position
-GVL_HMI.HMIParameters.rM1Velocity	 	:= 10; 	// [mm/s] M1 Motor Velocity
-
-GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	// [mm] M2 Motor Home Position
-GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	// [mm/s] M2 Motor Velocity
-
-GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	// [mm] M3 Motor Home Position / Waste Position
-GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	// [mm/s] M3 Motor Velocity
- 
-//temporary until we are able to get this parameter from hmi
-GVL_HMI.HMIParameters.aM1Position[2]			:= -315;
-GVL_HMI.HMIParameters.aM1Position[3]			:= -280;
-GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 70;
-GVL_Motion.M1Motor.rTargetVelocityP1 			:= 20;
-GVL_Motion.M1Motor.rTargetVelocityP2 			:= 5;
-GVL_Motion.M1Motor.rAccleration 				:= 10; 
-
+//Mapping bellow doors signals as they are not in safety DI
 GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
-]]></ST>
+
+//temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
+//Default Motors Parameters
+//Motor M1 parameters
+GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
+GVL_HMI.HMIParameters.aM1Position[2]			:= -315; // [mm] M1 Motor Seal Position
+GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
+GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
+GVL_HMI.HMIParameters.rM1Velocity				:= 15;
+GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
+GVL_HMI.HMIParameters.rM1Accleration			:= 15;
+GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
+
+GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 // [mm] M2 Motor Home Position
+GVL_HMI.HMIParameters.aM2Position[4]	:= -170; // [mm] M2 Motor Calibration Position
+GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 // [mm/s] M2 Motor Velocity
+
+GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 // [mm] M3 Motor Home Position / Waste Position
+GVL_HMI.HMIParameters.aM3Position[6] 	:= -120; // [mm] M3 Motor Calibration Position
+GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 // [mm/s] M3 Motor Velocity]]></ST>
     </Implementation>
     <LineIds Name="PRG_UpdateVariablesMoving">
-      <LineId Id="39" Count="16" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="60" Count="1" />
-      <LineId Id="65" Count="0" />
-      <LineId Id="62" Count="2" />
-      <LineId Id="59" Count="0" />
+      <LineId Id="39" Count="4" />
+      <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
+      <LineId Id="75" Count="18" />
       <LineId Id="69" Count="0" />
     </LineIds>
   </POU>

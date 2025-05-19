@@ -186,7 +186,7 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 	END_IF
 	
 	IF bHomeSensorValue THEN
-		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := 5.0, Acceleration := 20.0, Deceleration := 20.0, direction := 1);
+		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := 15.0, Acceleration := 20.0, Deceleration := 20.0, direction := 1);
 		status.sMessage := 'Seeking home sensor...';
 		bStopExecute := TRUE;
 	ELSE
@@ -244,7 +244,7 @@ ELSE
 	rTrigMove(CLK := bHomeRequest AND NOT bHomeInProgress);
 	
 	// If homing previously done then Move to zero position
-	fbMoveAbs(Axis := Axis, Execute := rTrigMove.Q, Position := 0, velocity := 10, Acceleration := 10, Deceleration := 10);
+	fbMoveAbs(Axis := Axis, Execute := rTrigMove.Q, Position := 0, velocity := 15, Acceleration := 15, Deceleration := 15);
 	bHomeinProgress := TRUE;
 	
 
