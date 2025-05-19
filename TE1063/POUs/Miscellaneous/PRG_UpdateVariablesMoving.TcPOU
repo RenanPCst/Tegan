@@ -3,6 +3,7 @@
   <POU Name="PRG_UpdateVariablesMoving" Id="{8cee1700-2e8b-41ec-ad51-7968702f1049}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
+	bFirstVariablesAssignment : BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -18,31 +19,41 @@ GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClose
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
 
 //temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
-//Default Motors Parameters
-//Motor M1 parameters
-GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
-GVL_HMI.HMIParameters.aM1Position[2]			:= -315; // [mm] M1 Motor Seal Position
-GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
-GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
-GVL_HMI.HMIParameters.rM1Velocity				:= 15;
-GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
-GVL_HMI.HMIParameters.rM1Accleration			:= 15;
-GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
-
-GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 // [mm] M2 Motor Home Position
-GVL_HMI.HMIParameters.aM2Position[4]	:= -170; // [mm] M2 Motor Calibration Position
-GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 // [mm/s] M2 Motor Velocity
-
-GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 // [mm] M3 Motor Home Position / Waste Position
-GVL_HMI.HMIParameters.aM3Position[6] 	:= -120; // [mm] M3 Motor Calibration Position
-GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 // [mm/s] M3 Motor Velocity]]></ST>
+IF NOT bFirstVariablesAssignment THEN
+	//Default Motors Parameters
+	//Motor M1 parameters
+	GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
+	GVL_HMI.HMIParameters.aM1Position[2]			:= -315; // [mm] M1 Motor Seal Position
+	GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
+	GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
+	GVL_HMI.HMIParameters.rM1Velocity				:= 15;
+	GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
+	GVL_HMI.HMIParameters.rM1Accleration			:= 15;
+	GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
+	
+	GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 // [mm] M2 Motor Home Position
+	GVL_HMI.HMIParameters.aM2Position[4]	:= -170; // [mm] M2 Motor Calibration Position
+	GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 // [mm/s] M2 Motor Velocity
+	
+	GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 // [mm] M3 Motor Home Position / Waste Position
+	GVL_HMI.HMIParameters.aM3Position[6] 	:= -120; // [mm] M3 Motor Calibration Position
+	GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 // [mm/s] M3 Motor Velocity
+	
+	bFirstVariablesAssignment := TRUE;
+END_IF
+]]></ST>
     </Implementation>
     <LineIds Name="PRG_UpdateVariablesMoving">
       <LineId Id="39" Count="4" />
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
-      <LineId Id="75" Count="18" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="103" Count="16" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="100" Count="0" />
       <LineId Id="69" Count="0" />
     </LineIds>
   </POU>
