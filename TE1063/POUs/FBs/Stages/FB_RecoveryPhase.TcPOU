@@ -45,6 +45,7 @@ VAR
 	//Metering Rinse 1
     bAllValvesInPosition : BOOL := TRUE;
     bAllPumpsDone        : BOOL := TRUE;
+	bMoveValvesDone		 : ARRAY[1..5] OF BOOL;
 	
 	//Recirculate Solvent 1
 	bAllValvesInPos  : BOOL := FALSE;
@@ -291,7 +292,7 @@ GetPumpVolume := volume;]]></ST>
                 ServoAxis := GVL_Motion.aValves[i].Axis, 
                 iValvePosition := GVL_Recipe.stSolventNTimes.aSolventN[1]);
         END_FOR
-        
+		     
         iStepCounter := 1;
 
     1: // Wait for valve positioning
@@ -769,7 +770,11 @@ END_CASE
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MeteringSolvent1">
-      <LineId Id="2" Count="59" />
+      <LineId Id="2" Count="4" />
+      <LineId Id="178" Count="4" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="14" Count="47" />
       <LineId Id="91" Count="6" />
       <LineId Id="68" Count="0" />
       <LineId Id="71" Count="1" />
