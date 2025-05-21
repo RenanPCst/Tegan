@@ -257,56 +257,53 @@ END_IF
     <Method Name="MoveAbsolute" Id="{3c2d0047-9043-4f3b-b941-8126a4eab227}">
       <Declaration><![CDATA[METHOD MoveAbsolute : BOOL
 VAR_INPUT
-	Position : LREAL;
-    Velocity : LREAL := 10.0;
-    Acc      : LREAL := 20.0;
-    Dec      : LREAL := 20.0;
+	rPosition : LREAL;
+    rVelocity : LREAL := 10.0;
+    rAcc      : LREAL := 20.0;
+    rDec      : LREAL := 20.0;
 END_VAR
 VAR
     Execute : BOOL := TRUE;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Absolute motion command (position, velocity, acceleration, deceleration)
-// Gera o pulso uma vez quando solicitado
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
 IF NOT bMoveAbsRequested THEN
     bMoveAbsExecute := TRUE;
     bMoveAbsRequested := TRUE;
 END_IF
 
-// Chamada do bloco
+// Call the internal motion block
 fbMoveAbs(
     Axis := Axis,
-    Position := Position,
+    Position := rPosition,
     Execute := bMoveAbsExecute,
-    Velocity := Velocity,
-    Acceleration := Acc,
-    Deceleration := Dec
+    Velocity := rVelocity,
+    Acceleration := rAcc,
+    Deceleration := rDec
 );
 
-// Atualiza status
+// Update actuator status
 status.bBusy := fbMoveAbs.Busy;
 status.bDone := fbMoveAbs.Done;
 status.bError := fbMoveAbs.Error;
 status.iErrorCode := fbMoveAbs.ErrorID;
 
 IF fbMoveAbs.Busy THEN
-	bMoveAbsExecute := FALSE;
+    bMoveAbsExecute := FALSE;
 END_IF
 
 IF fbMoveAbs.Error THEN
     status.eState := E_ActuatorState.eError;
-    status.sMessage := 'Error in MoveAbsolute';
+    status.sMessage := 'Error in Move Motor';
 END_IF
 
 IF bMoveAbsRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
     bMoveAbsRequested := FALSE;
     MoveAbsolute := TRUE;
-	RETURN;
+    RETURN;
 ELSE
     MoveAbsolute := FALSE;
 END_IF
-
-
 
 
 ]]></ST>
@@ -563,18 +560,7 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveAbsolute">
-      <LineId Id="6" Count="0" />
-      <LineId Id="52" Count="14" />
-      <LineId Id="127" Count="0" />
-      <LineId Id="73" Count="4" />
-      <LineId Id="128" Count="2" />
-      <LineId Id="107" Count="0" />
-      <LineId Id="99" Count="0" />
-      <LineId Id="79" Count="7" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="87" Count="1" />
-      <LineId Id="32" Count="0" />
-      <LineId Id="108" Count="0" />
+      <LineId Id="196" Count="36" />
       <LineId Id="115" Count="0" />
       <LineId Id="117" Count="0" />
       <LineId Id="105" Count="0" />

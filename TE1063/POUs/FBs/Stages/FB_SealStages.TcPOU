@@ -62,10 +62,10 @@ IF bExecute THEN
 		// Step 1: Move to pre-position with deceleration offset
 		IF NOT bMoveM1Pos1 THEN
 			bMoveM1Pos1 := GVL_Motion.aMotors[1].MoveAbsolute(
-				Position := rTargetPosition + GVL_HMI.HMIParameters.fM1PositionDeceleration,
-				Velocity := GVL_HMI.HMIParameters.rM1Velocity,
-				Acc := GVL_HMI.HMIParameters.rM1Accleration,
-				Dec := GVL_HMI.HMIParameters.rM1Deceleration
+				rPosition := rTargetPosition + GVL_HMI.HMIParameters.fM1PositionDeceleration,
+				rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
+				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+				rDec := GVL_HMI.HMIParameters.rM1Deceleration
 			);
 		END_IF
 
@@ -79,10 +79,10 @@ IF bExecute THEN
 		// Step 2: Final precise move to target
 		IF NOT bMoveM1Pos2 AND tonStartMove2.Q THEN
 			bMoveM1Pos2 := GVL_Motion.aMotors[1].MoveAbsolute(
-				Position := rTargetPosition,
-				Velocity := GVL_HMI.HMIParameters.rM1PrecisionVelocity,
-				Acc := GVL_HMI.HMIParameters.rM1Accleration,
-				Dec := GVL_HMI.HMIParameters.rM1Deceleration
+				rPosition := rTargetPosition,
+				rVelocity := GVL_HMI.HMIParameters.rM1PrecisionVelocity,
+				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+				rDec := GVL_HMI.HMIParameters.rM1Deceleration
 			);
 		END_IF
 	END_IF

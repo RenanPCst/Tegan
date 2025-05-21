@@ -6421,7 +6421,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{9165FD77-13C0-0EF6-F707-8AA7098E41B1}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{31A3106E-5390-5853-EC22-A2325671AF16}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6432,11 +6432,6 @@ External Setpoint Generation:
 							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
 							<Type GUID="{D90D184B-66B3-4005-E9ED-8853F9B54225}">ST_EL3058</Type>
@@ -6445,6 +6440,16 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.iPosition</Name>
@@ -7024,11 +7029,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -7048,13 +7048,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -7096,6 +7096,11 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bInResetSignal</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7450,11 +7455,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bSafetyRun</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -7781,9 +7781,9 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{4A5B12BF-10C0-4DA6-A42A-18D163635672}" Name="M6-Valve3" PrjFilePath="M6-Valve3\M6-Valve3.splcproj" TmcFilePath="M6-Valve3\M6-Valve3.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project GUID="{B784D50B-3074-40C5-B467-8E70DCA6D1E3}" Name="M6_Valve.3" PrjFilePath="M6_Valve.3\M6_Valve.3.splcproj" TmcFilePath="M6_Valve.3\M6_Valve.3.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010050" KeepUnrestoredLinks="2">
-					<Name>M6-Valve3 Instance</Name>
+					<Name>M6_Valve.3 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
 						<InitSequence>PO</InitSequence>
@@ -14808,7 +14808,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_106 TxPDO" Index="#x7000" Sub="#x0b">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_109 TxPDO" Index="#x7000" Sub="#x0c">
+								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_111 TxPDO" Index="#x7000" Sub="#x0c">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
 							</Pdo>
@@ -14846,7 +14846,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<Entry Name="TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_106 RxPDO" Index="#x6000" Sub="#x0b">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
-								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_109 RxPDO" Index="#x6000" Sub="#x0c">
+								<Entry Name="TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_111 RxPDO" Index="#x6000" Sub="#x0c">
 									<Type GUID="{0994ABA9-6F32-EEB9-4362-7774F7A1F4F4}">FSOE_11</Type>
 								</Entry>
 							</Pdo>
@@ -42072,7 +42072,7 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 RxPDO" VarB="Device (Safety)^FSoE Slave Connection 1 Slave Message^ChA_Connection_Input.SAFEMOTION FSoE Connection_1"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
-				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_109 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
+				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_111 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 11 (AMI8000-0100)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_106 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
@@ -42087,7 +42087,7 @@ Bit 8 - 15 : reserved]]></Comment>
 		</OwnerA>
 		<OwnerA Name="TIID^Device 6 (EtherCAT)">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 3 (EL6910)">
-				<Link VarA="Box 10 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_109 TxPDO"/>
+				<Link VarA="Box 10 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_111 TxPDO"/>
 				<Link VarA="Box 11 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 11 (AMI8000-0100)_106 TxPDO"/>
 				<Link VarA="Box 12 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1" VarB="ConnectionOutputs^TwinSafeGroup1.Connection to Box 12 (AMI8000-0100)_105 RxPDO"/>
 				<Link VarA="Box 8 (AMI8000-0100)^Module 1 (SAFETY)^SAFETY FSoE Connection 1 Receive Message^Message_1" VarB="ConnectionInputs^TwinSafeGroup1.Connection to Box 8 (AMI8000-0100)_101 TxPDO"/>

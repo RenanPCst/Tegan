@@ -99,8 +99,8 @@ VAR
 	testTon : TON;
 	bEnableDone, bHomeDone : BOOL := FALSE;
 	
-	rM1Position : LREAL;
-	rValve1Position : LREAL;
+	rM1Position : ARRAY[1..3] OF LREAL;
+	rValve1Position : array[1..5] of LREAL;
 	
 END_VAR
 ]]></Declaration>
@@ -131,24 +131,28 @@ IF bHomeDone THEN
 END_IF
 	
 IF bDebug3 THEN
-	rM1Position 	:= GVL_Motion.aMotors[1].GetPosition();
-	rValve1Position	:= GVL_Motion.aValvesObj[1].GetPosition();
+	rM1Position[1] 		:= GVL_Motion.aMotors[1].GetPosition();
+	rValve1Position[1]	:= GVL_Motion.aValvesObj[1].GetPosition();
+	rValve1Position[2]	:= GVL_Motion.aValvesObj[2].GetPosition();
+	rValve1Position[3]	:= GVL_Motion.aValvesObj[3].GetPosition();
+	rValve1Position[4]	:= GVL_Motion.aValvesObj[4].GetPosition();
+	rValve1Position[5]	:= GVL_Motion.aValvesObj[5].GetPosition();
 END_IF
 
 IF bDebug4 THEN
-	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -50, Velocity := 10, Acc := 10, Dec := 10);
+	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := -50, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug5 THEN
-	bDebug5 := NOT GVL_Motion.aMotors[1].MoveAbsolute(Position := -150, Velocity := 10, Acc := 10, Dec := 10);
+	bDebug5 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := -150, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug6 THEN
-	bDebug6 := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug7 THEN
-	bDebug7 := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug8 THEN
@@ -431,6 +435,7 @@ END_IF
       <LineId Id="4165" Count="0" />
       <LineId Id="3967" Count="0" />
       <LineId Id="4172" Count="1" />
+      <LineId Id="4819" Count="3" />
       <LineId Id="4171" Count="0" />
       <LineId Id="4177" Count="0" />
       <LineId Id="4176" Count="0" />
