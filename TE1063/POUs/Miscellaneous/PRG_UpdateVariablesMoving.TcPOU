@@ -4,6 +4,8 @@
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
 	bFirstVariablesAssignment : BOOL := FALSE;
+	i : UINT := 1;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -52,6 +54,30 @@ IF NOT bFirstVariablesAssignment THEN
 	GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 // [mm/s] M3 Motor Velocity
 	
 	bFirstVariablesAssignment := TRUE;
+	
+	//Default Homing Motors settings
+	GVL_Motion.M1Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M1Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M1Motor.rHomeVel 	:= 15.0;
+	GVL_Motion.M2Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M2Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M2Motor.rHomeVel 	:= 15.0;
+	GVL_Motion.M3Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M3Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M3Motor.rHomeVel 	:= 15.0;
+	
+	FOR i :=1 TO 5 DO
+		GVL_Motion.aValves[i].rHomeAcc := 20.0;
+		GVL_Motion.aValves[i].rHomeDec := 20.0;
+		GVL_Motion.aValves[i].rHomeVel := 30.0;
+	END_FOR
+	
+	FOR i :=1 TO 10 DO
+		GVL_Motion.aPumps[i].Linear.rHomeAcc := 2.0;
+		GVL_Motion.aPumps[i].Linear.rHomeDec := 2.0;
+		GVL_Motion.aPumps[i].Linear.rHomeVel := 1.0;
+	END_FOR
+	
 END_IF
 ]]></ST>
     </Implementation>
@@ -69,6 +95,20 @@ END_IF
       <LineId Id="103" Count="16" />
       <LineId Id="99" Count="0" />
       <LineId Id="120" Count="1" />
+      <LineId Id="139" Count="2" />
+      <LineId Id="143" Count="1" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="153" Count="1" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="155" Count="1" />
+      <LineId Id="161" Count="2" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="166" Count="1" />
+      <LineId Id="170" Count="1" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="142" Count="0" />
       <LineId Id="100" Count="0" />
       <LineId Id="69" Count="0" />
     </LineIds>

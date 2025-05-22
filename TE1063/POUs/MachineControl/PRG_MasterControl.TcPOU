@@ -76,8 +76,6 @@ END_IF
 IF (GVL_HMI.eMachineMode <> E_MachineMode.SYSTEM_INITIALIZING) AND NOT bSystemInitReseted THEN
 	bSystemInitReseted := PRG_SystemInit.Reset();
 	bSystemInitTimerStart := FALSE; //Reset timer every time is not in System Initializing
-ELSE
-	bSystemInitReseted := FALSE;
 END_IF
 //**********************************************************************************************************************
 //Reset the Stopped state flags every time gets out of Stopped State
@@ -138,6 +136,7 @@ CASE GVL_HMI.eMachineMode OF
 			GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_READY;
 		END_IF
 		
+		bSystemInitReseted := FALSE;
 		bSystemInitTimerStart := TRUE;
 		
 	E_MachineMode.SYSTEM_READY:	// Entry when the start button was pressed on Stop State.
@@ -181,7 +180,7 @@ END_CASE
       <LineId Id="440" Count="0" />
       <LineId Id="435" Count="0" />
       <LineId Id="291" Count="0" />
-      <LineId Id="481" Count="5" />
+      <LineId Id="481" Count="3" />
       <LineId Id="476" Count="4" />
       <LineId Id="367" Count="0" />
       <LineId Id="343" Count="0" />
@@ -211,6 +210,7 @@ END_CASE
       <LineId Id="247" Count="0" />
       <LineId Id="262" Count="0" />
       <LineId Id="487" Count="9" />
+      <LineId Id="523" Count="0" />
       <LineId Id="224" Count="0" />
       <LineId Id="312" Count="0" />
       <LineId Id="225" Count="0" />

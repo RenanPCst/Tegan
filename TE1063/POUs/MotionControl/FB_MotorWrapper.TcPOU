@@ -43,6 +43,7 @@ VAR
 	bStartDelay		 : BOOL := FALSE;
 	tonHoming 		 : TON;
 	bhomeExecute	 : BOOL := FALSE;
+	bHomeRequest 	 : BOOL := FALSE;
 
 	bExecuteMove	 : BOOL;
 	bHomeSensorValue : BOOL;
@@ -151,8 +152,11 @@ GetStatus := status;
     <Method Name="Home" Id="{771f97a4-e7d4-481b-b233-9c33c798e61d}">
       <Declaration><![CDATA[METHOD Home : BOOL
 VAR_INPUT
-	bHomeRequest : BOOL;
 	pHomeSensor : POINTER TO BOOL; // home sensor pointer
+	rVelocity : LREAL;
+    rAcc      : LREAL;
+    rDec      : LREAL;
+	
 END_VAR
 VAR
 	 rTrigHome : R_TRIG;
@@ -163,6 +167,7 @@ END_VAR
         <ST><![CDATA[bHomeSensorValue  := pHomeSensor^;
 IF NOT bHomeRequest THEN
 	Home := FALSE;
+	bHomeRequest := TRUE;
 END_IF
 
 IF NOT GVL_Motion.bInitialHomingDone THEN
@@ -186,7 +191,7 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 	END_IF
 	
 	IF bHomeSensorValue THEN
-		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := 15.0, Acceleration := 20.0, Deceleration := 20.0, direction := 1);
+		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := rVelocity, Acceleration := rAcc, Deceleration := rDec, direction := 1); //15, 20, 20
 		status.sMessage := 'Seeking home sensor...';
 		bStopExecute := TRUE;
 	ELSE
@@ -220,7 +225,9 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 		tonHoming.IN := FALSE;
 		bHomeInProgress := FALSE;
 		GVL_Motion.bMotorsHomeDone := TRUE;
+		bHomeRequest := FALSE;
 		Home := TRUE;
+		RETURN;
 	ELSIF fbHome.Error THEN
 		status.eState := E_ActuatorState.eError;
 		status.bError := TRUE;
@@ -230,6 +237,7 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 		bStartDelay  := FALSE;
 		tonHoming.IN := FALSE;
 		bHomeInProgress := FALSE;
+		bHomeRequest := FALSE;
 		Home := FALSE;
 	ELSE
 		Home := FALSE;
@@ -526,7 +534,9 @@ END_IF
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Home">
       <LineId Id="371" Count="0" />
-      <LineId Id="505" Count="2" />
+      <LineId Id="505" Count="1" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="507" Count="0" />
       <LineId Id="428" Count="0" />
       <LineId Id="427" Count="0" />
       <LineId Id="484" Count="0" />
@@ -540,7 +550,13 @@ END_IF
       <LineId Id="521" Count="0" />
       <LineId Id="518" Count="0" />
       <LineId Id="509" Count="0" />
-      <LineId Id="435" Count="48" />
+      <LineId Id="435" Count="35" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="472" Count="8" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="481" Count="2" />
       <LineId Id="429" Count="0" />
       <LineId Id="485" Count="0" />
       <LineId Id="503" Count="0" />

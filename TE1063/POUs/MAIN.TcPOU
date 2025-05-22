@@ -99,8 +99,9 @@ VAR
 	testTon : TON;
 	bEnableDone, bHomeDone : BOOL := FALSE;
 	
-	rM1Position : ARRAY[1..3] OF LREAL;
-	rValve1Position : array[1..5] of LREAL;
+	rM1Position 	: ARRAY[1..3] OF LREAL;
+	rValvePosition 	: ARRAY[1..5] OF LREAL;
+	rPumpPosition 	: ARRAY[1..10] OF LREAL;
 	
 END_VAR
 ]]></Declaration>
@@ -122,21 +123,48 @@ IF bDebug1 THEN
 END_IF
 
 IF bDebug2 THEN
-	GVL_Motion.aPumpsRotary[1].Enable();
-	GVL_Motion.aPumpsLinear[1].Enable();
+	bDebug2 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[2].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[3].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[4].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[5].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[6].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[7].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[8].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[9].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[10].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2);
 END_IF
 
 IF bHomeDone THEN
-	bHomeDone := NOT GVL_Motion.aMotors[1].Home(pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home), bHomeRequest := bHomeDone);
+	//bHomeDone := NOT GVL_Motion.aMotors[1].Home(pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home), bHomeRequest := bHomeDone);
+	bHomeDone := NOT GVL_Motion.aPumpsLinear[1].Home( pHomeSensor := ADR(GVL_Motion.aPumps[1].Linear.iHomeSensor.0), 
+													  rVelocity := GVL_Motion.aPumps[1].Linear.rHomeVel, 
+													  rAcc := GVL_Motion.aPumps[1].Linear.rHomeAcc, 
+													  rDec := GVL_Motion.aPumps[1].Linear.rHomeDec
+													  );
 END_IF
 	
 IF bDebug3 THEN
-	rM1Position[3] 		:= GVL_Motion.aMotors[3].GetPosition();
-	rValve1Position[1]	:= GVL_Motion.aValvesObj[1].GetPosition();
-	rValve1Position[2]	:= GVL_Motion.aValvesObj[2].GetPosition();
-	rValve1Position[3]	:= GVL_Motion.aValvesObj[3].GetPosition();
-	rValve1Position[4]	:= GVL_Motion.aValvesObj[4].GetPosition();
-	rValve1Position[5]	:= GVL_Motion.aValvesObj[5].GetPosition();
+	rM1Position[1] 	:= GVL_Motion.aMotors[1].GetPosition();
+	rM1Position[2] 	:= GVL_Motion.aMotors[2].GetPosition();
+	rM1Position[3] 	:= GVL_Motion.aMotors[3].GetPosition();	
+
+	rPumpPosition[1] := GVL_Motion.aPumpsLinear[1].GetPosition();
+	rPumpPosition[2] := GVL_Motion.aPumpsLinear[2].GetPosition();
+	rPumpPosition[3] := GVL_Motion.aPumpsLinear[3].GetPosition();
+	rPumpPosition[4] := GVL_Motion.aPumpsLinear[4].GetPosition();
+	rPumpPosition[5] := GVL_Motion.aPumpsLinear[5].GetPosition();
+	rPumpPosition[6] := GVL_Motion.aPumpsLinear[6].GetPosition();
+	rPumpPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
+	rPumpPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
+	rPumpPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
+	rPumpPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
+
+	rValvePosition[1]	:= GVL_Motion.aValvesObj[1].GetPosition();
+	rValvePosition[2]	:= GVL_Motion.aValvesObj[2].GetPosition();
+	rValvePosition[3]	:= GVL_Motion.aValvesObj[3].GetPosition();
+	rValvePosition[4]	:= GVL_Motion.aValvesObj[4].GetPosition();
+	rValvePosition[5]	:= GVL_Motion.aValvesObj[5].GetPosition();
 END_IF
 
 IF bDebug4 THEN
@@ -264,94 +292,6 @@ END_IF
 
 //Motors Moviment Test M1 >> M8 ------------------------------------------------------------------------------------------------------------------
 
-//Get actual position from Motor 1
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M1Motor.Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M1Motor.rActualPosition
-	);
-END_IF
-
-//Get actual position from motor M2
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M2Motor.Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M2Motor.rActualPosition
-	);
-END_IF
-
-//Get actual position from motor M3
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.M3Motor.Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.M3Motor.rActualPosition
-	);		
-END_IF
-
-//Get actual position from motor M4
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.aValves[1].Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.aValves[1].rAtualPosition
-	);		
-END_IF
-
-//Get actual position from motor M5
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.aValves[2].Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.aValves[2].rAtualPosition
-	);		
-END_IF
-
-//Get actual position from motor M6
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.aValves[3].Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.aValves[3].rAtualPosition
-	);		
-END_IF
-
-//Get actual position from motor M7
-IF bGetPosition THEN	
-	PosFB(
-		bEnable			:=	bGetPosition,
-		AxisRef			:=	GVL_Motion.aValves[4].Axis,
-		bError			=>	bPosError,
-		nErrorID		=>	nPosErrorID,
-		rPosition		=>	GVL_Motion.aValves[4].rAtualPosition
-	);		
-END_IF
-
-//Get actual position from motor M8
-IF bGetPosition THEN	
-	PosFB(
-		bEnable		:=	bGetPosition,
-		AxisRef		:=	GVL_Motion.aValves[5].Axis,
-		bError		=>	bPosError,
-		nErrorID	=>	nPosErrorID,
-		rPosition	=>	GVL_Motion.aValves[5].rAtualPosition
-	);		
-END_IF
-
 fbMcPower(
     Axis 			:= GVL_Motion.aValves[2].Axis,
     bEnable 		:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
@@ -426,14 +366,25 @@ END_IF
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
       <LineId Id="4163" Count="1" />
-      <LineId Id="4713" Count="3" />
+      <LineId Id="4713" Count="1" />
+      <LineId Id="4716" Count="0" />
+      <LineId Id="4950" Count="3" />
+      <LineId Id="4955" Count="4" />
       <LineId Id="4712" Count="0" />
       <LineId Id="4377" Count="0" />
       <LineId Id="3875" Count="0" />
       <LineId Id="4379" Count="0" />
+      <LineId Id="4926" Count="0" />
+      <LineId Id="4943" Count="3" />
       <LineId Id="4183" Count="0" />
       <LineId Id="4165" Count="0" />
       <LineId Id="3967" Count="0" />
+      <LineId Id="4927" Count="0" />
+      <LineId Id="4948" Count="1" />
+      <LineId Id="4947" Count="0" />
+      <LineId Id="4930" Count="4" />
+      <LineId Id="4936" Count="1" />
+      <LineId Id="4940" Count="2" />
       <LineId Id="4172" Count="1" />
       <LineId Id="4819" Count="3" />
       <LineId Id="4171" Count="0" />
@@ -474,7 +425,7 @@ END_IF
       <LineId Id="3107" Count="58" />
       <LineId Id="3169" Count="5" />
       <LineId Id="3392" Count="0" />
-      <LineId Id="3175" Count="90" />
+      <LineId Id="3263" Count="2" />
       <LineId Id="3267" Count="57" />
       <LineId Id="767" Count="0" />
     </LineIds>

@@ -4,12 +4,13 @@
     <Declaration><![CDATA[TYPE ST_EL7062A1 EXTENDS ST_Motor :
 STRUCT
 	//Axis 1 - Pump Linear Actuator - 1A
-	bHome         : BOOL;    // Homing Command
-    bHomed        : BOOL;    // Homing status accomplished
-    fTargetPos    : LREAL;   // Absolute target position
-    fTargetVel    : REAL;    // Absolute target speed
-    fAcceleration : REAL;    // Default Acceleration for movements
-    fDeceleration : REAL;    // Default Deceleration for movements
+	rHomeVel      : LREAL;   // Homing Speed
+	rHomeAcc	  : LREAL;   // Homing Acceleration	
+	rHomeDec	  : LREAL;   // Homing Speed Deceleration
+    rTargetPos    : LREAL;   // Absolute target position
+    rTargetVel    : LREAL;   // Absolute target speed
+    rAcceleration : LREAL;   // Default Acceleration for movements
+    rDeceleration : LREAL;   // Default Deceleration for movements
 	
 	//Terminal 23 to 32 - EL7062 UINT Input
 	iHomeSensor	  	AT%I*   : UINT;
