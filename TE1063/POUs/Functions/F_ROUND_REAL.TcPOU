@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_ROUND_REAL" Id="{95848e51-29c9-47b8-ba91-f91034e23531}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_ROUND_REAL : LREAL
+VAR_INPUT
+	rInput : LREAL;
+  	iDecimalPlaces : INT;
+END_VAR
+VAR
+	rFactor : LREAL;
+    rScaled : LREAL;
+    rRounded : LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rFactor := EXPT(10.0, iDecimalPlaces);         // Ex: 100.0 for 2 digits
+rScaled := rInput * rFactor;
+
+IF rScaled >= 0.0 THEN
+    rRounded := TRUNC(rScaled + 0.5);
+ELSE
+    rRounded := TRUNC(rScaled - 0.5);
+END_IF
+
+F_ROUND_REAL := rRounded / rFactor;]]></ST>
+    </Implementation>
+    <LineIds Name="F_ROUND_REAL">
+      <LineId Id="50" Count="0" />
+      <LineId Id="65" Count="7" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

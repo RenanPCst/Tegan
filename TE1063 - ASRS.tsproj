@@ -2585,8 +2585,8 @@ External Setpoint Generation:
 					<Name>M2 Motor - SC Vertical</Name>
 					<AxisPara>
 						<Dynamic AccelerationMaximum="15" DecelerationMaximum="15" Acceleration="15" Deceleration="15" Jerk="2457.738"/>
-						<Velo RefSearch="5.46164" RefSync="5.46164" SlowManual="1" FastManual="6" Fast="546.164" Maximum="546.164"/>
-						<OtherSettings AllowMotionCmdToSlave="true"/>
+						<Velo RefSearch="5.46164" RefSync="5.46164" SlowManual="2" FastManual="6" Fast="546.164" Maximum="546.164"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
 						<EncPara ScaleFactorNumerator="10" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
@@ -2728,8 +2728,8 @@ External Setpoint Generation:
 					<Name>M3 Motor - SC Horizontal</Name>
 					<AxisPara>
 						<Dynamic Acceleration="819.246" Deceleration="819.246" Jerk="2457.738"/>
-						<Velo RefSearch="5.46164" RefSync="5.46164" SlowManual="1" FastManual="6" Fast="546.164" Maximum="546.164"/>
-						<OtherSettings AllowMotionCmdToSlave="true"/>
+						<Velo RefSearch="5.46164" RefSync="5.46164" SlowManual="6" FastManual="12" Fast="546.164" Maximum="546.164"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="2" PulseDistanceNeg="2"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
 						<EncPara ScaleFactorNumerator="10" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
@@ -2870,8 +2870,8 @@ External Setpoint Generation:
 					<AxisPara>
 						<General UnitName="°"/>
 						<Dynamic Acceleration="1474.6425" Deceleration="1474.6425" Jerk="4423.9275"/>
-						<Velo RefSearch="9.83095" RefSync="9.83095" SlowManual="49.15475" FastManual="294.9285" Fast="983.095" Maximum="983.095"/>
-						<OtherSettings AllowMotionCmdToSlave="true"/>
+						<Velo RefSearch="9.83095" RefSync="9.83095" SlowManual="15" FastManual="30" Fast="983.095" Maximum="983.095"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
 						<EncPara ScaleFactorNumerator="360" ScaleFactorDenominator="20971520" MaxCount="#xffffffff">
@@ -3584,14 +3584,17 @@ External Setpoint Generation:
 					<Name>Pump 1 - Linear</Name>
 					<AxisPara>
 						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.05" FastManual="0.3" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true"/>
+						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
 						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
-							<SoftEndMinControl Range="-13"/>
-							<SoftEndMaxControl Range="0.5"/>
+							<SoftEndMinControl Enable="true" Range="-13"/>
+							<SoftEndMaxControl Enable="true" Range="1"/>
 							<Inc RefSyncInverse="false" HomingSensorSource="9"/>
+							<ParameterChanged>14</ParameterChanged>
+							<ParameterChanged>11</ParameterChanged>
+							<ParameterChanged>12</ParameterChanged>
 						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
@@ -6421,7 +6424,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{797F3C13-C9A1-F121-CD94-FEB4036DF591}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{38C39215-0A76-0BB4-19D3-8A96BA691721}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6430,6 +6433,11 @@ External Setpoint Generation:
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
@@ -6442,206 +6450,161 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iPosition</Name>
-							<Comment><![CDATA[M1 Motor Structure]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iStatusWord</Name>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M2Motor.iTargetPosition</Name>
-							<Comment><![CDATA[Terminals 27 n 28 EL7211-9014	| Servomotor Terminal with OCT and STO, 48 V (Axis 1)
-M2 and M3 Motors Stage collection matrix Axis]]></Comment>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iStatusWord</Name>
+							<Name>GVL_Motion.M1Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M2Motor.rActualVelocity</Name>
+							<Name>GVL_Motion.M1Motor.fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
 							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M2Motor.nState</Name>
-							<Comment><![CDATA[2			//Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.M1Motor.fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M2Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M3Motor.iTargetPosition</Name>
-							<Comment><![CDATA[Terminals 27 n 28 EL7211-9014	| Servomotor Terminal with OCT and STO, 48 V (Axis 1)
-M2 and M3 Motors Stage collection matrix Axis]]></Comment>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iStatusWord</Name>
+							<Name>GVL_Motion.M2Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M3Motor.rActualVelocity</Name>
+							<Name>GVL_Motion.M2Motor.fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
 							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M3Motor.nState</Name>
-							<Comment><![CDATA[2			//Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.M2Motor.fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[1].iTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iStatusWord</Name>
+							<Name>GVL_Motion.M3Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[1].nActualVelocity</Name>
-							<Type>INT</Type>
+							<Name>GVL_Motion.M3Motor.fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[1].nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.M3Motor.fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[1].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[2].iTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iStatusWord</Name>
+							<Name>GVL_Motion.aValves[1].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[2].nActualVelocity</Name>
-							<Type>INT</Type>
+							<Name>GVL_Motion.aValves[1].fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[2].nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.aValves[1].fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[2].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[3].iTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iStatusWord</Name>
+							<Name>GVL_Motion.aValves[2].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[3].nActualVelocity</Name>
-							<Type>INT</Type>
+							<Name>GVL_Motion.aValves[2].fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[3].nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.aValves[2].fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[3].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[4].iTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iStatusWord</Name>
+							<Name>GVL_Motion.aValves[3].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[4].nActualVelocity</Name>
-							<Type>INT</Type>
+							<Name>GVL_Motion.aValves[3].fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[4].nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.aValves[3].fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[4].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[5].iTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iTargetVelocity</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iStatusWord</Name>
+							<Name>GVL_Motion.aValves[4].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[5].nActualVelocity</Name>
-							<Type>INT</Type>
+							<Name>GVL_Motion.aValves[4].fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[5].nState</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>WORD</Type>
+							<Name>GVL_Motion.aValves[4].fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[5].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].fActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].fActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>REAL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
@@ -7074,11 +7037,6 @@ M2 and M3 Motors Stage collection matrix Axis]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -7098,13 +7056,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -7149,24 +7107,19 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M1Motor.qControlWord</Name>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.qTargetVelocity</Name>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M1Motor.n_AxisTorqueLimitation</Name>
+							<Name>GVL_Motion.M1Motor.nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.bTS_Run</Name>
-							<Comment><![CDATA[M1 Motor Safety]]></Comment>
+							<Comment><![CDATA[Terminal 45 AX8108-0100-0000	| Servomotor Driver with FSoE SS1 and STO, (Axis 1)
+M1 Motor Stage Collection Vertical Axis
+M1 Motor Safety]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7174,149 +7127,66 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M2Motor.nTargetPosition</Name>
-							<Comment><![CDATA[4]]></Comment>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.qControlWord</Name>
-							<Comment><![CDATA[1]]></Comment>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.nTargetVelocity</Name>
-							<Comment><![CDATA[3]]></Comment>
-							<Type>INT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Motion.M2Motor.Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M2Motor.n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.M2Motor.nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.nTargetPosition</Name>
-							<Comment><![CDATA[4]]></Comment>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.qControlWord</Name>
-							<Comment><![CDATA[1]]></Comment>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.nTargetVelocity</Name>
-							<Comment><![CDATA[3]]></Comment>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M3Motor.Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M3Motor.n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.M3Motor.nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].nTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].qControlWord</Name>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].nTargetVelocity</Name>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[1].Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[1].n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.aValves[1].nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].nTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].qControlWord</Name>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].nTargetVelocity</Name>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[2].Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[2].n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.aValves[2].nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].nTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].qControlWord</Name>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].nTargetVelocity</Name>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[3].Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[3].n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.aValves[3].nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].nTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].qControlWord</Name>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].nTargetVelocity</Name>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[4].Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[4].n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.aValves[4].nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].nTargetPosition</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].qControlWord</Name>
-							<Type>WORD</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].nTargetVelocity</Name>
-							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[5].Axis.PlcToNc</Name>
 							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.aValves[5].n_Axis3TorqueLimitation</Name>
+							<Name>GVL_Motion.aValves[5].nControlWord</Name>
+							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>

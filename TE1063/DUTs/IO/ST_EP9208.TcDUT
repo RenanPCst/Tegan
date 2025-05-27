@@ -1,27 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <DUT Name="ST_EP9208" Id="{55e06dc4-9c3f-4959-8bac-04e032f67e79}">
-    <Declaration><![CDATA[TYPE ST_EP9208 :
+    <Declaration><![CDATA[TYPE ST_EP9208 EXTENDS ST_Motor :
 STRUCT
 	//VICI Valves connected to EP9208-1035
-	ECAT_ControlWord      				: UINT;    // EtherCAT Control Word 
-    ECAT_TargetPosition   				: LREAL;   // Target Position
-    ECAT_TargetVelocity   				: LREAL;   // Target Velocity
-    ECAT_StatusWord       				: UINT;    // EtherCAT Status Word 
-    ECAT_ModeOfOperation  				: BYTE;    // Operation Mode
-	
-	iTargetPosition			AT %I*		: UDINT;
-	iTargetVelocity			AT %I*		: UDINT;
-	nTargetPosition			AT %Q*		: UDINT; 			//
-	iStatusWord				AT %I*		: UINT;
-	qControlWord			AT %Q*		: WORD; 			//
-	nTargetVelocity			AT %Q*		: INT;  			//
-	nActualVelocity			AT %I*	 	: INT;
-	nState					AT %I*		: WORD; 			//Terminal State from IO Terminal Info Data
-	sStatus								: STRING(200);
-	Axis	                    		: AXIS_REF; 		//TC2_MC2.AXIS_REF Axis reference for the motor;
-	n_Axis3TorqueLimitation	AT %Q*		: UINT	:=	32767;
-	n_Axis3ActualTorque					: REAL; 			//now part of structured varaible axis_ref
 	
 	//New Variables
 	rHomeVel      : LREAL;   // Homing Speed

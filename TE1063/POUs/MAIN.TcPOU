@@ -120,9 +120,8 @@ PRG_AxisAssignment();
 PRG_RecipeManager();
 
 //################ TESTING AREA ################################
-IF bDebug1 THEN
-	bDebug1 := NOT (GVL_Motion.aMotors[1].Enable() AND GVL_Motion.aValvesObj[1].Enable());
-END_IF
+
+//GVL_Motion.aMotors[1].Jog(bFwd := bDebug1, bBwd := bDebug8);
 
 IF bDebug2 THEN
 	bDebug2 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
@@ -185,10 +184,6 @@ IF bDebug7 THEN
 	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
-IF bDebug8 THEN
-	bDebug8 := NOT GVL_Motion.aMotors[1].Reset();
-END_IF
-
 IF bDebug9 THEN
 	bDebug9 := NOT GVL_Motion.aMotors[1].Stop();
 END_IF
@@ -197,18 +192,6 @@ IF bDebug10 THEN
 	bDebug10 := NOT GVL_Motion.aValvesObj[1].Stop();
 END_IF
 
-
-//Manual Motor Moviment testing
-//Manual Moviment motor 1 - Stage Collection Vertical Axis
-IF bTestMovFwd THEN
-	GVL_Motion.aMotors[1].JogFwd(bPressed := TRUE, rVelocity := 10);
-	ELSE IF bTestMovBwd THEN
-		GVL_Motion.aMotors[1].JogBwd(bPressed := TRUE, rVelocity := 10);
-	ELSE
-		GVL_Motion.aMotors[1].JogFwd(bPressed := FALSE, rVelocity := 10);
-		GVL_Motion.aMotors[1].JogBwd(bPressed := FALSE, rVelocity := 10);
-	END_IF
-END_IF
 
 //<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 
@@ -290,71 +273,8 @@ END_IF
 IF bPressureInput THEN
 	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
 END_IF
-
-
-
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------
 
-//Motors Moviment Test M1 >> M8 ------------------------------------------------------------------------------------------------------------------
-
-fbMcPower(
-    Axis 			:= GVL_Motion.aValves[2].Axis,
-    bEnable 		:= bPowerEnable, //Enable the Axis if the driver is ready without safety fauls
-	bReset			:= FALSE,		 //Reset the Axis if the driver is ready without safety fauls
-	iErrorID			=> PowerErrorID	 //Error ID if the power enter in error.
-);
-
-//Valves servormotor testing [M4, M5, M6, M7, M8]
-DesiredPos := 5;
-
-IF NOT ValveInPosition AND EnableServo THEN
-fbValveController(
-    bEnable 		:= EnableServo,
-	ServoAxis		:= GVL_Motion.aValves[2].Axis,
-    iValvePosition 	:= DesiredPos,
-	bMoveDone		=> ValveInPosition
-);
-
-END_IF
-
-//target positions test for the motors
-//GVL_Motion.M1Motor.rTargetPosition 	:= 0;
-//GVL_Motion.M1Motor.rTargetVelocity	:= 15;
-
-GVL_Motion.M3Motor.iTargetPosition	:= 0;
-GVL_Motion.M3Motor.iTargetVelocity	:= 5;
-
-GVL_Motion.M2Motor.iTargetPosition	:= 0;
-GVL_Motion.M2Motor.iTargetVelocity	:= 5;
-
-//Set position 0
-fbSetZero(
-    Execute := bSetZero,
-    Axis := GVL_Motion.M3Motor.Axis,
-    Position := 0.0,  // Define a posição atual como zero
-    Done => bZeroDone,
-    Error => bZeroError,
-    ErrorID => nZeroErrorID
-);
-
-//Motors Moving testing [M1, M2, M3]
-IF bMoveStart AND GVL_Safety.iMotorsSTOEnabled THEN
-    MoveFB(
-        bEnable 	:= TRUE,
-        AxisRef 	:= GVL_Motion.M2Motor.Axis, 
-        nPosition 	:= GVL_Motion.M2Motor.iTargetPosition, 
-        nVelocity 	:= GVL_Motion.M2Motor.iTargetVelocity,
-        bDone		=> bMoveDone,
-        bError		=> bPosError,
-        nErrorID	=> nPosErrorID,
-        sState		=> sState
-    );
-END_IF
-
-// Reset bMoveStart when move is completed
-IF bMoveDone THEN
-    bMoveStart := FALSE;
-END_IF
 
 
 
@@ -370,7 +290,7 @@ END_IF
       <LineId Id="3651" Count="0" />
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
-      <LineId Id="4163" Count="1" />
+      <LineId Id="5183" Count="0" />
       <LineId Id="4713" Count="1" />
       <LineId Id="4716" Count="0" />
       <LineId Id="4950" Count="3" />
@@ -403,15 +323,12 @@ END_IF
       <LineId Id="4387" Count="0" />
       <LineId Id="4395" Count="2" />
       <LineId Id="4394" Count="0" />
-      <LineId Id="4499" Count="2" />
-      <LineId Id="4498" Count="0" />
-      <LineId Id="4604" Count="2" />
+      <LineId Id="4499" Count="0" />
+      <LineId Id="4605" Count="1" />
       <LineId Id="4603" Count="0" />
       <LineId Id="4607" Count="2" />
       <LineId Id="3653" Count="0" />
-      <LineId Id="5064" Count="2" />
-      <LineId Id="5068" Count="8" />
-      <LineId Id="5067" Count="0" />
+      <LineId Id="5068" Count="0" />
       <LineId Id="5063" Count="0" />
       <LineId Id="3654" Count="0" />
       <LineId Id="3673" Count="0" />
@@ -427,10 +344,8 @@ END_IF
       <LineId Id="3656" Count="1" />
       <LineId Id="3652" Count="0" />
       <LineId Id="3107" Count="58" />
-      <LineId Id="3169" Count="5" />
-      <LineId Id="3392" Count="0" />
-      <LineId Id="3263" Count="2" />
-      <LineId Id="3267" Count="57" />
+      <LineId Id="3172" Count="0" />
+      <LineId Id="3321" Count="3" />
       <LineId Id="767" Count="0" />
     </LineIds>
   </POU>
