@@ -3,13 +3,327 @@
   <POU Name="PRG_ManualControl" Id="{d07ba183-6201-49c6-acdd-4e668144af08}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_ManualControl
 VAR
+	elseif: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[]]></ST>
+      <ST><![CDATA[//Motors Manual jog handling 
+MotorsJog();
+
+// Get Motors Actual Position
+//GVL_Motion.M1Motor.
+]]></ST>
     </Implementation>
+    <Action Name="MotorsJog" Id="{57b89f50-f3a8-44a2-8323-78bd3226c039}">
+      <Implementation>
+        <ST><![CDATA[//Manual Motors Moviment
+//Manual Moviment motor 1 - Stage Collection Vertical Axis
+IF GVL_HMI.ManualMov.bMotorsJogFwd[1] THEN
+	GVL_Motion.aMotors[1].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bMotorsJogBwd[1] THEN
+		GVL_Motion.aMotors[1].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aMotors[1].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aMotors[1].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment motor 2 - Sample Recovery Vertical Axis
+IF GVL_HMI.ManualMov.bMotorsJogFwd[2] THEN
+	GVL_Motion.aMotors[2].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bMotorsJogBwd[2] THEN
+		GVL_Motion.aMotors[2].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aMotors[2].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aMotors[2].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment motor 3 - Sample Recovery Horizontal Axis
+IF GVL_HMI.ManualMov.bMotorsJogFwd[3] THEN
+	GVL_Motion.aMotors[3].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bMotorsJogBwd[3] THEN
+		GVL_Motion.aMotors[3].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aMotors[3].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aMotors[3].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment M4 - Valve 1 
+IF GVL_HMI.ManualMov.bValvesJogFwd[1] THEN
+	GVL_Motion.aValvesObj[1].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bValvesJogBwd[1] THEN
+		GVL_Motion.aValvesObj[1].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aValvesObj[1].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aValvesObj[1].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment M5 - Valve 2 
+IF GVL_HMI.ManualMov.bValvesJogFwd[2] THEN
+	GVL_Motion.aValvesObj[2].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bValvesJogBwd[2] THEN
+		GVL_Motion.aValvesObj[2].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aValvesObj[2].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aValvesObj[2].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment M6 - Valve 3
+IF GVL_HMI.ManualMov.bValvesJogFwd[3] THEN
+	GVL_Motion.aValvesObj[3].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bValvesJogBwd[3] THEN
+		GVL_Motion.aValvesObj[3].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aValvesObj[3].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aValvesObj[3].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment M7 - Valve 4
+IF GVL_HMI.ManualMov.bValvesJogFwd[4] THEN
+	GVL_Motion.aValvesObj[4].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bValvesJogBwd[4] THEN
+		GVL_Motion.aValvesObj[4].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aValvesObj[4].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aValvesObj[4].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//Manual Moviment M8 - Valve 5
+IF GVL_HMI.ManualMov.bValvesJogFwd[5] THEN
+	GVL_Motion.aValvesObj[5].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF GVL_HMI.ManualMov.bValvesJogBwd[5] THEN
+		GVL_Motion.aValvesObj[5].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aValvesObj[5].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aValvesObj[5].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
+END_IF
+
+//region Jog Pumps - Linear
+//Manual Moviment Pump 1 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[1] THEN
+	GVL_Motion.aPumpsLinear[1].JogFwd(bPressed := TRUE, rVelocity := 1);
+	ELSE IF GVL_HMI.ManualMov.bPumpsLinearJogBwd[1] THEN
+		GVL_Motion.aPumpsLinear[1].JogBwd(bPressed := TRUE, rVelocity := 1);
+	ELSE
+		GVL_Motion.aPumpsLinear[1].JogFwd(bPressed := FALSE, rVelocity := 1);
+		GVL_Motion.aPumpsLinear[1].JogBwd(bPressed := FALSE, rVelocity := 1);
+	END_IF
+END_IF
+
+//Manual Moviment Pump 2 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[2] THEN
+	GVL_Motion.aPumpsLinear[2].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[2] THEN
+	GVL_Motion.aPumpsLinear[2].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[2].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[2].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 3 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[3] THEN
+	GVL_Motion.aPumpsLinear[3].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[3] THEN
+	GVL_Motion.aPumpsLinear[3].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[3].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[3].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 4 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[4] THEN
+	GVL_Motion.aPumpsLinear[4].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[4] THEN
+	GVL_Motion.aPumpsLinear[4].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[4].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[4].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 5 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[5] THEN
+	GVL_Motion.aPumpsLinear[5].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[5] THEN
+	GVL_Motion.aPumpsLinear[5].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[5].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[5].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 6 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[6] THEN
+	GVL_Motion.aPumpsLinear[6].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[6] THEN
+	GVL_Motion.aPumpsLinear[6].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[6].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[6].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 7 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[7] THEN
+	GVL_Motion.aPumpsLinear[7].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[7] THEN
+	GVL_Motion.aPumpsLinear[7].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[7].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[7].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 8 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[8] THEN
+	GVL_Motion.aPumpsLinear[8].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[8] THEN
+	GVL_Motion.aPumpsLinear[8].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[8].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[8].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 9 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[9] THEN
+	GVL_Motion.aPumpsLinear[9].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[9] THEN
+	GVL_Motion.aPumpsLinear[9].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[9].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[9].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+
+//Manual Moviment Pump 10 - Linear
+IF GVL_HMI.ManualMov.bPumpsLinearJogFwd[10] THEN
+	GVL_Motion.aPumpsLinear[10].JogFwd(bPressed := TRUE, rVelocity := 1);
+ELSIF GVL_HMI.ManualMov.bPumpsLinearJogBwd[10] THEN
+	GVL_Motion.aPumpsLinear[10].JogBwd(bPressed := TRUE, rVelocity := 1);
+ELSE
+	GVL_Motion.aPumpsLinear[10].JogFwd(bPressed := FALSE, rVelocity := 1);
+	GVL_Motion.aPumpsLinear[10].JogBwd(bPressed := FALSE, rVelocity := 1);
+END_IF
+//endregion 
+
+//region Jog Pumps - Rotary
+//Manual Moviment Pump 1 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[1] THEN
+	GVL_Motion.aPumpsRotary[1].JogFwd(bPressed := TRUE, rVelocity := 100);
+	ELSE IF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[1] THEN
+		GVL_Motion.aPumpsRotary[1].JogBwd(bPressed := TRUE, rVelocity := 100);
+	ELSE
+		GVL_Motion.aPumpsRotary[1].JogFwd(bPressed := FALSE, rVelocity := 100);
+		GVL_Motion.aPumpsRotary[1].JogBwd(bPressed := FALSE, rVelocity := 100);
+	END_IF
+END_IF
+
+//Manual Moviment Pump 2 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[2] THEN
+	GVL_Motion.aPumpsRotary[2].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[2] THEN
+	GVL_Motion.aPumpsRotary[2].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[2].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[2].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 3 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[3] THEN
+	GVL_Motion.aPumpsRotary[3].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[3] THEN
+	GVL_Motion.aPumpsRotary[3].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[3].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[3].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 4 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[4] THEN
+	GVL_Motion.aPumpsRotary[4].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[4] THEN
+	GVL_Motion.aPumpsRotary[4].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[4].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[4].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 5 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[5] THEN
+	GVL_Motion.aPumpsRotary[5].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[5] THEN
+	GVL_Motion.aPumpsRotary[5].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[5].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[5].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 6 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[6] THEN
+	GVL_Motion.aPumpsRotary[6].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[6] THEN
+	GVL_Motion.aPumpsRotary[6].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[6].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[6].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 7 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[7] THEN
+	GVL_Motion.aPumpsRotary[7].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[7] THEN
+	GVL_Motion.aPumpsRotary[7].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[7].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[7].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 8 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[8] THEN
+	GVL_Motion.aPumpsRotary[8].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[8] THEN
+	GVL_Motion.aPumpsRotary[8].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[8].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[8].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 9 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[9] THEN
+	GVL_Motion.aPumpsRotary[9].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[9] THEN
+	GVL_Motion.aPumpsRotary[9].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[9].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[9].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+
+//Manual Moviment Pump 10 - Rotary
+IF GVL_HMI.ManualMov.bPumpsRotaryJogFwd[10] THEN
+	GVL_Motion.aPumpsRotary[10].JogFwd(bPressed := TRUE, rVelocity := 100);
+ELSIF GVL_HMI.ManualMov.bPumpsRotaryJogBwd[10] THEN
+	GVL_Motion.aPumpsRotary[10].JogBwd(bPressed := TRUE, rVelocity := 100);
+ELSE
+	GVL_Motion.aPumpsRotary[10].JogFwd(bPressed := FALSE, rVelocity := 100);
+	GVL_Motion.aPumpsRotary[10].JogBwd(bPressed := FALSE, rVelocity := 100);
+END_IF
+//endregion]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="PRG_ManualControl">
-      <LineId Id="5" Count="0" />
+      <LineId Id="356" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="357" Count="0" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="355" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_ManualControl.MotorsJog">
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="291" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

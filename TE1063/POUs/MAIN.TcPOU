@@ -96,6 +96,8 @@ VAR
 	bDebug8 : BOOL := FALSE;
 	bDebug9 : BOOL := FALSE;
 	bDebug10: BOOL := FALSE;
+	bTestMovFwd : BOOL := FALSE;
+	bTestMovBwd : BOOL := FALSE;
 	testTon : TON;
 	bEnableDone, bHomeDone : BOOL := FALSE;
 	
@@ -168,11 +170,11 @@ IF bDebug3 THEN
 END_IF
 
 IF bDebug4 THEN
-	bDebug4 := NOT GVL_Motion.aMotors[3].MoveAbsolute(rPosition := 0, rVelocity := 20, rAcc := 20, rDec := 20);
+	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 15, rDec := 15);
 END_IF
 
 IF bDebug5 THEN
-	bDebug5 := NOT GVL_Motion.aMotors[3].MoveAbsolute(rPosition := -20, rVelocity := 20, rAcc := 20, rDec := 20);
+	bDebug5 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := -100, rVelocity := 15, rAcc := 15, rDec := 15);
 END_IF
 
 IF bDebug6 THEN
@@ -194,22 +196,25 @@ END_IF
 IF bDebug10 THEN
 	bDebug10 := NOT GVL_Motion.aValvesObj[1].Stop();
 END_IF
-//<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
-fbMcPower( //Enabling the axis - rotary pump 1
-    Axis 			:= GVL_Motion.aPumps[1].Rotary.Axis,
-    bEnable 		:= bPumpEnable, 	//Enable the Axis if the driver is ready without safety fauls
-	bReset			:= FALSE,		 	//Reset the Axis if the driver is ready without safety fauls
-	iErrorID			=> PowerErrorID,	//Error ID if the power enter in error.
-	bError			=> bPowerError
-);
-fbSetPosition(Axis := GVL_Motion.aPumps[1].Rotary.Axis, execute:= bSetPosition, position := 0.0);
-IF fbSetPosition.Done THEN
-	bSetPosition := FALSE;
+
+
+//Manual Motor Moviment testing
+//Manual Moviment motor 1 - Stage Collection Vertical Axis
+IF bTestMovFwd THEN
+	GVL_Motion.aMotors[1].JogFwd(bPressed := TRUE, rVelocity := 10);
+	ELSE IF bTestMovBwd THEN
+		GVL_Motion.aMotors[1].JogBwd(bPressed := TRUE, rVelocity := 10);
+	ELSE
+		GVL_Motion.aMotors[1].JogFwd(bPressed := FALSE, rVelocity := 10);
+		GVL_Motion.aMotors[1].JogBwd(bPressed := FALSE, rVelocity := 10);
+	END_IF
 END_IF
+
+//<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 
 //9mm Linear pump opening – 0.079 µL/step
 //5mL Testing 
-GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
+//GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
 
 fbMoveRelative(
 	Axis			:= GVL_Motion.aPumps[1].Rotary.Axis,
@@ -403,13 +408,12 @@ END_IF
       <LineId Id="4604" Count="2" />
       <LineId Id="4603" Count="0" />
       <LineId Id="4607" Count="2" />
-      <LineId Id="3653" Count="1" />
-      <LineId Id="3658" Count="4" />
-      <LineId Id="3667" Count="0" />
-      <LineId Id="3655" Count="0" />
-      <LineId Id="3693" Count="0" />
-      <LineId Id="3692" Count="0" />
-      <LineId Id="3694" Count="1" />
+      <LineId Id="3653" Count="0" />
+      <LineId Id="5064" Count="2" />
+      <LineId Id="5068" Count="8" />
+      <LineId Id="5067" Count="0" />
+      <LineId Id="5063" Count="0" />
+      <LineId Id="3654" Count="0" />
       <LineId Id="3673" Count="0" />
       <LineId Id="3669" Count="0" />
       <LineId Id="3674" Count="0" />

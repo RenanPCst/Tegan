@@ -21,6 +21,7 @@ VAR
 	fbReadPos	  : MC_ReadActualPosition;
     fbStop        : MC_Stop;
 	fbHalt		  : MC_Halt;
+	fbJog		  : MC_Jog;
     rTrigStop     : R_TRIG;
 
     fSetPosAbs    : LREAL;
@@ -260,6 +261,54 @@ ELSE
 END_IF
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="JogBwd" Id="{790dc599-9abd-440d-8320-e3bef74df6a1}">
+      <Declaration><![CDATA[METHOD JogBwd : BOOL
+VAR_INPUT
+	bPressed  : BOOL;
+	rVelocity : LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call the internal motion block
+fbJog( Axis := Axis, JogForward := bPressed, Mode := MC_JOGMODE_CONTINOUS, Velocity := rVelocity);
+
+// Update actuator status
+status.bBusy := fbJog.Busy;
+status.bDone := fbJog.Done;
+status.bError := fbJog.Error;
+status.iErrorCode := fbJog.ErrorID;
+
+IF fbJog.Busy THEN
+	JogBwd := TRUE;
+ELSE
+	JogBwd := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="JogFwd" Id="{3fad885f-82d0-4ede-add0-67a44b600103}">
+      <Declaration><![CDATA[METHOD JogFwd : BOOL
+VAR_INPUT
+	bPressed  : BOOL;
+	rVelocity : LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call the internal motion block
+fbJog( Axis := Axis, JogBackwards := bPressed, Mode := MC_JOGMODE_CONTINOUS, Velocity := rVelocity);
+
+// Update actuator status
+status.bBusy := fbJog.Busy;
+status.bDone := fbJog.Done;
+status.bError := fbJog.Error;
+status.iErrorCode := fbJog.ErrorID;
+
+IF fbJog.Busy THEN
+	JogFwd := TRUE;
+ELSE
+	JogFwd := FALSE;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="MoveAbsolute" Id="{3c2d0047-9043-4f3b-b941-8126a4eab227}">
@@ -574,6 +623,18 @@ END_IF
       <LineId Id="430" Count="0" />
       <LineId Id="372" Count="0" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.JogBwd">
+      <LineId Id="8" Count="12" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.JogFwd">
+      <LineId Id="12" Count="1" />
+      <LineId Id="21" Count="6" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="46" Count="1" />
+      <LineId Id="45" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveAbsolute">
       <LineId Id="196" Count="36" />
