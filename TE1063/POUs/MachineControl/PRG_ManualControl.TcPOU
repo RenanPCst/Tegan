@@ -3,16 +3,80 @@
   <POU Name="PRG_ManualControl" Id="{d07ba183-6201-49c6-acdd-4e668144af08}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_ManualControl
 VAR
-	elseif: INT;
+	
 	rMotorsActualPosition : ARRAY[1..3] OF LREAL;
 	rValvesActualPosition : ARRAY[1..5] OF LREAL;
 	rPumpsActualPosition  : ARRAY[1..10] OF LREAL;
+	
+	bSafeMoveM2		:	BOOL := FALSE;
+	bSafeMoveM3		:	BOOL := FALSE;
+	
+	i : INT;
+	aMotorBusy	: ARRAY[1..3] OF BOOL;
+		
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Motors Manual jog handling 
 MotorsJog();
-MotorsActualPosition();]]></ST>
+MotorsActualPosition();
+
+//New Manual Screen commands test area ##########################################################
+(*<M1 Motor>*)
+//Move M1 by HMI combobox manual mode
+IF GVL_HMI.aManualMotorsCmd[1].bRun THEN
+	GVL_HMI.aManualMotorsCmd[1].bRun := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM1Position[GVL_HMI.aManualMotorsCmd[1].iPosition],
+                        														rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
+                        														rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+                       															rDec := GVL_HMI.HMIParameters.rM1Deceleration
+																				);
+END_IF
+//Stop Moviment M1 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[1].bStop THEN
+	GVL_HMI.aManualMotorsCmd[1].bStop := NOT GVL_Motion.aMotors[1].Stop();
+END_IF
+(*<\M1 Motor>*)
+
+(*<M2 Motor>*)
+//Move M2 by HMI combobox manual mode
+IF GVL_HMI.aManualMotorsCmd[2].bRun THEN
+	GVL_HMI.aManualMotorsCmd[2].bRun := NOT GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM2Position[GVL_HMI.aManualMotorsCmd[2].iPosition],
+                        														rVelocity := GVL_HMI.HMIParameters.rM2Velocity,
+                        														rAcc := GVL_HMI.HMIParameters.rM2Accleration,
+                       															rDec := GVL_HMI.HMIParameters.rM2Deceleration
+																				);
+END_IF
+//Stop Moviment M2 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[2].bStop THEN
+	GVL_HMI.aManualMotorsCmd[2].bStop := NOT GVL_Motion.aMotors[2].Stop();
+END_IF
+(*<\M2 Motor>*)
+
+(*<M3 Motor>*)
+//Interlock by M2 Position
+IF rMotorsActualPosition[2] = GVL_HMI.HMIParameters.aM2Position[1] THEN
+	bSafeMoveM3 := TRUE;
+ELSE
+	bSafeMoveM3 := FALSE;
+END_IF
+
+//Move M2 by HMI combobox manual mode
+IF GVL_HMI.aManualMotorsCmd[3].bRun THEN
+	GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
+                        														rVelocity := GVL_HMI.HMIParameters.rM3Velocity,
+                        														rAcc := GVL_HMI.HMIParameters.rM3Accleration,
+                       															rDec := GVL_HMI.HMIParameters.rM3Deceleration
+																				);
+END_IF
+//Stop Moviment M2 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[3].bStop THEN
+	GVL_HMI.aManualMotorsCmd[3].bStop := NOT GVL_Motion.aMotors[3].Stop();
+END_IF
+(*<\M3 Motor>*)
+
+
+
+]]></ST>
     </Implementation>
     <Action Name="MotorsActualPosition" Id="{634c759f-49ee-43fa-86d1-7097ca0492ea}">
       <Implementation>
@@ -35,8 +99,6 @@ rPumpsActualPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
 rPumpsActualPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
 rPumpsActualPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
 rPumpsActualPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
-
-
 
 //Linear Motors - M1, M2, M3
 GVL_Motion.M1Motor.rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rMotorsActualPosition[1]), iDecimalPlaces := 2)* -1;
@@ -111,9 +173,41 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       <LineId Id="356" Count="0" />
       <LineId Id="350" Count="0" />
       <LineId Id="358" Count="0" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="557" Count="2" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="567" Count="1" />
+      <LineId Id="563" Count="0" />
+      <LineId Id="569" Count="0" />
+      <LineId Id="564" Count="0" />
+      <LineId Id="573" Count="0" />
+      <LineId Id="560" Count="0" />
+      <LineId Id="572" Count="0" />
+      <LineId Id="571" Count="0" />
+      <LineId Id="576" Count="0" />
+      <LineId Id="604" Count="0" />
+      <LineId Id="588" Count="0" />
+      <LineId Id="577" Count="10" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="614" Count="1" />
+      <LineId Id="618" Count="1" />
+      <LineId Id="616" Count="0" />
+      <LineId Id="609" Count="0" />
+      <LineId Id="592" Count="11" />
+      <LineId Id="590" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="561" Count="0" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="473" Count="0" />
     </LineIds>
     <LineIds Name="PRG_ManualControl.MotorsActualPosition">
-      <LineId Id="2" Count="43" />
+      <LineId Id="2" Count="18" />
+      <LineId Id="23" Count="22" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="PRG_ManualControl.MotorsJog">
