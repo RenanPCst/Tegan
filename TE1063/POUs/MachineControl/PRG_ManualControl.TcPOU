@@ -7,12 +7,13 @@ VAR
 	rMotorsActualPosition : ARRAY[1..3] OF LREAL;
 	rValvesActualPosition : ARRAY[1..5] OF LREAL;
 	rPumpsActualPosition  : ARRAY[1..10] OF LREAL;
-	
-	bSafeMoveM2		:	BOOL := FALSE;
-	bSafeMoveM3		:	BOOL := FALSE;
-	
-	i : INT;
 	aMotorBusy	: ARRAY[1..3] OF BOOL;
+	
+	//interlock Variables
+	iTargetPosM2 : INT;
+    rActualPosM3 : LREAL;
+    rTol         : LREAL := 3.0; // tolerância para considerar posição "alinhada"
+    bAllowMoveM2 : BOOL := TRUE;
 		
 END_VAR
 ]]></Declaration>
@@ -39,13 +40,41 @@ END_IF
 
 (*<M2 Motor>*)
 //Move M2 by HMI combobox manual mode
+iTargetPosM2 := GVL_HMI.aManualMotorsCmd[2].iPosition;
+rActualPosM3 := rMotorsActualPosition[3];
+
+//Interlock move for M2 base on M3 position
+CASE iTargetPosM2 OF
+    3: // Fill Vials
+        bAllowMoveM2 := (
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[2]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[3]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[4]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[5]) <= rTol
+        );
+
+    4: // Calibration
+        bAllowMoveM2 := ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[6]) <= rTol;
+
+    ELSE
+        bAllowMoveM2 := TRUE;
+END_CASE
+
+//M2 Moviment if there is no interlock
 IF GVL_HMI.aManualMotorsCmd[2].bRun THEN
-	GVL_HMI.aManualMotorsCmd[2].bRun := NOT GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM2Position[GVL_HMI.aManualMotorsCmd[2].iPosition],
-                        														rVelocity := GVL_HMI.HMIParameters.rM2Velocity,
-                        														rAcc := GVL_HMI.HMIParameters.rM2Accleration,
-                       															rDec := GVL_HMI.HMIParameters.rM2Deceleration
-																				);
+    IF bAllowMoveM2 THEN
+        GVL_HMI.aManualMotorsCmd[2].bRun := NOT GVL_Motion.aMotors[2].MoveAbsolute(
+            rPosition := GVL_HMI.HMIParameters.aM2Position[iTargetPosM2],
+            rVelocity := GVL_HMI.HMIParameters.rM2Velocity,
+            rAcc := GVL_HMI.HMIParameters.rM2Accleration,
+            rDec := GVL_HMI.HMIParameters.rM2Deceleration
+        );
+    ELSE
+        GVL_HMI.aManualMotorsCmd[2].bRun := FALSE;
+        // TODO: Block flag or alarm
+    END_IF
 END_IF
+
 //Stop Moviment M2 by HMI manual mode button
 IF GVL_HMI.aManualMotorsCmd[2].bStop THEN
 	GVL_HMI.aManualMotorsCmd[2].bStop := NOT GVL_Motion.aMotors[2].Stop();
@@ -54,25 +83,87 @@ END_IF
 
 (*<M3 Motor>*)
 //Interlock by M2 Position
-IF rMotorsActualPosition[2] = GVL_HMI.HMIParameters.aM2Position[1] THEN
-	bSafeMoveM3 := TRUE;
-ELSE
-	bSafeMoveM3 := FALSE;
-END_IF
-
-//Move M2 by HMI combobox manual mode
 IF GVL_HMI.aManualMotorsCmd[3].bRun THEN
-	GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
-                        														rVelocity := GVL_HMI.HMIParameters.rM3Velocity,
-                        														rAcc := GVL_HMI.HMIParameters.rM3Accleration,
-                       															rDec := GVL_HMI.HMIParameters.rM3Deceleration
-																				);
+    IF ABS(rMotorsActualPosition[2] - GVL_HMI.HMIParameters.aM2Position[1]) > rTol THEN
+        //If M2 it is not in Home Position, M3 move cannot be done
+        GVL_HMI.aManualMotorsCmd[3].bRun := FALSE;
+        // TODO: Block flag or alarm
+    ELSE
+        GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(
+            rPosition := GVL_HMI.HMIParameters.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
+            rVelocity := GVL_HMI.HMIParameters.rM3Velocity,
+            rAcc := GVL_HMI.HMIParameters.rM3Accleration,
+            rDec := GVL_HMI.HMIParameters.rM3Deceleration
+        );
+    END_IF
 END_IF
 //Stop Moviment M2 by HMI manual mode button
 IF GVL_HMI.aManualMotorsCmd[3].bStop THEN
 	GVL_HMI.aManualMotorsCmd[3].bStop := NOT GVL_Motion.aMotors[3].Stop();
 END_IF
 (*<\M3 Motor>*)
+
+(* <Valves> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)
+
+(*<Valve 1>*)
+//Move Valve 1 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[1].bMove THEN
+	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 1 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[1].bStop THEN
+	GVL_HMI.aManualValvesCmd[1].bStop := NOT GVL_Motion.aValvesObj[1].Stop();
+END_IF
+(*<\Valve 1>*)
+
+(*<Valve 2>*)
+//Move Valve 2 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[2].bMove THEN
+	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 2 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[2].bStop THEN
+	GVL_HMI.aManualValvesCmd[2].bStop := NOT GVL_Motion.aValvesObj[2].Stop();
+END_IF
+(*<\Valve 2>*)
+
+(*<Valve 3>*)
+//Move Valve 3 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[3].bMove THEN
+	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 3 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[3].bStop THEN
+	GVL_HMI.aManualValvesCmd[3].bStop := NOT GVL_Motion.aValvesObj[3].Stop();
+END_IF
+(*<\Valve 3>*)
+
+(*<Valve 4>*)
+//Move Valve 4 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[4].bMove THEN
+	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 4 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[4].bStop THEN
+	GVL_HMI.aManualValvesCmd[4].bStop := NOT GVL_Motion.aValvesObj[4].Stop();
+END_IF
+(*<\Valve 4>*)
+
+(*<Valve 5>*)
+//Move Valve 5 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[5].bMove THEN
+	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 5 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[5].bStop THEN
+	GVL_HMI.aManualValvesCmd[5].bStop := NOT GVL_Motion.aValvesObj[5].Stop();
+END_IF
+(*<\Valve 5>*)
 
 
 
@@ -188,18 +279,43 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       <LineId Id="576" Count="0" />
       <LineId Id="604" Count="0" />
       <LineId Id="588" Count="0" />
-      <LineId Id="577" Count="10" />
+      <LineId Id="577" Count="0" />
+      <LineId Id="627" Count="1" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="632" Count="13" />
+      <LineId Id="630" Count="1" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="646" Count="11" />
+      <LineId Id="584" Count="0" />
+      <LineId Id="658" Count="0" />
+      <LineId Id="585" Count="2" />
       <LineId Id="575" Count="0" />
       <LineId Id="589" Count="0" />
       <LineId Id="605" Count="0" />
       <LineId Id="591" Count="0" />
       <LineId Id="610" Count="0" />
-      <LineId Id="614" Count="1" />
-      <LineId Id="618" Count="1" />
-      <LineId Id="616" Count="0" />
-      <LineId Id="609" Count="0" />
-      <LineId Id="592" Count="11" />
+      <LineId Id="659" Count="12" />
+      <LineId Id="599" Count="4" />
       <LineId Id="590" Count="0" />
+      <LineId Id="674" Count="0" />
+      <LineId Id="673" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="693" Count="0" />
+      <LineId Id="677" Count="1" />
+      <LineId Id="683" Count="1" />
+      <LineId Id="692" Count="0" />
+      <LineId Id="685" Count="3" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="696" Count="9" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="707" Count="10" />
+      <LineId Id="675" Count="0" />
+      <LineId Id="719" Count="10" />
+      <LineId Id="718" Count="0" />
+      <LineId Id="731" Count="10" />
+      <LineId Id="730" Count="0" />
       <LineId Id="606" Count="0" />
       <LineId Id="561" Count="0" />
       <LineId Id="556" Count="0" />
