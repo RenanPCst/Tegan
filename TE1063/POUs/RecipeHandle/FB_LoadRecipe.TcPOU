@@ -93,16 +93,16 @@ END_VAR
     END_IF
 
 40:
-    IF TO_LINT(fbJson.ParseDocument(sBuffer)) <> S_OK THEN
+    jsonRoot := fbJson.ParseDocument(sBuffer);
+    IF jsonRoot = 0 THEN
         bError := TRUE;
-        nErrId := TO_UDINT(fbJson.initStatus);
+        nErrId := 16#F1000001; // Código customizado para JSON inválido
         step := 100;
     ELSE
-        jsonRoot := fbJson.GetDocumentRoot();
         step := 50;
     END_IF
 
-50:
+50: //Fill the variables with Json buffer info [Parse Json file]
     sPath := 'stInfo/sMethodName';
     GVL_Recipe.stCurrentRecipe.stInfo.sMethodName := fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath));
 
@@ -128,11 +128,60 @@ END_VAR
 
     FOR idx := 1 TO 4 DO
         sPath := CONCAT('stVolumes/aT_IC_Volume#', INT_TO_STRING(idx-1));
-        GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[idx] := fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS0_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS1_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS2_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS3_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS4_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS5_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS6_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aS7_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
+		sPath := CONCAT('stVolumes/aF_Volume#', INT_TO_STRING(idx-1));
+        GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[idx] := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+		
     END_FOR
 
     sPath := 'stOtherParams/tSoakTime';
     GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/tAgitate1Time';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/tAgitade2Time';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/iVialsToFill';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill := TO_USINT(fbJson.GetInt(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/rVialPrimeVol';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/rVial1FillVol';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/rVials2_4FillVol';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := LREAL_TO_REAL(fbJson.GetDouble(fbJson.FindMemberPath(jsonRoot, sPath)));
+	
+	sPath := 'stOtherParams/tAirDryTime';
+    GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
 
     step := 100;
 
@@ -149,7 +198,18 @@ END_VAR
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="FB_LoadRecipe">
-      <LineId Id="916" Count="116" />
+      <LineId Id="916" Count="63" />
+      <LineId Id="1059" Count="0" />
+      <LineId Id="1067" Count="5" />
+      <LineId Id="987" Count="28" />
+      <LineId Id="1073" Count="1" />
+      <LineId Id="1077" Count="21" />
+      <LineId Id="1075" Count="0" />
+      <LineId Id="1099" Count="1" />
+      <LineId Id="1076" Count="0" />
+      <LineId Id="1016" Count="3" />
+      <LineId Id="1101" Count="20" />
+      <LineId Id="1020" Count="12" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

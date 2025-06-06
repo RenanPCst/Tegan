@@ -64,6 +64,11 @@ VAR
 	bMoveValveExecute 	: BOOL;
     bMoveValveRequested : BOOL;
 	
+	//MoveVel()
+	bMoveVelExecute 	: BOOL;
+    bMoveVelRequested 	: BOOL;
+	bMoveVelDone		: BOOL;
+	
 	//Reset()
 	bResetExecute 		: BOOL;
     bResetRequested 	: BOOL;
@@ -129,9 +134,9 @@ END_VAR
         <ST><![CDATA[// Get unified status struct with all feedback for HMI/diagnostics
 fbReadPos(Axis := Axis, Enable := TRUE);
 status.fPosition := fbReadPos.Position;
-status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy;
+status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.Busy;
 status.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
-status.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error;
+status.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error OR fbMoveVel.Error;
 // Prioritize error messages by source
 IF status.bError THEN
 	status.eState := E_ActuatorState.eError;
@@ -141,6 +146,8 @@ IF status.bError THEN
 		status.sMessage := 'Error in MoveAbsolute';
 	ELSIF fbMoveRel.Error THEN
 		status.sMessage := 'Error in MoveRelative';
+	ELSIF fbMoveVel.Error THEN
+		status.sMessage := 'Error in MoveVelocity';
 	ELSIF fbHome.Error THEN
 		status.sMessage := 'Error in Home';
 	END_IF
@@ -434,6 +441,69 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="MoveVelocity" Id="{88eea3e3-3d47-49a5-8a94-a24aaca29cb6}">
+      <Declaration><![CDATA[METHOD MoveVelocity : BOOL
+VAR_INPUT
+    rVelocity  : LREAL := 10.0;
+    rAcc       : LREAL := 20.0;
+    rDec       : LREAL := 20.0;
+	iDirection : E_PumpDirection;
+END_VAR
+
+VAR
+	mcDirection: MC_Direction;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bMoveVelRequested THEN
+    bMoveVelExecute := TRUE;
+    bMoveVelRequested := TRUE;
+END_IF
+
+// Get the corect direction
+IF iDirection = E_PumpDirection.Forward THEN
+	mcDirection := MC_Direction.MC_Positive_Direction;
+	ELSE IF iDirection = E_PumpDirection.Backward THEN
+		mcDirection := MC_Direction.MC_Negative_Direction;
+	ELSE
+		mcDirection := MC_Direction.MC_Current_Direction;
+	END_IF
+END_IF
+
+// Call the internal motion block
+fbMoveVel( 	Axis := Axis,
+			Execute := bMoveVelExecute,
+			Velocity := rVelocity,
+			Direction := mcDirection,
+			Acceleration := rAcc,
+			Deceleration := rDec
+);
+			
+
+// Update actuator status
+status.bBusy := fbMoveVel.Busy;
+status.bError := fbMoveVel.Error;
+status.iErrorCode := fbMoveVel.ErrorID;
+
+IF fbMoveVel.Busy THEN
+    bMoveVelExecute := FALSE;
+END_IF
+
+IF fbMoveVel.Error THEN
+    status.eState := E_ActuatorState.eError;
+    status.sMessage := 'Error in Move Motor';
+END_IF
+
+IF bMoveVelRequested AND NOT fbMoveVel.Busy AND NOT fbMoveVel.Error THEN
+    bMoveVelRequested := FALSE;
+    MoveVelocity := TRUE;
+    RETURN;
+ELSE
+    MoveVelocity := FALSE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Reset" Id="{55ea212e-113c-4739-bf54-01562c1314f2}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
@@ -554,7 +624,9 @@ END_IF
     <LineIds Name="FB_MotorWrapper.GetStatus">
       <LineId Id="6" Count="0" />
       <LineId Id="26" Count="0" />
-      <LineId Id="8" Count="16" />
+      <LineId Id="8" Count="12" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="21" Count="3" />
       <LineId Id="27" Count="0" />
       <LineId Id="25" Count="0" />
       <LineId Id="5" Count="0" />
@@ -626,6 +698,24 @@ END_IF
     <LineIds Name="FB_MotorWrapper.MoveValve">
       <LineId Id="31" Count="44" />
       <LineId Id="77" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.MoveVelocity">
+      <LineId Id="6" Count="4" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="25" Count="18" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">

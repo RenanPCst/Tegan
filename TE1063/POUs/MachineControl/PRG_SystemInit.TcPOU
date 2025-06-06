@@ -18,13 +18,16 @@ VAR
 	
 	bAllResetDone	: BOOL := FALSE;
 	bEnableDone		: BOOL := FALSE;
-	bResetCheck		: ARRAY[1..18] OF BOOL;
+	bResetCheck		: ARRAY[1..28] OF BOOL;
 	
 	aMotorsEnabled 	: ARRAY[1..3] OF BOOL;
 	aValvesEnabled 	: ARRAY[1..5] OF BOOL;
-	aPumpsEnabled	: ARRAY[1..10] OF BOOL;
+	aLinearPumpsEnabled	: ARRAY[1..10] OF BOOL;
+	aRotaryPumpsEnabled	: ARRAY[1..10] OF BOOL;
 	
 	bAllPumpsEnabled  : BOOL := FALSE;
+	bAllLinearPumpsEnabled  : BOOL := FALSE;
+	bAllRotaryPumpsEnabled  : BOOL := FALSE;
 	bAllMotorsEnabled : BOOL := FALSE;
 	bAllValvesEnabled : BOOL := FALSE;
 	
@@ -60,12 +63,18 @@ IF NOT bEnableDone THEN
 		END_FOR
 		
 		FOR i := 1 TO 10 DO
-			aPumpsEnabled[i] := GVL_Motion.aPumpsLinear[i].Enable();
+			aLinearPumpsEnabled[i] := GVL_Motion.aPumpsLinear[i].Enable();
 		END_FOR
-		
+		(*
+		FOR i := 1 TO 10 DO
+			aRotaryPumpsEnabled[i] := GVL_Motion.aPumpsRotary[i].Enable();
+		END_FOR
+		*)
 		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3];
 		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
-		bAllPumpsEnabled  := aPumpsEnabled[1] AND aPumpsEnabled[2] AND aPumpsEnabled[3] AND aPumpsEnabled[4] AND aPumpsEnabled[5] AND aPumpsEnabled[6] AND aPumpsEnabled[7] AND aPumpsEnabled[8] AND aPumpsEnabled[9] AND aPumpsEnabled[10]; 
+		bAllLinearPumpsEnabled  := aLinearPumpsEnabled[1] AND aLinearPumpsEnabled[2] AND aLinearPumpsEnabled[3] AND aLinearPumpsEnabled[4] AND aLinearPumpsEnabled[5] AND aLinearPumpsEnabled[6] AND aLinearPumpsEnabled[7] AND aLinearPumpsEnabled[8] AND aLinearPumpsEnabled[9] AND aLinearPumpsEnabled[10]; 
+		//bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
+		bAllPumpsEnabled := bAllLinearPumpsEnabled (*AND bAllRotaryPumpsEnabled*);
 		
 		IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllPumpsEnabled THEN
 			bEnableDone := TRUE;
@@ -132,13 +141,45 @@ IF NOT bAllResetDone AND bEnableDone THEN
 	END_IF
 	IF NOT bResetCheck[18] THEN
 			bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
+	END_IF(*
+	IF NOT bResetCheck[19] THEN
+			bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
 	END_IF
+	IF NOT bResetCheck[20] THEN
+			bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
+	END_IF
+	IF NOT bResetCheck[21] THEN
+			bResetCheck[21] := GVL_Motion.aPumpsRotary[3].Reset();
+	END_IF
+	IF NOT bResetCheck[22] THEN
+			bResetCheck[22] := GVL_Motion.aPumpsRotary[4].Reset();
+	END_IF
+	IF NOT bResetCheck[23] THEN
+			bResetCheck[23] := GVL_Motion.aPumpsRotary[5].Reset();
+	END_IF
+	IF NOT bResetCheck[24] THEN
+			bResetCheck[24] := GVL_Motion.aPumpsRotary[6].Reset();
+	END_IF
+	IF NOT bResetCheck[25] THEN
+			bResetCheck[25] := GVL_Motion.aPumpsRotary[7].Reset();
+	END_IF
+	IF NOT bResetCheck[26] THEN
+			bResetCheck[26] := GVL_Motion.aPumpsRotary[8].Reset();
+	END_IF
+	IF NOT bResetCheck[27] THEN
+			bResetCheck[27] := GVL_Motion.aPumpsRotary[9].Reset();
+	END_IF
+	IF NOT bResetCheck[28] THEN
+			bResetCheck[28] := GVL_Motion.aPumpsRotary[10].Reset();
+	END_IF*)
 	//Check if all motors reset was done
 	IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND bResetCheck[4] AND 
        bResetCheck[5] AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] AND
        bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
        bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
-       bResetCheck[17] AND bResetCheck[18] THEN
+       bResetCheck[17] AND bResetCheck[18] (*AND bResetCheck[19] AND bResetCheck[20] AND
+	   bResetCheck[21] AND bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
+	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28]*) THEN
 		bAllResetDone := TRUE;
 	ELSE
 		bAllResetDone := FALSE;
@@ -492,10 +533,28 @@ IF bResetExecute THEN
 	bAllResetDone	 := FALSE;
 	bEnableDone		 := FALSE;
 		
-	FOR i := 1 TO 18 DO
+	FOR i := 1 TO 28 DO
 		bResetCheck[i] := FALSE;
 	END_FOR
+	FOR i := 1 TO 3 DO
+		aMotorsEnabled[i] := FALSE;
+	END_FOR
+	FOR i := 1 TO 5 DO
+		aValvesEnabled[i] := FALSE;
+	END_FOR
+	FOR i := 1 TO 10 DO
+		aLinearPumpsEnabled[i] := FALSE;
+	END_FOR
+	FOR i := 1 TO 10 DO
+		aRotaryPumpsEnabled[i] := FALSE;
+	END_FOR
 	
+	bAllPumpsEnabled  := FALSE;
+	bAllLinearPumpsEnabled := FALSE;
+	bAllRotaryPumpsEnabled := FALSE;
+	bAllMotorsEnabled := FALSE;
+	bAllValvesEnabled := FALSE;
+
 	bHomeMotorDone[1] := FALSE;
 	bHomeMotorDone[2] := FALSE;
 	bHomeMotorDone[3] := FALSE;
@@ -539,9 +598,14 @@ END_IF
       <LineId Id="1204" Count="0" />
       <LineId Id="1206" Count="1" />
       <LineId Id="1205" Count="0" />
+      <LineId Id="1350" Count="0" />
+      <LineId Id="1315" Count="1" />
+      <LineId Id="1314" Count="0" />
       <LineId Id="689" Count="0" />
       <LineId Id="1212" Count="0" />
       <LineId Id="1214" Count="1" />
+      <LineId Id="1310" Count="0" />
+      <LineId Id="1312" Count="0" />
       <LineId Id="1213" Count="0" />
       <LineId Id="690" Count="26" />
       <LineId Id="718" Count="8" />
@@ -564,9 +628,30 @@ END_IF
       <LineId Id="1246" Count="0" />
       <LineId Id="1250" Count="1" />
       <LineId Id="1249" Count="0" />
+      <LineId Id="1318" Count="1" />
+      <LineId Id="1317" Count="0" />
+      <LineId Id="1321" Count="1" />
+      <LineId Id="1320" Count="0" />
+      <LineId Id="1324" Count="1" />
+      <LineId Id="1323" Count="0" />
+      <LineId Id="1327" Count="1" />
+      <LineId Id="1326" Count="0" />
+      <LineId Id="1330" Count="1" />
+      <LineId Id="1329" Count="0" />
+      <LineId Id="1333" Count="1" />
+      <LineId Id="1332" Count="0" />
+      <LineId Id="1336" Count="1" />
+      <LineId Id="1335" Count="0" />
+      <LineId Id="1339" Count="1" />
+      <LineId Id="1338" Count="0" />
+      <LineId Id="1342" Count="1" />
+      <LineId Id="1341" Count="0" />
+      <LineId Id="1345" Count="1" />
+      <LineId Id="1344" Count="0" />
       <LineId Id="1255" Count="0" />
       <LineId Id="728" Count="0" />
       <LineId Id="1256" Count="3" />
+      <LineId Id="1348" Count="1" />
       <LineId Id="729" Count="1" />
       <LineId Id="1262" Count="0" />
       <LineId Id="1261" Count="0" />
@@ -670,7 +755,19 @@ END_IF
       <LineId Id="79" Count="1" />
       <LineId Id="41" Count="11" />
       <LineId Id="88" Count="0" />
-      <LineId Id="93" Count="2" />
+      <LineId Id="93" Count="1" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="133" Count="1" />
+      <LineId Id="136" Count="1" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="139" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="142" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="146" Count="3" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="95" Count="0" />
       <LineId Id="89" Count="0" />
       <LineId Id="54" Count="1" />
       <LineId Id="99" Count="3" />
