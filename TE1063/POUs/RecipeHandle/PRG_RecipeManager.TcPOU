@@ -8,6 +8,9 @@ VAR
 
     sPrefix      : STRING(64) := 'C:\TwinCAT\Recipes\';
     sFileName    : STRING(255);
+	
+	bDatagridRowsNaming	: BOOL := FALSE;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -20,6 +23,11 @@ END_IF
 
 IF fbListFiles.bDone THEN
 	GVL_HMI.bRefreshRecipeList := FALSE;
+END_IF
+
+//Naming the datagrid rows in the HMI Recipe Screen just once
+IF NOT bDatagridRowsNaming THEN
+	ACT_DatagridsRowNaming();
 END_IF
 
 // Monta o nome do arquivo selecionado
@@ -36,13 +44,92 @@ IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFro
     GVL_Recipe.stActiveRecipe := GVL_Recipe.stCurrentRecipe;
     GVL_HMI.bRecipeLoadFromFile := FALSE;
     GVL_HMI.bRecipeLoaded := TRUE;
-END_IF]]></ST>
+END_IF
+
+]]></ST>
     </Implementation>
+    <Action Name="ACT_DatagridsRowNaming" Id="{7a5f0b3d-52d7-4ce2-b6cd-e160802e7ce0}">
+      <Implementation>
+        <ST><![CDATA[//Naming the HMI Recipe Screen Datagrid rows
+//TcHmiDatagrid_SolventAndTimes
+GVL_HMI.aSolventAndTimesRows[1].Parameter := 'Solvent #';
+GVL_HMI.aSolventAndTimesRows[2].Parameter := 'Time';
+GVL_HMI.aSolventAndTimesRows[3].Parameter := 'Velocity';
+
+//TcHmiDatagrid_Volumes
+GVL_HMI.aVolumeRows[1].Stage := 'T/IC';
+GVL_HMI.aVolumeRows[2].Stage := 'S0';
+GVL_HMI.aVolumeRows[3].Stage := 'S1';
+GVL_HMI.aVolumeRows[4].Stage := 'S2';
+GVL_HMI.aVolumeRows[5].Stage := 'S3';
+GVL_HMI.aVolumeRows[6].Stage := 'S4';
+GVL_HMI.aVolumeRows[7].Stage := 'S5';
+GVL_HMI.aVolumeRows[8].Stage := 'S6';
+GVL_HMI.aVolumeRows[9].Stage := 'S7';
+GVL_HMI.aVolumeRows[10].Stage := 'F';
+
+//TcHmiDatagrid_OtherParams
+GVL_HMI.aOtherParamsRows[1].Parameter := 'Soak Time';
+GVL_HMI.aOtherParamsRows[2].Parameter := 'Agitate 1 Time';
+GVL_HMI.aOtherParamsRows[3].Parameter := 'Agitate 2 Time';
+GVL_HMI.aOtherParamsRows[4].Parameter := 'Vials to Fill';
+GVL_HMI.aOtherParamsRows[5].Parameter := 'Vial Prime Vol';
+GVL_HMI.aOtherParamsRows[6].Parameter := 'Vial 1 Fill Vol';
+GVL_HMI.aOtherParamsRows[7].Parameter := 'Vials 2-4 Fill Vol';
+GVL_HMI.aOtherParamsRows[8].Parameter := 'Air Dry Time';
+//TcHmiDatagrid_OtherParams - Data Units
+GVL_HMI.aOtherParamsRows[1].Units     := 'sec';
+GVL_HMI.aOtherParamsRows[2].Units     := 'sec';
+GVL_HMI.aOtherParamsRows[3].Units     := 'sec';
+GVL_HMI.aOtherParamsRows[4].Units     := 'unit';
+GVL_HMI.aOtherParamsRows[5].Units     := 'ml';
+GVL_HMI.aOtherParamsRows[6].Units     := 'ml';
+GVL_HMI.aOtherParamsRows[7].Units     := 'ml';
+GVL_HMI.aOtherParamsRows[8].Units     := 'sec';
+
+//Finish the naming
+bDatagridRowsNaming := TRUE;
+]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="PRG_RecipeManager">
       <LineId Id="58" Count="5" />
       <LineId Id="87" Count="3" />
-      <LineId Id="64" Count="14" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="108" Count="2" />
+      <LineId Id="64" Count="8" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="74" Count="4" />
       <LineId Id="43" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="104" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_DatagridsRowNaming">
+      <LineId Id="4" Count="1" />
+      <LineId Id="1" Count="2" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="19" Count="8" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="32" Count="5" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
