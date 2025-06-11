@@ -17,7 +17,7 @@ END_VAR
 VAR
 	iStep         : INT;
     hFile         : UINT;
-    sBuffer       : STRING(4096);
+    sBuffer       : STRING(8192);
     fbFileOpen    : FB_FileOpen;
     fbFileRead    : FB_FileRead;
     fbFileClose   : FB_FileClose;
@@ -26,6 +26,7 @@ VAR
     jsonProp      : SJsonValue;
 	bExecutePrev : BOOL; 
     bStart       : BOOL;
+	iCount		 : UINT := 0;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -116,19 +117,30 @@ CASE iStep OF
         ELSE
             jsonDoc := fbJson.ParseDocument(sBuffer);
             IF jsonDoc = 0 THEN
-                bError := TRUE;
-                nErrId := 16#F1000001; // Custom error code for invalid JSON
-                iStep := 100;
+                iStep := 35;
             ELSE
                 iStep := 40;
             END_IF
         END_IF
     END_IF
 
+35:
+	IF iCount > 10 THEN 
+		bError := TRUE;
+		nErrId := 16#F1000001; // Custom error code for invalid JSON
+		iStep := 100;
+	ELSE
+		jsonDoc := 0;
+		jsonProp := 0;
+		sBuffer := '';
+		iCount := iCount + 1;
+		iStep := 0;
+	END_IF
+	
 40:
     // Extract sCreatedBy
-    jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/sCreatedBy');
-    GVL_Recipe.aAvailableFiles[iTargetIndex].sCreatedBy := fbJson.GetString(jsonProp);
+	jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/sCreatedBy');
+	GVL_Recipe.aAvailableFiles[iTargetIndex].sCreatedBy := fbJson.GetString(jsonProp);
 
     // Extract dCreationDate
     jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/dCreationDate');
@@ -143,6 +155,7 @@ CASE iStep OF
 100:
     bBusy := FALSE;
     bDone := TRUE;
+	icount := 0;
     IF NOT bExecute THEN
         iStep := 0;
     END_IF
@@ -159,7 +172,23 @@ END_CASE]]></ST>
       <LineId Id="1321" Count="1" />
       <LineId Id="1326" Count="1" />
       <LineId Id="1323" Count="0" />
-      <LineId Id="1210" Count="94" />
+      <LineId Id="1210" Count="63" />
+      <LineId Id="1276" Count="5" />
+      <LineId Id="1363" Count="1" />
+      <LineId Id="1371" Count="0" />
+      <LineId Id="1381" Count="1" />
+      <LineId Id="1372" Count="0" />
+      <LineId Id="1375" Count="0" />
+      <LineId Id="1377" Count="3" />
+      <LineId Id="1376" Count="0" />
+      <LineId Id="1373" Count="0" />
+      <LineId Id="1369" Count="0" />
+      <LineId Id="1283" Count="1" />
+      <LineId Id="1362" Count="0" />
+      <LineId Id="1361" Count="0" />
+      <LineId Id="1287" Count="13" />
+      <LineId Id="1383" Count="0" />
+      <LineId Id="1301" Count="3" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

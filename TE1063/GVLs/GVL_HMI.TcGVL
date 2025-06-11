@@ -37,15 +37,27 @@ VAR_GLOBAL
     bRecipeLoadFromFile	 	: BOOL := FALSE; 	//load recipe button from HMI
 	bRecipeLoaded			: BOOL;
     sSelectedRecipeName     : STRING(255); 		// Selected name from hmi list popup
-	
 	bRecipeCorrectLoaded	: BOOL; //Flag to identify if there is a recipe loaded to proceed with the recovery
 	bSettingsCorrectLoaded	: BOOL; //Flag to identify if the settings parameters were loaded correctly from json configuration file
+	
+	bRecipeActivateButton	: BOOL := FALSE; //Activate Recipe command from recipe activate button 
+	bRecipeActivateDone		: BOOL := FALSE; //Activate done flag after command from recipe activate button
+	bRecipeActivateError	: BOOL := FALSE; //Activate Error flag after command from recipe activate button
+	
+	bRecipeSaveButton		: BOOL := FALSE; //save command from recipe save button
+	bRecipeSaveDone			: BOOL := FALSE; //Save done flag after save command from recipe save button
+	bRecipeSaveError		: BOOL := FALSE; //Save Error flag after save command from recipe save button
+	
+	bNewRecipeButton		: BOOL := FALSE; //New Recipe button on recipe screen.
+	
+	sActualUserName			: STRING := '';
 	
 	//Recipe HMI View - data needs to be transposed for better view and handled by HMI
 	stRecipeInfo		 : ST_RecipeInfo;
 	aSolventAndTimesRows : ARRAY[1..3] OF ST_HMI_SolventAndTimeRow;
 	aVolumeRows 		 : ARRAY[1..10] OF ST_HMI_VolumesRow; // 1:T/IC, 2:S0, ..., 10:F
 	aOtherParamsRows 	 : ARRAY[1..8] OF ST_HMI_OtherParamsRow;
+	
 	
 	//Manual Motors Moviment
 	ManualMov	: ST_MotorsJog;

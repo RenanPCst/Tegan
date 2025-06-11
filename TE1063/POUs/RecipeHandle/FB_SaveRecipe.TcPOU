@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SaveRecipe" Id="{8d1bf021-741a-4d11-bf93-fed01591b205}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SaveRecipe
+VAR_INPUT
+    bExecute : BOOL;
+    sUser    : STRING(64);
+END_VAR
+VAR_OUTPUT
+    bDone    : BOOL;
+    bBusy    : BOOL;
+    bError   : BOOL;
+    nErrId   : UDINT;
+END_VAR
+VAR
+    iStep         : INT;
+    fbJson        : FB_JsonDomParser;
+    sJsonBuffer   : STRING(4096);
+    sFileName     : STRING(256);
+    sOldFile      : STRING(256);
+    sOldBackup    : STRING(256);
+    fbFileOpen    : FB_FileOpen;
+    fbFileWrite   : FB_FileWrite;
+    fbFileClose   : FB_FileClose;
+    fbFileRename  : FB_FileRename;
+    nBytesToWrite : UDINT;
+    hFile         : UINT;
+
+    // Data/Hora
+    fbLocalSystemTime : FB_LocalSystemTime := (bEnable := TRUE, dwCycle := 5);
+    sDate : STRING(12);
+    stLocalSystemTime : TIMESTRUCT;
+    tzID : E_TimeZoneID := eTimeZoneID_Invalid;
+
+    // JSON nodes
+    jsonRoot, objStInfo, objSolventsTimes, objVolumes, objOtherParams : SJsonValue;
+    arrVal : SJsonValue;
+    i : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// === STATE MACHINE ===
+CASE iStep OF
+0:
+    IF bExecute THEN
+        bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
+
+        // Atualiza revisão
+        IF GVL_Recipe.stCurrentRecipe.stInfo.iRevision < 1 THEN
+            GVL_Recipe.stCurrentRecipe.stInfo.iRevision := 1;
+        ELSE
+            GVL_Recipe.stCurrentRecipe.stInfo.iRevision := GVL_Recipe.stCurrentRecipe.stInfo.iRevision + 1;
+        END_IF
+
+        // Sincroniza sistema local (pega data atual)
+        fbLocalSystemTime();
+        IF fbLocalSystemTime.bValid THEN
+            stLocalSystemTime := fbLocalSystemTime.systemTime;
+            // Exemplo de string: "2024-06-08"
+            sDate := CONCAT(INT_TO_STRING(stLocalSystemTime.wYear), '-');
+            sDate := CONCAT(sDate, INT_TO_STRING(stLocalSystemTime.wMonth));
+            sDate := CONCAT(sDate, '-');
+            sDate := CONCAT(sDate, INT_TO_STRING(stLocalSystemTime.wDay));
+            GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate := STRING_TO_DATE(sDate);
+        END_IF
+
+        GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := sUser;
+
+        // Monta nome do novo arquivo
+        sFileName := CONCAT('C:/TwinCAT/Recipes/',
+            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+            CONCAT(sUser, CONCAT('_rev', CONCAT(INT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision), '.json')))))
+        );
+        // Nome do arquivo antigo e do backup
+        sOldFile := CONCAT('C:/TwinCAT/Recipes/',
+            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+            CONCAT(sUser, CONCAT('_rev', CONCAT(INT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
+        );
+        sOldBackup := CONCAT('C:/TwinCAT/Recipes/_old/',
+            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+            CONCAT(sUser, CONCAT('_rev', CONCAT(INT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
+        );
+
+        // --- Monta JSON ---
+        jsonRoot := fbJson.NewDocument();
+
+        // Info
+        objStInfo := fbJson.AddObjectMember(jsonRoot, 'stInfo');
+        fbJson.AddStringMember(objStInfo, 'sMethodName', GVL_Recipe.stCurrentRecipe.stInfo.sMethodName);
+        fbJson.AddIntMember(objStInfo, 'iRevision', GVL_Recipe.stCurrentRecipe.stInfo.iRevision);
+        fbJson.AddStringMember(objStInfo, 'sCreatedBy', GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy);
+        fbJson.AddStringMember(objStInfo, 'dCreationDate', DATE_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate));
+
+        // SolventsTimes
+        objSolventsTimes := fbJson.AddObjectMember(jsonRoot, 'stSolventsTimes');
+        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aSolventN', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aTime', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackStringValue(arrVal, TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i])); END_FOR
+        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aVelocity', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i]); END_FOR
+
+        // Volumes
+        objVolumes := fbJson.AddObjectMember(jsonRoot, 'stVolumes');
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aT_IC_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS0_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS1_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS2_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS3_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS4_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS5_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS6_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aS7_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[i]); END_FOR
+        arrVal := fbJson.AddArrayMember(objVolumes, 'aF_Volume', 0);
+        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i]); END_FOR
+
+        // Other Params
+        objOtherParams := fbJson.AddObjectMember(jsonRoot, 'stOtherParams');
+        fbJson.AddStringMember(objOtherParams, 'tSoakTime', TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime));
+        fbJson.AddStringMember(objOtherParams, 'tAgitate1Time', TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time));
+        fbJson.AddStringMember(objOtherParams, 'tAgitade2Time', TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time));
+        fbJson.AddIntMember(objOtherParams, 'iVialsToFill', GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill);
+        fbJson.AddDoubleMember(objOtherParams, 'rVialPrimeVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol);
+        fbJson.AddDoubleMember(objOtherParams, 'rVial1FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol);
+        fbJson.AddDoubleMember(objOtherParams, 'rVials2_4FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol);
+        fbJson.AddStringMember(objOtherParams, 'tAirDryTime', TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime));
+
+        // Exporta documento
+        fbJson.CopyDocument(sJsonBuffer, SIZEOF(sJsonBuffer));
+        iStep := 5;
+    END_IF
+
+5: // Move arquivo antigo para _old (não faz erro fatal se não existir)
+    fbFileRename(
+        sNetId := '',
+        sOldName := sOldFile,
+        sNewName := sOldBackup,
+        bExecute := TRUE
+    );
+    IF NOT fbFileRename.bBusy THEN
+        iStep := 10;
+    END_IF
+
+10: // Cria novo arquivo
+    fbFileOpen(
+        sNetId := '',
+        sPathName := sFileName,
+        nMode := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
+        bExecute := TRUE
+    );
+    IF NOT fbFileOpen.bBusy THEN
+        IF fbFileOpen.bError THEN
+            bError := TRUE;
+            nErrId := fbFileOpen.nErrId;
+            iStep := 100;
+        ELSE
+            hFile := fbFileOpen.hFile;
+            iStep := 20;
+        END_IF
+    END_IF
+
+20:
+    nBytesToWrite := LEN(sJsonBuffer);
+    fbFileWrite(
+        sNetId := '',
+        hFile := hFile,
+        pWriteBuff := ADR(sJsonBuffer),
+        cbWriteLen := nBytesToWrite,
+        bExecute := TRUE
+    );
+    IF NOT fbFileWrite.bBusy THEN
+        IF fbFileWrite.bError THEN
+            bError := TRUE;
+            nErrId := fbFileWrite.nErrId;
+            iStep := 100;
+        ELSE
+            iStep := 30;
+        END_IF
+    END_IF
+
+30:
+    fbFileClose(
+        sNetId := '',
+        hFile := hFile,
+        bExecute := TRUE
+    );
+    IF NOT fbFileClose.bBusy THEN
+        IF fbFileClose.bError THEN
+            bError := TRUE;
+            nErrId := fbFileClose.nErrId;
+        END_IF
+        bDone := TRUE;
+        bBusy := FALSE;
+        iStep := 100;
+    END_IF
+
+100:
+    IF NOT bExecute THEN
+        iStep := 0;
+        bDone := FALSE;
+        bBusy := FALSE;
+    END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SaveRecipe">
+      <LineId Id="341" Count="170" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
