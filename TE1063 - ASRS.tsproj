@@ -3729,8 +3729,8 @@ External Setpoint Generation:
 					<Name>Pump 1 - Rotary</Name>
 					<AxisPara>
 						<General UnitName="°"/>
-						<Dynamic AccelerationMaximum="1500" DecelerationMaximum="1500" Acceleration="7264.57" Deceleration="7264.57" Jerk="21793.7"/>
-						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.05"/>
+						<Dynamic AccelerationMaximum="1500" DecelerationMaximum="1500" Jerk="21793.7205"/>
+						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="242.15245" FastManual="1452.9147" Fast="4843.049" Maximum="4843.049"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
@@ -3795,7 +3795,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="4800" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5327.3539" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4219,7 +4219,7 @@ External Setpoint Generation:
 						</Vars>
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
-						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
+						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00000100">
 							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
@@ -4303,7 +4303,9 @@ External Setpoint Generation:
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="360" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="360" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<Inc RefSyncInverse="false"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -4418,6 +4420,7 @@ External Setpoint Generation:
 					</Drive>
 					<Controller Name="Ctrl" CtrType="1">
 						<CtrPara PriorControlFactor="1">
+							<PosDiffControl Enable="false"/>
 							<Observer BandWidth="20"/>
 						</CtrPara>
 					</Controller>
@@ -6421,11 +6424,16 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{1CF38134-1D1C-B156-5178-2BF93FB37AF7}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{6CF37876-C888-C458-BD51-11A50158E7A4}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
 						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
@@ -6440,11 +6448,6 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyEnable</Name>
@@ -7095,13 +7098,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gDigOutputs</Name>
 							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
 							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyErrorAck</Name>
@@ -7123,6 +7126,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.iM4STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STORun</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7387,14 +7398,6 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STORun</Name>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.iM6STOErrorAck</Name>
@@ -16257,601 +16260,6 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 						<Name>Term 15 (EL7211-9014)</Name>
 						<ImageId>1007</ImageId>
 						<Xml>
-							<TcDMDrive>
-								<SortId>0</SortId>
-								<DriveModuleType>4</DriveModuleType>
-								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
-									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
-									<ItemId>27</ItemId>
-									<ObjectId>#x0302001b</ObjectId>
-								</TcLink>
-								<OrderCode>EL7211-9014</OrderCode>
-								<Name>Term 15 (EL7211-9014)</Name>
-								<FirmwareVersion>27</FirmwareVersion>
-								<CatalogNo>EL7211-9014</CatalogNo>
-								<HardwareVersion>10</HardwareVersion>
-								<SerialNr>55 634</SerialNr>
-								<BIC>1P145789SBTN999imdhf1KEL7211-9014                   Q1    2P152427100032</BIC>
-								<ProductRevision>EL7211-9014-0032</ProductRevision>
-								<WatchLog UpdateIntervalInMs="500">
-									<WatchLogItem>
-										<WatchLogParaCoE Index="4120" SubIndex="2"/>
-										<Alias>Type</Alias>
-									</WatchLogItem>
-									<WatchLogItem>
-										<WatchLogParaCoE Index="4120" SubIndex="4"/>
-										<Alias>Serial Nr</Alias>
-									</WatchLogItem>
-									<WatchLogItem>
-										<WatchLogParaCoE Index="4322" SubIndex="1"/>
-										<Alias>BIC</Alias>
-									</WatchLogItem>
-									<WatchLogItem>
-										<WatchLogParaCoE Index="4106" SubIndex="0"/>
-										<Alias>Firmware version</Alias>
-									</WatchLogItem>
-									<WatchLogItem>
-										<WatchLogParaCoE Index="36880" SubIndex="18"/>
-										<Alias>DC link voltage</Alias>
-									</WatchLogItem>
-									<WatchLogItem>
-										<WatchLogParaCoE Index="36880" SubIndex="17"/>
-										<Alias>Amplifier temperature</Alias>
-									</WatchLogItem>
-								</WatchLog>
-								<Inverter>
-									<Device>
-										<Name>DMInverterTypeDevice</Name>
-										<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
-										<Parameter>
-											<PropertyName>MaxAllowedMainVoltage</PropertyName>
-											<Value>48</Value>
-										</Parameter>
-										<Parameter>
-											<PropertyName>MinDcLinkVoltage</PropertyName>
-											<Value>6.8</Value>
-										</Parameter>
-										<Parameter>
-											<PropertyName>MaxDcLinkVoltage</PropertyName>
-											<Value>60</Value>
-										</Parameter>
-									</Device>
-									<Channel ChnId="0">
-										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
-											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
-											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^M2 Motor - SC Vertical</NcItemPathName>
-										</TcLink>
-										<SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
-										<Block Id="0">
-											<Motor IsManualInput="false" IsManualMFiInput="false" DataSource="2" SerialNo="aa404xde">
-												<DatabaseType>
-													<SchemaVersion/>
-													<DataVersion>1.26</DataVersion>
-													<OrderCode>AM8121-0FH1-0000</OrderCode>
-													<GroupType/>
-													<ElectricMotorType>AM8121-xFx1</ElectricMotorType>
-													<MotorfeedbackType>EDM35-2KF0A0S03</MotorfeedbackType>
-													<MotorbrakeType>AM8121-0FH1-0000-brake</MotorbrakeType>
-													<AssemblyType/>
-													<VendorName>Beckhoff</VendorName>
-													<IsAc>true</IsAc>
-													<ConstructType>0</ConstructType>
-													<IsBeckhoffMotorShaftSpeicified>false</IsBeckhoffMotorShaftSpeicified>
-												</DatabaseType>
-												<DatabaseParameters>
-													<Parameter>
-														<Name>Vendor</Name>
-														<Data type="visibleString">Beckhoff</Data>
-													</Parameter>
-													<Parameter>
-														<Name>ElecType</Name>
-														<Data type="visibleString">AM8121-xFx1</Data>
-													</Parameter>
-													<Parameter>
-														<Name>SerialNr</Name>
-														<Data type="visibleString">aa404xde</Data>
-													</Parameter>
-													<Parameter>
-														<Name>OrderCode</Name>
-														<Data type="visibleString">AM8121-0FH1-0000</Data>
-													</Parameter>
-													<Parameter>
-														<Name>ConstrType</Name>
-														<Data type="real64">0</Data>
-													</Parameter>
-													<Parameter>
-														<Name>PolePairs</Name>
-														<Data type="real64">3</Data>
-													</Parameter>
-													<Parameter>
-														<Name>I0rms</Name>
-														<Data type="real64" unitSiNumerator="4">4</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Inrms</Name>
-														<Data type="real64" unitSiNumerator="4">4</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Iprms</Name>
-														<Data type="real64" unitSiNumerator="4">17</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Unrms</Name>
-														<Data type="real64" unitSiNumerator="38">33.9</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Umaxrms</Name>
-														<Data type="real64" unitSiNumerator="38">96</Data>
-													</Parameter>
-													<Parameter>
-														<Name>dudtMax</Name>
-														<Data type="real64" unitSiNumerator="38" unitSiDenominator="3">8000000000</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Mpeak</Name>
-														<Data type="real64" unitSiNumerator="86">1.97</Data>
-													</Parameter>
-													<Parameter>
-														<Name>kT</Name>
-														<Data type="real64" unitSiNumerator="86" unitSiDenominator="4">0.125</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Mi</Name>
-														<DataTable type="real641" unitSiNumerator="4">
-															<item>1.7</item>
-															<item>3.4</item>
-															<item>5.1000000000000005</item>
-															<item>6.8</item>
-															<item>8.5</item>
-															<item>10.200000000000001</item>
-															<item>11.9</item>
-															<item>13.6</item>
-															<item>15.3</item>
-															<item>17</item>
-														</DataTable>
-														<DataTable type="real641" unitSiNumerator="86">
-															<item>0.211</item>
-															<item>0.419</item>
-															<item>0.623</item>
-															<item>0.82500000000000007</item>
-															<item>1.024</item>
-															<item>1.22</item>
-															<item>1.412</item>
-															<item>1.602</item>
-															<item>1.7890000000000002</item>
-															<item>1.97</item>
-														</DataTable>
-													</Parameter>
-													<Parameter>
-														<Name>kErms</Name>
-														<Data type="real64" unitSiNumerator="38" unitSiDenominator="225">0.0075</Data>
-													</Parameter>
-													<Parameter>
-														<Name>R</Name>
-														<Data type="real64" unitSiNumerator="40">1.65</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Lq</Name>
-														<Data type="real64" unitSiNumerator="44">0.0028</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Ld</Name>
-														<Data type="real64" unitSiNumerator="44">0.0028</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Lqi</Name>
-														<DataTable type="real641" unitSiNumerator="4">
-															<item>1.7</item>
-															<item>3.4</item>
-															<item>5.1000000000000005</item>
-															<item>6.8</item>
-															<item>8.5</item>
-															<item>10.200000000000001</item>
-															<item>11.9</item>
-															<item>13.6</item>
-															<item>15.3</item>
-															<item>17</item>
-														</DataTable>
-														<DataTable type="real641" unitSiNumerator="44">
-															<item>0.002144</item>
-															<item>0.001588</item>
-															<item>0.001419</item>
-															<item>0.001238</item>
-															<item>0.0010509999999999999</item>
-															<item>0.00092499999999999993</item>
-															<item>0.00081799999999999993</item>
-															<item>0.00074699999999999994</item>
-															<item>0.000694</item>
-															<item>0.000656</item>
-														</DataTable>
-													</Parameter>
-													<Parameter>
-														<Name>Nmax</Name>
-														<Data type="real64" unitSiNumerator="225">10000</Data>
-													</Parameter>
-													<Parameter>
-														<Name>J</Name>
-														<Data type="real64" unitSiNumerator="224">2.11E-05</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TMotorWarn</Name>
-														<Data type="real64" unitSiNumerator="45">120</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TMotorLimit</Name>
-														<Data type="real64" unitSiNumerator="45">140</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Ti2t</Name>
-														<Data type="real64" unitSiNumerator="3">54.7</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Mtc</Name>
-														<Data type="real64" unitSiNumerator="71">10</Data>
-													</Parameter>
-													<Parameter>
-														<Name>BrakeType</Name>
-														<Data type="real64">1</Data>
-													</Parameter>
-													<Parameter>
-														<Name>UBrakeMin</Name>
-														<Data type="real64" unitSiNumerator="38">21.6</Data>
-													</Parameter>
-													<Parameter>
-														<Name>UBrakeMax</Name>
-														<Data type="real64" unitSiNumerator="38">25.4</Data>
-													</Parameter>
-													<Parameter>
-														<Name>IBrakeMin</Name>
-														<Data type="real64" unitSiNumerator="4">0.199</Data>
-													</Parameter>
-													<Parameter>
-														<Name>MBrake</Name>
-														<Data type="real64" unitSiNumerator="86">2</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeOn</Name>
-														<Data type="real64" unitSiNumerator="3">0.025</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeOff</Name>
-														<Data type="real64" unitSiNumerator="3">0.008</Data>
-													</Parameter>
-													<Parameter>
-														<Name>IBrakeRed</Name>
-														<Data type="real64" unitSiNumerator="4">0.248</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeRed</Name>
-														<Data type="real64" unitSiNumerator="3">3</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TempSensorCon</Name>
-														<Data type="real64">1</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TempSensorRT</Name>
-														<DataTable type="real641" unitSiNumerator="45">
-															<item>-40</item>
-															<item>-15.5</item>
-															<item>9</item>
-															<item>33.5</item>
-															<item>58</item>
-															<item>82.5</item>
-															<item>107</item>
-															<item>131.5</item>
-															<item>156</item>
-															<item>181</item>
-														</DataTable>
-														<DataTable type="real641" unitSiNumerator="40">
-															<item>359</item>
-															<item>440</item>
-															<item>534</item>
-															<item>642</item>
-															<item>762</item>
-															<item>896</item>
-															<item>1043</item>
-															<item>1204</item>
-															<item>1377</item>
-															<item>1560</item>
-														</DataTable>
-													</Parameter>
-													<Parameter>
-														<Name>NnUnrms</Name>
-														<DataTable type="real641" unitSiNumerator="38">
-															<item>17</item>
-															<item>33.9</item>
-														</DataTable>
-														<DataTable type="real641" unitSiNumerator="225">
-															<item>1000</item>
-															<item>3000</item>
-														</DataTable>
-													</Parameter>
-													<Parameter>
-														<Name>MnUnrms</Name>
-														<DataTable type="real641" unitSiNumerator="38">
-															<item>17</item>
-															<item>33.9</item>
-														</DataTable>
-														<DataTable type="real641" unitSiNumerator="86">
-															<item>0.5</item>
-															<item>0.5</item>
-														</DataTable>
-													</Parameter>
-													<Parameter>
-														<Name>Version</Name>
-														<Data type="real64">1.26</Data>
-													</Parameter>
-												</DatabaseParameters>
-												<Calc>
-													<CoE>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Motor Settings / Commutation offset</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32785</Index>
-															<SubIndex>21</SubIndex>
-															<Data>0E01</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Brake Settings / Emergency application timeout</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32786</Index>
-															<SubIndex>19</SubIndex>
-															<Data>0000</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Amplifier Settings / Stand still window</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32784</Index>
-															<SubIndex>51</SubIndex>
-															<Data>0A00</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Motor Settings / Motor speed limitation</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32785</Index>
-															<SubIndex>27</SubIndex>
-															<Data>D30C0000</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Outputs / Torque limitation</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>28688</Index>
-															<SubIndex>11</SubIndex>
-															<Data>D007</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Amplifier Settings / Current loop proportional gain</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32784</Index>
-															<SubIndex>19</SubIndex>
-															<Data>4C01</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Amplifier Settings / Current loop integral time</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32784</Index>
-															<SubIndex>18</SubIndex>
-															<Data>0500</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Amplifier Settings / Velocity loop proportional gain</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32784</Index>
-															<SubIndex>21</SubIndex>
-															<Data>95000000</Data>
-														</InitCmd>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>DRV Amplifier Settings / Velocity loop integral time</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32784</Index>
-															<SubIndex>20</SubIndex>
-															<Data>96000000</Data>
-														</InitCmd>
-													</CoE>
-												</Calc>
-											</Motor>
-											<Feedback DataSource="2">
-												<DatabaseType>
-													<OrderCode>EDM35-2KF0A0S03</OrderCode>
-													<VendorName/>
-													<IsRotary>true</IsRotary>
-													<AbsolutePosInterface>7</AbsolutePosInterface>
-													<GroupType/>
-													<ElectricFeedbackType/>
-												</DatabaseType>
-												<DatabaseParameters>
-													<Parameter>
-														<Name>AbsolutePositionData_ResolutionSinglePos</Name>
-														<Data type="real64">20</Data>
-													</Parameter>
-													<Parameter>
-														<Name>AbsolutePositionData_ResolutionMultiPos</Name>
-														<Data type="real64">12</Data>
-													</Parameter>
-													<Parameter>
-														<Name>Kind</Name>
-														<Data type="int16">0</Data>
-													</Parameter>
-													<Parameter>
-														<Name>AbsolutePositionInterface</Name>
-														<Data type="int16">7</Data>
-													</Parameter>
-													<Parameter>
-														<Name>RelativePositionInterface</Name>
-														<Data type="int16">0</Data>
-													</Parameter>
-												</DatabaseParameters>
-												<FeedbackUse>Commutation</FeedbackUse>
-												<SerialNo>A6250617U</SerialNo>
-												<Calc>
-													<CoE>
-														<InitCmd>
-															<Transition>PS</Transition>
-															<Comment>FB Settings / Invert feedback direction</Comment>
-															<Timeout>0</Timeout>
-															<Ccs>1</Ccs>
-															<Index>32768</Index>
-															<SubIndex>1</SubIndex>
-															<Data>00</Data>
-														</InitCmd>
-													</CoE>
-												</Calc>
-											</Feedback>
-											<Brake>
-												<DatabaseType>
-													<OrderCode>AM8121-0FH1-0000-brake</OrderCode>
-													<MountedMotorOrderCode>AM8121-0FH1-0000</MountedMotorOrderCode>
-													<BrakeType>HoldingBrake</BrakeType>
-												</DatabaseType>
-												<DatabaseParameters>
-													<Parameter>
-														<Name>BrakeType</Name>
-														<Data type="real64">1</Data>
-													</Parameter>
-													<Parameter>
-														<Name>UBrakeMin</Name>
-														<Data type="real64" unitSiNumerator="38">21.6</Data>
-													</Parameter>
-													<Parameter>
-														<Name>UBrakeMax</Name>
-														<Data type="real64" unitSiNumerator="38">25.4</Data>
-													</Parameter>
-													<Parameter>
-														<Name>IBrakeMin</Name>
-														<Data type="real64" unitSiNumerator="4">0.199</Data>
-													</Parameter>
-													<Parameter>
-														<Name>MBrake</Name>
-														<Data type="real64" unitSiNumerator="86">2</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeOn</Name>
-														<Data type="real64" unitSiNumerator="3">0.025</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeOff</Name>
-														<Data type="real64" unitSiNumerator="3">0.008</Data>
-													</Parameter>
-													<Parameter>
-														<Name>TBrakeRed</Name>
-														<Data type="real64" unitSiNumerator="3">3</Data>
-													</Parameter>
-												</DatabaseParameters>
-											</Brake>
-											<Load MoveStyle="Linear">
-												<IsMotorRotary>true</IsMotorRotary>
-												<Name>InverterChannelTypeBlockLoad</Name>
-												<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
-												<Parameter>
-													<PropertyName>FeedConstantUnit</PropertyName>
-													<Value>mm</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>FeedConstant</PropertyName>
-													<Value>10</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>GearRatioMotorSide</PropertyName>
-													<Value>1</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>GearRatioLoadSide</PropertyName>
-													<Value>1</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>GearboxInertia</PropertyName>
-													<Value>0</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>LoadInertiaMassReflectedOnGearbox</PropertyName>
-													<Value>0</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>MaxMoveDistance</PropertyName>
-													<Value>20</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>LoadInertiaMass</PropertyName>
-													<Value>0</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>MaxApplicationTorqueForce</PropertyName>
-													<Value>1</Value>
-												</Parameter>
-												<Parameter>
-													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>343.79496</Value>
-												</Parameter>
-											</Load>
-											<Controller>
-												<Filter Id="0">
-													<Name>ControllerFilter</Name>
-													<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
-													<Parameter>
-														<PropertyName>Filter_Type</PropertyName>
-														<Value>1</Value>
-													</Parameter>
-													<Parameter>
-														<PropertyName>Filter_LowPassFrequency</PropertyName>
-														<Value>320</Value>
-													</Parameter>
-													<Parameter>
-														<PropertyName>Filter_LowPassDamping</PropertyName>
-														<Value>0</Value>
-													</Parameter>
-													<Parameter>
-														<PropertyName>Filter_HighPassFrequency</PropertyName>
-														<Value>0</Value>
-													</Parameter>
-													<Parameter>
-														<PropertyName>Filter_HighPassDamping</PropertyName>
-														<Value>0</Value>
-													</Parameter>
-												</Filter>
-											</Controller>
-										</Block>
-										<WatchLog ChnId="0" UpdateIntervalInMs="500">
-											<WatchLogItem>
-												<WatchLogParaCoE Index="24592" SubIndex="1"/>
-												<Alias>Status word</Alias>
-											</WatchLogItem>
-											<WatchLogItem>
-												<WatchLogParaCoE Index="28688" SubIndex="3"/>
-												<Alias>Actual operation mode</Alias>
-											</WatchLogItem>
-											<WatchLogItem>
-												<WatchLogParaCoE Index="24592" SubIndex="7"/>
-												<Alias>Actual velocity</Alias>
-											</WatchLogItem>
-											<WatchLogItem>
-												<WatchLogParaCoE Index="24592" SubIndex="8"/>
-												<Alias>Actual torque</Alias>
-											</WatchLogItem>
-										</WatchLog>
-									</Channel>
-								</Inverter>
-							</TcDMDrive>
 							<EL72xxDriveTool>
 								<AxisSettings>
 									<AxisSetting Channel="0">
@@ -17575,6 +16983,601 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 									</Element>
 								</StatusBar>
 							</EL72xxDriveTool>
+							<TcDMDrive>
+								<SortId>0</SortId>
+								<DriveModuleType>4</DriveModuleType>
+								<TcLink>
+									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
+									<ItemId>27</ItemId>
+									<ObjectId>#x0302001b</ObjectId>
+								</TcLink>
+								<OrderCode>EL7211-9014</OrderCode>
+								<Name>Term 15 (EL7211-9014)</Name>
+								<FirmwareVersion>27</FirmwareVersion>
+								<CatalogNo>EL7211-9014</CatalogNo>
+								<HardwareVersion>10</HardwareVersion>
+								<SerialNr>55 634</SerialNr>
+								<BIC>1P145789SBTN999imdhf1KEL7211-9014                   Q1    2P152427100032</BIC>
+								<ProductRevision>EL7211-9014-0032</ProductRevision>
+								<WatchLog UpdateIntervalInMs="500">
+									<WatchLogItem>
+										<WatchLogParaCoE Index="4120" SubIndex="2"/>
+										<Alias>Type</Alias>
+									</WatchLogItem>
+									<WatchLogItem>
+										<WatchLogParaCoE Index="4120" SubIndex="4"/>
+										<Alias>Serial Nr</Alias>
+									</WatchLogItem>
+									<WatchLogItem>
+										<WatchLogParaCoE Index="4322" SubIndex="1"/>
+										<Alias>BIC</Alias>
+									</WatchLogItem>
+									<WatchLogItem>
+										<WatchLogParaCoE Index="4106" SubIndex="0"/>
+										<Alias>Firmware version</Alias>
+									</WatchLogItem>
+									<WatchLogItem>
+										<WatchLogParaCoE Index="36880" SubIndex="18"/>
+										<Alias>DC link voltage</Alias>
+									</WatchLogItem>
+									<WatchLogItem>
+										<WatchLogParaCoE Index="36880" SubIndex="17"/>
+										<Alias>Amplifier temperature</Alias>
+									</WatchLogItem>
+								</WatchLog>
+								<Inverter>
+									<Device>
+										<Name>DMInverterTypeDevice</Name>
+										<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+										<Parameter>
+											<PropertyName>MaxAllowedMainVoltage</PropertyName>
+											<Value>48</Value>
+										</Parameter>
+										<Parameter>
+											<PropertyName>MinDcLinkVoltage</PropertyName>
+											<Value>6.8</Value>
+										</Parameter>
+										<Parameter>
+											<PropertyName>MaxDcLinkVoltage</PropertyName>
+											<Value>60</Value>
+										</Parameter>
+									</Device>
+									<Channel ChnId="0">
+										<TcLink>
+											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
+											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^M2 Motor - SC Vertical</NcItemPathName>
+										</TcLink>
+										<SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
+										<Block Id="0">
+											<Motor IsManualInput="false" IsManualMFiInput="false" DataSource="2" SerialNo="aa404xde">
+												<DatabaseType>
+													<SchemaVersion/>
+													<DataVersion>1.26</DataVersion>
+													<OrderCode>AM8121-0FH1-0000</OrderCode>
+													<GroupType/>
+													<ElectricMotorType>AM8121-xFx1</ElectricMotorType>
+													<MotorfeedbackType>EDM35-2KF0A0S03</MotorfeedbackType>
+													<MotorbrakeType>AM8121-0FH1-0000-brake</MotorbrakeType>
+													<AssemblyType/>
+													<VendorName>Beckhoff</VendorName>
+													<IsAc>true</IsAc>
+													<ConstructType>0</ConstructType>
+													<IsBeckhoffMotorShaftSpeicified>false</IsBeckhoffMotorShaftSpeicified>
+												</DatabaseType>
+												<DatabaseParameters>
+													<Parameter>
+														<Name>Vendor</Name>
+														<Data type="visibleString">Beckhoff</Data>
+													</Parameter>
+													<Parameter>
+														<Name>ElecType</Name>
+														<Data type="visibleString">AM8121-xFx1</Data>
+													</Parameter>
+													<Parameter>
+														<Name>SerialNr</Name>
+														<Data type="visibleString">aa404xde</Data>
+													</Parameter>
+													<Parameter>
+														<Name>OrderCode</Name>
+														<Data type="visibleString">AM8121-0FH1-0000</Data>
+													</Parameter>
+													<Parameter>
+														<Name>ConstrType</Name>
+														<Data type="real64">0</Data>
+													</Parameter>
+													<Parameter>
+														<Name>PolePairs</Name>
+														<Data type="real64">3</Data>
+													</Parameter>
+													<Parameter>
+														<Name>I0rms</Name>
+														<Data type="real64" unitSiNumerator="4">4</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Inrms</Name>
+														<Data type="real64" unitSiNumerator="4">4</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Iprms</Name>
+														<Data type="real64" unitSiNumerator="4">17</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Unrms</Name>
+														<Data type="real64" unitSiNumerator="38">33.9</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Umaxrms</Name>
+														<Data type="real64" unitSiNumerator="38">96</Data>
+													</Parameter>
+													<Parameter>
+														<Name>dudtMax</Name>
+														<Data type="real64" unitSiNumerator="38" unitSiDenominator="3">8000000000</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Mpeak</Name>
+														<Data type="real64" unitSiNumerator="86">1.97</Data>
+													</Parameter>
+													<Parameter>
+														<Name>kT</Name>
+														<Data type="real64" unitSiNumerator="86" unitSiDenominator="4">0.125</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Mi</Name>
+														<DataTable type="real641" unitSiNumerator="4">
+															<item>1.7</item>
+															<item>3.4</item>
+															<item>5.1000000000000005</item>
+															<item>6.8</item>
+															<item>8.5</item>
+															<item>10.200000000000001</item>
+															<item>11.9</item>
+															<item>13.6</item>
+															<item>15.3</item>
+															<item>17</item>
+														</DataTable>
+														<DataTable type="real641" unitSiNumerator="86">
+															<item>0.211</item>
+															<item>0.419</item>
+															<item>0.623</item>
+															<item>0.82500000000000007</item>
+															<item>1.024</item>
+															<item>1.22</item>
+															<item>1.412</item>
+															<item>1.602</item>
+															<item>1.7890000000000002</item>
+															<item>1.97</item>
+														</DataTable>
+													</Parameter>
+													<Parameter>
+														<Name>kErms</Name>
+														<Data type="real64" unitSiNumerator="38" unitSiDenominator="225">0.0075</Data>
+													</Parameter>
+													<Parameter>
+														<Name>R</Name>
+														<Data type="real64" unitSiNumerator="40">1.65</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Lq</Name>
+														<Data type="real64" unitSiNumerator="44">0.0028</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Ld</Name>
+														<Data type="real64" unitSiNumerator="44">0.0028</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Lqi</Name>
+														<DataTable type="real641" unitSiNumerator="4">
+															<item>1.7</item>
+															<item>3.4</item>
+															<item>5.1000000000000005</item>
+															<item>6.8</item>
+															<item>8.5</item>
+															<item>10.200000000000001</item>
+															<item>11.9</item>
+															<item>13.6</item>
+															<item>15.3</item>
+															<item>17</item>
+														</DataTable>
+														<DataTable type="real641" unitSiNumerator="44">
+															<item>0.002144</item>
+															<item>0.001588</item>
+															<item>0.001419</item>
+															<item>0.001238</item>
+															<item>0.0010509999999999999</item>
+															<item>0.00092499999999999993</item>
+															<item>0.00081799999999999993</item>
+															<item>0.00074699999999999994</item>
+															<item>0.000694</item>
+															<item>0.000656</item>
+														</DataTable>
+													</Parameter>
+													<Parameter>
+														<Name>Nmax</Name>
+														<Data type="real64" unitSiNumerator="225">10000</Data>
+													</Parameter>
+													<Parameter>
+														<Name>J</Name>
+														<Data type="real64" unitSiNumerator="224">2.11E-05</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TMotorWarn</Name>
+														<Data type="real64" unitSiNumerator="45">120</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TMotorLimit</Name>
+														<Data type="real64" unitSiNumerator="45">140</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Ti2t</Name>
+														<Data type="real64" unitSiNumerator="3">54.7</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Mtc</Name>
+														<Data type="real64" unitSiNumerator="71">10</Data>
+													</Parameter>
+													<Parameter>
+														<Name>BrakeType</Name>
+														<Data type="real64">1</Data>
+													</Parameter>
+													<Parameter>
+														<Name>UBrakeMin</Name>
+														<Data type="real64" unitSiNumerator="38">21.6</Data>
+													</Parameter>
+													<Parameter>
+														<Name>UBrakeMax</Name>
+														<Data type="real64" unitSiNumerator="38">25.4</Data>
+													</Parameter>
+													<Parameter>
+														<Name>IBrakeMin</Name>
+														<Data type="real64" unitSiNumerator="4">0.199</Data>
+													</Parameter>
+													<Parameter>
+														<Name>MBrake</Name>
+														<Data type="real64" unitSiNumerator="86">2</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeOn</Name>
+														<Data type="real64" unitSiNumerator="3">0.025</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeOff</Name>
+														<Data type="real64" unitSiNumerator="3">0.008</Data>
+													</Parameter>
+													<Parameter>
+														<Name>IBrakeRed</Name>
+														<Data type="real64" unitSiNumerator="4">0.248</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeRed</Name>
+														<Data type="real64" unitSiNumerator="3">3</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TempSensorCon</Name>
+														<Data type="real64">1</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TempSensorRT</Name>
+														<DataTable type="real641" unitSiNumerator="45">
+															<item>-40</item>
+															<item>-15.5</item>
+															<item>9</item>
+															<item>33.5</item>
+															<item>58</item>
+															<item>82.5</item>
+															<item>107</item>
+															<item>131.5</item>
+															<item>156</item>
+															<item>181</item>
+														</DataTable>
+														<DataTable type="real641" unitSiNumerator="40">
+															<item>359</item>
+															<item>440</item>
+															<item>534</item>
+															<item>642</item>
+															<item>762</item>
+															<item>896</item>
+															<item>1043</item>
+															<item>1204</item>
+															<item>1377</item>
+															<item>1560</item>
+														</DataTable>
+													</Parameter>
+													<Parameter>
+														<Name>NnUnrms</Name>
+														<DataTable type="real641" unitSiNumerator="38">
+															<item>17</item>
+															<item>33.9</item>
+														</DataTable>
+														<DataTable type="real641" unitSiNumerator="225">
+															<item>1000</item>
+															<item>3000</item>
+														</DataTable>
+													</Parameter>
+													<Parameter>
+														<Name>MnUnrms</Name>
+														<DataTable type="real641" unitSiNumerator="38">
+															<item>17</item>
+															<item>33.9</item>
+														</DataTable>
+														<DataTable type="real641" unitSiNumerator="86">
+															<item>0.5</item>
+															<item>0.5</item>
+														</DataTable>
+													</Parameter>
+													<Parameter>
+														<Name>Version</Name>
+														<Data type="real64">1.26</Data>
+													</Parameter>
+												</DatabaseParameters>
+												<Calc>
+													<CoE>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Motor Settings / Commutation offset</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32785</Index>
+															<SubIndex>21</SubIndex>
+															<Data>0E01</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Brake Settings / Emergency application timeout</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32786</Index>
+															<SubIndex>19</SubIndex>
+															<Data>0000</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Amplifier Settings / Stand still window</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32784</Index>
+															<SubIndex>51</SubIndex>
+															<Data>0A00</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Motor Settings / Motor speed limitation</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32785</Index>
+															<SubIndex>27</SubIndex>
+															<Data>D30C0000</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Outputs / Torque limitation</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>28688</Index>
+															<SubIndex>11</SubIndex>
+															<Data>D007</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Amplifier Settings / Current loop proportional gain</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32784</Index>
+															<SubIndex>19</SubIndex>
+															<Data>4C01</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Amplifier Settings / Current loop integral time</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32784</Index>
+															<SubIndex>18</SubIndex>
+															<Data>0500</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Amplifier Settings / Velocity loop proportional gain</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32784</Index>
+															<SubIndex>21</SubIndex>
+															<Data>95000000</Data>
+														</InitCmd>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>DRV Amplifier Settings / Velocity loop integral time</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32784</Index>
+															<SubIndex>20</SubIndex>
+															<Data>96000000</Data>
+														</InitCmd>
+													</CoE>
+												</Calc>
+											</Motor>
+											<Feedback DataSource="2">
+												<DatabaseType>
+													<OrderCode>EDM35-2KF0A0S03</OrderCode>
+													<VendorName/>
+													<IsRotary>true</IsRotary>
+													<AbsolutePosInterface>7</AbsolutePosInterface>
+													<GroupType/>
+													<ElectricFeedbackType/>
+												</DatabaseType>
+												<DatabaseParameters>
+													<Parameter>
+														<Name>AbsolutePositionData_ResolutionSinglePos</Name>
+														<Data type="real64">20</Data>
+													</Parameter>
+													<Parameter>
+														<Name>AbsolutePositionData_ResolutionMultiPos</Name>
+														<Data type="real64">12</Data>
+													</Parameter>
+													<Parameter>
+														<Name>Kind</Name>
+														<Data type="int16">0</Data>
+													</Parameter>
+													<Parameter>
+														<Name>AbsolutePositionInterface</Name>
+														<Data type="int16">7</Data>
+													</Parameter>
+													<Parameter>
+														<Name>RelativePositionInterface</Name>
+														<Data type="int16">0</Data>
+													</Parameter>
+												</DatabaseParameters>
+												<FeedbackUse>Commutation</FeedbackUse>
+												<SerialNo>A6250617U</SerialNo>
+												<Calc>
+													<CoE>
+														<InitCmd>
+															<Transition>PS</Transition>
+															<Comment>FB Settings / Invert feedback direction</Comment>
+															<Timeout>0</Timeout>
+															<Ccs>1</Ccs>
+															<Index>32768</Index>
+															<SubIndex>1</SubIndex>
+															<Data>00</Data>
+														</InitCmd>
+													</CoE>
+												</Calc>
+											</Feedback>
+											<Brake>
+												<DatabaseType>
+													<OrderCode>AM8121-0FH1-0000-brake</OrderCode>
+													<MountedMotorOrderCode>AM8121-0FH1-0000</MountedMotorOrderCode>
+													<BrakeType>HoldingBrake</BrakeType>
+												</DatabaseType>
+												<DatabaseParameters>
+													<Parameter>
+														<Name>BrakeType</Name>
+														<Data type="real64">1</Data>
+													</Parameter>
+													<Parameter>
+														<Name>UBrakeMin</Name>
+														<Data type="real64" unitSiNumerator="38">21.6</Data>
+													</Parameter>
+													<Parameter>
+														<Name>UBrakeMax</Name>
+														<Data type="real64" unitSiNumerator="38">25.4</Data>
+													</Parameter>
+													<Parameter>
+														<Name>IBrakeMin</Name>
+														<Data type="real64" unitSiNumerator="4">0.199</Data>
+													</Parameter>
+													<Parameter>
+														<Name>MBrake</Name>
+														<Data type="real64" unitSiNumerator="86">2</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeOn</Name>
+														<Data type="real64" unitSiNumerator="3">0.025</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeOff</Name>
+														<Data type="real64" unitSiNumerator="3">0.008</Data>
+													</Parameter>
+													<Parameter>
+														<Name>TBrakeRed</Name>
+														<Data type="real64" unitSiNumerator="3">3</Data>
+													</Parameter>
+												</DatabaseParameters>
+											</Brake>
+											<Load MoveStyle="Linear">
+												<IsMotorRotary>true</IsMotorRotary>
+												<Name>InverterChannelTypeBlockLoad</Name>
+												<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+												<Parameter>
+													<PropertyName>FeedConstantUnit</PropertyName>
+													<Value>mm</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>FeedConstant</PropertyName>
+													<Value>10</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>GearRatioMotorSide</PropertyName>
+													<Value>1</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>GearRatioLoadSide</PropertyName>
+													<Value>1</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>GearboxInertia</PropertyName>
+													<Value>0</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>LoadInertiaMassReflectedOnGearbox</PropertyName>
+													<Value>0</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>MaxMoveDistance</PropertyName>
+													<Value>20</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>LoadInertiaMass</PropertyName>
+													<Value>0</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>MaxApplicationTorqueForce</PropertyName>
+													<Value>1</Value>
+												</Parameter>
+												<Parameter>
+													<PropertyName>MaxApplicationSpeed</PropertyName>
+													<Value>343.79496</Value>
+												</Parameter>
+											</Load>
+											<Controller>
+												<Filter Id="0">
+													<Name>ControllerFilter</Name>
+													<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+													<Parameter>
+														<PropertyName>Filter_Type</PropertyName>
+														<Value>1</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassFrequency</PropertyName>
+														<Value>320</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassFrequency</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+												</Filter>
+											</Controller>
+										</Block>
+										<WatchLog ChnId="0" UpdateIntervalInMs="500">
+											<WatchLogItem>
+												<WatchLogParaCoE Index="24592" SubIndex="1"/>
+												<Alias>Status word</Alias>
+											</WatchLogItem>
+											<WatchLogItem>
+												<WatchLogParaCoE Index="28688" SubIndex="3"/>
+												<Alias>Actual operation mode</Alias>
+											</WatchLogItem>
+											<WatchLogItem>
+												<WatchLogParaCoE Index="24592" SubIndex="7"/>
+												<Alias>Actual velocity</Alias>
+											</WatchLogItem>
+											<WatchLogItem>
+												<WatchLogParaCoE Index="24592" SubIndex="8"/>
+												<Alias>Actual torque</Alias>
+											</WatchLogItem>
+										</WatchLog>
+									</Channel>
+								</Inverter>
+							</TcDMDrive>
 						</Xml>
 						<EtherCAT SlaveType="2" PdiType="#x0405" MboxDataLinkLayer="true" StateMBoxPolling="true" CfgModeSafeOp="true" CycleMBoxPollingTime="0" CoeType="39" FoeType="1" VendorId="#x00000002" ProductCode="#x1c2b3052" RevisionNo="#x00202336" InfoDataAddr="true" InfoDataSoeDS401="true" InfoDataDcTimes="true" TimeoutMailbox2="2000" CheckRevisionNoType="3" PortPhys="51" SdoUploadWithMaxLength="true" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL7211-9014 1Ch. MDP742 Servo motor output stage with OCT (50V, 4.5A RMS) and STO input" Desc="EL7211-9014" PortABoxInfo="#x0100001a">
 							<SyncMan>001080002600010001000000500080008000001026010000</SyncMan>
@@ -20946,7 +20949,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>83.7758</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -21041,7 +21044,7 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000c0000002c000000000000000000000000000000000000000000000020118130040000004c040000445256204d6f746f722053657474696e67732043682e32202f2057696e64696e6720726573697374616e636500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000002a00000000000000000000000000000000000000000000002011813104000000f0490200445256204d6f746f722053657474696e67732043682e32202f20566f6c7461676520636f6e7374616e7400</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003800000000000000000000000000000000000000000000002011813304000000c8000000445256204d6f746f722053657474696e67732043682e32202f204d6f746f722066756c6c737465707320706572207265766f6c7574696f6e00</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000c0000003000000000000000000000000000000000000000000000002011811b04000000a0000000445256204d6f746f722053657474696e67732043682e32202f204d6f746f72207370656564206c696d69746174696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c0000003000000000000000000000000000000000000000000000002011811b0400000020030000445256204d6f746f722053657474696e67732043682e32202f204d6f746f72207370656564206c696d69746174696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003200000000000000000000000000000000000000000000002011813404000000d0070000445256204d6f746f722053657474696e67732043682e32202f20436f6e66696775726564206d6f746f722063757272656e7400</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000a0000003c000000000000000000000000000000000000000000000020108113020000002e0044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
@@ -21049,8 +21052,8 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001044525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000020046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000001000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000900000035000000000000000000000000000000000000000000000020108104010000000044525620416d706c69666965722053657474696e67732043682e32202f205265706561742066696e6420636f6d6d75746174696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000900000035000000000000000000000000000000000000000000000020108104010000000144525620416d706c69666965722053657474696e67732043682e32202f205265706561742066696e6420636f6d6d75746174696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003800000000000000000000000000000000000000000000002008801304000000c800000046422053657474696e677320454e432043682e31202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
@@ -24308,7 +24311,6 @@ Bit 8 - 15 : reserved]]></Comment>
 										<TcLink>
 											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 25 (EL7062)</IoItemPathName>
-											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 3 - Linear</NcItemPathName>
 										</TcLink>
 										<SelectedModifyOptPDOsMode>0</SelectedModifyOptPDOsMode>
 										<Block Id="0">
@@ -24759,6 +24761,54 @@ Bit 8 - 15 : reserved]]></Comment>
 												<Stepper>
 													<ControlMode>0</ControlMode>
 												</Stepper>
+												<Filter Id="0">
+													<Name>ControllerFilter</Name>
+													<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+													<Parameter>
+														<PropertyName>Filter_Type</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassFrequency</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassFrequency</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+												</Filter>
+												<Filter Id="1">
+													<Name>ControllerFilter</Name>
+													<ProjectGUID>00000000-0000-0000-0000-000000000000</ProjectGUID>
+													<Parameter>
+														<PropertyName>Filter_Type</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassFrequency</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_LowPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassFrequency</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+													<Parameter>
+														<PropertyName>Filter_HighPassDamping</PropertyName>
+														<Value>0</Value>
+													</Parameter>
+												</Filter>
 											</Controller>
 										</Block>
 									</Channel>
@@ -24768,7 +24818,7 @@ Bit 8 - 15 : reserved]]></Comment>
 						<EtherCAT SlaveType="2" PdiType="#x0405" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="47" FoeType="1" VendorId="#x00000002" ProductCode="#x1b963052" RevisionNo="#x00100000" InfoDataAddr="true" InfoDataSoeDS401="true" InfoDataDcTimes="true" TimeoutMailbox2="2000" CheckRevisionNoType="3" PortPhys="51" SdoUploadWithMaxLength="true" MaxSlotCount="256" MaxSlotGroupCount="1" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL7062-0000 2Ch. Stepper motor output stage (48V, 3A)" Desc="EL7062" PortABoxInfo="#x01000024">
 							<SyncMan>001000012600010001000000800000010001001026010000</SyncMan>
 							<SyncMan>001100012200010002000000800000010001001122010000</SyncMan>
-							<SyncMan>00120c002400010003000000000000000c00001224010000</SyncMan>
+							<SyncMan>001210002400010003000000000000000c00001224010000</SyncMan>
 							<SyncMan>001916002000010004000000000000001400001920010000</SyncMan>
 							<Fmmu>0000000000000000001200020100000001000000000000000000000000000000</Fmmu>
 							<Fmmu>0000000000000000001900010100000002000000000000000000000000000000</Fmmu>
@@ -24806,6 +24856,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001044525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000020046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000900000035000000000000000000000000000000000000000000000020108104010000000044525620416d706c69666965722053657474696e67732043682e32202f205265706561742066696e6420636f6d6d75746174696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>0200030009000000250000000000000000000000000000000000000000000000201071030100000008445256204f7574707574732043682e32202f204d6f646573206f66206f7065726174696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -25876,7 +25931,7 @@ Bit 7 : Fault reset
 Bit 8 - 15 : reserved]]></Comment>
 								</Entry>
 							</Pdo>
-							<Pdo Name="DRV Target velocity Channel 2" Index="#x1681" InOut="1" Flags="#x0010">
+							<Pdo Name="DRV Target velocity Channel 2" Index="#x1681" InOut="1" Flags="#x0010" SyncMan="2">
 								<Entry Name="Target velocity" BitLen="32" Index="#x7110" Sub="#x06">
 									<Type>DINT</Type>
 								</Entry>
@@ -41984,11 +42039,9 @@ Bit 8 - 15 : reserved]]></Comment>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 8 (EL2904)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionInputs^TwinSafeGroup1.Term 20 (EL2904) - Module 1 (FSOES)_6 TxPDO" VarB="Module 1 (FSOES)^RxPDO^FSOE"/>
 			</OwnerB>
-			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 45 (AX8620-0000-0105)">
-				<Link VarA="Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)^Device^DeviceMain Outputs^Power supply controlword" VarB="PSM Controlword for axis^Controlword for axis"/>
-			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 45 (AX8620-0000-0105)^Drive 46 (AX8108-0100-0106)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Drive 46 (AX8108-0100-0106)_41 RxPDO" VarB="Device (Safety)^FSoE Slave Connection 1 Slave Message^ChA_Connection_Input.SAFEMOTION FSoE Connection_1"/>
+				<Link VarA="Term 45 (AX8620-0000-0105)^PSM Controlword for axis^Controlword for axis" VarB="Device^DeviceMain Outputs^Power supply controlword"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
 				<Link VarA="Term 1 (EK1100)^Term 3 (EL6910)^ConnectionOutputs^TwinSafeGroup1.Connection to Box 10 (AMI8000-0100)_111 RxPDO" VarB="Module 1 (SAFETY)^SAFETY FSoE Connection 1 Send Message^Message_1"/>
@@ -42262,16 +42315,9 @@ Bit 8 - 15 : reserved]]></Comment>
 		</OwnerA>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^Pump 3 - Linear">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 25 (EL7062)">
-				<Link VarA="Drive^Inputs^In^nDataIn1" VarB="DRV Following error actual value Channel 1^Following error actual value"/>
 				<Link VarA="Drive^Inputs^In^nDcOutputTime" VarB="InfoData^DcOutputShift"/>
-				<Link VarA="Drive^Inputs^In^nState1" VarB="DRV Statusword Channel 1^Statusword"/>
-				<Link VarA="Drive^Inputs^In^nState2" VarB="DRV Statusword Channel 1^Statusword" Size="8" OffsB="8"/>
 				<Link VarA="Drive^Inputs^In^nState4" VarB="WcState^InputToggle" Size="1" OffsA="1"/>
 				<Link VarA="Drive^Inputs^In^nState4" VarB="WcState^WcState"/>
-				<Link VarA="Drive^Outputs^Out^nCtrl1" VarB="DRV Controlword Channel 1^Controlword"/>
-				<Link VarA="Drive^Outputs^Out^nCtrl2" VarB="DRV Controlword Channel 1^Controlword" Size="8" OffsB="8"/>
-				<Link VarA="Drive^Outputs^Out^nDataOut1" VarB="DRV Target position Channel 1^Target position"/>
-				<Link VarA="Enc^Inputs^In^nDataIn1" VarB="FB Position Channel 1^Position"/>
 				<Link VarA="Enc^Inputs^In^nDcInputTime" VarB="InfoData^DcInputShift"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^InputToggle" Size="1" OffsA="1"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^WcState"/>
@@ -42288,7 +42334,8 @@ Bit 8 - 15 : reserved]]></Comment>
 				<Link VarA="Drive^Outputs^Out^nCtrl1" VarB="DRV Controlword Channel 2^Controlword"/>
 				<Link VarA="Drive^Outputs^Out^nCtrl2" VarB="DRV Controlword Channel 2^Controlword" Size="8" OffsB="8"/>
 				<Link VarA="Drive^Outputs^Out^nDataOut1" VarB="DRV Target position Channel 2^Target position"/>
-				<Link VarA="Enc^Inputs^In^nDataIn1" VarB="FB Position Channel 2^Position"/>
+				<Link VarA="Drive^Outputs^Out^nDataOut2" VarB="DRV Target velocity Channel 2^Target velocity"/>
+				<Link VarA="Enc^Inputs^In^nDataIn1" VarB="FB Position Channel 1^Position"/>
 				<Link VarA="Enc^Inputs^In^nDcInputTime" VarB="InfoData^DcInputShift"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^InputToggle" Size="1" OffsA="1"/>
 				<Link VarA="Enc^Inputs^In^nState4" VarB="WcState^WcState"/>

@@ -5,12 +5,16 @@
 VAR
 	fbLoadRecipe : FB_LoadRecipe;
     fbListFiles  : FB_ListRecipeFiles;
+	
+	fbSaveRecipe : FB_SaveRecipe;
 
     sPrefix      : STRING(64) := 'C:\TwinCAT\Recipes\';
     sFileName    : STRING(255);
 	
 	bDatagridRowsNaming	: BOOL := FALSE;
 	
+	bDatagridToRecipeDone	: BOOL := FALSE;
+		
 	i	: INT;
 	
 	
@@ -36,6 +40,15 @@ END_IF
 //Fill stCurrentRecipe from HMI datagrids if save button is pressed
 IF GVL_HMI.bRecipeSaveButton THEN
 	ACT_DatagridToRecipe();
+	IF bDatagridToRecipeDone THEN
+		fbSaveRecipe(bExecute := TRUE, sUser := GVL_HMI.stRecipeInfo.sCreatedBy);
+		IF fbSaveRecipe.bDone AND NOT fbSaveRecipe.bError THEN
+			fbSaveRecipe(bExecute := FALSE);
+			GVL_HMI.bRecipeSaveButton := FALSE;	
+			bDatagridToRecipeDone := FALSE;
+		END_IF
+		
+	END_IF
 END_IF
 
 // Monta o nome do arquivo selecionado
@@ -47,6 +60,11 @@ IF NOT GVL_HMI.bRecipeLoaded THEN
 		sFileName := sFileName,
 		bExecute := GVL_HMI.bRecipeLoadFromFile
 	);
+END_IF
+
+//Reload the datagrids with the recipe in stCurrentRecipe if the bt cancel is pressed during new recipe
+IF GVL_HMI.bReloadRecipeDatagrids THEN
+	ACT_RecipeToDatagrid();
 END_IF
 
 //Activate command from HMI. 
@@ -109,116 +127,211 @@ bDatagridRowsNaming := TRUE;
     </Action>
     <Action Name="ACT_DatagridToRecipe" Id="{d800e175-fa01-48f3-8ed7-dde5a40976cb}">
       <Implementation>
-        <ST><![CDATA[// ---- Commit SolventAndTimes ----
-FOR i := 1 TO 4 DO // 1: Rinse1, 2: Rinse2, 3: Wash1, 4: Wash2
-    // Solvent #
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Rinse1);
-        2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Rinse2);
-        3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Wash1);
-        4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Wash2);
-    END_CASE;
-    // Time (convertendo para TIME)
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse1);
-        2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse2);
-        3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash1);
-        4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash2);
-    END_CASE;
-    // Velocity
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Wash2;
-    END_CASE;
-END_FOR
+        <ST><![CDATA[IF NOT bDatagridToRecipeDone THEN
+	// ---- Commit RecipeInfo ----	
+	GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := GVL_HMI.stRecipeInfo.sCreatedBy;
+	GVL_Recipe.stCurrentRecipe.stInfo.sMethodName := GVL_HMI.stRecipeInfo.sMethodName;
 
-// ---- Commit Volumes ----
-// Cada linha do aVolumesRows corresponde a um array do struct
-// Ordem: 1:T_IC, 2:S0, 3:S1, 4:S2, 5:S3, 6:S4, 7:S5, 8:S6, 9:S7, 10:F
-FOR i := 1 TO 4 DO // Rinse1, Rinse2, Wash1, Wash2
-    // T_IC
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Wash2;
-    END_CASE;
-    // S0
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Wash2;
-    END_CASE;
-    // S1 
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Wash2;
-    END_CASE;
-    // S2
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Wash2;
-    END_CASE;
-	CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Wash2;
-    END_CASE;
-	CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Wash2;
-    END_CASE;
-	CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Wash2;
-    END_CASE;
-	CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Wash2;
-    END_CASE;
-	CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Wash2;
-    END_CASE;
-    CASE i OF
-        1: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Rinse1;
-        2: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Rinse2;
-        3: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Wash1;
-        4: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Wash2;
-    END_CASE;
-END_FOR
+	// ---- Commit SolventAndTimes ----
+	FOR i := 1 TO 4 DO // 1: Rinse1, 2: Rinse2, 3: Wash1, 4: Wash2
+		// Solvent #
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Rinse1);
+			2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Rinse2);
+			3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Wash1);
+			4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := TO_USINT(GVL_HMI.aSolventAndTimesRows[1].Wash2);
+		END_CASE;
+		// Time (convertendo para TIME)
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse1);
+			2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse2);
+			3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash1);
+			4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash2);
+		END_CASE;
+		// Velocity
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := GVL_HMI.aSolventAndTimesRows[3].Wash2;
+		END_CASE;
+	END_FOR
+	
+	// ---- Commit Volumes ----
+	// Cada linha do aVolumesRows corresponde a um array do struct
+	// Ordem: 1:T_IC, 2:S0, 3:S1, 4:S2, 5:S3, 6:S4, 7:S5, 8:S6, 9:S7, 10:F
+	FOR i := 1 TO 4 DO // Rinse1, Rinse2, Wash1, Wash2
+		// T_IC
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := GVL_HMI.aVolumeRows[1].Wash2;
+		END_CASE;
+		// S0
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := GVL_HMI.aVolumeRows[2].Wash2;
+		END_CASE;
+		// S1 
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := GVL_HMI.aVolumeRows[3].Wash2;
+		END_CASE;
+		// S2
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[4].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[5].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[6].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[7].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[8].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := GVL_HMI.aVolumeRows[9].Wash2;
+		END_CASE;
+		CASE i OF
+			1: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Rinse1;
+			2: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Rinse2;
+			3: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Wash1;
+			4: GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := GVL_HMI.aVolumeRows[10].Wash2;
+		END_CASE;
+	END_FOR
+	
+	// ---- Commit OtherParams ----
+	// Supondo a ordem das linhas conforme DataGrid (ajuste se necessário)
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime        := TO_TIME(GVL_HMI.aOtherParamsRows[1].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time    := TO_TIME(GVL_HMI.aOtherParamsRows[2].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time    := TO_TIME(GVL_HMI.aOtherParamsRows[3].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill     := TO_USINT(GVL_HMI.aOtherParamsRows[4].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol    := GVL_HMI.aOtherParamsRows[5].Value;
+	GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol    := GVL_HMI.aOtherParamsRows[6].Value;
+	GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := GVL_HMI.aOtherParamsRows[7].Value;
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime   	  := TO_TIME(GVL_HMI.aOtherParamsRows[8].Value);
+	
+	//reset flags
+	
+	i:=0;
+	
+	bDatagridToRecipeDone := TRUE;
+	
+END_IF
 
-// ---- Commit OtherParams ----
-// Supondo a ordem das linhas conforme DataGrid (ajuste se necessário)
-GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime        := TO_TIME(GVL_HMI.aOtherParamsRows[1].Value);
-GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time    := TO_TIME(GVL_HMI.aOtherParamsRows[2].Value);
-GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time    := TO_TIME(GVL_HMI.aOtherParamsRows[3].Value);
-GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill     := TO_USINT(GVL_HMI.aOtherParamsRows[4].Value);
-GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol    := GVL_HMI.aOtherParamsRows[5].Value;
-GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol    := GVL_HMI.aOtherParamsRows[6].Value;
-GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := GVL_HMI.aOtherParamsRows[7].Value;
-GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime   	  := TO_TIME(GVL_HMI.aOtherParamsRows[8].Value);
 
-//reset flags
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_RecipeToDatagrid" Id="{947174eb-de1f-4e9d-b1cf-e0d4928d41c5}">
+      <Implementation>
+        <ST><![CDATA[
+// SolventAndTimes
+GVL_HMI.aSolventAndTimesRows[1].Rinse1 := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[1];
+GVL_HMI.aSolventAndTimesRows[1].Rinse2 := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[2];
+GVL_HMI.aSolventAndTimesRows[1].Wash1  := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[3];
+GVL_HMI.aSolventAndTimesRows[1].Wash2  := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[4];
 
-i:=0;
-GVL_HMI.bRecipeSaveButton := FALSE;
+GVL_HMI.aSolventAndTimesRows[2].Rinse1 := TO_INT(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1])/1000);
+GVL_HMI.aSolventAndTimesRows[2].Rinse2 := TO_INT(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2])/1000);
+GVL_HMI.aSolventAndTimesRows[2].Wash1  := TO_INT(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3])/1000);
+GVL_HMI.aSolventAndTimesRows[2].Wash2  := TO_INT(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4])/1000);
+
+GVL_HMI.aSolventAndTimesRows[3].Rinse1 := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[1];
+GVL_HMI.aSolventAndTimesRows[3].Rinse2 := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[2];
+GVL_HMI.aSolventAndTimesRows[3].Wash1  := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[3];
+GVL_HMI.aSolventAndTimesRows[3].Wash2  := GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[4];
+
+// Volumes
+GVL_HMI.aVolumeRows[1].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[1];
+GVL_HMI.aVolumeRows[1].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[2];
+GVL_HMI.aVolumeRows[1].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[3];
+GVL_HMI.aVolumeRows[1].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[4];
+
+GVL_HMI.aVolumeRows[2].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[1];
+GVL_HMI.aVolumeRows[2].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[2];
+GVL_HMI.aVolumeRows[2].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[3];
+GVL_HMI.aVolumeRows[2].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[4];
+
+GVL_HMI.aVolumeRows[3].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[1];
+GVL_HMI.aVolumeRows[3].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[2];
+GVL_HMI.aVolumeRows[3].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[3];
+GVL_HMI.aVolumeRows[3].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[4];
+
+GVL_HMI.aVolumeRows[4].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[1];
+GVL_HMI.aVolumeRows[4].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[2];
+GVL_HMI.aVolumeRows[4].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[3];
+GVL_HMI.aVolumeRows[4].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[4];
+
+GVL_HMI.aVolumeRows[5].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[1];
+GVL_HMI.aVolumeRows[5].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[2];
+GVL_HMI.aVolumeRows[5].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[3];
+GVL_HMI.aVolumeRows[5].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[4];
+
+GVL_HMI.aVolumeRows[6].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[1];
+GVL_HMI.aVolumeRows[6].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[2];
+GVL_HMI.aVolumeRows[6].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[3];
+GVL_HMI.aVolumeRows[6].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[4];
+
+GVL_HMI.aVolumeRows[7].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[1];
+GVL_HMI.aVolumeRows[7].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[2];
+GVL_HMI.aVolumeRows[7].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[3];
+GVL_HMI.aVolumeRows[7].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[4];
+
+GVL_HMI.aVolumeRows[8].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[1];
+GVL_HMI.aVolumeRows[8].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[2];
+GVL_HMI.aVolumeRows[8].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[3];
+GVL_HMI.aVolumeRows[8].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[4];
+
+GVL_HMI.aVolumeRows[9].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[1];
+GVL_HMI.aVolumeRows[9].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[2];
+GVL_HMI.aVolumeRows[9].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[3];
+GVL_HMI.aVolumeRows[9].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[4];
+
+GVL_HMI.aVolumeRows[10].Rinse1 := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[1];
+GVL_HMI.aVolumeRows[10].Rinse2 := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[2];
+GVL_HMI.aVolumeRows[10].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[3];
+GVL_HMI.aVolumeRows[10].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[4];
+
+// --- Outros Params ---
+GVL_HMI.aOtherParamsRows[1].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime)/1000;
+GVL_HMI.aOtherParamsRows[2].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000;
+GVL_HMI.aOtherParamsRows[3].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time)/1000;
+GVL_HMI.aOtherParamsRows[4].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill;
+GVL_HMI.aOtherParamsRows[5].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol;
+GVL_HMI.aOtherParamsRows[6].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol;
+GVL_HMI.aOtherParamsRows[7].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol;
+GVL_HMI.aOtherParamsRows[8].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime)/1000;
+
+//Flag to initiate the save fb
+GVL_HMI.bReloadRecipeDatagrids  := FALSE;
 
 ]]></ST>
       </Implementation>
@@ -231,11 +344,21 @@ GVL_HMI.bRecipeSaveButton := FALSE;
       <LineId Id="108" Count="2" />
       <LineId Id="115" Count="0" />
       <LineId Id="114" Count="0" />
-      <LineId Id="116" Count="2" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="192" Count="1" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="118" Count="0" />
       <LineId Id="64" Count="4" />
       <LineId Id="133" Count="0" />
       <LineId Id="69" Count="3" />
       <LineId Id="134" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="169" Count="3" />
       <LineId Id="150" Count="0" />
       <LineId Id="149" Count="0" />
       <LineId Id="151" Count="1" />
@@ -275,7 +398,12 @@ GVL_HMI.bRecipeSaveButton := FALSE;
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="PRG_RecipeManager.ACT_DatagridToRecipe">
-      <LineId Id="37" Count="56" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="158" Count="1" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="38" Count="55" />
       <LineId Id="118" Count="4" />
       <LineId Id="117" Count="0" />
       <LineId Id="124" Count="4" />
@@ -289,8 +417,19 @@ GVL_HMI.bRecipeSaveButton := FALSE;
       <LineId Id="95" Count="19" />
       <LineId Id="149" Count="0" />
       <LineId Id="148" Count="0" />
+      <LineId Id="150" Count="0" />
       <LineId Id="147" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="152" Count="1" />
       <LineId Id="33" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_RecipeToDatagrid">
+      <LineId Id="353" Count="0" />
+      <LineId Id="274" Count="76" />
+      <LineId Id="352" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="188" Count="0" />
       <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
