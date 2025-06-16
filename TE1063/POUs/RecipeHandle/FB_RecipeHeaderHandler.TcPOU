@@ -24,36 +24,46 @@ VAR
     fbJson        : FB_JsonDomParser;
     jsonDoc       : SJsonValue;
     jsonProp      : SJsonValue;
-	bExecutePrev : BOOL; 
-    bStart       : BOOL;
-	iCount		 : UINT := 0;
+	nBytesRead    : UDINT; // Adicione se necessário, ou use o output do FB
+	bExecutePrev  : BOOL; 
+    bStart        : BOOL;
+	iCount		  : UINT := 0;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[bStart := bExecute AND NOT bExecutePrev;
 bExecutePrev := bExecute;
 
+IF NOT bExecute THEN
+	sBuffer := '';
+	jsonDoc := 0;
+	jsonProp := 0;
+	hFile := 0;
+	bExecutePrev := FALSE;	
+END_IF
+
 CASE iStep OF
 
 0:
-     IF bExecute THEN //bStart
-        //bBusy := TRUE;
+     IF bExecute THEN
+        bBusy := TRUE;
         bDone := FALSE;
         bError := FALSE;
         nErrId := 0;
-
-        fbFileOpen(
+		iStep := 5;        
+    END_IF
+	
+5:
+	fbFileOpen(
             sNetId := '',
             sPathName := sFileName,
             nMode := FOPEN_MODEREAD OR FOPEN_MODETEXT,
             bExecute := TRUE,
 			hFile => hFile
-        );
-		IF NOT fbFileOpen.bBusy AND NOT fbFileOpen.bError THEN
-			iStep := 10;
-		END_IF
-        
-    END_IF
+	);
+	IF NOT fbFileOpen.bBusy AND NOT fbFileOpen.bError THEN
+		iStep := 10;
+	END_IF
 
 10:
     fbFileOpen(
@@ -86,7 +96,8 @@ CASE iStep OF
         hFile := hFile,
         pReadBuff := ADR(sBuffer),
         cbReadLen := SIZEOF(sBuffer),
-        bExecute := FALSE
+        bExecute := FALSE,
+        cbRead => nBytesRead // <--- Output da FB
     );
     IF NOT fbFileRead.bBusy THEN
         IF fbFileRead.bError THEN
@@ -94,6 +105,11 @@ CASE iStep OF
             nErrId := fbFileRead.nErrId;
             iStep := 100;
         ELSE
+            // Limpa o buffer corretamente:
+            IF nBytesRead < SIZEOF(sBuffer) THEN
+    			sBuffer[nBytesRead] := 0; // termina a string corretamente
+			END_IF
+
             fbFileClose(
                 sNetId := '',
                 hFile := hFile,
@@ -102,6 +118,7 @@ CASE iStep OF
             iStep := 30;
         END_IF
     END_IF
+
 
 30:
     fbFileClose(
@@ -155,6 +172,7 @@ CASE iStep OF
 100:
     bBusy := FALSE;
     bDone := TRUE;
+	bExecutePrev := FALSE;
 	icount := 0;
     IF NOT bExecute THEN
         iStep := 0;
@@ -163,32 +181,12 @@ CASE iStep OF
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="FB_RecipeHeaderHandler">
-      <LineId Id="1308" Count="0" />
-      <LineId Id="1307" Count="0" />
-      <LineId Id="1309" Count="0" />
-      <LineId Id="1193" Count="2" />
-      <LineId Id="1310" Count="10" />
-      <LineId Id="1325" Count="0" />
-      <LineId Id="1321" Count="1" />
-      <LineId Id="1326" Count="1" />
-      <LineId Id="1323" Count="0" />
-      <LineId Id="1210" Count="63" />
-      <LineId Id="1276" Count="5" />
-      <LineId Id="1363" Count="1" />
-      <LineId Id="1371" Count="0" />
-      <LineId Id="1381" Count="1" />
-      <LineId Id="1372" Count="0" />
-      <LineId Id="1375" Count="0" />
-      <LineId Id="1377" Count="3" />
-      <LineId Id="1376" Count="0" />
-      <LineId Id="1373" Count="0" />
-      <LineId Id="1369" Count="0" />
-      <LineId Id="1283" Count="1" />
-      <LineId Id="1362" Count="0" />
-      <LineId Id="1361" Count="0" />
-      <LineId Id="1287" Count="13" />
-      <LineId Id="1383" Count="0" />
-      <LineId Id="1301" Count="3" />
+      <LineId Id="1732" Count="58" />
+      <LineId Id="1951" Count="15" />
+      <LineId Id="1980" Count="1" />
+      <LineId Id="1969" Count="9" />
+      <LineId Id="1921" Count="0" />
+      <LineId Id="1813" Count="58" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

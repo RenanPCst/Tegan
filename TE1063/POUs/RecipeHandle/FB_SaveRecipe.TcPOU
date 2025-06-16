@@ -37,6 +37,13 @@ VAR
     jsonRoot, objStInfo, objSolventsTimes, objVolumes, objOtherParams : SJsonValue;
     arrVal : SJsonValue;
     i : INT;
+	
+	bRevisionDone : BOOL := FALSE;
+	bGetCurrentDateDone : BOOL := FALSE;
+	
+	
+	bDebug1 : BOOL := FALSE;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -47,11 +54,15 @@ CASE iStep OF
         bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
 
         // Atualiza revisão
-        IF GVL_Recipe.stCurrentRecipe.stInfo.iRevision < 1 THEN
-            GVL_Recipe.stCurrentRecipe.stInfo.iRevision := 1;
-        ELSE
-            GVL_Recipe.stCurrentRecipe.stInfo.iRevision := GVL_Recipe.stCurrentRecipe.stInfo.iRevision + 1;
-        END_IF
+		IF NOT bRevisionDone THEN
+			IF GVL_HMI.bNewRecipeButton THEN
+				GVL_Recipe.stCurrentRecipe.stInfo.iRevision := 0;
+				bRevisionDone := TRUE;
+			ELSE
+				GVL_Recipe.stCurrentRecipe.stInfo.iRevision := GVL_Recipe.stCurrentRecipe.stInfo.iRevision + 1;
+				bRevisionDone := TRUE;
+			END_IF
+		END_IF
 
         // Sincroniza sistema local (pega data atual)
         fbLocalSystemTime(bEnable := TRUE, dwCycle := 5);
@@ -64,89 +75,93 @@ CASE iStep OF
             sDate := CONCAT(sDate, '-');
             sDate := CONCAT(sDate, INT_TO_STRING(stLocalSystemTime.wDay));
             GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate := STRING_TO_DATE(sDate);
+			bGetCurrentDateDone := TRUE;
         END_IF
 
-        GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := sUser;
-
-        // Monta nome do novo arquivo
-        sFileName := CONCAT('C:/TwinCAT/Recipes/',
-            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
-            CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision), '.json')))))
-        );
-        // Nome do arquivo antigo e do backup
-        sOldFile := CONCAT('C:/TwinCAT/Recipes/',
-            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
-            CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
-        );
-        sOldBackup := CONCAT('C:/TwinCAT/Recipes/_old/',
-            CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
-            CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
-        );
-
-        // --- Monta JSON ---
-        jsonRoot := fbJson.NewDocument();
-
-        // Info
-        objStInfo := fbJson.AddObjectMember(jsonRoot, 'stInfo');
-        fbJson.AddStringMember(objStInfo, 'sMethodName', GVL_Recipe.stCurrentRecipe.stInfo.sMethodName);
-        fbJson.AddIntMember(objStInfo, 'iRevision', GVL_Recipe.stCurrentRecipe.stInfo.iRevision);
-        fbJson.AddStringMember(objStInfo, 'sCreatedBy', GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy);
-		sTempStr := DATE_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate);
-        fbJson.AddStringMember(objStInfo, 'dCreationDate', sTempStr );
-
-        // SolventsTimes
-        objSolventsTimes := fbJson.AddObjectMember(jsonRoot, 'stSolventsTimes');
-        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aSolventN', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aTime', 0);
-        FOR i := 1 TO 4 DO 
-			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i]);
-			fbJson.PushbackStringValue(arrVal, sTempStr); 
-		END_FOR
-        arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aVelocity', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i]); END_FOR
-
-        // Volumes
-        objVolumes := fbJson.AddObjectMember(jsonRoot, 'stVolumes');
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aT_IC_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS0_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS1_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS2_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS3_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS4_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS5_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS6_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aS7_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[i]); END_FOR
-        arrVal := fbJson.AddArrayMember(objVolumes, 'aF_Volume', 0);
-        FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i]); END_FOR
-
-        // Other Params
-        objOtherParams := fbJson.AddObjectMember(jsonRoot, 'stOtherParams');
-		sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime);
-        fbJson.AddStringMember(objOtherParams, 'tSoakTime', sTempStr);
-		sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time);
-        fbJson.AddStringMember(objOtherParams, 'tAgitate1Time', sTempStr);
-		sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time);
-        fbJson.AddStringMember(objOtherParams, 'tAgitade2Time', sTempStr);
-        fbJson.AddIntMember(objOtherParams, 'iVialsToFill', GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill);
-        fbJson.AddDoubleMember(objOtherParams, 'rVialPrimeVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol);
-        fbJson.AddDoubleMember(objOtherParams, 'rVial1FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol);
-        fbJson.AddDoubleMember(objOtherParams, 'rVials2_4FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol);
-		sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime);
-        fbJson.AddStringMember(objOtherParams, 'tAirDryTime', sTempStr);
-
-        // Exporta documento
-        fbJson.CopyDocument(sJsonBuffer, SIZEOF(sJsonBuffer));
-        iStep := 5;
+		IF bGetCurrentDateDone THEN
+	
+			GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := sUser;
+	
+			// Monta nome do novo arquivo
+			sFileName := CONCAT('C:/TwinCAT/Recipes/',
+				CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+				CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision), '.json')))))
+			);
+			// Nome do arquivo antigo e do backup
+			sOldFile := CONCAT('C:/TwinCAT/Recipes/',
+				CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+				CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
+			);
+			sOldBackup := CONCAT('C:/TwinCAT/Recipes/_old/',
+				CONCAT(GVL_Recipe.stCurrentRecipe.stInfo.sMethodName, CONCAT('_',
+				CONCAT(sUser, CONCAT('_rev', CONCAT(DINT_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.iRevision - 1), '.json')))))
+			);
+	
+			// --- Monta JSON ---
+			jsonRoot := fbJson.NewDocument();
+	
+			// Info
+			objStInfo := fbJson.AddObjectMember(jsonRoot, 'stInfo');
+			fbJson.AddStringMember(objStInfo, 'sMethodName', GVL_Recipe.stCurrentRecipe.stInfo.sMethodName);
+			fbJson.AddIntMember(objStInfo, 'iRevision', GVL_Recipe.stCurrentRecipe.stInfo.iRevision);
+			fbJson.AddStringMember(objStInfo, 'sCreatedBy', GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy);
+			sTempStr := DATE_TO_STRING(GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate);
+			fbJson.AddStringMember(objStInfo, 'dCreationDate', sTempStr );
+	
+			// SolventsTimes
+			objSolventsTimes := fbJson.AddObjectMember(jsonRoot, 'stSolventsTimes');
+			arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aSolventN', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aTime', 0);
+			FOR i := 1 TO 4 DO 
+				sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i]);
+				fbJson.PushbackStringValue(arrVal, sTempStr); 
+			END_FOR
+			arrVal := fbJson.AddArrayMember(objSolventsTimes, 'aVelocity', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackIntValue(arrVal, GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i]); END_FOR
+	
+			// Volumes
+			objVolumes := fbJson.AddObjectMember(jsonRoot, 'stVolumes');
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aT_IC_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS0_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS1_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS2_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS3_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS4_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS5_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS6_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aS7_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[i]); END_FOR
+			arrVal := fbJson.AddArrayMember(objVolumes, 'aF_Volume', 0);
+			FOR i := 1 TO 4 DO fbJson.PushbackDoubleValue(arrVal, GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i]); END_FOR
+	
+			// Other Params
+			objOtherParams := fbJson.AddObjectMember(jsonRoot, 'stOtherParams');
+			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime);
+			fbJson.AddStringMember(objOtherParams, 'tSoakTime', sTempStr);
+			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time);
+			fbJson.AddStringMember(objOtherParams, 'tAgitate1Time', sTempStr);
+			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time);
+			fbJson.AddStringMember(objOtherParams, 'tAgitade2Time', sTempStr);
+			fbJson.AddIntMember(objOtherParams, 'iVialsToFill', GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill);
+			fbJson.AddDoubleMember(objOtherParams, 'rVialPrimeVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol);
+			fbJson.AddDoubleMember(objOtherParams, 'rVial1FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol);
+			fbJson.AddDoubleMember(objOtherParams, 'rVials2_4FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol);
+			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime);
+			fbJson.AddStringMember(objOtherParams, 'tAirDryTime', sTempStr);
+	
+			// Exporta documento
+			fbJson.CopyDocument(sJsonBuffer, SIZEOF(sJsonBuffer));
+			iStep := 5;
+		END_IF
     END_IF
 
 5: // Move arquivo antigo para _old (não faz erro fatal se não existir)
@@ -214,6 +229,9 @@ CASE iStep OF
             bError := TRUE;
             nErrId := fbFileClose.nErrId;
         END_IF
+		bGetCurrentDateDone := FALSE;
+		GVL_HMI.bNewRecipeButton := FALSE;
+		bRevisionDone := FALSE;
         bDone := TRUE;
         bBusy := FALSE;
         iStep := 100;
@@ -229,9 +247,23 @@ CASE iStep OF
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="FB_SaveRecipe">
-      <LineId Id="341" Count="17" />
+      <LineId Id="341" Count="6" />
+      <LineId Id="656" Count="0" />
+      <LineId Id="348" Count="1" />
+      <LineId Id="660" Count="0" />
+      <LineId Id="350" Count="1" />
+      <LineId Id="661" Count="0" />
+      <LineId Id="352" Count="0" />
+      <LineId Id="659" Count="0" />
+      <LineId Id="353" Count="5" />
       <LineId Id="596" Count="0" />
-      <LineId Id="359" Count="31" />
+      <LineId Id="359" Count="4" />
+      <LineId Id="665" Count="0" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="365" Count="0" />
+      <LineId Id="647" Count="0" />
+      <LineId Id="366" Count="24" />
       <LineId Id="549" Count="0" />
       <LineId Id="391" Count="6" />
       <LineId Id="552" Count="0" />
@@ -246,14 +278,20 @@ END_CASE]]></ST>
       <LineId Id="557" Count="0" />
       <LineId Id="429" Count="4" />
       <LineId Id="558" Count="0" />
-      <LineId Id="434" Count="36" />
+      <LineId Id="434" Count="4" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="439" Count="31" />
       <LineId Id="597" Count="3" />
       <LineId Id="471" Count="0" />
       <LineId Id="607" Count="0" />
       <LineId Id="601" Count="5" />
       <LineId Id="478" Count="0" />
       <LineId Id="608" Count="0" />
-      <LineId Id="479" Count="32" />
+      <LineId Id="479" Count="20" />
+      <LineId Id="667" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="662" Count="0" />
+      <LineId Id="500" Count="11" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

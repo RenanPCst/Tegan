@@ -26,6 +26,9 @@ VAR
     bStart          : BOOL;
     bHeaderHandlerReset : BOOL;
     bHeaderHandlerExecute : BOOL;
+	
+	i : INT;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -74,57 +77,44 @@ CASE iStep OF
         END_IF
     END_IF
 
+// 20 - Processa arquivo iFileIndex
 20:
     IF iFileIndex < TO_INT(nFoundFiles) AND iFileIndex <= 49 THEN
-        IF NOT fbHeaderHandler.bBusy THEN
-            IF bHeaderHandlerReset THEN
-                // Wait one cycle with bExecute := FALSE
-                fbHeaderHandler(bExecute := FALSE);
-                bHeaderHandlerReset := FALSE;
-                iStep := 25;
-            ELSIF NOT bHeaderHandlerExecute THEN
-                // Fill file name and timestamp
-                GVL_Recipe.aAvailableFiles[iFileIndex].sFileName := aFindBuffer[iFileIndex].sFileName;
-                fbFileTime(
-                    in := FILETIME_TO_FILETIME64(aFindBuffer[iFileIndex].lastWriteTime),
-                    tzInfo := WEST_EUROPE_TZI
-                );
-                GVL_Recipe.aAvailableFiles[iFileIndex].dtLastModified := FILETIME64_TO_DT(fbFileTime.out);
+        // Preenche campos básicos do arquivo
+        GVL_Recipe.aAvailableFiles[iFileIndex].sFileName := aFindBuffer[iFileIndex].sFileName;
+        fbFileTime(
+            in := FILETIME_TO_FILETIME64(aFindBuffer[iFileIndex].lastWriteTime),
+            tzInfo := WEST_EUROPE_TZI
+        );
+        GVL_Recipe.aAvailableFiles[iFileIndex].dtLastModified := FILETIME64_TO_DT(fbFileTime.out);
 
-                // Trigger header parser
-                fbHeaderHandler(
-                    sFileName := CONCAT('C:/TwinCAT/Recipes/', aFindBuffer[iFileIndex].sFileName),
-                    iTargetIndex := iFileIndex,
-                    bExecute := TRUE
-                );
-                bHeaderHandlerExecute := fbHeaderHandler.bDone;
-            ELSE
-				
-                iStep := 30;
-				
-            END_IF
-        END_IF
+        // Vai para o step de reset do FB_HeaderHandler
+        iStep := 21;
     ELSE
         bDone := TRUE;
         iStep := 100;
     END_IF
 
-25:
+// 21 - Reset do FB_HeaderHandler (chamada com bExecute := FALSE por um ciclo)
+21:
     fbHeaderHandler(bExecute := FALSE);
-    iStep := 20;
+    iStep := 22;
 
-30:
-    fbHeaderHandler(bExecute := FALSE);
+// 22 - Chama o FB_HeaderHandler para ler o header do arquivo atual
+22:
+    fbHeaderHandler(
+        sFileName := CONCAT('C:/TwinCAT/Recipes/', aFindBuffer[iFileIndex].sFileName),
+        iTargetIndex := iFileIndex,
+        bExecute := TRUE
+    );
     IF NOT fbHeaderHandler.bBusy THEN
         IF fbHeaderHandler.bError THEN
             bError := TRUE;
             nErrId := fbHeaderHandler.nErrId;
             iStep := 100;
         ELSIF fbHeaderHandler.bDone THEN
-            bHeaderHandlerReset := TRUE;
-            bHeaderHandlerExecute := FALSE;
             iFileIndex := iFileIndex + 1;
-            iStep := 20;
+            iStep := 20; // Volta para o próximo arquivo
         END_IF
     END_IF
 
@@ -133,14 +123,12 @@ CASE iStep OF
     IF NOT bExecute THEN
         iStep := 0;
     END_IF
-END_CASE]]></ST>
+END_CASE ]]></ST>
     </Implementation>
     <LineIds Name="FB_ListRecipeFiles">
-      <LineId Id="1457" Count="69" />
-      <LineId Id="1570" Count="0" />
-      <LineId Id="1527" Count="0" />
-      <LineId Id="1572" Count="0" />
-      <LineId Id="1528" Count="30" />
+      <LineId Id="1731" Count="44" />
+      <LineId Id="1835" Count="38" />
+      <LineId Id="1828" Count="6" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
