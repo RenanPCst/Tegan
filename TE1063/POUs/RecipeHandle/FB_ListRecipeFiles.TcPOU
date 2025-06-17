@@ -35,6 +35,13 @@ END_VAR
       <ST><![CDATA[bStart := NOT bExecutePrev AND bExecute;
 bExecutePrev := bExecute;
 
+IF NOT bExecute THEN
+	bBusy := FALSE;
+  	bDone := FALSE;
+	bError := FALSE;
+	nErrId := 0;
+END_IF
+
 CASE iStep OF
 
 0:
@@ -81,12 +88,12 @@ CASE iStep OF
 20:
     IF iFileIndex < TO_INT(nFoundFiles) AND iFileIndex <= 49 THEN
         // Preenche campos básicos do arquivo
-        GVL_Recipe.aAvailableFiles[iFileIndex].sFileName := aFindBuffer[iFileIndex].sFileName;
+        GVL_HMI.aAvailableFiles[iFileIndex].sFileName := aFindBuffer[iFileIndex].sFileName;
         fbFileTime(
             in := FILETIME_TO_FILETIME64(aFindBuffer[iFileIndex].lastWriteTime),
             tzInfo := WEST_EUROPE_TZI
         );
-        GVL_Recipe.aAvailableFiles[iFileIndex].dtLastModified := FILETIME64_TO_DT(fbFileTime.out);
+        GVL_HMI.aAvailableFiles[iFileIndex].dtLastModified := FILETIME64_TO_DT(fbFileTime.out);
 
         // Vai para o step de reset do FB_HeaderHandler
         iStep := 21;
@@ -98,7 +105,9 @@ CASE iStep OF
 // 21 - Reset do FB_HeaderHandler (chamada com bExecute := FALSE por um ciclo)
 21:
     fbHeaderHandler(bExecute := FALSE);
-    iStep := 22;
+    IF NOT fbHeaderHandler.bBusy AND NOT fbHeaderHandler.bDone THEN
+        iStep := 22;
+    END_IF
 
 // 22 - Chama o FB_HeaderHandler para ler o header do arquivo atual
 22:
@@ -113,10 +122,14 @@ CASE iStep OF
             nErrId := fbHeaderHandler.nErrId;
             iStep := 100;
         ELSIF fbHeaderHandler.bDone THEN
-            iFileIndex := iFileIndex + 1;
-            iStep := 20; // Volta para o próximo arquivo
+            iStep := 23;
         END_IF
     END_IF
+
+23: // Dummy step — aguarda 1 ciclo antes de liberar novo arquivo
+    fbHeaderHandler(bExecute := FALSE);
+    iFileIndex := iFileIndex + 1;
+    iStep := 20;
 
 100:
     bBusy := FALSE;
@@ -126,8 +139,20 @@ CASE iStep OF
 END_CASE ]]></ST>
     </Implementation>
     <LineIds Name="FB_ListRecipeFiles">
-      <LineId Id="1731" Count="44" />
-      <LineId Id="1835" Count="38" />
+      <LineId Id="1731" Count="1" />
+      <LineId Id="1904" Count="0" />
+      <LineId Id="1903" Count="0" />
+      <LineId Id="1907" Count="2" />
+      <LineId Id="1905" Count="1" />
+      <LineId Id="1733" Count="42" />
+      <LineId Id="1835" Count="0" />
+      <LineId Id="1953" Count="14" />
+      <LineId Id="1851" Count="3" />
+      <LineId Id="1923" Count="2" />
+      <LineId Id="1855" Count="0" />
+      <LineId Id="1857" Count="2" />
+      <LineId Id="1999" Count="13" />
+      <LineId Id="1919" Count="3" />
       <LineId Id="1828" Count="6" />
       <LineId Id="9" Count="0" />
     </LineIds>

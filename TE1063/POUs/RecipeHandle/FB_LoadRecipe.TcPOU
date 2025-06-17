@@ -23,13 +23,25 @@ VAR
     jsonRoot : SJsonValue;
     jsonVal  : SJsonValue;
     idx      : INT;
-    step     : INT;
+    iStep     : INT;
 
     sPath    : STRING(255);
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE step OF
+      <ST><![CDATA[IF NOT bExecute THEN
+	bBusy := TRUE;
+	bDone := FALSE;
+	bError := FALSE;
+	nErrId := 0;
+	fbFileOpen(bExecute := FALSE);
+	fbFileRead(bExecute := FALSE);
+	fbFileClose(bExecute := FALSE);
+	iStep := 0;
+END_IF
+
+
+CASE iStep OF
 0:
     IF bExecute THEN
         bBusy := TRUE;
@@ -44,7 +56,7 @@ END_VAR
             bExecute := TRUE
         );
 
-        step := 10;
+        iStep := 10;
     END_IF
 
 10:
@@ -53,7 +65,7 @@ END_VAR
         IF fbFileOpen.bError THEN
             bError := TRUE;
             nErrId := fbFileOpen.nErrId;
-            step := 100;
+            iStep := 100;
         ELSE
             hFile := fbFileOpen.hFile;
             fbFileRead(
@@ -63,7 +75,7 @@ END_VAR
                 cbReadLen := SIZEOF(sBuffer),
                 bExecute := TRUE
             );
-            step := 20;
+            iStep := 20;
         END_IF
     END_IF
 
@@ -73,10 +85,10 @@ END_VAR
         IF fbFileRead.bError THEN
             bError := TRUE;
             nErrId := fbFileRead.nErrId;
-            step := 90;
+            iStep := 90;
         ELSE
             fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
-            step := 30;
+            iStep := 30;
         END_IF
     END_IF
 
@@ -86,9 +98,9 @@ END_VAR
         IF fbFileClose.bError THEN
             bError := TRUE;
             nErrId := fbFileClose.nErrId;
-            step := 100;
+            iStep := 100;
         ELSE
-            step := 40;
+            iStep := 40;
         END_IF
     END_IF
 
@@ -97,9 +109,9 @@ END_VAR
     IF jsonRoot = 0 THEN
         bError := TRUE;
         nErrId := 16#F1000001; // Código customizado para JSON inválido
-        step := 100;
+        iStep := 100;
     ELSE
-        step := 50;
+        iStep := 50;
     END_IF
 
 50: //Fill the variables with Json buffer info [Parse Json file]
@@ -113,7 +125,7 @@ END_VAR
     GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate := STRING_TO_DATE(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
 
     sPath := 'stInfo/iRevision';
-    GVL_Recipe.stCurrentRecipe.stInfo.iRevision := fbJson.GetInt(fbJson.FindMemberPath(jsonRoot, sPath));
+    GVL_Recipe.stCurrentRecipe.stInfo.iRevision := DINT_TO_INT(fbJson.GetInt(fbJson.FindMemberPath(jsonRoot, sPath)));
 
     FOR idx := 1 TO 4 DO
         sPath := CONCAT('stSolventsTimes/aSolventN#', INT_TO_STRING(idx-1));
@@ -166,7 +178,7 @@ END_VAR
     GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
 	
 	sPath := 'stOtherParams/tAgitate2Time';
-    GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
+    GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
 	
 	sPath := 'stOtherParams/iVialsToFill';
     GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill := TO_USINT(fbJson.GetInt(fbJson.FindMemberPath(jsonRoot, sPath)));
@@ -183,7 +195,7 @@ END_VAR
 	sPath := 'stOtherParams/tAirDryTime';
     GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime := STRING_TO_TIME(fbJson.GetString(fbJson.FindMemberPath(jsonRoot, sPath)));
 
-    step := 60;
+    iStep := 60;
 	
 60: // Fill the HMI datagrids for recipe screen
 	//Recipe Header info
@@ -266,28 +278,34 @@ END_VAR
 	//Other Params datagrid
 	GVL_HMI.aOtherParamsRows[1].Value     := TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime) / 1000.0; // Soak Time
 	GVL_HMI.aOtherParamsRows[2].Value     := TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time) / 1000.0; // Agitate 1 Time
-	GVL_HMI.aOtherParamsRows[3].Value     := TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time) / 1000.0; // Agitate 2 Time
+	GVL_HMI.aOtherParamsRows[3].Value     := TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time) / 1000.0; // Agitate 2 Time
 	GVL_HMI.aOtherParamsRows[4].Value     := GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill; // Vials to Fill
 	GVL_HMI.aOtherParamsRows[5].Value     := GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol; // Vial Prime Vol
 	GVL_HMI.aOtherParamsRows[6].Value     := GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol; // Vial 1 Fill Vol
 	GVL_HMI.aOtherParamsRows[7].Value     := GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol; // Vials 2-4 Fill Vol
 	GVL_HMI.aOtherParamsRows[8].Value     := TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime) / 1000.0; // Air Dry Time
 	
-	step := 100;
+	iStep := 100;
 
 90:
     fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
-    step := 100;
+    iStep := 100;
 	
 100:
     bBusy := FALSE;
     bDone := NOT bError;
     IF NOT bExecute THEN
-        step := 0;
+        iStep := 0;
     END_IF
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="FB_LoadRecipe">
+      <LineId Id="1331" Count="0" />
+      <LineId Id="1336" Count="2" />
+      <LineId Id="1334" Count="0" />
+      <LineId Id="1339" Count="3" />
+      <LineId Id="1335" Count="0" />
+      <LineId Id="1332" Count="1" />
       <LineId Id="916" Count="63" />
       <LineId Id="1059" Count="0" />
       <LineId Id="1067" Count="5" />

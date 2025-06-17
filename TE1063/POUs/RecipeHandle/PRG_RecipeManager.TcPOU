@@ -3,15 +3,17 @@
   <POU Name="PRG_RecipeManager" Id="{f4641f87-7b16-4bb3-8169-d73676afbb75}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_RecipeManager
 VAR
-	fbLoadRecipe : FB_LoadRecipe;
-    fbListFiles  : FB_ListRecipeFiles;
-	
-	fbSaveRecipe : FB_SaveRecipe;
+	fbLoadRecipe  	: FB_LoadRecipe;
+    fbListFiles  	: FB_ListRecipeFiles;
+	fbDeleteRecipe 	: FB_DeleteRecipe;
+	fbSaveRecipe 	: FB_SaveRecipe;
 
     sPrefix      : STRING(64) := 'C:\TwinCAT\Recipes\';
     sFileName    : STRING(255);
 	
-	bDatagridRowsNaming	: BOOL := FALSE;
+	bDatagridRowsNaming		 : BOOL := FALSE;
+	bClearAvailableFiles	 : BOOL := FALSE;
+	bClearAvailableFilesDone : BOOL := FALSE;
 	
 	bDatagridToRecipeDone	: BOOL := FALSE;
 		
@@ -21,23 +23,54 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Execução controlada (ex: estado STOPPED, botão carregado, etc.)
-IF GVL_HMI.bRefreshRecipeList THEN
-    fbListFiles(bExecute := TRUE);
-ELSE
-    fbListFiles(bExecute := FALSE);
-END_IF
-
-IF fbListFiles.bDone THEN
-	GVL_HMI.bRefreshRecipeList := FALSE;
-END_IF
-
-//Naming the datagrid rows in the HMI Recipe Screen just once
+      <ST><![CDATA[//Naming the datagrid 1st column with the names in the HMI Recipe Screen just once
 IF NOT bDatagridRowsNaming THEN
 	ACT_DatagridsRowNaming();
 END_IF
 
-//Fill stCurrentRecipe from HMI datagrids if save button is pressed
+// <Load button> ############# Look up for the recipe files in the folder and fill up the GVL_Recipe.aAvailableFiles[]. ######################### 
+IF GVL_HMI.bRefreshRecipeList THEN
+	bClearAvailableFiles := TRUE;
+	IF bClearAvailableFilesDone THEN
+		fbListFiles(bExecute := TRUE);
+	END_IF
+ELSE
+	bClearAvailableFiles := FALSE;
+	bClearAvailableFilesDone := FALSE;
+    fbListFiles(bExecute := FALSE);
+END_IF
+
+// Clear the Available files datagrid in the load file popup
+IF bClearAvailableFiles THEN
+	ACT_ClearAvailableFiles();
+END_IF
+
+// Reset load actions once its done
+IF fbListFiles.bDone THEN
+	GVL_HMI.bRefreshRecipeList := FALSE;
+END_IF
+
+ //Reset file name
+sFileName := '';
+
+// Run the loading recipe from selected row in the recipe load popup
+IF NOT GVL_HMI.bRecipeLoaded THEN
+	sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json')); // File naming assemble for the selected row in the recipe load popup
+	fbLoadRecipe( sFileName := sFileName, bExecute := GVL_HMI.bRecipeLoadFromFile );
+END_IF
+
+IF fbLoadRecipe.bError THEN
+	fbLoadRecipe( sFileName := sFileName, bExecute := FALSE);
+END_IF
+
+// After the recipe loading, reseting and setting the flags
+IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFromFile THEN
+    GVL_HMI.bRecipeLoadFromFile := FALSE;
+    GVL_HMI.bRecipeLoaded := TRUE;
+END_IF
+// <\Load button> ############# END ##############
+
+// <Save Button> ############# Fill stCurrentRecipe from HMI datagrids if save button is pressed ########################
 IF GVL_HMI.bRecipeSaveButton THEN
 	ACT_DatagridToRecipe();
 	IF bDatagridToRecipeDone THEN
@@ -50,37 +83,136 @@ IF GVL_HMI.bRecipeSaveButton THEN
 		
 	END_IF
 END_IF
+// <\Save Button> ############# END ########################
 
-// Monta o nome do arquivo selecionado
-sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json'));
-
-// Executa o carregamento da receita se solicitado pela HMI
-IF NOT GVL_HMI.bRecipeLoaded THEN
-	fbLoadRecipe(
-		sFileName := sFileName,
-		bExecute := GVL_HMI.bRecipeLoadFromFile
-	);
-END_IF
-
-//Reload the datagrids with the recipe in stCurrentRecipe if the bt cancel is pressed during new recipe
+// <Cancel Button> ############# Reload the datagrids with the recipe in stCurrentRecipe if the bt cancel is pressed during new recipe ########################
 IF GVL_HMI.bReloadRecipeDatagrids THEN
 	ACT_RecipeToDatagrid();
 END_IF
+// <\Cancel Button> ############# END ########################
 
-//Activate command from HMI. 
+// <Activate Button> ############# Transfer data from stCurrentRecipe for stActivatedRecipe witch will be used on the cycle  ########################
 IF GVL_HMI.bRecipeActivateButton THEN
 	GVL_Recipe.stActiveRecipe := GVL_Recipe.stCurrentRecipe; //Only fill stActiveRecipe if button Activate was pressed on hmi. 
 	GVL_Recipe.bIsThereRecipeActivated := TRUE;
 END_IF
+// <\Activate Button> ############# END ########################
 
-// Após carregamento, acione o flag de receita carregada ou prossiga com a ativação
-IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFromFile THEN
-    GVL_HMI.bRecipeLoadFromFile := FALSE;
-    GVL_HMI.bRecipeLoaded := TRUE;
+// <Delete Button> ############# Moves the loaded Recipe file from the root folder for the _deleted folder ########################
+IF GVL_HMI.bDeleteRecipeButton THEN
+	ACT_PopulateDeleteRecipeInfo();
+	GVL_HMI.bDeleteRecipeDone := FALSE;
+	GVL_HMI.bDeleteRecipeError := FALSE;
 END_IF
+
+fbDeleteRecipe(bExecute := GVL_HMI.bDeleteRecipeConfirm, stFileInfo := GVL_HMI.stDeleteRecipeInfo);
+
+IF fbDeleteRecipe.bDone THEN
+	IF NOT fbDeleteRecipe.bError THEN 
+		ACT_ClearStCurrentRecipe();
+		ACT_ClearHMIDatagrids();
+		GVL_HMI.bDeleteRecipeConfirm := FALSE;
+		GVL_HMI.bDeleteRecipeDone := TRUE;
+	ELSE 
+		GVL_HMI.bDeleteRecipeError := TRUE;
+	END_IF
+END_IF
+
+// <\Delete Button> ############# END ########################
 
 ]]></ST>
     </Implementation>
+    <Action Name="ACT_ClearAvailableFiles" Id="{69c4ef56-ea89-4269-bd3f-37b671659ed2}">
+      <Implementation>
+        <ST><![CDATA[//Clear the GVL_Recipe.aAvailableFiles, witch is the list files datagrid data source
+IF NOT bClearAvailableFilesDone THEN
+	FOR i := 1 TO 50 DO
+		GVL_HMI.aAvailableFiles[i].sFileName := '';
+		GVL_HMI.aAvailableFiles[i].sCreatedBy := '';
+		GVL_HMI.aAvailableFiles[i].iRevision := 0;
+		GVL_HMI.aAvailableFiles[i].dtLastModified := DT#1970-01-01-00:00;
+		GVL_HMI.aAvailableFiles[i].dCreationDate := D#1970-01-01;
+	END_FOR
+	
+	IF i >= 50 THEN
+		bClearAvailableFilesDone := TRUE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_ClearHMIDatagrids" Id="{ac68110a-010b-4d2e-a48f-41c3d72a6a58}">
+      <Implementation>
+        <ST><![CDATA[//Clear the arrays that are binding with the datagrids source on recipe HMI content
+//Recipe Info fields
+GVL_HMI.stRecipeInfo.dCreationDate := D#1970-01-01;
+GVL_HMI.stRecipeInfo.iRevision := 0;
+GVL_HMI.stRecipeInfo.sCreatedBy := '';
+GVL_HMI.stRecipeInfo.sMethodName := '';
+
+//Solvents and Times datagrid
+FOR i := 1 TO 3 DO
+	GVL_HMI.aSolventAndTimesRows[i].Rinse1 := 0;
+	GVL_HMI.aSolventAndTimesRows[i].Rinse2 := 0;
+	GVL_HMI.aSolventAndTimesRows[i].Wash1 := 0;
+	GVL_HMI.aSolventAndTimesRows[i].Wash2 := 0;
+END_FOR
+
+//Volumes datagrid
+FOR i := 1 TO 10 DO
+	GVL_HMI.aVolumeRows[i].Rinse1 := 0;
+	GVL_HMI.aVolumeRows[i].Rinse2 := 0;
+	GVL_HMI.aVolumeRows[i].Wash1 := 0;
+	GVL_HMI.aVolumeRows[i].Wash2 := 0;
+END_FOR
+
+//Other Parameters datagrid
+FOR i := 1 TO 8 DO
+	GVL_HMI.aOtherParamsRows[i].Value := 0;
+END_FOR]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_ClearStCurrentRecipe" Id="{015909d4-6612-4235-8058-47c7ae45226c}">
+      <Implementation>
+        <ST><![CDATA[//Clears the array stCurrentRecipe 
+//Info
+GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate := D#1970-01-01;
+GVL_Recipe.stCurrentRecipe.stInfo.iRevision := 0;
+GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := '';
+GVL_Recipe.stCurrentRecipe.stInfo.sMethodName := '';
+
+//Other Parameters
+GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill := 0;
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol := 0;
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol := 0;
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := 0;
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time := T#0S;
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time := T#0S;
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime := T#0S;
+GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime := T#0S;
+
+FOR i := 1 TO 4 DO
+	//Solvents and Times
+	GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := T#0S;
+	GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[i] := 0;
+	
+	//Volumes
+	GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[i] := 0;
+	GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[i] := 0;
+END_FOR
+
+]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="ACT_DatagridsRowNaming" Id="{7a5f0b3d-52d7-4ce2-b6cd-e160802e7ce0}">
       <Implementation>
         <ST><![CDATA[//Naming the HMI Recipe Screen Datagrid rows
@@ -143,10 +275,10 @@ bDatagridRowsNaming := TRUE;
 		END_CASE;
 		// Time (convertendo para TIME)
 		CASE i OF
-			1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse1);
-			2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse2);
-			3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash1);
-			4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash2);
+			1: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse1 * 1000);
+			2: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Rinse2 * 1000);
+			3: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash1 * 1000);
+			4: GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[i] := DWORD_TO_TIME(GVL_HMI.aSolventAndTimesRows[2].Wash2 * 1000);
 		END_CASE;
 		// Velocity
 		CASE i OF
@@ -229,14 +361,14 @@ bDatagridRowsNaming := TRUE;
 	
 	// ---- Commit OtherParams ----
 	// Supondo a ordem das linhas conforme DataGrid (ajuste se necessário)
-	GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime        := TO_TIME(GVL_HMI.aOtherParamsRows[1].Value);
-	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time    := TO_TIME(GVL_HMI.aOtherParamsRows[2].Value);
-	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time    := TO_TIME(GVL_HMI.aOtherParamsRows[3].Value);
-	GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill     := TO_USINT(GVL_HMI.aOtherParamsRows[4].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime        := TO_TIME(GVL_HMI.aOtherParamsRows[1].Value * 1000);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time    := TO_TIME(GVL_HMI.aOtherParamsRows[2].Value * 1000);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time    := TO_TIME(GVL_HMI.aOtherParamsRows[3].Value * 1000);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill     := TO_USINT(GVL_HMI.aOtherParamsRows[4].Value * 1000);
 	GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol    := GVL_HMI.aOtherParamsRows[5].Value;
 	GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol    := GVL_HMI.aOtherParamsRows[6].Value;
 	GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := GVL_HMI.aOtherParamsRows[7].Value;
-	GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime   	  := TO_TIME(GVL_HMI.aOtherParamsRows[8].Value);
+	GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime   	  := TO_TIME(GVL_HMI.aOtherParamsRows[8].Value * 1000);
 	
 	//reset flags
 	
@@ -248,6 +380,19 @@ END_IF
 
 
 ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_PopulateDeleteRecipeInfo" Id="{441531cc-5411-489e-b8c8-b1846bd52885}">
+      <Implementation>
+        <ST><![CDATA[// Fill up the info fields for popup delete confirmation
+GVL_HMI.stDeleteRecipeInfo.sCreatedBy := GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy;
+GVL_HMI.stDeleteRecipeInfo.dCreationDate := GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate;
+GVL_HMI.stDeleteRecipeInfo.iRevision := GVL_Recipe.stCurrentRecipe.stInfo.iRevision;
+GVL_HMI.stDeleteRecipeInfo.sMethodName := GVL_Recipe.stCurrentRecipe.stInfo.sMethodName;
+GVL_HMI.stDeleteRecipeInfo.sFileName := GVL_Recipe.sSelectedRecipeName;
+
+// Resets the flag
+GVL_HMI.bDeleteRecipeButton := FALSE;]]></ST>
       </Implementation>
     </Action>
     <Action Name="ACT_RecipeToDatagrid" Id="{947174eb-de1f-4e9d-b1cf-e0d4928d41c5}">
@@ -321,14 +466,14 @@ GVL_HMI.aVolumeRows[10].Wash1  := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume
 GVL_HMI.aVolumeRows[10].Wash2  := GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[4];
 
 // --- Outros Params ---
-GVL_HMI.aOtherParamsRows[1].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime)/1000;
-GVL_HMI.aOtherParamsRows[2].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000;
-GVL_HMI.aOtherParamsRows[3].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitade2Time)/1000;
+GVL_HMI.aOtherParamsRows[1].Value := UDINT_TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime)/1000);
+GVL_HMI.aOtherParamsRows[2].Value := UDINT_TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
+GVL_HMI.aOtherParamsRows[3].Value := UDINT_TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
 GVL_HMI.aOtherParamsRows[4].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill;
 GVL_HMI.aOtherParamsRows[5].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol;
 GVL_HMI.aOtherParamsRows[6].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol;
 GVL_HMI.aOtherParamsRows[7].Value := GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol;
-GVL_HMI.aOtherParamsRows[8].Value := TIME_TO_REAL(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime)/1000;
+GVL_HMI.aOtherParamsRows[8].Value := UDINT_TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime)/1000);
 
 //Flag to initiate the save fb
 GVL_HMI.bReloadRecipeDatagrids  := FALSE;
@@ -337,12 +482,31 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       </Implementation>
     </Action>
     <LineIds Name="PRG_RecipeManager">
-      <LineId Id="58" Count="5" />
+      <LineId Id="260" Count="2" />
+      <LineId Id="258" Count="1" />
+      <LineId Id="58" Count="1" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="233" Count="2" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="62" Count="1" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="231" Count="1" />
+      <LineId Id="253" Count="0" />
       <LineId Id="87" Count="3" />
+      <LineId Id="242" Count="5" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="275" Count="1" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="264" Count="4" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="238" Count="0" />
       <LineId Id="107" Count="0" />
-      <LineId Id="106" Count="0" />
-      <LineId Id="108" Count="2" />
-      <LineId Id="115" Count="0" />
       <LineId Id="114" Count="0" />
       <LineId Id="116" Count="1" />
       <LineId Id="192" Count="1" />
@@ -353,23 +517,89 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="199" Count="0" />
       <LineId Id="194" Count="0" />
       <LineId Id="118" Count="0" />
-      <LineId Id="64" Count="4" />
-      <LineId Id="133" Count="0" />
-      <LineId Id="69" Count="3" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="64" Count="0" />
       <LineId Id="134" Count="0" />
-      <LineId Id="173" Count="0" />
-      <LineId Id="169" Count="3" />
-      <LineId Id="150" Count="0" />
-      <LineId Id="149" Count="0" />
-      <LineId Id="151" Count="1" />
+      <LineId Id="170" Count="2" />
+      <LineId Id="254" Count="1" />
+      <LineId Id="150" Count="2" />
       <LineId Id="154" Count="0" />
       <LineId Id="153" Count="0" />
       <LineId Id="102" Count="0" />
-      <LineId Id="74" Count="1" />
-      <LineId Id="77" Count="1" />
-      <LineId Id="43" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="305" Count="1" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="309" Count="1" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="271" Count="0" />
       <LineId Id="105" Count="0" />
       <LineId Id="104" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_ClearAvailableFiles">
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="2" Count="1" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_ClearHMIDatagrids">
+      <LineId Id="42" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="44" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="25" Count="2" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="32" Count="3" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_ClearStCurrentRecipe">
+      <LineId Id="58" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="11" Count="2" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="18" Count="6" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="46" Count="8" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="2" Count="0" />
     </LineIds>
     <LineIds Name="PRG_RecipeManager.ACT_DatagridsRowNaming">
       <LineId Id="4" Count="1" />
@@ -423,6 +653,14 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="152" Count="1" />
       <LineId Id="33" Count="0" />
       <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_RecipeManager.ACT_PopulateDeleteRecipeInfo">
+      <LineId Id="8" Count="0" />
+      <LineId Id="2" Count="3" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_RecipeManager.ACT_RecipeToDatagrid">
       <LineId Id="353" Count="0" />

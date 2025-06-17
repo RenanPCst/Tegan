@@ -29,10 +29,10 @@ VAR_GLOBAL
 	
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
 	
-	//Recipe Handle
-	aAvailableFiles         : ARRAY[1..50] OF ST_RecipeInfo;
+	// <Recipe> Variables needed to handle recipe ##########################################################################################
+	aAvailableFiles         : ARRAY[0..49] OF ST_RecipeFileInfo;
     iFileCount              : INT;
-
+	
     bRefreshRecipeList      : BOOL; 			//List the recipe files from HMI
     bRecipeLoadFromFile	 	: BOOL := FALSE; 	//load recipe button from HMI
 	bReloadRecipeDatagrids	: BOOL := FALSE;	//Reload the recipe in stCurrentRecipe to the datagrids if the cancel button is pressed when creating new recipe
@@ -49,6 +49,12 @@ VAR_GLOBAL
 	bRecipeSaveDone			: BOOL := FALSE; //Save done flag after save command from recipe save button
 	bRecipeSaveError		: BOOL := FALSE; //Save Error flag after save command from recipe save button
 	
+	stDeleteRecipeInfo		: ST_RecipeFileInfo;
+	bDeleteRecipeButton		: BOOL := FALSE; //Delete button Action - Open delete popup
+	bDeleteRecipeConfirm	: BOOL := FALSE; //Delete confirmation action
+	bDeleteRecipeError		: BOOL := FALSE;
+	bDeleteRecipeDone		: BOOL := FALSE;
+	
 	bNewRecipeButton		: BOOL := FALSE; //New Recipe button on recipe screen.
 	
 	//Recipe HMI View - data needs to be transposed for better view and handled by HMI
@@ -56,7 +62,7 @@ VAR_GLOBAL
 	aSolventAndTimesRows : ARRAY[1..3] OF ST_HMI_SolventAndTimeRow;
 	aVolumeRows 		 : ARRAY[1..10] OF ST_HMI_VolumesRow; // 1:T/IC, 2:S0, ..., 10:F
 	aOtherParamsRows 	 : ARRAY[1..8] OF ST_HMI_OtherParamsRow;
-	
+	// <\Recipe> ################################################################################################################
 	
 	//Manual Motors Moviment
 	ManualMov	: ST_MotorsJog;
