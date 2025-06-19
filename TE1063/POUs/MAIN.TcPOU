@@ -105,6 +105,11 @@ VAR
 	rValvePosition 	: ARRAY[1..5] OF LREAL;
 	rPumpPosition 	: ARRAY[1..10] OF LREAL;
 		
+	// ########## Retain valves position ####################
+ 	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
+    bValveStatus      : ARRAY[1..5] OF BOOL;
+    i                 : INT;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -122,6 +127,32 @@ PRG_RecipeManager();
 //################ TESTING AREA ################################
 
 //GVL_Motion.aMotors[1].Jog(bFwd := bDebug1, bBwd := bDebug8);
+
+IF bDebug1 THEN
+	bDebug1 := GVL_Motion.aValvesObj[1].ReadStatus();
+END_IF
+
+
+FOR i := 1 TO 5 DO
+	
+	bValveStatus[i] := GVL_Motion.aValvesObj[i].ReadStatus();
+
+	IF bValveStatus[i] THEN
+		IF bSetValvePosition[i] AND GVL_Retain.bPositionIsValid[i] THEN
+			// Tentativa única de restaurar a posição
+			bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(rPosition := GVL_Retain.rValveLastPosition[i]);
+		ELSE
+			// Armazena a posição continuamente enquanto motor está energizado
+			GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
+			GVL_Retain.bPositionIsValid[i] := TRUE;
+		END_IF
+	ELSE
+		// Motor não energizado: reseta flag para setar posição ao religar
+		bSetValvePosition[i] := TRUE;
+	END_IF
+END_FOR
+
+
 
 IF bDebug2 THEN
 	bDebug2 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
@@ -291,6 +322,17 @@ END_IF
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
       <LineId Id="5183" Count="0" />
+      <LineId Id="5334" Count="1" />
+      <LineId Id="5341" Count="0" />
+      <LineId Id="5340" Count="0" />
+      <LineId Id="5346" Count="0" />
+      <LineId Id="5344" Count="0" />
+      <LineId Id="5318" Count="0" />
+      <LineId Id="5349" Count="0" />
+      <LineId Id="5319" Count="14" />
+      <LineId Id="5302" Count="0" />
+      <LineId Id="5338" Count="0" />
+      <LineId Id="5299" Count="0" />
       <LineId Id="4713" Count="1" />
       <LineId Id="4716" Count="0" />
       <LineId Id="4950" Count="3" />

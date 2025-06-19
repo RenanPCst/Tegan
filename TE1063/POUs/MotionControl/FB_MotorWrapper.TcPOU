@@ -14,9 +14,11 @@ VAR
 	// MC2 Motion Function Blocks
     fbPower       : MC_Power;
     fbReset       : MC_Reset;
+	fbReadStatus  : MC_ReadStatus;
     fbMoveAbs     : MC_MoveAbsolute;
     fbMoveRel     : MC_MoveRelative;
 	fbMoveVel	  : MC_MoveVelocity;
+	fbSetPos	  : MC_SetPosition;
     fbHome        : MC_Home;
 	fbReadPos	  : MC_ReadActualPosition;
     fbStop        : MC_Stop;
@@ -54,6 +56,10 @@ VAR
 	bWaitingForStop	: BOOL;
 	bStartHoming	: BOOL;
 	
+	//ReadStatus()
+	bReadStatusExecute 	: BOOL;
+    bReadStatusRequested: BOOL;
+	
 	//MoveAbs()
 	bMoveAbsExecute 	: BOOL;
     bMoveAbsRequested 	: BOOL;
@@ -73,6 +79,11 @@ VAR
 	bResetExecute 		: BOOL;
     bResetRequested 	: BOOL;
 	bResetDone			: BOOL;
+	
+	//SetPosition()
+	bSetPosExecute 		: BOOL;
+    bSetPosRequested	: BOOL;
+	bSetPosDone			: BOOL;
 	
 	
 END_VAR
@@ -504,6 +515,51 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="ReadStatus" Id="{75b26eb2-c886-42bf-86aa-71bae3e05caa}">
+      <Declaration><![CDATA[METHOD ReadStatus : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+//Axis.ReadStatus();
+// Request procedure only once
+IF NOT bReadStatusRequested THEN
+	bReadStatusExecute := TRUE;
+	bReadStatusRequested := TRUE;
+END_IF
+
+//Calls the MC_ReadStatus function
+fbReadStatus(Axis := Axis, Enable := bReadStatusExecute);
+
+//Check if the function was called and sets execute false
+IF fbReadStatus.Busy THEN
+    bReadStatusExecute := FALSE;
+END_IF
+
+//Check if the axis is enabled or not
+IF fbReadStatus.Valid AND NOT fbReadStatus.Disabled THEN
+	bReadStatusRequested := FALSE;
+    ReadStatus := TRUE; // Returns Axis Enabled
+	RETURN;
+ELSE
+	bReadStatusRequested := FALSE;
+    ReadStatus := FALSE; // Returns Axis Disabled
+END_IF
+*)
+
+Axis.ReadStatus();
+
+IF Axis.Status.Error AND Axis.Status.ErrorID = 16#00004466 THEN
+    ReadStatus := FALSE;
+ELSE
+    ReadStatus := NOT Axis.Status.Error AND NOT Axis.Status.Disabled;
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Reset" Id="{55ea212e-113c-4739-bf54-01562c1314f2}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
@@ -552,6 +608,49 @@ END_IF
 Reset := FALSE;
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetPosition" Id="{a529999b-02b0-40ec-9986-934333a30507}">
+      <Declaration><![CDATA[METHOD SetPosition : BOOL
+VAR_INPUT
+	rPosition : LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bSetPosRequested THEN
+    bSetPosExecute := TRUE;
+    bSetPosRequested := TRUE;
+END_IF
+
+// Call the internal motion block
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);
+
+// Update actuator status
+status.bBusy := fbSetPos.Busy;
+status.bDone := fbSetPos.Done;
+status.bError := fbSetPos.Error;
+status.iErrorCode := fbSetPos.ErrorID;
+
+IF fbSetPos.busy THEN
+    bSetPosExecute := FALSE;
+END_IF
+
+IF fbSetPos.Error THEN
+    status.eState := E_ActuatorState.eError;
+    status.sMessage := 'Error in motor Set Position';
+END_IF
+
+IF bSetPosRequested AND NOT fbSetPos.Busy AND NOT fbSetPos.Error THEN
+    bSetPosRequested := FALSE;
+    SetPosition := TRUE;
+    RETURN;
+ELSE
+    SetPosition := FALSE;
+END_IF
+
+// Call the internal motion block
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);]]></ST>
       </Implementation>
     </Method>
     <Method Name="Stop" Id="{27336d58-d763-4c6d-b6e1-79be37906c83}">
@@ -718,6 +817,32 @@ END_IF
       <LineId Id="25" Count="18" />
       <LineId Id="5" Count="0" />
     </LineIds>
+    <LineIds Name="FB_MotorWrapper.ReadStatus">
+      <LineId Id="56" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="2" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="48" Count="3" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="72" Count="5" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
       <LineId Id="36" Count="22" />
       <LineId Id="83" Count="0" />
@@ -728,6 +853,16 @@ END_IF
       <LineId Id="71" Count="3" />
       <LineId Id="21" Count="0" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.SetPosition">
+      <LineId Id="6" Count="4" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="22" Count="20" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
       <LineId Id="85" Count="3" />

@@ -5,25 +5,82 @@
 VAR
 	fbReboot    : NT_Reboot;
     fbShutdown  : NT_Shutdown;
+    fbWritePersistentData : FB_WritePersistentData;
+
+    fbR_Trig        : R_TRIG;
+    tSafeShutdown   : TON;
+    tSafeReboot     : TON;
+
+    bStart              : BOOL := TRUE;
+    bWriteDone          : BOOL := FALSE;
+    bShutdownRequest    : BOOL := FALSE;
+    bRebootRequest      : BOOL := FALSE;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Reboot commando condition
-IF GVL_HMI.HMIDigInputs.bRebootPLC THEN
-    fbReboot(Start:=TRUE);
+      <ST><![CDATA[// === Check if power supply is NOT OK or Shutdown is requested by HMI ===
+IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND
+        GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck) OR
+   		GVL_HMI.HMIDigInputs.bShutdownPLC THEN
+
+    // === Trigger on rising edge of START to prevent multiple writes ===
+    fbR_Trig(CLK := bStart);
+
+    IF fbR_Trig.Q THEN
+        // Start writing RETAIN/PERSISTENT variables to non-volatile memory
+        fbWritePersistentData(NETID := '', PORT := 851, START := TRUE, TMOUT := T#1s);
+    ELSE
+        fbWritePersistentData(START := FALSE);
+    END_IF
+
+    // === Start Shutdown Timer only after successful write ===
+    IF NOT fbWritePersistentData.BUSY AND NOT fbWritePersistentData.ERR THEN
+        bWriteDone := TRUE;
+    END_IF
+
+    IF bWriteDone THEN
+        tSafeShutdown(IN := TRUE, PT := T#10S);
+		GVL_HMI.rTimeCountingDown := TIME_TO_DWORD(tSafeShutdown.ET)/1000;
+    END_IF
 ELSE
-    fbReboot(Start:=FALSE);
+    // Reset shutdown timer and write flag if no shutdown condition
+    tSafeShutdown(IN := FALSE);
+    bWriteDone := FALSE;
 END_IF
 
-// Shutdown command condition
-IF GVL_HMI.HMIDigInputs.bShutdownPLC THEN
-    fbShutdown(Start:=TRUE);
+
+// === Check if Reboot command from HMI is active ===
+IF GVL_HMI.HMIDigInputs.bRebootPLC THEN
+    tSafeReboot(IN := TRUE, PT := T#10S);
+	GVL_HMI.rTimeCountingDown := TIME_TO_DWORD(tSafeReboot.ET)/1000;
 ELSE
-    fbShutdown(Start:=FALSE);
-END_IF]]></ST>
+    tSafeReboot(IN := FALSE);
+END_IF
+
+
+// === After timers expire, set action flags ===
+IF tSafeShutdown.Q THEN
+    bShutdownRequest := TRUE;
+END_IF
+
+IF tSafeReboot.Q THEN
+    bRebootRequest := TRUE;
+END_IF
+
+
+// === Execute Reboot ===
+fbReboot(Start := bRebootRequest);
+
+// === Execute Shutdown ===
+fbShutdown(Start := bShutdownRequest);]]></ST>
     </Implementation>
     <LineIds Name="PRG_ShutdownPLC">
-      <LineId Id="8" Count="11" />
+      <LineId Id="100" Count="21" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="122" Count="10" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="133" Count="18" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

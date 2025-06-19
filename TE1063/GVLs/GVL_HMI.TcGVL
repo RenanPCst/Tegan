@@ -29,6 +29,9 @@ VAR_GLOBAL
 	
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
 	
+	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
+	sCountdownText		 : STRING(64);
+	
 	// <Recipe> Variables needed to handle recipe ##########################################################################################
 	aAvailableFiles         : ARRAY[0..49] OF ST_RecipeFileInfo;
     iFileCount              : INT;
@@ -39,6 +42,8 @@ VAR_GLOBAL
 	bRecipeLoaded			: BOOL;
     sSelectedRecipeName     : STRING(255); 		// Selected name from hmi list popup
 	bRecipeCorrectLoaded	: BOOL; //Flag to identify if there is a recipe loaded to proceed with the recovery
+	bRecipeLoadFailed		: BOOL; //Flag to identify if there was any error loading the recipe file
+	
 	bSettingsCorrectLoaded	: BOOL; //Flag to identify if the settings parameters were loaded correctly from json configuration file
 	
 	bRecipeActivateButton	: BOOL := FALSE; //Activate Recipe command from recipe activate button 

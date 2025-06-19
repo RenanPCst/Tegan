@@ -30,6 +30,8 @@ END_IF
 
 // <Load button> ############# Look up for the recipe files in the folder and fill up the GVL_Recipe.aAvailableFiles[]. ######################### 
 IF GVL_HMI.bRefreshRecipeList THEN
+	//GVL_HMI.bRecipeCorrectLoaded := FALSE;
+	//GVL_HMI.bRecipeLoadFailed := FALSE;
 	bClearAvailableFiles := TRUE;
 	IF bClearAvailableFilesDone THEN
 		fbListFiles(bExecute := TRUE);
@@ -54,19 +56,18 @@ END_IF
 sFileName := '';
 
 // Run the loading recipe from selected row in the recipe load popup
-IF NOT GVL_HMI.bRecipeLoaded THEN
-	sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json')); // File naming assemble for the selected row in the recipe load popup
-	fbLoadRecipe( sFileName := sFileName, bExecute := GVL_HMI.bRecipeLoadFromFile );
-END_IF
+sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json')); // File naming assemble for the selected row in the recipe load popup
+fbLoadRecipe( sFileName := sFileName, bExecute := GVL_HMI.bRecipeLoadFromFile );
 
 IF fbLoadRecipe.bError THEN
 	fbLoadRecipe( sFileName := sFileName, bExecute := FALSE);
+	GVL_HMI.bRecipeLoadFailed := TRUE;
 END_IF
 
 // After the recipe loading, reseting and setting the flags
 IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFromFile THEN
     GVL_HMI.bRecipeLoadFromFile := FALSE;
-    GVL_HMI.bRecipeLoaded := TRUE;
+	GVL_HMI.bRecipeCorrectLoaded := TRUE;
 END_IF
 // <\Load button> ############# END ##############
 
@@ -76,9 +77,14 @@ IF GVL_HMI.bRecipeSaveButton THEN
 	IF bDatagridToRecipeDone THEN
 		fbSaveRecipe(bExecute := TRUE, sUser := GVL_HMI.stRecipeInfo.sCreatedBy);
 		IF fbSaveRecipe.bDone AND NOT fbSaveRecipe.bError THEN
+			GVL_HMI.stRecipeInfo.iRevision := GVL_Recipe.stCurrentRecipe.stInfo.iRevision; //Update the datagrid revision that does not come from the grid
 			fbSaveRecipe(bExecute := FALSE);
+			GVL_HMI.bRecipeSaveDone := TRUE; //Response Success flag to HMI
 			GVL_HMI.bRecipeSaveButton := FALSE;	
 			bDatagridToRecipeDone := FALSE;
+			ELSE IF fbSaveRecipe.bError THEN
+				GVL_HMI.bRecipeSaveError := TRUE; //Response Error flag to HMI
+			END_IF
 		END_IF
 		
 	END_IF
@@ -263,6 +269,7 @@ bDatagridRowsNaming := TRUE;
 	// ---- Commit RecipeInfo ----	
 	GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := GVL_HMI.stRecipeInfo.sCreatedBy;
 	GVL_Recipe.stCurrentRecipe.stInfo.sMethodName := GVL_HMI.stRecipeInfo.sMethodName;
+	
 
 	// ---- Commit SolventAndTimes ----
 	FOR i := 1 TO 4 DO // 1: Rinse1, 2: Rinse2, 3: Wash1, 4: Wash2
@@ -485,6 +492,7 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="260" Count="2" />
       <LineId Id="258" Count="1" />
       <LineId Id="58" Count="1" />
+      <LineId Id="313" Count="1" />
       <LineId Id="227" Count="0" />
       <LineId Id="233" Count="2" />
       <LineId Id="61" Count="0" />
@@ -496,14 +504,15 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="231" Count="1" />
       <LineId Id="253" Count="0" />
       <LineId Id="87" Count="3" />
-      <LineId Id="242" Count="5" />
+      <LineId Id="242" Count="4" />
       <LineId Id="274" Count="0" />
       <LineId Id="248" Count="0" />
-      <LineId Id="241" Count="0" />
       <LineId Id="275" Count="1" />
       <LineId Id="279" Count="0" />
+      <LineId Id="311" Count="0" />
       <LineId Id="278" Count="0" />
-      <LineId Id="264" Count="4" />
+      <LineId Id="264" Count="3" />
+      <LineId Id="312" Count="0" />
       <LineId Id="263" Count="0" />
       <LineId Id="238" Count="0" />
       <LineId Id="107" Count="0" />
@@ -511,8 +520,10 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="116" Count="1" />
       <LineId Id="192" Count="1" />
       <LineId Id="198" Count="0" />
-      <LineId Id="200" Count="0" />
+      <LineId Id="315" Count="1" />
+      <LineId Id="337" Count="0" />
       <LineId Id="202" Count="1" />
+      <LineId Id="341" Count="2" />
       <LineId Id="201" Count="0" />
       <LineId Id="199" Count="0" />
       <LineId Id="194" Count="0" />
@@ -630,7 +641,7 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
     <LineIds Name="PRG_RecipeManager.ACT_DatagridToRecipe">
       <LineId Id="37" Count="0" />
       <LineId Id="155" Count="0" />
-      <LineId Id="158" Count="1" />
+      <LineId Id="158" Count="2" />
       <LineId Id="157" Count="0" />
       <LineId Id="151" Count="0" />
       <LineId Id="38" Count="55" />
