@@ -18,12 +18,13 @@ VAR
     fbFileClose : FB_FileClose;
     fbJson      : FB_JsonDomParser;
 
-    hFile    : UINT;
-    sBuffer  : STRING(8192);
-    jsonRoot : SJsonValue;
-    jsonVal  : SJsonValue;
-    idx      : INT;
-    iStep     : INT;
+    hFile    	: UINT;
+    sBuffer  	: STRING(16384);
+    jsonRoot 	: SJsonValue;
+    jsonVal  	: SJsonValue;
+	nBytesRead  : UDINT;
+    idx      	: INT;
+    iStep     	: INT;
 
     sPath    : STRING(255);
 END_VAR
@@ -34,6 +35,7 @@ END_VAR
 	bDone := FALSE;
 	bError := FALSE;
 	nErrId := 0;
+	sBuffer := '';
 	fbFileOpen(bExecute := FALSE);
 	fbFileRead(bExecute := FALSE);
 	fbFileClose(bExecute := FALSE);
@@ -55,7 +57,7 @@ CASE iStep OF
             nMode := FOPEN_MODEREAD OR FOPEN_MODETEXT,
             bExecute := TRUE
         );
-
+		sBuffer := '';
         iStep := 10;
     END_IF
 
@@ -80,13 +82,17 @@ CASE iStep OF
     END_IF
 
 20:
-    fbFileRead(bExecute := FALSE);
+    fbFileRead(bExecute := FALSE, sNetId := '', hFile := hFile, pReadBuff := ADR(sBuffer), cbReadLen := SIZEOF(sBuffer), cbRead => nBytesRead);
     IF NOT fbFileRead.bBusy THEN
         IF fbFileRead.bError THEN
             bError := TRUE;
             nErrId := fbFileRead.nErrId;
             iStep := 90;
         ELSE
+			// Clear the buffer
+            IF nBytesRead < SIZEOF(sBuffer) THEN
+    			sBuffer[nBytesRead] := 0; 
+			END_IF
             fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
             iStep := 30;
         END_IF
@@ -303,10 +309,14 @@ END_CASE]]></ST>
       <LineId Id="1331" Count="0" />
       <LineId Id="1336" Count="2" />
       <LineId Id="1334" Count="0" />
+      <LineId Id="1369" Count="0" />
       <LineId Id="1339" Count="3" />
       <LineId Id="1335" Count="0" />
       <LineId Id="1332" Count="1" />
-      <LineId Id="916" Count="63" />
+      <LineId Id="916" Count="45" />
+      <LineId Id="1373" Count="2" />
+      <LineId Id="1372" Count="0" />
+      <LineId Id="962" Count="17" />
       <LineId Id="1059" Count="0" />
       <LineId Id="1067" Count="5" />
       <LineId Id="987" Count="28" />

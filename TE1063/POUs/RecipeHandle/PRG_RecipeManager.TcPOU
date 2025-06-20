@@ -60,14 +60,14 @@ sFileName := CONCAT(sPrefix, CONCAT(GVL_Recipe.sSelectedRecipeName, '.json')); /
 fbLoadRecipe( sFileName := sFileName, bExecute := GVL_HMI.bRecipeLoadFromFile );
 
 IF fbLoadRecipe.bError THEN
-	fbLoadRecipe( sFileName := sFileName, bExecute := FALSE);
 	GVL_HMI.bRecipeLoadFailed := TRUE;
+	GVL_HMI.bRecipeLoadFromFile := FALSE;
 END_IF
 
 // After the recipe loading, reseting and setting the flags
 IF NOT fbLoadRecipe.bBusy AND NOT fbLoadRecipe.bError AND GVL_HMI.bRecipeLoadFromFile THEN
-    GVL_HMI.bRecipeLoadFromFile := FALSE;
 	GVL_HMI.bRecipeCorrectLoaded := TRUE;
+	GVL_HMI.bRecipeLoadFromFile := FALSE;
 END_IF
 // <\Load button> ############# END ##############
 
@@ -508,11 +508,12 @@ GVL_HMI.bReloadRecipeDatagrids  := FALSE;
       <LineId Id="274" Count="0" />
       <LineId Id="248" Count="0" />
       <LineId Id="275" Count="1" />
-      <LineId Id="279" Count="0" />
       <LineId Id="311" Count="0" />
+      <LineId Id="365" Count="0" />
       <LineId Id="278" Count="0" />
-      <LineId Id="264" Count="3" />
+      <LineId Id="264" Count="2" />
       <LineId Id="312" Count="0" />
+      <LineId Id="364" Count="0" />
       <LineId Id="263" Count="0" />
       <LineId Id="238" Count="0" />
       <LineId Id="107" Count="0" />

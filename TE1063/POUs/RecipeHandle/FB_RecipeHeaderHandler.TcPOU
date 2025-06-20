@@ -24,7 +24,7 @@ VAR
     fbJson        : FB_JsonDomParser;
     jsonDoc       : SJsonValue;
     jsonProp      : SJsonValue;
-	nBytesRead    : UDINT; // Adicione se necessário, ou use o output do FB
+	nBytesRead    : UDINT;
 	bExecutePrev  : BOOL; 
     bStart        : BOOL;
 	bWait1Cycle	  : BOOL := FALSE;
@@ -109,7 +109,7 @@ CASE iStep OF
         pReadBuff := ADR(sBuffer),
         cbReadLen := SIZEOF(sBuffer),
         bExecute := FALSE,
-        cbRead => nBytesRead // <--- Output da FB
+        cbRead => nBytesRead 
     );
     IF NOT fbFileRead.bBusy THEN
         IF fbFileRead.bError THEN
@@ -117,9 +117,9 @@ CASE iStep OF
             nErrId := fbFileRead.nErrId;
             iStep := 100;
         ELSE
-            // Limpa o buffer corretamente:
+            // Clear the buffer
             IF nBytesRead < SIZEOF(sBuffer) THEN
-    			sBuffer[nBytesRead] := 0; // termina a string corretamente
+    			sBuffer[nBytesRead] := 0; 
 			END_IF
 
             fbFileClose(
