@@ -139,6 +139,7 @@ FOR i := 1 TO 5 DO
 
 	IF bValveStatus[i] THEN
 		IF bSetValvePosition[i] AND GVL_Retain.bPositionIsValid[i] THEN
+			GVL_Motion.bValvesPositionRecovered := TRUE; // Permissive flag for repositioning valves after shutdown
 			// Tentativa única de restaurar a posição
 			bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(rPosition := GVL_Retain.rValveLastPosition[i]);
 		ELSE
@@ -208,11 +209,11 @@ IF bDebug5 THEN
 END_IF
 
 IF bDebug6 THEN
-	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3 ,iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug7 THEN
-	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug9 THEN
@@ -329,7 +330,9 @@ END_IF
       <LineId Id="5344" Count="0" />
       <LineId Id="5318" Count="0" />
       <LineId Id="5349" Count="0" />
-      <LineId Id="5319" Count="14" />
+      <LineId Id="5319" Count="4" />
+      <LineId Id="5461" Count="0" />
+      <LineId Id="5324" Count="9" />
       <LineId Id="5302" Count="0" />
       <LineId Id="5338" Count="0" />
       <LineId Id="5299" Count="0" />

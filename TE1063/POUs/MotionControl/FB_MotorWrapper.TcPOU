@@ -393,6 +393,7 @@ MoveRelative := fbMoveRel.Done;]]></ST>
     <Method Name="MoveValve" Id="{0efdf2ac-cd7b-4dd3-893f-1eab65963717}">
       <Declaration><![CDATA[METHOD MoveValve : BOOL
 VAR_INPUT
+	iValveID  : USINT;
 	iPosition : USINT;
 	rVelocity : LREAL;
 	rAcc	  : LREAL;
@@ -401,22 +402,18 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Map logical valve position to angular position
-CASE iPosition OF
-    1: rTargetAngle := 60.0;
-    2: rTargetAngle := 120.0;
-    3: rTargetAngle := 180.0;
-    4: rTargetAngle := 240.0;
-    5: rTargetAngle := 300.0;
-    6: rTargetAngle := 0.0;
+IF (iValveID >= 1) AND (iValveID <= 5) AND (iPosition >= 1) AND (iPosition <= 6) THEN
+    rTargetAngle := GVL_Motion.aValves[iValveID].rValvePositionAngle[iPosition];
 ELSE
-    rTargetAngle := 0.0;
-END_CASE
+    rTargetAngle := 0.0; // fallback
+END_IF
 
 // Reuse the same logic from MoveAbsolute
 IF NOT bMoveValveRequested THEN
     bMoveValveExecute := TRUE;
     bMoveValveRequested := TRUE;
 END_IF
+
 
 // Call the internal motion block
 fbMoveAbs(
@@ -795,7 +792,13 @@ END_IF
       <LineId Id="33" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
-      <LineId Id="31" Count="44" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="102" Count="3" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="108" Count="4" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="48" Count="27" />
       <LineId Id="77" Count="3" />
       <LineId Id="5" Count="0" />
     </LineIds>
