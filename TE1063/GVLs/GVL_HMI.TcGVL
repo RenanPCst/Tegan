@@ -12,6 +12,9 @@ VAR_GLOBAL
 	bHMIAlarmLampAmbar	 : BOOL;
 	bHMIAlarmLampGreen	 : BOOL;
 	
+	//Info Screen
+	stInfo				: ST_InfoPage;
+	
 	//Cycle Control
 	bBtStartCycle		 : BOOL := FALSE; //Button Start Cycle from HMI
 	bBtStopCycle		 : BOOL := FALSE; //Button Start Cycle from HMI
@@ -31,6 +34,12 @@ VAR_GLOBAL
 	
 	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
 	sCountdownText		 : STRING(64);
+	
+	//User Management
+	stUsers          : ARRAY[1..50] OF ST_User;  // Até 20 usuários
+    iLoggedUserID    : INT := -1;                // -1 = ninguém logado
+    dtCurrentLogin   : DT;
+    tSessionStart    : TIME;
 	
 	// <Recipe> Variables needed to handle recipe ##########################################################################################
 	aAvailableFiles         : ARRAY[0..49] OF ST_RecipeFileInfo;

@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_User" Id="{6996e08e-ed68-4d9a-886f-f5fccc56b791}">
+    <Declaration><![CDATA[TYPE ST_User :
+STRUCT
+	sUsername            : STRING(50);
+    sDisplayName         : STRING(100);
+    sPasswordHash        : STRING(64); // SHA-256 ou similar
+    eGroup               : E_UserGroup;
+    dtCreated            : DT;
+    sCreatedBy           : STRING(50);
+    dtLastPasswordChange : DT;
+    tAutoLogoutTime      : TIME;
+    bBlocked             : BOOL;
+    nFailedLoginCount    : UINT;
+    bForcePasswordReset  : BOOL;
+    stStats              : ST_UserStats;;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
