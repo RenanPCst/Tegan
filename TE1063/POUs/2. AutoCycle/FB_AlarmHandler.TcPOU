@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_AlarmHandler" Id="{5e7f237a-32b2-4825-a094-3cb12ffb08a5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_AlarmHandler EXTENDS FB_TcAlarm
+
+VAR_INPUT
+	evtEntry	: TcEventEntry;
+	bEvt		: BOOL;
+	bConfirm	: BOOL;
+	sSystem		: STRING; // Adding Alarm system name
+	sMessage	: STRING; // Alarm Message
+END_VAR
+
+VAR_OUTPUT
+	
+END_VAR
+
+VAR
+	bInit	: BOOL := TRUE;
+	bMem	: BOOL;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bInit THEN
+	SUPER^.CreateEx(evtEntry, TRUE, 0);
+	bInit	:= FALSE;
+END_IF
+
+// To when the alarm is triggered for the first time
+IF bEvt AND NOT bMem AND SUPER^.eConfirmationState <> TcEventConfirmationState.WaitForConfirmation THEN
+	SUPER^.ipArguments.AddString(sSystem).AddString(sMessage); // Adiciona as strings ao alarme
+	SUPER^.Raise(0);
+END_IF
+
+// To when the alarm is reset
+IF bMem AND NOT bEvt THEN
+	SUPER^.Clear(0, FALSE);
+END_IF
+
+// Alarm confirmation
+IF bConfirm THEN
+	SUPER^.Confirm(0);
+END_IF
+
+bMem := bEvt;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_AlarmHandler">
+      <LineId Id="9" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="35" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

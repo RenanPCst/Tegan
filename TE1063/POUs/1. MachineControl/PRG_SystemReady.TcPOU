@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_SystemReady" Id="{cef8cb42-e9dd-485d-b555-b87acc65ca60}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SystemReady
+VAR_OUTPUT
+	bSystemReadyToStart : BOOL;
+END_VAR
+VAR
+	fbBlinkStartButton	:	FB_Blink;
+	
+	bRecipeCorrectLoaded	: BOOL := FALSE;
+	bSettingsCorrectLoaded	: BOOL := FALSE;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Start Button Blinking if everything is set. 
+IF GVL_Safety.bSafetyEnable (*AND bRecipeCorrectLoaded AND bSettingsCorrectLoaded*) THEN //Incoherence would be a state where there is no recipe activated or no parameters set on the HMI, needs to be implemented
+	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
+ELSE
+	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
+END_IF
+GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
+
+
+//Check if there is recipe loaded from HMI - if there is not, should pop up a warning reminder on HMI
+
+
+
+//Check if the settings were correctly loaded from settings json file - if not loaded correctly, should pop up a warning reminder on HMI
+
+
+
+IF bRecipeCorrectLoaded AND bSettingsCorrectLoaded THEN
+	bSystemReadyToStart := TRUE;
+ELSE
+	bSystemReadyToStart := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SystemReady">
+      <LineId Id="52" Count="20" />
+      <LineId Id="32" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

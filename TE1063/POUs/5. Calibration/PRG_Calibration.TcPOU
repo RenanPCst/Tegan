@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_Calibration" Id="{f2ab8e02-eb8c-441d-b1b0-c2b3833b2b19}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_Calibration
+VAR_OUTPUT
+    bCalibrationFinished : BOOL;  // Indica o fim com sucesso da calibração
+END_VAR
+VAR
+	fbLeakTest : FB_LeakTest;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Leak Test request from HMI
+fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S, rSystemPressure => GVL_HMI.rCalLealTestPressure);
+
+// Leak Test post treatment
+IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
+	GVL_HMI.bCalLeakTestPass := TRUE;
+	GVL_HMI.bCalLeakTestButton := FALSE;
+END_IF
+
+IF fbLeakTest.bLeakTestError THEN
+	GVL_HMI.bCalLeakTestError := TRUE;
+	GVL_HMI.bCalLeakTestButton := FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{27813d8d-2df7-44d9-b974-4b44cba9f55d}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="PRG_Calibration">
+      <LineId Id="17" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.Reset">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

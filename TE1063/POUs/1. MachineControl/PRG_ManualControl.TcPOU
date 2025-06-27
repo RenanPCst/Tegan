@@ -1,0 +1,432 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_ManualControl" Id="{d07ba183-6201-49c6-acdd-4e668144af08}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ManualControl
+VAR
+	
+	rMotorsActualPosition : ARRAY[1..3] OF LREAL;
+	rValvesActualPosition : ARRAY[1..5] OF LREAL;
+	rPumpsActualPosition  : ARRAY[1..10] OF LREAL;
+	rDegreesPerVolume 	  : ARRAY[1..10] OF LREAL;
+	
+	aMotorBusy	: ARRAY[1..3] OF BOOL;
+	
+	//interlock Variables
+	iTargetPosM2 : INT;
+    rActualPosM3 : LREAL;
+    rTol         : LREAL := 3.0; // tolerância para considerar posição "alinhada"
+    bAllowMoveM2 : BOOL := TRUE;
+		
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Motors Manual jog handling 
+MotorsJog();
+MotorsActualPosition();
+
+//New Manual Screen commands test area ##########################################################
+(* <Motors> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)
+
+(*<M1 Motor>*)
+//Move M1 by HMI combobox manual mode
+IF GVL_HMI.aManualMotorsCmd[1].bRun THEN
+	GVL_HMI.aManualMotorsCmd[1].bRun := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM1Position[GVL_HMI.aManualMotorsCmd[1].iPosition],
+                        														rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
+                        														rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+                       															rDec := GVL_HMI.HMIParameters.rM1Deceleration
+																				);
+END_IF
+//Stop Moviment M1 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[1].bStop THEN
+	GVL_HMI.aManualMotorsCmd[1].bStop := NOT GVL_Motion.aMotors[1].Stop();
+END_IF
+(*<\M1 Motor>*)
+
+(*<M2 Motor>*)
+//Move M2 by HMI combobox manual mode
+iTargetPosM2 := GVL_HMI.aManualMotorsCmd[2].iPosition;
+rActualPosM3 := rMotorsActualPosition[3];
+
+//Interlock move for M2 base on M3 position
+CASE iTargetPosM2 OF
+    3: // Fill Vials
+        bAllowMoveM2 := (
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[2]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[3]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[4]) <= rTol OR
+            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[5]) <= rTol
+        );
+
+    4: // Calibration
+        bAllowMoveM2 := ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[6]) <= rTol;
+
+    ELSE
+        bAllowMoveM2 := TRUE;
+END_CASE
+
+//M2 Moviment if there is no interlock
+IF GVL_HMI.aManualMotorsCmd[2].bRun THEN
+    IF bAllowMoveM2 THEN
+        GVL_HMI.aManualMotorsCmd[2].bRun := NOT GVL_Motion.aMotors[2].MoveAbsolute(
+            rPosition := GVL_HMI.HMIParameters.aM2Position[iTargetPosM2],
+            rVelocity := GVL_HMI.HMIParameters.rM2Velocity,
+            rAcc := GVL_HMI.HMIParameters.rM2Accleration,
+            rDec := GVL_HMI.HMIParameters.rM2Deceleration
+        );
+    ELSE
+        GVL_HMI.aManualMotorsCmd[2].bRun := FALSE;
+        // TODO: Block flag or alarm
+    END_IF
+END_IF
+
+//Stop Moviment M2 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[2].bStop THEN
+	GVL_HMI.aManualMotorsCmd[2].bStop := NOT GVL_Motion.aMotors[2].Stop();
+END_IF
+(*<\M2 Motor>*)
+
+(*<M3 Motor>*)
+//Interlock by M2 Position
+IF GVL_HMI.aManualMotorsCmd[3].bRun THEN
+    IF ABS(rMotorsActualPosition[2] - GVL_HMI.HMIParameters.aM2Position[1]) > rTol THEN
+        //If M2 it is not in Home Position, M3 move cannot be done
+        GVL_HMI.aManualMotorsCmd[3].bRun := FALSE;
+        // TODO: Block flag or alarm
+    ELSE
+        GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(
+            rPosition := GVL_HMI.HMIParameters.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
+            rVelocity := GVL_HMI.HMIParameters.rM3Velocity,
+            rAcc := GVL_HMI.HMIParameters.rM3Accleration,
+            rDec := GVL_HMI.HMIParameters.rM3Deceleration
+        );
+    END_IF
+END_IF
+//Stop Moviment M2 by HMI manual mode button
+IF GVL_HMI.aManualMotorsCmd[3].bStop THEN
+	GVL_HMI.aManualMotorsCmd[3].bStop := NOT GVL_Motion.aMotors[3].Stop();
+END_IF
+(*<\M3 Motor>*)
+
+(* <Valves> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)
+
+(*<Valve 1>*)
+//Move Valve 1 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[1].bMove THEN
+	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iValveID := 1, iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 1 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[1].bStop THEN
+	GVL_HMI.aManualValvesCmd[1].bStop := NOT GVL_Motion.aValvesObj[1].Stop();
+END_IF
+(*<\Valve 1>*)
+
+(*<Valve 2>*)
+//Move Valve 2 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[2].bMove THEN
+	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iValveID := 2, iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 2 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[2].bStop THEN
+	GVL_HMI.aManualValvesCmd[2].bStop := NOT GVL_Motion.aValvesObj[2].Stop();
+END_IF
+(*<\Valve 2>*)
+
+(*<Valve 3>*)
+//Move Valve 3 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[3].bMove THEN
+	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 3 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[3].bStop THEN
+	GVL_HMI.aManualValvesCmd[3].bStop := NOT GVL_Motion.aValvesObj[3].Stop();
+END_IF
+(*<\Valve 3>*)
+
+(*<Valve 4>*)
+//Move Valve 4 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[4].bMove THEN
+	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iValveID := 4, iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 4 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[4].bStop THEN
+	GVL_HMI.aManualValvesCmd[4].bStop := NOT GVL_Motion.aValvesObj[4].Stop();
+END_IF
+(*<\Valve 4>*)
+
+(*<Valve 5>*)
+//Move Valve 5 by HMI combobox manual mode
+IF GVL_HMI.aManualValvesCmd[5].bMove THEN
+	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iValveID := 5, iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+END_IF
+
+//Stop Moviment Valve 5 by HMI manual mode button
+IF GVL_HMI.aManualValvesCmd[5].bStop THEN
+	GVL_HMI.aManualValvesCmd[5].bStop := NOT GVL_Motion.aValvesObj[5].Stop();
+END_IF
+(*<\Valve 5>*)
+
+(* <Pumps> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)
+
+(*<Pump 1>*)
+(*
+//Pump 1 - Rotary Movement by speed [MoveVelocity]
+IF GVL_HMI.aManualPumpsCmd[1].bRunBySpeed THEN
+	GVL_HMI.aManualPumpsCmd[1].bRunBySpeed := NOT GVL_Motion.aPumpsRotary[1].MoveVelocity( rVelocity := (GVL_HMI.aManualPumpsCmd[1].rSpeed*6), rAcc := 100, rDec := 100, iDirection := GVL_HMI.aManualPumpsCmd[1].eDirection);
+END_IF
+
+//Pump 1 - Rotary movement by volume [MoveRelative]
+//ratio uL/step - 200 steps/rev [volume in mL * 1000] / [calibration constant in uL/step * 200 steps/rev] = revolutions * 360 = distance degrees
+rDegreesPerVolume[1] := (GVL_HMI.aManualPumpsCmd[1].rVolume * 1000)/(GVL_Settings.aPumpCalibration[1]*200)*360;
+
+IF GVL_HMI.aManualPumpsCmd[1].bRunByVolume THEN
+	GVL_HMI.aManualPumpsCmd[1].bRunByVolume := NOT GVL_Motion.aPumpsRotary[1].MoveRelative( Distance :=  rDegreesPerVolume[1], Velocity := (GVL_HMI.aManualPumpsCmd[1].rSpeed*6), Acc := 100, Dec := 100);
+END_IF
+
+//Pump 1 - Get Status for Running or Idle flag
+IF GVL_HMI.aManualPumpsCmd[1].bRunBySpeed OR GVL_HMI.aManualPumpsCmd[1].bRunByVolume THEN
+	GVL_HMI.aManualPumpsCmd[1].bBusy := TRUE;
+ELSE
+	GVL_HMI.aManualPumpsCmd[1].bBusy := FALSE;
+END_IF
+
+//Pump 1 - Stop Rotary Movement
+IF GVL_HMI.aManualPumpsCmd[1].bStop THEN
+	GVL_HMI.aManualPumpsCmd[1].bStop := NOT GVL_Motion.aPumpsRotary[1].Stop();
+END_IF
+(*<\Pump 1>*)
+*)
+
+
+
+]]></ST>
+    </Implementation>
+    <Action Name="MotorsActualPosition" Id="{634c759f-49ee-43fa-86d1-7097ca0492ea}">
+      <Implementation>
+        <ST><![CDATA[// Get Motors Actual Position
+rMotorsActualPosition[1] := GVL_Motion.aMotors[1].GetPosition();
+rMotorsActualPosition[2] := GVL_Motion.aMotors[2].GetPosition();
+rMotorsActualPosition[3] := GVL_Motion.aMotors[3].GetPosition();
+rValvesActualPosition[1] := GVL_Motion.aValvesObj[1].GetPosition();
+rValvesActualPosition[2] := GVL_Motion.aValvesObj[2].GetPosition();
+rValvesActualPosition[3] := GVL_Motion.aValvesObj[3].GetPosition();
+rValvesActualPosition[4] := GVL_Motion.aValvesObj[4].GetPosition();
+rValvesActualPosition[5] := GVL_Motion.aValvesObj[5].GetPosition();
+rPumpsActualPosition[1] := GVL_Motion.aPumpsLinear[1].GetPosition();
+rPumpsActualPosition[2] := GVL_Motion.aPumpsLinear[2].GetPosition();
+rPumpsActualPosition[3] := GVL_Motion.aPumpsLinear[3].GetPosition();
+rPumpsActualPosition[4] := GVL_Motion.aPumpsLinear[4].GetPosition();
+rPumpsActualPosition[5] := GVL_Motion.aPumpsLinear[5].GetPosition();
+rPumpsActualPosition[6] := GVL_Motion.aPumpsLinear[6].GetPosition();
+rPumpsActualPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
+rPumpsActualPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
+rPumpsActualPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
+rPumpsActualPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
+
+//Linear Motors - M1, M2, M3
+GVL_Motion.M1Motor.rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rMotorsActualPosition[1]), iDecimalPlaces := 2)* -1;
+GVL_Motion.M2Motor.rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rMotorsActualPosition[2]), iDecimalPlaces := 2)* -1;
+GVL_Motion.M3Motor.rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rMotorsActualPosition[3]), iDecimalPlaces := 2)* -1;
+
+//Vici Valves - M4 to M8
+GVL_Motion.aValves[1].rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rValvesActualPosition[1]), iDecimalPlaces := 2);
+GVL_Motion.aValves[2].rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rValvesActualPosition[2]), iDecimalPlaces := 2);
+GVL_Motion.aValves[3].rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rValvesActualPosition[3]), iDecimalPlaces := 2);
+GVL_Motion.aValves[4].rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rValvesActualPosition[4]), iDecimalPlaces := 2);
+GVL_Motion.aValves[5].rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rValvesActualPosition[5]), iDecimalPlaces := 2);
+
+//Linear pumps - 1 to 10
+GVL_Motion.aPumps[1].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[1]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[2].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[2]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[3].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[3]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[4].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[4]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[5].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[5]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[6].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[6]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[7].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[7]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[8].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[8]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[9].Linear.rActualPosition  := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[9]), iDecimalPlaces := 2)* -1;
+GVL_Motion.aPumps[10].Linear.rActualPosition := F_ROUND_REAL(rInput := TO_REAL(rPumpsActualPosition[10]), iDecimalPlaces := 2)* -1;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MotorsJog" Id="{57b89f50-f3a8-44a2-8323-78bd3226c039}">
+      <Implementation>
+        <ST><![CDATA[//Manual Motors Moviment
+
+//Manual Moviment motor 1 - Stage Collection Vertical Axis
+GVL_Motion.aMotors[1].Jog(bFwd := GVL_HMI.ManualMov.bMotorsJogFwd[1], bBwd := GVL_HMI.ManualMov.bMotorsJogBwd[1]);
+//Manual Moviment motor 2 - Sample Recovery Vertical Axis
+GVL_Motion.aMotors[2].Jog(bFwd := GVL_HMI.ManualMov.bMotorsJogFwd[2], bBwd := GVL_HMI.ManualMov.bMotorsJogBwd[2]);
+//Manual Moviment motor 3 - Sample Recovery Horizontal Axis
+GVL_Motion.aMotors[3].Jog(bFwd := GVL_HMI.ManualMov.bMotorsJogFwd[3], bBwd := GVL_HMI.ManualMov.bMotorsJogBwd[3]);
+
+//Manual Moviment M4 - Valve 1 
+GVL_Motion.aValvesObj[1].Jog(bFwd := GVL_HMI.ManualMov.bValvesJogFwd[1], bBwd := GVL_HMI.ManualMov.bValvesJogBwd[1]);
+//Manual Moviment M5 - Valve 2 
+GVL_Motion.aValvesObj[2].Jog(bFwd := GVL_HMI.ManualMov.bValvesJogFwd[2], bBwd := GVL_HMI.ManualMov.bValvesJogBwd[2]);
+//Manual Moviment M6 - Valve 3
+GVL_Motion.aValvesObj[3].Jog(bFwd := GVL_HMI.ManualMov.bValvesJogFwd[3], bBwd := GVL_HMI.ManualMov.bValvesJogBwd[3]);
+//Manual Moviment M7 - Valve 4
+GVL_Motion.aValvesObj[4].Jog(bFwd := GVL_HMI.ManualMov.bValvesJogFwd[4], bBwd := GVL_HMI.ManualMov.bValvesJogBwd[4]);
+//Manual Moviment M8 - Valve 5
+GVL_Motion.aValvesObj[5].Jog(bFwd := GVL_HMI.ManualMov.bValvesJogFwd[5], bBwd := GVL_HMI.ManualMov.bValvesJogBwd[5]);
+
+//Manual Moviment Pump 1 - Linear
+GVL_Motion.aPumpsLinear[1].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[1], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[1]);
+//Manual Moviment Pump 2 - Linear
+GVL_Motion.aPumpsLinear[2].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[2], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[2]);
+//Manual Moviment Pump 3 - Linear
+GVL_Motion.aPumpsLinear[3].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[3], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[3]);
+//Manual Moviment Pump 4 - Linear
+GVL_Motion.aPumpsLinear[4].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[4], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[4]);
+//Manual Moviment Pump 5 - Linear
+GVL_Motion.aPumpsLinear[5].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[5], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[5]);
+//Manual Moviment Pump 6 - Linear
+GVL_Motion.aPumpsLinear[6].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[6], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[6]);
+//Manual Moviment Pump 7 - Linear
+GVL_Motion.aPumpsLinear[7].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[7], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[7]);
+//Manual Moviment Pump 8 - Linear
+GVL_Motion.aPumpsLinear[8].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[8], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[8]);
+//Manual Moviment Pump 9 - Linear
+GVL_Motion.aPumpsLinear[9].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[9], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[9]);
+//Manual Moviment Pump 10 - Linear
+GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[10]);]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="PRG_ManualControl">
+      <LineId Id="356" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="759" Count="1" />
+      <LineId Id="557" Count="2" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="567" Count="1" />
+      <LineId Id="563" Count="0" />
+      <LineId Id="569" Count="0" />
+      <LineId Id="564" Count="0" />
+      <LineId Id="573" Count="0" />
+      <LineId Id="560" Count="0" />
+      <LineId Id="572" Count="0" />
+      <LineId Id="571" Count="0" />
+      <LineId Id="576" Count="0" />
+      <LineId Id="604" Count="0" />
+      <LineId Id="588" Count="0" />
+      <LineId Id="577" Count="0" />
+      <LineId Id="627" Count="1" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="632" Count="13" />
+      <LineId Id="630" Count="1" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="646" Count="11" />
+      <LineId Id="584" Count="0" />
+      <LineId Id="658" Count="0" />
+      <LineId Id="585" Count="2" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="659" Count="12" />
+      <LineId Id="599" Count="4" />
+      <LineId Id="590" Count="0" />
+      <LineId Id="674" Count="0" />
+      <LineId Id="673" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="693" Count="0" />
+      <LineId Id="677" Count="1" />
+      <LineId Id="683" Count="1" />
+      <LineId Id="692" Count="0" />
+      <LineId Id="685" Count="3" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="696" Count="9" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="707" Count="10" />
+      <LineId Id="675" Count="0" />
+      <LineId Id="719" Count="10" />
+      <LineId Id="718" Count="0" />
+      <LineId Id="731" Count="10" />
+      <LineId Id="730" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="561" Count="0" />
+      <LineId Id="791" Count="0" />
+      <LineId Id="762" Count="0" />
+      <LineId Id="793" Count="0" />
+      <LineId Id="761" Count="0" />
+      <LineId Id="771" Count="1" />
+      <LineId Id="770" Count="0" />
+      <LineId Id="764" Count="0" />
+      <LineId Id="763" Count="0" />
+      <LineId Id="783" Count="0" />
+      <LineId Id="782" Count="0" />
+      <LineId Id="774" Count="2" />
+      <LineId Id="773" Count="0" />
+      <LineId Id="767" Count="0" />
+      <LineId Id="766" Count="0" />
+      <LineId Id="769" Count="0" />
+      <LineId Id="784" Count="0" />
+      <LineId Id="786" Count="1" />
+      <LineId Id="785" Count="0" />
+      <LineId Id="790" Count="0" />
+      <LineId Id="768" Count="0" />
+      <LineId Id="788" Count="1" />
+      <LineId Id="765" Count="0" />
+      <LineId Id="792" Count="0" />
+      <LineId Id="794" Count="0" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="757" Count="0" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="473" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_ManualControl.MotorsActualPosition">
+      <LineId Id="2" Count="18" />
+      <LineId Id="23" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_ManualControl.MotorsJog">
+      <LineId Id="296" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="603" Count="1" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="637" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="638" Count="0" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="593" Count="0" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="609" Count="0" />
+      <LineId Id="640" Count="0" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="641" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="642" Count="0" />
+      <LineId Id="612" Count="0" />
+      <LineId Id="643" Count="0" />
+      <LineId Id="624" Count="1" />
+      <LineId Id="644" Count="0" />
+      <LineId Id="615" Count="0" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="627" Count="0" />
+      <LineId Id="647" Count="0" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="648" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="649" Count="0" />
+      <LineId Id="630" Count="0" />
+      <LineId Id="650" Count="0" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="632" Count="0" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="633" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

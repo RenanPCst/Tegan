@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
+
+VAR_INPUT
+    bExecute 		: BOOL;  	//Start the movement
+END_VAR
+
+VAR_OUTPUT
+	bSealSuccess 	: BOOL; 	//Indicates whether the process was completed successfully
+    bSealError 		: BOOL;  	//Indicates whether there was an error during execution
+END_VAR
+
+VAR
+	bExecuting		: BOOL := FALSE;
+	rActualPosition	: LREAL;
+	rTargetPosition : LREAL;
+	rTolerance      : LREAL := 0.5;
+	bInPosition     : BOOL := FALSE;
+	
+	bMoveM1Pos1	 	: BOOL := FALSE;
+	bMoveM1Pos2	 	: BOOL := FALSE;
+
+	bMotionSequenceDone	: BOOL := FALSE;
+	
+	bStartMove2		: BOOL := FALSE;
+	tonStartMove2	: ton;
+	stStatus		: ST_ActuatorStatus;
+		
+	//EventLogger Variables
+	fbEventHandler : FB_EventHandler;
+    bExecuteEvent  : BOOL := FALSE;
+    bEventDone     : BOOL := FALSE;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Get the M1 Motor actual position
+rActualPosition := GVL_Motion.aMotors[1].GetPosition();
+rTargetPosition := GVL_HMI.HMIParameters.aM1Position[2];
+bInPosition := ABS(rActualPosition - rTargetPosition) <= rTolerance;
+
+IF bExecute THEN
+
+	// Reset flags on first entry
+	IF NOT bExecuting THEN
+		bExecuting := TRUE;
+		bMoveM1Pos1 := FALSE;
+		bMoveM1Pos2 := FALSE;
+		bStartMove2 := FALSE;
+		tonStartMove2(IN := FALSE);
+	END_IF
+
+	IF NOT bInPosition OR NOT bMotionSequenceDone THEN
+		// Movement sequence finished
+		IF bMoveM1Pos1 AND bMoveM1Pos2 THEN
+			bStartMove2 := FALSE;
+			bMotionSequenceDone := TRUE;
+		END_IF
+
+		// Step 1: Move to pre-position with deceleration offset
+		IF NOT bMoveM1Pos1 THEN
+			bMoveM1Pos1 := GVL_Motion.aMotors[1].MoveAbsolute(
+				rPosition := rTargetPosition + GVL_HMI.HMIParameters.fM1PositionDeceleration,
+				rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
+				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+				rDec := GVL_HMI.HMIParameters.rM1Deceleration
+			);
+		END_IF
+
+		// Trigger move 2 when move 1 is done
+		IF bMoveM1Pos1 AND NOT bMoveM1Pos2 THEN
+			bStartMove2 := TRUE;
+		END_IF
+
+		tonStartMove2(IN := bStartMove2, PT := T#500MS);
+
+		// Step 2: Final precise move to target
+		IF NOT bMoveM1Pos2 AND tonStartMove2.Q THEN
+			bMoveM1Pos2 := GVL_Motion.aMotors[1].MoveAbsolute(
+				rPosition := rTargetPosition,
+				rVelocity := GVL_HMI.HMIParameters.rM1PrecisionVelocity,
+				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
+				rDec := GVL_HMI.HMIParameters.rM1Deceleration
+			);
+		END_IF
+	END_IF
+
+	// Get status and handle errors or success
+	stStatus := GVL_Motion.aMotors[1].GetStatus();
+
+	IF stStatus.bError THEN
+		bSealError := TRUE;
+		bSealSuccess := FALSE;
+		bExecuteEvent := TRUE;
+
+		fbEventHandler(
+			bExecute := bExecuteEvent,
+			eEventName := E_Events.ERROR,
+			sSystem := 'Seal Stage State',
+			sMessage := CONCAT('Error: ', stStatus.sMessage),
+			bDone => bEventDone
+		);
+		ResetEventTrigger();
+
+	ELSE
+		bSealError := FALSE;
+		IF bInPosition THEN
+			bSealSuccess := TRUE;
+			bExecuteEvent := TRUE;
+
+			fbEventHandler(
+				bExecute := bExecuteEvent,
+				eEventName := E_Events.INFO,
+				sSystem := 'Seal Stage',
+				sMessage := 'Completed!',
+				bDone => bEventDone
+			);
+			ResetEventTrigger();
+
+		ELSE
+			bSealSuccess := FALSE;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{f9795723-8eae-40ab-a345-51877b5d2bb9}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset Flags
+bSealSuccess		:= FALSE;
+bSealError  	:= FALSE;
+bInPosition		:= FALSE;
+bMoveM1Pos1		:= FALSE; 	
+bMoveM1Pos2		:= FALSE;	
+bMotionSequenceDone	:= FALSE;	
+
+// Send Reset Return
+IF NOT bSealSuccess AND NOT bSealError THEN
+	Reset := TRUE;
+	RETURN;
+ELSE
+	Reset := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="ResetEventTrigger" Id="{5e95a092-8b7d-48cb-95c9-b5f7292655e9}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_SealStages">
+      <LineId Id="316" Count="3" />
+      <LineId Id="326" Count="77" />
+      <LineId Id="405" Count="4" />
+      <LineId Id="181" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SealStages.Reset">
+      <LineId Id="6" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SealStages.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SolenoidControl" Id="{6fdcc804-c623-4349-8517-cdc349f41989}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SolenoidControl
+VAR_INPUT
+    bExecute      : BOOL;  			// Activates control of solenoid valves
+    eSolenoidSet  : E_SolenoidSet; 	// Enum with valve configuration
+END_VAR
+
+VAR_OUTPUT
+    bDone         : BOOL;  			// Indicates that the valves have been positioned correctly
+END_VAR
+
+VAR
+    eState        : (IDLE, SET_VALVES, DONE);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE eState OF
+    IDLE:
+        IF bExecute AND NOT bDone THEN
+            eState := SET_VALVES;
+        END_IF;
+
+    SET_VALVES: //Setting position accordantly pneumatics drawnings for Solenoid Valves A, B e C. 
+        CASE eSolenoidSet OF
+            E_SolenoidSet.IDLE:
+                GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+            E_SolenoidSet.LEAKTEST:
+                GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
+                GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+           E_SolenoidSet.LEAKTESTMONITORING:
+                GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
+                GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+            E_SolenoidSet.AIRDRY:
+                GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+                GVL_IO.gDigOutputs.bSolenoidValveC := TRUE;
+        END_CASE;
+        eState := DONE;
+    
+    DONE:
+        bDone := TRUE;
+        IF NOT bExecute THEN
+            eState := IDLE;
+            bDone := FALSE;
+            eSolenoidSet := E_SolenoidSet.IDLE;
+        END_IF;
+END_CASE;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SolenoidControl">
+      <LineId Id="21" Count="26" />
+      <LineId Id="64" Count="5" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

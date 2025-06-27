@@ -1,0 +1,338 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_StateMachine" Id="{3698ba7e-335b-4575-b74b-b2c2009fcddd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_StateMachine
+VAR
+    CurrentState 	: E_MachineStates; 
+    bErrorFlag		: BOOL; 
+	bPowerUpDone	: BOOL := FALSE;
+	tonPowerUp		: Tc2_Standard.TON;
+	bPowerUpTimerComplete : BOOL; //Initialization timer
+	
+	//Initialization stage
+	fbInitChecks			: FB_InitChecks; 	//FB Reponsible for the Init state Logic
+		bInitCheckDone		: BOOL := FALSE; 	//Flag response to the FB_InitChecks
+		bInitError			: BOOL := FALSE;
+	
+	//Hardware Initialization Instance
+	fbHardwareInit 		: FB_HardwareInit;
+		bHwInitDone		: BOOL := FALSE;
+		bHwInitError	: BOOL := FALSE;
+		
+	//Air Flow Variables
+	fbAirFlowCheck 		: FB_AirFlowCheck;  	//FB instance
+		bAirSupplyStable 	: BOOL;   			//Stable air flow flag
+		bAirSupplyError		: BOOL;      		//Air flow error flag
+		rAirSupplyNow		: LREAL;			//Instant air flow meassure
+	
+	//Recovery Phase Variables
+	fbRecoveryPhase 	: FB_RecoveryPhase;    					//recevory fb instance
+		aSolenoidSets 		:  ST_SolenoidSet;					//solenoids sets
+		bRecoverySuccess 	: BOOL;               				//recovery sucess flag
+		bRecoveryError 		: BOOL;                 			//recovery error flag 						
+		
+	//Seal Stages Instance
+	fbSealStages 		: FB_SealStages;	//FB instance
+		bSealStages		: BOOL := FALSE;
+		bSealSuccess	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
+		bSealError		: BOOL := FALSE; 	//seal error flag FB_SealStages
+
+	//Leak Test Instance
+	fbLeakTest		:	FB_LeakTest;
+		bTestCompleted		: BOOL 	 := FALSE;
+		bTestFailed			: BOOL 	 := FALSE;
+		sTestErrorMessage 	: STRING := '';
+		
+	// Event/Alarm Trigger Variables
+	fbEventHandler : FB_EventHandler;
+		bExecuteEvent	: BOOL := FALSE;
+		bEventDone 		: BOOL := FALSE;
+		sSystem			: STRING(256);
+		sMessage		: STRING(256);
+		
+	//Debug variables
+	bStatePass1	: BOOL := FALSE;
+	bStatePass2	: BOOL := FALSE;
+	bStatePass3	: BOOL := FALSE;
+	bStatePass4	: BOOL := FALSE;
+	
+	//tonTest	: TON;
+	//fbStop, fbStopM1, fbStopM2, fbStopM3	: FB_StopMotion;
+		bStopMotion 	: BOOL := FALSE;
+		bStopTrigger	: BOOL := FALSE;
+	//fbHaltM1, fbHaltM2, fbHaltM3  : MC_Halt;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// If the reset signal is TRUE or the stop button is pressed, it returns to UNINITIALIZED
+IF NOT GVL_Safety.bSafetyEnable OR NOT GVL_IO.gDigInputs.bStopButton THEN
+	CurrentState := E_MachineStates.INIT;
+END_IF;
+
+//Sequence
+CASE CurrentState OF
+	
+    E_MachineStates.INIT: 	//Initialization stage - checking powersuply, doors and air supply
+	
+		GVL_IO.gDigOutputs.bStartIndicator := TRUE; //Turn on the start indicator once the system already started
+		
+		//Event Trigger Info State - Checking Initialization
+		sSystem := 'StateMachine.INIT'; sMessage := 'Cheking Safe Conditions!';
+		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+		ResetEventTrigger();
+		
+		//Calling the FB responsible for check all condition for initial operation	
+		fbInitChecks(
+			bPower24V_OK  := GVL_IO.gDigInputs.b24VPowerSupplyOK,
+			bPower48V_OK  := GVL_IO.gDigInputs.b48VPowerSupplyOK,
+			bDoorsClosed  := GVL_Safety.bDoorClosedAlias,
+			bDoorsLocked  := GVL_Safety.bDoorLockedFeedback,
+			bAirEnabled   := GVL_Safety.SafetyOutputs.bBelowDoorsFeedback,//#TODO GVL_Safety.bAirEnabledFeedback, AirSupply not working implemented valve feedback no working
+			bExecute	  := TRUE,
+			bReset		  := FALSE,
+			bInitOK       => bInitCheckDone,
+			bError        => bInitError
+		);
+		//State Transition
+		IF bInitError THEN
+			//Event Trigger Info State - Initialization Done
+			sSystem := 'StateMachine.INIT'; sMessage := 'Initialization fail - Going to Error State!';
+			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+			ResetEventTrigger();
+			//State Trasition to ERROR_STATE
+			CurrentState := E_MachineStates.ERROR_STATE;
+		ELSIF bInitCheckDone THEN
+			//Event Trigger Info State - Initialization Done
+			sSystem := 'StateMachine.INIT'; sMessage := 'Initialization Successful!';
+			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+			ResetEventTrigger();
+			//State Trasition to CHECK_AIR_FLOW
+			CurrentState := E_MachineStates.CHECK_AIR_FLOW;
+		END_IF;
+
+	E_MachineStates.CHECK_AIR_FLOW: //Checking is the air supply is higher than the air supply threshold
+	
+		//IF bStatePass2 THEN//temporary Debug Manual variable ************************************************************************************
+			// 1. Check if the pressure sensor reports an error
+			IF GVL_IO.gAnalogInputs.bPressureRegulatorError THEN
+				//Trigger Error Event
+				fbEventHandler(
+					bExecute  	:= bExecuteEvent,
+					eEventName 	:= E_Events.ERROR,
+					sSystem    	:= 'Air Supply Check',
+					sMessage   	:= 'Air Supply Sensor Error State!',
+					bDone      	=> bEventDone
+				);
+				ResetEventTrigger(); //Reset the Error Event
+				
+				//Going to error state
+				CurrentState := E_MachineStates.ERROR_STATE;
+				bAirSupplyError := TRUE;
+			ELSE
+				// 2. Execute the airflow verification
+				fbAirFlowCheck(
+					iRawSensorValue    	:= GVL_IO.gAnalogInputs.rMainPressureSupplyInput, // Raw sensor value
+					iSensorID          	:= 1, // FESTO Air supply Pressure sensor Id
+					rPressureThreshold 	:= GVL_Settings.rAirSupplyThreshold,
+					tStabilizationTime 	:= GVL_Settings.rAirSupplyTestingTime,
+					bExecute           	:= TRUE,
+					bReset				:= FALSE,
+					bAirFlowOK			=> bAirSupplyStable,
+					bAirFlowError		=> bAirSupplyError
+				);
+			
+				// 3. State transitions
+				IF bAirSupplyError THEN
+					CurrentState := E_MachineStates.ERROR_STATE;
+					GVL_IO.gDigOutputs.bTowerRedLight := TRUE; // Activate alarm
+				ELSIF bAirSupplyStable THEN
+					//Trigger info Event
+					fbEventHandler(
+						bExecute  	:= bExecuteEvent,
+						eEventName 	:= E_Events.INFO,
+						sSystem    	:= 'Air Supply Check',
+						sMessage   	:= 'Air Supply OK!',
+						bDone      	=> bEventDone
+					);
+					ResetEventTrigger(); //Reset the Error Event
+					CurrentState := E_MachineStates.SEAL_STAGES; // Move to the next state jumping Hardware Init because it was done by Master control System Initializing state. 
+				END_IF;
+			END_IF;	
+		//END_IF//temporary Debug Manual variable ************************************************************************************
+		
+    E_MachineStates.HARDWARE_INIT: //Initiate the motors M1 - M3 going to home position sensor e then get zero position. M4 -> M8 valves going to position 1.
+		//IF bStatePass3 THEN//temporary Debug Manual variable ************************************************************************************
+		fbHardwareInit( bExecute := TRUE, bReset := FALSE, bDone => bHwInitDone, bError => bHwInitError );
+		//State Transition
+		IF bHwInitError THEN
+			CurrentState := E_MachineStates.ERROR_STATE;
+		END_IF;
+		IF bHwInitDone THEN
+			CurrentState := E_MachineStates.SEAL_STAGES;
+		END_IF;
+		//END_IF//temporary Debug Manual variable ************************************************************************************
+		
+    E_MachineStates.SEAL_STAGES:
+	
+			//calling the FB_SealStages
+			IF GVL_Safety.bM1STOEnabled THEN
+				bSealStages := TRUE;
+			ELSE
+				bSealStages := FALSE;
+			END_IF
+			
+			fbSealStages( bExecute := bSealStages);
+				
+			//error check
+			IF fbSealStages.bSealError THEN
+				//error dealing logic
+				CurrentState := E_MachineStates.ERROR_STATE;
+			END_IF;
+	
+			//step forward to step ahead
+			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
+				CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
+			END_IF;
+	
+	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
+	IF bStatePass1 THEN
+		// Call the Leak Test function block
+        fbLeakTest(
+            bExecute 			:= TRUE,
+            eSolenoidPosition 	:= E_SolenoidSet.LEAKTEST, // Set solenoids to leak test position
+            tMonitorTime 		:= GVL_Settings.tLeakTestMonitorTime, // Configurable monitoring time
+            bLeakTestDone 		=> bTestCompleted,
+            bLeakTestError 		=> bTestFailed,
+            sLTMessageError 	=> sTestErrorMessage
+        );
+
+        // Transition to the next state if the test is completed successfully
+        IF bTestCompleted THEN
+            CurrentState := E_MachineStates.RECOVERY_PHASE;
+        
+        // If the test fails, log the error and transition to ERROR state
+        ELSIF bTestFailed THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+	END_IF
+	
+    E_MachineStates.RECOVERY_PHASE:
+       (*
+		 //Setup and execute FB_RecoveryPhase
+        fbRecoveryPhase(
+            RecipeParameters := GVL_RecipeParameters,  	//recipe parameters reference 
+            aValveConfigs := ValveConfigs,             	//6position valves reference
+            aSolenoidSets := aSolenoidSets,            	//passing solenoids sets 
+            bExecute := TRUE                           	//init trigger
+        );
+
+        //checking the RecoveryPhaseFB results
+        bRecoverySuccess := RecoveryPhaseFB.bSuccess;
+        bRecoveryError := RecoveryPhaseFB.bError;
+
+        //state transitions based oon fb returns
+        IF bRecoveryError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+            GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
+        ELSIF bRecoverySuccess THEN
+            CurrentState := E_MachineStates.DRYING_PHASE; //step forward to step ahead
+        END_IF;
+	*)
+    E_MachineStates.WASHING_PHASE: //TODO
+        IF TRUE THEN //washing sequence
+            CurrentState := E_MachineStates.DRYING_PHASE;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.DRYING_PHASE: //TODO
+        IF TRUE THEN //drying sequence
+            CurrentState := E_MachineStates.POST_EXECUTION;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.POST_EXECUTION: //TODO
+        IF TRUE THEN //post execution sequence
+            CurrentState := E_MachineStates.INIT;
+        ELSE
+            bErrorFlag := TRUE;
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+    E_MachineStates.ERROR_STATE: //TODO
+        GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //red light
+		
+		//Event Trigger Info State - Error State
+		sSystem := 'StateMachine.Error'; sMessage := 'Error State!';
+		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
+		ResetEventTrigger();
+		GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT; 
+		
+        IF GVL_IO.gDigInputs.bStopButton THEN
+            bErrorFlag := FALSE;
+            CurrentState := E_MachineStates.INIT;
+        END_IF;
+END_CASE;]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{1669a766-3630-4bf1-8f08-d4512a274fc5}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Reset the flags and FB's
+//CurrentState := E_MachineStates.INIT;
+
+bInitCheckDone 		:= FALSE;
+bInitError			:= FALSE;
+fbInitChecks   (bExecute  := FALSE, bReset := TRUE);
+fbAirFlowCheck (bExecute  := FALSE, bReset := TRUE);
+	bAirSupplyStable 	  := FALSE;
+	bAirSupplyError 	  := FALSE;
+fbHardwareInit (bExecute  := FALSE, bReset := TRUE);
+	bHwInitDone			  := FALSE;
+	bHwInitError		  := FALSE;
+//fbSealStages.Reset();
+
+// Send Reset Return
+IF fbSealStages.Reset() THEN
+	Reset := TRUE;
+	RETURN;
+ELSE
+	Reset := FALSE;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="ResetEventTrigger" Id="{2d5034a6-643b-4aff-aeda-4e9dc3f48beb}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="PRG_StateMachine">
+      <LineId Id="1826" Count="44" />
+      <LineId Id="1898" Count="73" />
+      <LineId Id="2002" Count="91" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_StateMachine.Reset">
+      <LineId Id="25" Count="12" />
+      <LineId Id="40" Count="6" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_StateMachine.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
