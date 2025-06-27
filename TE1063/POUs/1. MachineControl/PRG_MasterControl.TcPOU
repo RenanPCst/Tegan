@@ -95,7 +95,7 @@ CASE GVL_HMI.eMachineMode OF
 		
 		IF bResetSMDone THEN
 			bResetStateMachine := FALSE;
-    		PRG_StateMachine(); //calls the state machine
+    		PRG_StateMachine(); // calls the state machine
 		END_IF
 
     E_MachineMode.MANUAL:		// Entry from HMI Selection
@@ -130,6 +130,9 @@ CASE GVL_HMI.eMachineMode OF
 	
        	tonSystemInitialize(IN := bSystemInitTimerStart, PT := T#2S);
 		
+		bSystemInitReseted := FALSE;
+		bSystemInitTimerStart := TRUE;
+		
 		IF GVL_Safety.bSafetyEnable AND tonSystemInitialize.Q THEN
 			PRG_SystemInit(); // Run init procedure
 		END_IF
@@ -137,9 +140,6 @@ CASE GVL_HMI.eMachineMode OF
 		IF PRG_SystemInit.bDone AND tonSystemInitialize.Q THEN
 			GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_READY;
 		END_IF
-		
-		bSystemInitReseted := FALSE;
-		bSystemInitTimerStart := TRUE;
 		
 	E_MachineMode.SYSTEM_READY:	// Entry when the start button was pressed on Stop State.
 	
@@ -149,7 +149,6 @@ CASE GVL_HMI.eMachineMode OF
 				GVL_HMI.eMachineMode := E_MachineMode.AUTO_CYCLE;
         END_IF
 		
-
 END_CASE
 ]]></ST>
     </Implementation>
@@ -212,9 +211,11 @@ END_CASE
       <LineId Id="221" Count="0" />
       <LineId Id="247" Count="0" />
       <LineId Id="262" Count="0" />
-      <LineId Id="487" Count="9" />
-      <LineId Id="523" Count="0" />
-      <LineId Id="224" Count="0" />
+      <LineId Id="487" Count="1" />
+      <LineId Id="578" Count="0" />
+      <LineId Id="580" Count="0" />
+      <LineId Id="579" Count="0" />
+      <LineId Id="489" Count="6" />
       <LineId Id="312" Count="0" />
       <LineId Id="225" Count="0" />
       <LineId Id="236" Count="0" />
@@ -223,7 +224,7 @@ END_CASE
       <LineId Id="233" Count="1" />
       <LineId Id="232" Count="0" />
       <LineId Id="226" Count="0" />
-      <LineId Id="106" Count="1" />
+      <LineId Id="107" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

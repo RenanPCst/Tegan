@@ -5,10 +5,6 @@
 
 VAR
 	// Axis Motion Controls
-	PosFB				: FB_GetPosition;
-	MoveFB				: FB_MotorControl;
-	fbSetZero			: MC_SetPosition;
-	fbReadStatus		: MC_ReadStatus;
 	rCurrentPosition 	: LREAL;
 	bGetPosition		: BOOL := FALSE;
 	bMoveStart			: BOOL := FALSE;
@@ -29,20 +25,8 @@ VAR
 	nZeroErrorID	:	UDINT;
 	bSetZero		:	BOOL := FALSE;
 	
-	//Moviment testing Motos and Valves
-	fbValveController : FB_ValvePositionControl; 	//FB Instance
-		EnableServo     : BOOL := FALSE;
-		DesiredPos      : INT;   				// Choose valve position(1 a 6)
-		MoveNow         : BOOL := FALSE;
-		ValveInPosition : BOOL;
-	
-	//MC_Power responsible to enable the motor
-	fbMcPower 		: FB_MCPower;
-		bPowerEnable	: BOOL := FALSE;
-		bPumpEnable		: BOOL := FALSE;
-		bPowerError		: BOOL := FALSE;
-		PowerErrorID	: UDINT;
-	
+
+
 	//Balance FB call and Testing
 	fbTcpClient						: FB_TCPClient;
 		bConnectionDone				: BOOL 			:= FALSE;
@@ -67,24 +51,8 @@ VAR
 		bPressureInput	: BOOL := FALSE;
 		rPressureSensor	: REAL;
 		bPressureExecute: BOOL := FALSE;
-		
-	//Home Positioning M1
-	fbHomeM1		: FB_HomePosition;
-	fbHomeM2		: FB_HomePosition;
-	fbHomeM3		: FB_HomePosition;
-		
+
 	//testting
-	axisTest : POINTER TO AXIS_REF;
-	fbMotorsPowerUp : FB_MotorsPowerUP;
-		bPowerUp	: BOOL := FALSE;
-	
-	fbMoveRelative		: FB_MCMoveRelative;
-		bStartRelMov	: BOOL := FALSE;
-		
-	fbSetPosition		: MC_SetPosition;
-		bSetPosition	: BOOL := FALSE;
-	
-	fbStop : MC_Stop;
 
 	bDebug1 : BOOL := FALSE;
 	bDebug2 : BOOL := FALSE;
@@ -234,17 +202,6 @@ END_IF
 //5mL Testing 
 //GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
 
-fbMoveRelative(
-	Axis			:= GVL_Motion.aPumps[1].Rotary.Axis,
-	Execute			:= bStartRelMov,
-	Distance		:= GVL_Motion.aPumps[1].Rotary.fDistance,
-	Velocity		:= GVL_Motion.aPumps[1].Rotary.fRelVelocity,
-	Acceleration	:= GVL_Motion.aPumps[1].Rotary.fAcceleration,
-	Deceleration	:= GVL_Motion.aPumps[1].Rotary.fDeceleration,
-	Done			=> GVL_Motion.aPumps[1].Rotary.bInPosition,
-	Error			=> GVL_Motion.aPumps[1].Rotary.bError,
-	ErrorID			=> GVL_Motion.aPumps[1].Rotary.nErrorID
-);
 
 
 //<\pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
@@ -387,10 +344,6 @@ END_IF
       <LineId Id="3674" Count="0" />
       <LineId Id="3691" Count="0" />
       <LineId Id="3690" Count="0" />
-      <LineId Id="3675" Count="2" />
-      <LineId Id="3681" Count="2" />
-      <LineId Id="3686" Count="3" />
-      <LineId Id="3678" Count="0" />
       <LineId Id="3668" Count="0" />
       <LineId Id="3656" Count="1" />
       <LineId Id="3652" Count="0" />

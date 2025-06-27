@@ -18,12 +18,6 @@ VAR
     bInitComplete : BOOL := FALSE;
 
     fbSolenoidControl : FB_SolenoidControl;
-    aValveController  : ARRAY[1..5] OF FB_ValvePositionControl;
-    fbPumpLinear 	  : ARRAY[1..10] OF FB_MCMoveAbsolute;
-    fbPumpRotary 	  : ARRAY[1..10] OF FB_MCMoveRelative;
-
-    fbMotorM2 : FB_MCMoveAbsolute;
-    fbMotorM3 : FB_MCMoveAbsolute;
 	
 	//Error Handle
 	bErrorDetected   : BOOL := FALSE;
@@ -187,7 +181,7 @@ END_CASE;
     <Action Name="CleaningLinesSolvent1" Id="{9273111f-dd95-4702-809f-ba9c490b1159}">
       <Implementation>
         <ST><![CDATA[CASE iStepCounter OF
-
+(*
     0: // Inicia movimento reverse (negativo) para retornar solvente para as jarras
         FOR i := 1 TO 10 DO
             fbPumpRotary[i](
@@ -231,7 +225,7 @@ END_CASE;
                 iStepCounter := 0; // reset para próximo uso
             END_IF
         END_IF
-
+*)
 END_CASE
 ]]></ST>
       </Implementation>
@@ -282,7 +276,7 @@ GetPumpVolume := volume;]]></ST>
     <Action Name="MeteringSolvent1" Id="{043bbe9a-a49a-4e9b-8157-9bfa39662a89}">
       <Implementation>
         <ST><![CDATA[CASE iStepCounter OF
-
+(*
     0: // Initialization: Reset solenoids and set valves
         fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
 
@@ -403,14 +397,15 @@ GetPumpVolume := volume;]]></ST>
         iStepCounter := 0; // Reset e tenta novamente
     END_IF
 
-
+*)
 END_CASE
 ]]></ST>
       </Implementation>
     </Action>
     <Action Name="MeteringSolvent2" Id="{ab3c9a64-fa5a-49bd-80d9-c7e2f0aaf572}">
       <Implementation>
-        <ST><![CDATA[IF GVL_Recipe.stSolventNTimes.aSolventN[2] = 0 THEN
+        <ST><![CDATA[(*
+IF GVL_Recipe.stSolventNTimes.aSolventN[2] = 0 THEN
     // Solvent 2 não definido, pula etapa diretamente
     bMovementComplete := TRUE;
     iStepCounter := 0;
@@ -492,12 +487,13 @@ ELSE
     END_CASE
 
 END_IF
-]]></ST>
+*)]]></ST>
       </Implementation>
     </Action>
     <Action Name="MixSolvent1and2" Id="{be5d325a-d90b-476e-8b7a-b5a6c59989fc}">
       <Implementation>
-        <ST><![CDATA[IF GVL_Recipe.stSolventNTimes.aSolventN[2] = 0 THEN
+        <ST><![CDATA[(*
+IF GVL_Recipe.stSolventNTimes.aSolventN[2] = 0 THEN
     // Solvent 2 não definido, pula essa etapa diretamente
     bMovementComplete := TRUE;
     iStepCounter := 0;
@@ -581,7 +577,7 @@ ELSE
     END_CASE
 
 END_IF
-]]></ST>
+*)]]></ST>
       </Implementation>
     </Action>
     <Action Name="MoveToPosition" Id="{e91bc937-13f8-4d14-a3d2-4237e5f04640}">
@@ -602,7 +598,7 @@ END_IF
     <Action Name="RecirculateSolvent1" Id="{dd88b683-a3d6-421a-a9d9-04dab5a1112d}">
       <Implementation>
         <ST><![CDATA[CASE iStepCounter OF
-
+(*
     0: // Setar válvulas para posição 5 (Recirculação)
         FOR i := 1 TO 5 DO
             aValveController[i](
@@ -674,7 +670,7 @@ END_IF
                 iStepCounter := 0; // reset para próximo uso
             END_IF
         END_IF
-
+*)
 END_CASE
 ]]></ST>
       </Implementation>
@@ -693,21 +689,6 @@ END_VAR
         <ST><![CDATA[
 // Reset solenoid control
 fbSolenoidControl(bExecute := FALSE, eSolenoidSet := E_SolenoidSet.IDLE);
-
-// Reset valve controllers
-FOR i := 1 TO 5 DO
-    aValveController[i](bEnable := FALSE, ServoAxis := GVL_Motion.aValves[i].Axis, iValvePosition := 0);
-END_FOR
-
-// Reset linear pumps
-FOR i := 1 TO 10 DO
-    fbPumpLinear[i](Execute := FALSE, axis := GVL_Motion.aPumps[i].Linear.Axis, Position := 0, Velocity := 0);
-    fbPumpRotary[i](Execute := FALSE, axis := GVL_Motion.aPumps[i].Rotary.Axis, Distance := 0, Velocity := 0);
-END_FOR
-
-// Reset Motors M2 e M3
-fbMotorM2(Execute := FALSE, axis := GVL_Motion.M2Motor.Axis, Position := 0, Velocity := 0);
-fbMotorM3(Execute := FALSE, axis := GVL_Motion.M2Motor.Axis, Position := 0, Velocity := 0);
 
 // Reset Timers
 timerSoak(IN := FALSE, PT := T#0S);
@@ -787,10 +768,12 @@ END_CASE
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MeteringSolvent2">
+      <LineId Id="84" Count="0" />
       <LineId Id="2" Count="81" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MixSolvent1and2">
+      <LineId Id="87" Count="0" />
       <LineId Id="2" Count="7" />
       <LineId Id="86" Count="0" />
       <LineId Id="11" Count="74" />
@@ -814,7 +797,8 @@ END_CASE
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.ResetAll">
       <LineId Id="33" Count="0" />
-      <LineId Id="7" Count="25" />
+      <LineId Id="7" Count="2" />
+      <LineId Id="25" Count="7" />
       <LineId Id="1" Count="0" />
       <LineId Id="34" Count="0" />
     </LineIds>
