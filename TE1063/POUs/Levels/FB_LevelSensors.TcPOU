@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_LevelSensors" Id="{5fddadb9-4339-40e5-ab65-f02ee80f37cd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_LevelSensors
+VAR_INPUT
+	abyInputs : ARRAY[1..5, 0..3] OF BYTE; // 5 sensors, 4 bytes each
+    eSensorID : E_LevelSensorID;
+END_VAR
+VAR_OUTPUT
+	stLevelData : ST_KQ1000_Data;
+END_VAR
+VAR
+	fbParsers : ARRAY[1..5] OF FB_KQ1000_Parser;
+    i : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Parsers execute
+FOR i := 1 TO 5 DO
+    fbParsers[i].byInput0 := abyInputs[i, 0];
+    fbParsers[i].byInput1 := abyInputs[i, 1];
+    fbParsers[i].byInput2 := abyInputs[i, 2];
+    fbParsers[i].byInput3 := abyInputs[i, 3];
+END_FOR
+
+// Sends the result based on sensor id
+stLevelData := fbParsers[eSensorID].stData;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_LevelSensors">
+      <LineId Id="15" Count="8" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

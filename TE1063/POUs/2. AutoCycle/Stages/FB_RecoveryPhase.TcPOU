@@ -25,7 +25,7 @@ VAR
     nErrorID         : UDINT := 0;
 
     iStepCounter : INT := 0;
-    i : INT; //loop for index
+    i : USINT; //loop for index
 	
 	//Timers
 	timerAgitate : TON;
@@ -37,6 +37,7 @@ VAR
     bMovementComplete : BOOL := FALSE;
 	
 	//Metering Rinse 1
+	bMoveValveDone		 : ARRAY[1..5] OF BOOL;
     bAllValvesInPosition : BOOL := TRUE;
     bAllPumpsDone        : BOOL := TRUE;
 	bMoveValvesDone		 : ARRAY[1..5] OF BOOL;
@@ -276,19 +277,18 @@ GetPumpVolume := volume;]]></ST>
     <Action Name="MeteringSolvent1" Id="{043bbe9a-a49a-4e9b-8157-9bfa39662a89}">
       <Implementation>
         <ST><![CDATA[CASE iStepCounter OF
-(*
+
     0: // Initialization: Reset solenoids and set valves
         fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
 
         FOR i := 1 TO 5 DO
-            aValveController[i](
-                bEnable := TRUE, 
-                ServoAxis := GVL_Motion.aValves[i].Axis, 
-                iValvePosition := GVL_Recipe.stSolventNTimes.aSolventN[1]);
+			bMoveValveDone[i] := NOT GVL_Motion.aValvesObj[i].MoveValve(iValveID := i, iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1], rVelocity := 10, rAcc := 10, rDec := 10);
         END_FOR
-		     
-        iStepCounter := 1;
-
+		
+		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
+        	iStepCounter := 1;
+		END_IF
+(*
     1: // Wait for valve positioning
         bAllValvesInPosition := TRUE;
         FOR i := 1 TO 5 DO
@@ -752,10 +752,14 @@ END_CASE
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MeteringSolvent1">
       <LineId Id="2" Count="4" />
-      <LineId Id="178" Count="4" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="184" Count="0" />
       <LineId Id="12" Count="0" />
       <LineId Id="183" Count="0" />
-      <LineId Id="14" Count="47" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="15" Count="46" />
       <LineId Id="91" Count="6" />
       <LineId Id="68" Count="0" />
       <LineId Id="71" Count="1" />

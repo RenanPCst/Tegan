@@ -1863,31 +1863,6 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
-			<BitSize>24</BitSize>
-			<SubItem>
-				<Name>bStageCollectionLeftLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bSampleRecoveryLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>8</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bStageCollectionRightLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>16</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
 			<Name GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}" AutoDeleteType="true">ST_EL2809</Name>
 			<BitSize>72</BitSize>
 			<SubItem>
@@ -1952,6 +1927,31 @@ External Setpoint Generation:
 				<Comment><![CDATA[ Solenoid Valve C ]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>64</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
+			<BitSize>24</BitSize>
+			<SubItem>
+				<Name>bStageCollectionLeftLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bSampleRecoveryLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bStageCollectionRightLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -2406,8 +2406,8 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
+					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6426,11 +6426,97 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{B9C1EDE4-73C2-7966-8A49-71EF88E818E0}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{814689A7-2954-F9D0-569B-4A7BC48555B9}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
+						<Var>
+							<Name>PRG_LevelHandler.byCh1_0</Name>
+							<Comment><![CDATA[Variables Mapping from ifm AL1333	
+ Ch1 = Rinse 1 bottle]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh1_1</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh1_2</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh1_3</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh2_0</Name>
+							<Comment><![CDATA[ Ch2 = Rinse 2 bottle]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh2_1</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh2_2</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh2_3</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh3_0</Name>
+							<Comment><![CDATA[ Ch3 = Rinse 3 bottle]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh3_1</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh3_2</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh3_3</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh4_0</Name>
+							<Comment><![CDATA[ Ch4 = Rinse 4 bottle]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh4_1</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh4_2</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh4_3</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh5_0</Name>
+							<Comment><![CDATA[ Ch5 = Waste Container]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh5_1</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh5_2</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>PRG_LevelHandler.byCh5_3</Name>
+							<Type>BYTE</Type>
+						</Var>
 						<Var>
 							<Name>GVL_IO.bInAckSignal</Name>
 							<Comment><![CDATA[Safety]]></Comment>
@@ -6450,6 +6536,25 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
@@ -7034,25 +7139,6 @@ External Setpoint Generation:
 							<Type>REAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bResetButtonBlink</Name>
 							<Comment><![CDATA[reset button blink signal]]></Comment>
 							<Type>BOOL</Type>
@@ -7099,14 +7185,27 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.PlcToNc</Name>
@@ -7370,19 +7469,6 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.iM4STOErrorAck</Name>
@@ -42567,6 +42653,28 @@ Bit 8 - 15 : reserved]]></Comment>
 			</OwnerB>
 		</OwnerA>
 		<OwnerA Name="TIPC^TE1063^TE1063 Instance">
+			<OwnerB Name="TIID^Device 3 (EtherCAT)^Box 1 (ifm IO-Link Master AL1333)">
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh1_0" VarB="Module 1 (IOL_In_4Byte)^TxPDO^input byte 0"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh1_1" VarB="Module 1 (IOL_In_4Byte)^TxPDO^input byte 1"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh1_2" VarB="Module 1 (IOL_In_4Byte)^TxPDO^input byte 2"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh1_3" VarB="Module 1 (IOL_In_4Byte)^TxPDO^input byte 3"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh2_0" VarB="Module 2 (IOL_In_4Byte)^TxPDO^input byte 0"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh2_1" VarB="Module 2 (IOL_In_4Byte)^TxPDO^input byte 1"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh2_2" VarB="Module 2 (IOL_In_4Byte)^TxPDO^input byte 2"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh2_3" VarB="Module 2 (IOL_In_4Byte)^TxPDO^input byte 3"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh3_0" VarB="Module 3 (IOL_In_4Byte)^TxPDO^input byte 0"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh3_1" VarB="Module 3 (IOL_In_4Byte)^TxPDO^input byte 1"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh3_2" VarB="Module 3 (IOL_In_4Byte)^TxPDO^input byte 2"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh3_3" VarB="Module 3 (IOL_In_4Byte)^TxPDO^input byte 3"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh4_0" VarB="Module 4 (IOL_In_4Byte)^TxPDO^input byte 0"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh4_1" VarB="Module 4 (IOL_In_4Byte)^TxPDO^input byte 1"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh4_2" VarB="Module 4 (IOL_In_4Byte)^TxPDO^input byte 2"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh4_3" VarB="Module 4 (IOL_In_4Byte)^TxPDO^input byte 3"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh5_0" VarB="Module 5 (IOL_In_4Byte)^TxPDO^input byte 0"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh5_1" VarB="Module 5 (IOL_In_4Byte)^TxPDO^input byte 1"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh5_2" VarB="Module 5 (IOL_In_4Byte)^TxPDO^input byte 2"/>
+				<Link VarA="PlcTask Inputs^PRG_LevelHandler.byCh5_3" VarB="Module 5 (IOL_In_4Byte)^TxPDO^input byte 3"/>
+			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 10 (EL2809-0015)">
 				<Link VarA="PlcTask Outputs^GVL_IO.gDigOutputs^bResetIndicator" VarB="Channel 2^Output"/>
 				<Link VarA="PlcTask Outputs^GVL_IO.gDigOutputs^bSolenoidValveA" VarB="Channel 8^Output"/>

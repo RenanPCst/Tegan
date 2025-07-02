@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_LevelHandler" Id="{ec562435-eadf-4da6-9aa5-8902ad679c1e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_LevelHandler
+VAR
+	fbParser : ARRAY[1..5] OF FB_KQ1000_Parser;
+    stLevels : ARRAY[1..5] OF ST_KQ1000_Data;
+	
+	rRinseLevel : ARRAY[1..4] OF REAL;
+	rWasteLevel : REAL;
+
+	//Variables Mapping from ifm AL1333	
+	
+	// Ch1 = Rinse 1 bottle
+    byCh1_0 AT %IB0 : BYTE;
+    byCh1_1 AT %IB1 : BYTE;
+    byCh1_2 AT %IB2 : BYTE;
+    byCh1_3 AT %IB3 : BYTE;
+	
+	// Ch2 = Rinse 2 bottle
+    byCh2_0 AT %IB4 : BYTE;
+    byCh2_1 AT %IB5 : BYTE;
+    byCh2_2 AT %IB6 : BYTE;
+    byCh2_3 AT %IB7 : BYTE;
+	
+	// Ch3 = Rinse 3 bottle
+    byCh3_0 AT %IB8 : BYTE;
+    byCh3_1 AT %IB9 : BYTE;
+    byCh3_2 AT %IB10 : BYTE;
+    byCh3_3 AT %IB11 : BYTE;
+	
+	// Ch4 = Rinse 4 bottle
+    byCh4_0 AT %IB12 : BYTE;
+    byCh4_1 AT %IB13 : BYTE;
+    byCh4_2 AT %IB14 : BYTE;
+    byCh4_3 AT %IB15 : BYTE;
+	
+	// Ch5 = Waste Container
+    byCh5_0 AT %IB16 : BYTE;
+    byCh5_1 AT %IB17 : BYTE;
+    byCh5_2 AT %IB18 : BYTE;
+    byCh5_3 AT %IB19 : BYTE;
+	
+	bRinseBottle1_OK   : BOOL := (stLevels[1].rLevelPercent >= 10.0); // Exemplo de condição
+	iWasteDeviceStatus : USINT := stLevels[5].iDeviceStatusCode;
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Execute the parsers
+fbParser[1](byInput0 := byCh1_0, byInput1 := byCh1_1, byInput2 := byCh1_2, byInput3 := byCh1_3);
+stLevels[1] := fbParser[1].stData;
+rRinseLevel[1] := stLevels[1].rLevelPercent;
+
+fbParser[2](byInput0 := byCh2_0, byInput1 := byCh2_1, byInput2 := byCh2_2, byInput3 := byCh2_3);
+stLevels[2] := fbParser[2].stData;
+rRinseLevel[2] := stLevels[2].rLevelPercent;
+
+fbParser[3](byInput0 := byCh3_0, byInput1 := byCh3_1, byInput2 := byCh3_2, byInput3 := byCh3_3);
+stLevels[3] := fbParser[3].stData;
+rRinseLevel[3] := stLevels[3].rLevelPercent;
+
+fbParser[4](byInput0 := byCh4_0, byInput1 := byCh4_1, byInput2 := byCh4_2, byInput3 := byCh4_3);
+stLevels[4] := fbParser[4].stData;
+rRinseLevel[4] := stLevels[4].rLevelPercent;
+
+fbParser[5](byInput0 := byCh5_0, byInput1 := byCh5_1, byInput2 := byCh5_2, byInput3 := byCh5_3);
+stLevels[5] := fbParser[5].stData;
+rWasteLevel := stLevels[5].rLevelPercent;
+
+//Update HMI bottles animation
+GVL_HMI.HMIDigOutputs.aRinseLevel[1]	:= TO_INT(rRinseLevel[1]);
+GVL_HMI.HMIDigOutputs.aRinseLevel[2]	:= TO_INT(rRinseLevel[2]);
+GVL_HMI.HMIDigOutputs.aRinseLevel[3]	:= TO_INT(rRinseLevel[3]);
+GVL_HMI.HMIDigOutputs.aRinseLevel[4]	:= TO_INT(rRinseLevel[4]);
+
+GVL_HMI.HMIDigOutputs.aWasteLevel		:= TO_INT(rWasteLevel);
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_LevelHandler">
+      <LineId Id="44" Count="4" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="51" Count="1" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="72" Count="1" />
+      <LineId Id="59" Count="4" />
+      <LineId Id="119" Count="6" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="126" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

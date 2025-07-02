@@ -41,7 +41,7 @@ IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSuppl
 
     IF bWriteDone THEN
         tSafeShutdown(IN := TRUE, PT := T#10S);
-		GVL_HMI.rTimeCountingDown := TIME_TO_DWORD(tSafeShutdown.ET)/1000;
+		GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tSafeShutdown.ET)/1000;
     END_IF
 ELSE
     // Reset shutdown timer and write flag if no shutdown condition
@@ -53,7 +53,7 @@ END_IF
 // === Check if Reboot command from HMI is active ===
 IF GVL_HMI.HMIDigInputs.bRebootPLC THEN
     tSafeReboot(IN := TRUE, PT := T#10S);
-	GVL_HMI.rTimeCountingDown := TIME_TO_DWORD(tSafeReboot.ET)/1000;
+	GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tSafeReboot.ET)/1000;
 ELSE
     tSafeReboot(IN := FALSE);
 END_IF
