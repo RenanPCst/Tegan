@@ -65,6 +65,11 @@ VAR
     bMoveAbsRequested 	: BOOL;
 	bMoveAbsDone		: BOOL;
 	
+	//MoveRel()
+	bMoveRelExecute 	: BOOL;
+    bMoveRelRequested 	: BOOL;
+	bMoveRelDone		: BOOL;
+	
 	//MoveValve()
 	rTargetAngle		: LREAL;
 	bMoveValveExecute 	: BOOL;
@@ -316,7 +321,6 @@ VAR_INPUT
     rDec      : LREAL := 20.0;
 END_VAR
 VAR
-    Execute : BOOL := TRUE;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Reuse the same logic from MoveAbsolute
@@ -371,23 +375,46 @@ VAR_INPUT
     Dec      : LREAL := 20.0;
 END_VAR
 VAR
-    Execute : BOOL := TRUE;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Relative motion command (distance, velocity, acceleration, deceleration)
-fbMoveRel(Axis := Axis, Distance := Distance, Execute := Execute, Velocity := Velocity, Acceleration := Acc, Deceleration := Dec);
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bMoveRelRequested THEN
+    bMoveRelExecute := TRUE;
+    bMoveRelRequested := TRUE;
+END_IF
+
+// Call the internal motion block
+fbMoveRel(
+    Axis := Axis,
+    Distance := Distance,
+    Execute := bMoveRelExecute,
+    Velocity := Velocity,
+    Acceleration := Acc,
+    Deceleration := Dec
+);
+
+// Update actuator status
 status.bBusy := fbMoveRel.Busy;
 status.bDone := fbMoveRel.Done;
 status.bError := fbMoveRel.Error;
 status.iErrorCode := fbMoveRel.ErrorID;
-IF fbMoveRel.Error THEN
-	status.eState := E_ActuatorState.eError;
-	status.sMessage := 'Error in MoveRelative';
-END_IF;
 
-//Return
-MoveRelative := fbMoveRel.Done;]]></ST>
+IF fbMoveRel.Busy THEN
+    bMoveRelExecute := FALSE;
+END_IF
+
+IF fbMoveRel.Error THEN
+    status.eState := E_ActuatorState.eError;
+    status.sMessage := 'Error in Move Motor';
+END_IF
+
+IF bMoveRelRequested AND NOT fbMoveRel.Busy AND NOT fbMoveRel.Error THEN
+    bMoveRelRequested := FALSE;
+    MoveRelative := TRUE;
+    RETURN;
+ELSE
+    MoveRelative := FALSE;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="MoveValve" Id="{0efdf2ac-cd7b-4dd3-893f-1eab65963717}">
@@ -785,11 +812,8 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveRelative">
-      <LineId Id="6" Count="0" />
-      <LineId Id="17" Count="8" />
-      <LineId Id="34" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="33" Count="0" />
+      <LineId Id="49" Count="36" />
+      <LineId Id="48" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
       <LineId Id="31" Count="0" />

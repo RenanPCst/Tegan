@@ -15,6 +15,9 @@ rM2MotorPositionPerc : LREAL;  // Motor Actual Position Scaled 0-100
 cM2MinPosition       : LREAL := 0.0; // Minimum expected Value
 cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value)
 
+//Doors Animation
+fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -32,6 +35,38 @@ GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; /
 (* <Controls Animation> ************************************************************************************************ *)
 ACT_M1Animation();
 ACT_M2Animation();
+
+//Calibration Box presence
+GVL_HMI.bHMICalibrationBox := GVL_IO.gDigInputs.bCalibrationBoxPresent;
+
+//Doors hide/visible 
+GVL_HMI.HMIAnimation.bHMIDoorOpen[1] := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[2] := NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorFdbk;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[3] := NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorFdbk;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[4] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk1;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[5] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk2;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[6] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3;
+
+//Doors open blinking red alert
+fbBlinkDoor[1](bEnable := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[1] := fbBlinkDoor[1].bBlink;
+
+fbBlinkDoor[2](bEnable := NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorFdbk, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[2] := fbBlinkDoor[2].bBlink;
+
+fbBlinkDoor[3](bEnable := NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorFdbk, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[3] := fbBlinkDoor[3].bBlink;
+
+fbBlinkDoor[4](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk1, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[4] := fbBlinkDoor[4].bBlink;
+
+fbBlinkDoor[5](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk2, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[5] := fbBlinkDoor[5].bBlink;
+
+fbBlinkDoor[6](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3, tPeriod := T#1S);
+GVL_HMI.HMIAnimation.bHMIDoorBlink[6] := fbBlinkDoor[6].bBlink;
+
+
 (* </Controls Animation> *********************************************************************************************** *)
 
 (* <Manual Moviment> *************************************************************************************************** *)
@@ -48,6 +83,8 @@ GVL_HMI.HMIDigOutputs.aValvePosition[2]	:= 5;
 GVL_HMI.HMIDigOutputs.aValvePosition[3]	:= 5;
 GVL_HMI.HMIDigOutputs.aValvePosition[4]	:= 5;
 GVL_HMI.HMIDigOutputs.aValvePosition[5]	:= 5;
+
+
 
 (* Old set on bottle levels for testing purposes
 GVL_HMI.HMIDigOutputs.aRinseLevel[1]	:= 64;
@@ -112,10 +149,34 @@ END_IF]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="PRG_HMIControl">
-      <LineId Id="252" Count="14" />
+      <LineId Id="252" Count="13" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="341" Count="1" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="388" Count="4" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="344" Count="0" />
+      <LineId Id="369" Count="1" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="372" Count="1" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="375" Count="1" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="379" Count="1" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="382" Count="1" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="266" Count="0" />
       <LineId Id="302" Count="0" />
       <LineId Id="301" Count="0" />
       <LineId Id="267" Count="12" />
+      <LineId Id="335" Count="1" />
       <LineId Id="318" Count="0" />
       <LineId Id="280" Count="5" />
       <LineId Id="85" Count="0" />

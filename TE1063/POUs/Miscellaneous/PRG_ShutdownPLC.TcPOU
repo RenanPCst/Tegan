@@ -40,13 +40,14 @@ IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSuppl
     END_IF
 
     IF bWriteDone THEN
-        tSafeShutdown(IN := TRUE, PT := T#10S);
+        tSafeShutdown(IN := TRUE, PT := T#60S);
 		GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tSafeShutdown.ET)/1000;
     END_IF
 ELSE
     // Reset shutdown timer and write flag if no shutdown condition
     tSafeShutdown(IN := FALSE);
     bWriteDone := FALSE;
+	
 END_IF
 
 
@@ -78,7 +79,9 @@ fbShutdown(Start := bShutdownRequest);]]></ST>
     <LineIds Name="PRG_ShutdownPLC">
       <LineId Id="100" Count="21" />
       <LineId Id="152" Count="0" />
-      <LineId Id="122" Count="10" />
+      <LineId Id="122" Count="4" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="127" Count="5" />
       <LineId Id="154" Count="0" />
       <LineId Id="133" Count="18" />
       <LineId Id="5" Count="0" />
