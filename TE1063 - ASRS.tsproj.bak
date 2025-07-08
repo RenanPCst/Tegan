@@ -1863,6 +1863,31 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
+			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
+			<BitSize>24</BitSize>
+			<SubItem>
+				<Name>bStageCollectionLeftLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bSampleRecoveryLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bStageCollectionRightLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}" AutoDeleteType="true">ST_EL2809</Name>
 			<BitSize>72</BitSize>
 			<SubItem>
@@ -1927,31 +1952,6 @@ External Setpoint Generation:
 				<Comment><![CDATA[ Solenoid Valve C ]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>64</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
-			<BitSize>24</BitSize>
-			<SubItem>
-				<Name>bStageCollectionLeftLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bSampleRecoveryLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>8</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bStageCollectionRightLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>16</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -5152,8 +5152,8 @@ External Setpoint Generation:
 					<Name>Pump 6 - Rotary</Name>
 					<AxisPara>
 						<General UnitName="°"/>
-						<Dynamic Acceleration="7264.5735" Deceleration="7264.5735" Jerk="21793.7205"/>
-						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.049"/>
+						<Dynamic Acceleration="7264.57" Deceleration="7264.57" Jerk="21793.7"/>
+						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.05"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
@@ -6426,7 +6426,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3BA09CF0-AD79-1AEE-AAB6-76632637D1A6}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{BCFDEF1F-1389-EA95-2975-7DFC4BEBC2F8}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6518,14 +6518,14 @@ External Setpoint Generation:
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
@@ -6540,20 +6540,6 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Safety.bSafetyEnable</Name>
 							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7139,18 +7125,32 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bResetButtonBlink</Name>
 							<Comment><![CDATA[reset button blink signal]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -7181,8 +7181,9 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
 						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
+							<Name>GVL_IO.gRelayOutputs</Name>
+							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
+							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gDigOutputs</Name>
@@ -7190,9 +7191,8 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gRelayOutputs</Name>
-							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
-							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyErrorAck</Name>

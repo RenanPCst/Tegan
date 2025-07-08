@@ -52,12 +52,15 @@ VAR
 	
 	rM1Position 	: ARRAY[1..3] OF LREAL;
 	rValvePosition 	: ARRAY[1..5] OF LREAL;
-	rPumpPosition 	: ARRAY[1..10] OF LREAL;
-		
+	rLinearPumpPosition 	: ARRAY[1..10] OF LREAL;
+	rRotaryPumpPosition 	: ARRAY[1..10] OF LREAL;
+			
 	// ########## Retain valves position ####################
  	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
     bValveStatus      : ARRAY[1..5] OF BOOL;
     i                 : INT;
+	
+	fbPumpsController : FB_AllPumpsController; 
 	
 END_VAR
 ]]></Declaration>
@@ -100,12 +103,8 @@ END_FOR
 
 //################ TESTING AREA ################################################################################################################################
 
-IF bDebug1 THEN
-	bDebug1 := GVL_Motion.aValvesObj[1].ReadStatus();
-END_IF
-
-IF bDebug2 THEN // open linear pumps
-	bDebug2 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+IF bDebug1 THEN // open linear pumps
+	bDebug1 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
 				NOT GVL_Motion.aPumpsLinear[2].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
 				NOT GVL_Motion.aPumpsLinear[3].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
 				NOT GVL_Motion.aPumpsLinear[4].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
@@ -117,59 +116,43 @@ IF bDebug2 THEN // open linear pumps
 				NOT GVL_Motion.aPumpsLinear[10].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2);
 END_IF
 
-IF bDebug3 THEN // See axis actual position 
+IF bDebug2 THEN // See axis actual position 
 	rM1Position[1] 	:= GVL_Motion.aMotors[1].GetPosition();
 	rM1Position[2] 	:= GVL_Motion.aMotors[2].GetPosition();
 	rM1Position[3] 	:= GVL_Motion.aMotors[3].GetPosition();	
 
-	rPumpPosition[1] := GVL_Motion.aPumpsLinear[1].GetPosition();
-	rPumpPosition[2] := GVL_Motion.aPumpsLinear[2].GetPosition();
-	rPumpPosition[3] := GVL_Motion.aPumpsLinear[3].GetPosition();
-	rPumpPosition[4] := GVL_Motion.aPumpsLinear[4].GetPosition();
-	rPumpPosition[5] := GVL_Motion.aPumpsLinear[5].GetPosition();
-	rPumpPosition[6] := GVL_Motion.aPumpsLinear[6].GetPosition();
-	rPumpPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
-	rPumpPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
-	rPumpPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
-	rPumpPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
+	rLinearPumpPosition[1] := GVL_Motion.aPumpsLinear[1].GetPosition();
+	rLinearPumpPosition[2] := GVL_Motion.aPumpsLinear[2].GetPosition();
+	rLinearPumpPosition[3] := GVL_Motion.aPumpsLinear[3].GetPosition();
+	rLinearPumpPosition[4] := GVL_Motion.aPumpsLinear[4].GetPosition();
+	rLinearPumpPosition[5] := GVL_Motion.aPumpsLinear[5].GetPosition();
+	rLinearPumpPosition[6] := GVL_Motion.aPumpsLinear[6].GetPosition();
+	rLinearPumpPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
+	rLinearPumpPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
+	rLinearPumpPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
+	rLinearPumpPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
 
 	rValvePosition[1]	:= GVL_Motion.aValvesObj[1].GetPosition();
 	rValvePosition[2]	:= GVL_Motion.aValvesObj[2].GetPosition();
 	rValvePosition[3]	:= GVL_Motion.aValvesObj[3].GetPosition();
 	rValvePosition[4]	:= GVL_Motion.aValvesObj[4].GetPosition();
 	rValvePosition[5]	:= GVL_Motion.aValvesObj[5].GetPosition();
-END_IF
-
-IF bPumpForwards THEN
-	bPumpForwards := NOT GVL_Motion.aPumpsRotary[1].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[2].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[3].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[4].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[5].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[6].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					// NOT GVL_Motion.aPumpsRotary[7].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[8].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[9].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 NOT GVL_Motion.aPumpsRotary[10].MoveRelative(Distance := 1000000, velocity := 1800, Acc := 1000, Dec := 1000);
+	
+	rRotaryPumpPosition[1] := GVL_Motion.aPumpsRotary[1].GetPosition();
+	rRotaryPumpPosition[2] := GVL_Motion.aPumpsRotary[2].GetPosition();
+	rRotaryPumpPosition[3] := GVL_Motion.aPumpsRotary[3].GetPosition();
+	rRotaryPumpPosition[4] := GVL_Motion.aPumpsRotary[4].GetPosition();
+	rRotaryPumpPosition[5] := GVL_Motion.aPumpsRotary[5].GetPosition();
+	rRotaryPumpPosition[6] := GVL_Motion.aPumpsRotary[6].GetPosition();
+	rRotaryPumpPosition[7] := GVL_Motion.aPumpsRotary[7].GetPosition();
+	rRotaryPumpPosition[8] := GVL_Motion.aPumpsRotary[8].GetPosition();
+	rRotaryPumpPosition[9] := GVL_Motion.aPumpsRotary[9].GetPosition();
+	rRotaryPumpPosition[10] := GVL_Motion.aPumpsRotary[10].GetPosition();
 END_IF
 
 IF bAllPumpsStop THEN
-	bAllPumpsStop := NOT GVL_Motion.aPumpsRotary[1].Stop() AND	NOT GVL_Motion.aPumpsRotary[2].Stop() AND NOT GVL_Motion.aPumpsRotary[3].Stop() AND	NOT GVL_Motion.aPumpsRotary[4].Stop() AND NOT GVL_Motion.aPumpsRotary[5].Stop() AND NOT	GVL_Motion.aPumpsRotary[6].Stop() AND NOT GVL_Motion.aPumpsRotary[7].Stop() AND NOT	GVL_Motion.aPumpsRotary[8].Stop() AND NOT GVL_Motion.aPumpsRotary[9].Stop() AND	NOT GVL_Motion.aPumpsRotary[10].Stop();		
+	bAllPumpsStop := NOT fbPumpsController.StopAllPumps();
 END_IF
-
-IF bPumpBackwards THEN
-	bPumpBackwards := NOT (GVL_Motion.aPumpsRotary[1].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[2].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[3].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[4].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[5].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[6].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					// GVL_Motion.aPumpsRotary[7].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[8].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[9].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000) AND
-					 GVL_Motion.aPumpsRotary[10].MoveRelative(Distance := -1000000, velocity := 1800, Acc := 1000, Dec := 1000));
-END_IF
-
 
 IF bDebug4 THEN
 	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 15, rDec := 15);
@@ -209,8 +192,6 @@ END_IF
 //9mm Linear pump opening – 0.079 µL/step
 //5mL Testing 
 //GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
-
-
 
 //<\pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
 
@@ -273,12 +254,7 @@ END_IF
 IF bPressureInput THEN
 	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
 END_IF
-//<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-]]></ST>
+//<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
       <LineId Id="3102" Count="3" />
@@ -301,10 +277,7 @@ END_IF
       <LineId Id="3651" Count="0" />
       <LineId Id="3106" Count="0" />
       <LineId Id="4161" Count="0" />
-      <LineId Id="5335" Count="0" />
-      <LineId Id="5341" Count="0" />
-      <LineId Id="5340" Count="0" />
-      <LineId Id="4713" Count="1" />
+      <LineId Id="4714" Count="0" />
       <LineId Id="4716" Count="0" />
       <LineId Id="4950" Count="3" />
       <LineId Id="4955" Count="4" />
@@ -319,19 +292,15 @@ END_IF
       <LineId Id="4940" Count="2" />
       <LineId Id="4172" Count="1" />
       <LineId Id="4819" Count="3" />
+      <LineId Id="6259" Count="0" />
+      <LineId Id="6261" Count="8" />
+      <LineId Id="6260" Count="0" />
       <LineId Id="4171" Count="0" />
       <LineId Id="6070" Count="0" />
-      <LineId Id="6068" Count="0" />
-      <LineId Id="6071" Count="0" />
-      <LineId Id="6083" Count="7" />
-      <LineId Id="6082" Count="0" />
-      <LineId Id="6072" Count="0" />
-      <LineId Id="6101" Count="2" />
-      <LineId Id="6100" Count="0" />
-      <LineId Id="6105" Count="11" />
-      <LineId Id="6104" Count="0" />
-      <LineId Id="6069" Count="0" />
-      <LineId Id="4177" Count="0" />
+      <LineId Id="6409" Count="0" />
+      <LineId Id="6426" Count="0" />
+      <LineId Id="6412" Count="0" />
+      <LineId Id="6105" Count="0" />
       <LineId Id="4176" Count="0" />
       <LineId Id="4280" Count="0" />
       <LineId Id="4179" Count="0" />
@@ -354,14 +323,11 @@ END_IF
       <LineId Id="3669" Count="0" />
       <LineId Id="3674" Count="0" />
       <LineId Id="3691" Count="0" />
-      <LineId Id="3690" Count="0" />
       <LineId Id="3668" Count="0" />
-      <LineId Id="3656" Count="1" />
+      <LineId Id="3657" Count="0" />
       <LineId Id="3652" Count="0" />
       <LineId Id="3107" Count="58" />
       <LineId Id="3172" Count="0" />
-      <LineId Id="3321" Count="3" />
-      <LineId Id="767" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

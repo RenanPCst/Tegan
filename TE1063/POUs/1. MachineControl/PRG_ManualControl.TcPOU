@@ -9,7 +9,18 @@ VAR
 	rPumpsActualPosition  : ARRAY[1..10] OF LREAL;
 	rDegreesPerVolume 	  : ARRAY[1..10] OF LREAL;
 	
+	aPumpsActivated		  : ARRAY[1..10] OF BOOL;
+	aPumpsDirection		  : ARRAY[1..10] OF E_PumpDirection;
+	aPumpsSpeed			  : ARRAY[1..10] OF REAL;
+	aPumpsVolume		  : ARRAY[1..10] OF REAL;
+	bRunPumpsBySpeed	  : BOOL := FALSE;
+	bRunPumpsByVolume	  : BOOL := FALSE;
+	
 	aMotorBusy	: ARRAY[1..3] OF BOOL;
+	
+	fbPumpsController : FB_AllPumpsController;
+
+	i : INT; 
 	
 	//interlock Variables
 	iTargetPosM2 : INT;
@@ -112,7 +123,7 @@ END_IF
 (*<Valve 1>*)
 //Move Valve 1 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[1].bMove THEN
-	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iValveID := 1, iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iValveID := 1, iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 1 by HMI manual mode button
@@ -124,7 +135,7 @@ END_IF
 (*<Valve 2>*)
 //Move Valve 2 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[2].bMove THEN
-	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iValveID := 2, iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iValveID := 2, iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 2 by HMI manual mode button
@@ -136,7 +147,7 @@ END_IF
 (*<Valve 3>*)
 //Move Valve 3 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[3].bMove THEN
-	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 3 by HMI manual mode button
@@ -148,7 +159,7 @@ END_IF
 (*<Valve 4>*)
 //Move Valve 4 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[4].bMove THEN
-	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iValveID := 4, iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iValveID := 4, iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 4 by HMI manual mode button
@@ -160,7 +171,7 @@ END_IF
 (*<Valve 5>*)
 //Move Valve 5 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[5].bMove THEN
-	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iValveID := 5, iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 30, rAcc := 20, rDec := 20);
+	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iValveID := 5, iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 5 by HMI manual mode button
@@ -170,39 +181,42 @@ END_IF
 (*<\Valve 5>*)
 
 (* <Pumps> -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)
-
-(*<Pump 1>*)
-(*
-//Pump 1 - Rotary Movement by speed [MoveVelocity]
-IF GVL_HMI.aManualPumpsCmd[1].bRunBySpeed THEN
-	GVL_HMI.aManualPumpsCmd[1].bRunBySpeed := NOT GVL_Motion.aPumpsRotary[1].MoveVelocity( rVelocity := (GVL_HMI.aManualPumpsCmd[1].rSpeed*6), rAcc := 100, rDec := 100, iDirection := GVL_HMI.aManualPumpsCmd[1].eDirection);
+(*<Move by Speed>*)
+IF GVL_HMI.bRunPumpsBySpeedBt THEN //Fill up the pump arrays and trigger pumps 
+	FOR i := 1 TO 10 DO
+		aPumpsActivated[i] := GVL_HMI.aManualPumpsCmd[i].bActive;
+		aPumpsDirection[i] := GVL_HMI.aManualPumpsCmd[i].eDirection;
+		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed;
+	END_FOR
+	bRunPumpsBySpeed := TRUE;
+	GVL_HMI.bRunPumpsBySpeedBt := FALSE;
 END_IF
-
-//Pump 1 - Rotary movement by volume [MoveRelative]
-//ratio uL/step - 200 steps/rev [volume in mL * 1000] / [calibration constant in uL/step * 200 steps/rev] = revolutions * 360 = distance degrees
-rDegreesPerVolume[1] := (GVL_HMI.aManualPumpsCmd[1].rVolume * 1000)/(GVL_Settings.aPumpCalibration[1]*200)*360;
-
-IF GVL_HMI.aManualPumpsCmd[1].bRunByVolume THEN
-	GVL_HMI.aManualPumpsCmd[1].bRunByVolume := NOT GVL_Motion.aPumpsRotary[1].MoveRelative( Distance :=  rDegreesPerVolume[1], Velocity := (GVL_HMI.aManualPumpsCmd[1].rSpeed*6), Acc := 100, Dec := 100);
+IF bRunPumpsBySpeed THEN //pumps movement
+	bRunPumpsBySpeed := NOT fbPumpsController.MoveBySpeed(aPumpIds := aPumpsActivated, aVelocity := aPumpsSpeed, aPumpDirection := aPumpsDirection);
 END_IF
+(*<\Move by Speed>*)
 
-//Pump 1 - Get Status for Running or Idle flag
-IF GVL_HMI.aManualPumpsCmd[1].bRunBySpeed OR GVL_HMI.aManualPumpsCmd[1].bRunByVolume THEN
-	GVL_HMI.aManualPumpsCmd[1].bBusy := TRUE;
-ELSE
-	GVL_HMI.aManualPumpsCmd[1].bBusy := FALSE;
+(*<Move by Volume>*)
+IF GVL_HMI.bRunPumpsByVolumeBt THEN //Fill up the pump arrays and trigger pumps 
+	FOR i := 1 TO 10 DO
+		aPumpsActivated[i] := GVL_HMI.aManualPumpsCmd[i].bActive;
+		aPumpsDirection[i] := GVL_HMI.aManualPumpsCmd[i].eDirection;
+		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed;
+		aPumpsVolume[i] := GVL_HMI.aManualPumpsCmd[i].rVolume;
+	END_FOR
 END_IF
-
-//Pump 1 - Stop Rotary Movement
-IF GVL_HMI.aManualPumpsCmd[1].bStop THEN
-	GVL_HMI.aManualPumpsCmd[1].bStop := NOT GVL_Motion.aPumpsRotary[1].Stop();
+IF bRunPumpsByVolume THEN //pumps movement
+	bRunPumpsByVolume := NOT fbPumpsController.MoveByVolume(aPumpIds := aPumpsActivated, aVolume := aPumpsVolume, aPumpDirection := aPumpsDirection, aVelocity := aPumpsSpeed);
 END_IF
-(*<\Pump 1>*)
-*)
+(*<\Move by Volume>*)
 
+(*<Stop All Pumps>*)
+IF GVL_HMI.bStopPumpsBt THEN
+	GVL_HMI.bStopPumpsBt := NOT fbPumpsController.StopAllPumps();
+END_IF
+(*<\Stop All Pumps>*)
 
-
-]]></ST>
+(* <\Pumps> ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*)]]></ST>
     </Implementation>
     <Action Name="MotorsActualPosition" Id="{634c759f-49ee-43fa-86d1-7097ca0492ea}">
       <Implementation>
@@ -296,92 +310,25 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       </Implementation>
     </Action>
     <LineIds Name="PRG_ManualControl">
-      <LineId Id="356" Count="0" />
-      <LineId Id="350" Count="0" />
-      <LineId Id="358" Count="0" />
-      <LineId Id="367" Count="0" />
-      <LineId Id="366" Count="0" />
-      <LineId Id="759" Count="1" />
-      <LineId Id="557" Count="2" />
-      <LineId Id="565" Count="0" />
-      <LineId Id="567" Count="1" />
-      <LineId Id="563" Count="0" />
-      <LineId Id="569" Count="0" />
-      <LineId Id="564" Count="0" />
-      <LineId Id="573" Count="0" />
-      <LineId Id="560" Count="0" />
-      <LineId Id="572" Count="0" />
-      <LineId Id="571" Count="0" />
-      <LineId Id="576" Count="0" />
-      <LineId Id="604" Count="0" />
-      <LineId Id="588" Count="0" />
-      <LineId Id="577" Count="0" />
-      <LineId Id="627" Count="1" />
-      <LineId Id="672" Count="0" />
-      <LineId Id="629" Count="0" />
-      <LineId Id="632" Count="13" />
-      <LineId Id="630" Count="1" />
-      <LineId Id="626" Count="0" />
-      <LineId Id="646" Count="11" />
-      <LineId Id="584" Count="0" />
-      <LineId Id="658" Count="0" />
-      <LineId Id="585" Count="2" />
-      <LineId Id="575" Count="0" />
-      <LineId Id="589" Count="0" />
-      <LineId Id="605" Count="0" />
-      <LineId Id="591" Count="0" />
-      <LineId Id="610" Count="0" />
-      <LineId Id="659" Count="12" />
-      <LineId Id="599" Count="4" />
-      <LineId Id="590" Count="0" />
-      <LineId Id="674" Count="0" />
-      <LineId Id="673" Count="0" />
-      <LineId Id="694" Count="0" />
-      <LineId Id="693" Count="0" />
-      <LineId Id="677" Count="1" />
-      <LineId Id="683" Count="1" />
-      <LineId Id="692" Count="0" />
-      <LineId Id="685" Count="3" />
-      <LineId Id="676" Count="0" />
-      <LineId Id="706" Count="0" />
-      <LineId Id="696" Count="9" />
-      <LineId Id="695" Count="0" />
-      <LineId Id="707" Count="10" />
-      <LineId Id="675" Count="0" />
-      <LineId Id="719" Count="10" />
-      <LineId Id="718" Count="0" />
-      <LineId Id="731" Count="10" />
-      <LineId Id="730" Count="0" />
-      <LineId Id="606" Count="0" />
-      <LineId Id="561" Count="0" />
-      <LineId Id="791" Count="0" />
-      <LineId Id="762" Count="0" />
-      <LineId Id="793" Count="0" />
-      <LineId Id="761" Count="0" />
-      <LineId Id="771" Count="1" />
-      <LineId Id="770" Count="0" />
-      <LineId Id="764" Count="0" />
-      <LineId Id="763" Count="0" />
-      <LineId Id="783" Count="0" />
-      <LineId Id="782" Count="0" />
-      <LineId Id="774" Count="2" />
-      <LineId Id="773" Count="0" />
-      <LineId Id="767" Count="0" />
-      <LineId Id="766" Count="0" />
-      <LineId Id="769" Count="0" />
-      <LineId Id="784" Count="0" />
-      <LineId Id="786" Count="1" />
-      <LineId Id="785" Count="0" />
-      <LineId Id="790" Count="0" />
-      <LineId Id="768" Count="0" />
-      <LineId Id="788" Count="1" />
-      <LineId Id="765" Count="0" />
-      <LineId Id="792" Count="0" />
-      <LineId Id="794" Count="0" />
-      <LineId Id="758" Count="0" />
-      <LineId Id="757" Count="0" />
-      <LineId Id="556" Count="0" />
-      <LineId Id="473" Count="0" />
+      <LineId Id="846" Count="153" />
+      <LineId Id="1023" Count="0" />
+      <LineId Id="1021" Count="0" />
+      <LineId Id="1000" Count="0" />
+      <LineId Id="1078" Count="1" />
+      <LineId Id="1002" Count="0" />
+      <LineId Id="1075" Count="1" />
+      <LineId Id="1074" Count="0" />
+      <LineId Id="1012" Count="0" />
+      <LineId Id="1032" Count="8" />
+      <LineId Id="1042" Count="0" />
+      <LineId Id="1071" Count="2" />
+      <LineId Id="1031" Count="0" />
+      <LineId Id="1029" Count="0" />
+      <LineId Id="1026" Count="2" />
+      <LineId Id="1025" Count="0" />
+      <LineId Id="1013" Count="0" />
+      <LineId Id="1030" Count="0" />
+      <LineId Id="1014" Count="0" />
     </LineIds>
     <LineIds Name="PRG_ManualControl.MotorsActualPosition">
       <LineId Id="2" Count="18" />

@@ -5,6 +5,8 @@
 VAR
 	bFirstVariablesAssignment : BOOL := FALSE;
 	bValvesPositionAssignment : BOOL := FALSE;
+	bPumpsFactorAssignment	  : BOOL := FALSE;
+	
 	i : UINT := 1;
 	
 END_VAR
@@ -20,6 +22,21 @@ END_IF
 GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
+
+//Pumps factor Assignment [ml/rev]
+IF NOT bPumpsFactorAssignment THEN
+	GVL_Motion.aPumps[1].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[2].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactor := 0.138;
+	GVL_Motion.aPumps[4].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[7].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[8].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[9].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[10].Rotary.rPumpFactor := 0.28;
+	bPumpsFactorAssignment := TRUE;
+END_IF
 
 //Valves position angle
 IF NOT bValvesPositionAssignment THEN
@@ -60,8 +77,6 @@ IF NOT bValvesPositionAssignment THEN
 	
 	bValvesPositionAssignment := TRUE;
 END_IF
-
-
 
 //Pumps Home sensor bit
 GVL_Motion.aPumps[1].Linear.bHomeSensorState := GVL_Motion.aPumps[1].Linear.iHomeSensor.0; 
@@ -139,14 +154,20 @@ END_IF
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
-      <LineId Id="201" Count="1" />
+      <LineId Id="295" Count="1" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="302" Count="5" />
+      <LineId Id="309" Count="2" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="202" Count="0" />
       <LineId Id="250" Count="0" />
       <LineId Id="253" Count="32" />
       <LineId Id="251" Count="0" />
       <LineId Id="286" Count="1" />
       <LineId Id="252" Count="0" />
-      <LineId Id="242" Count="0" />
-      <LineId Id="247" Count="0" />
       <LineId Id="127" Count="0" />
       <LineId Id="126" Count="0" />
       <LineId Id="128" Count="2" />

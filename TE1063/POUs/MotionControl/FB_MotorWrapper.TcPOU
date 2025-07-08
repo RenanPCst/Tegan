@@ -383,6 +383,10 @@ IF NOT bMoveRelRequested THEN
     bMoveRelRequested := TRUE;
 END_IF
 
+IF fbMoveRel.Busy THEN
+    bMoveRelExecute := FALSE;
+END_IF
+
 // Call the internal motion block
 fbMoveRel(
     Axis := Axis,
@@ -398,10 +402,6 @@ status.bBusy := fbMoveRel.Busy;
 status.bDone := fbMoveRel.Done;
 status.bError := fbMoveRel.Error;
 status.iErrorCode := fbMoveRel.ErrorID;
-
-IF fbMoveRel.Busy THEN
-    bMoveRelExecute := FALSE;
-END_IF
 
 IF fbMoveRel.Error THEN
     status.eState := E_ActuatorState.eError;
@@ -514,7 +514,6 @@ fbMoveVel( 	Axis := Axis,
 			Deceleration := rDec
 );
 			
-
 // Update actuator status
 status.bBusy := fbMoveVel.Busy;
 status.bError := fbMoveVel.Error;
@@ -812,7 +811,12 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveRelative">
-      <LineId Id="49" Count="36" />
+      <LineId Id="49" Count="4" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="96" Count="1" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="54" Count="15" />
+      <LineId Id="74" Count="11" />
       <LineId Id="48" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
@@ -840,7 +844,7 @@ END_IF
       <LineId Id="54" Count="1" />
       <LineId Id="59" Count="0" />
       <LineId Id="53" Count="0" />
-      <LineId Id="21" Count="2" />
+      <LineId Id="22" Count="1" />
       <LineId Id="25" Count="18" />
       <LineId Id="5" Count="0" />
     </LineIds>
