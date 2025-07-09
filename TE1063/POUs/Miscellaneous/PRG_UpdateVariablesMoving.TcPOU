@@ -4,8 +4,9 @@
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
 	bFirstVariablesAssignment : BOOL := FALSE;
-	bValvesPositionAssignment : BOOL := FALSE;
+	bValvesSettingsAssignment : BOOL := FALSE;
 	bPumpsFactorAssignment	  : BOOL := FALSE;
+	bPumpsSettingsAssignment  : BOOL := FALSE;
 	
 	i : UINT := 1;
 	
@@ -23,6 +24,16 @@ GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFee
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
 
+//Valves Settings Assignment
+IF NOT bValvesSettingsAssignment THEN
+	FOR i := 1 TO 5 DO
+		GVL_Motion.aValves[i].rTargetVel := 1500;
+		GVL_Motion.aValves[i].rAcceleration := 1000;
+		GVL_Motion.aValves[i].rDeceleration := 1000;
+	END_FOR
+	bValvesSettingsAssignment := TRUE;
+END_IF
+
 //Pumps factor Assignment [ml/rev]
 IF NOT bPumpsFactorAssignment THEN
 	GVL_Motion.aPumps[1].Rotary.rPumpFactor := 0.28;
@@ -38,44 +49,14 @@ IF NOT bPumpsFactorAssignment THEN
 	bPumpsFactorAssignment := TRUE;
 END_IF
 
-//Valves position angle
-IF NOT bValvesPositionAssignment THEN
-	GVL_Motion.aValves[1].rValvePositionAngle[1] := 0;
-	GVL_Motion.aValves[1].rValvePositionAngle[2] := 1200;
-	GVL_Motion.aValves[1].rValvePositionAngle[3] := 2400;
-	GVL_Motion.aValves[1].rValvePositionAngle[4] := 3600;
-	GVL_Motion.aValves[1].rValvePositionAngle[5] := 4800;
-	GVL_Motion.aValves[1].rValvePositionAngle[6] := 6000;
-	
-	GVL_Motion.aValves[2].rValvePositionAngle[1] := 0;
-	GVL_Motion.aValves[2].rValvePositionAngle[2] := 1200;
-	GVL_Motion.aValves[2].rValvePositionAngle[3] := 2400;
-	GVL_Motion.aValves[2].rValvePositionAngle[4] := 3600;
-	GVL_Motion.aValves[2].rValvePositionAngle[5] := 4800;
-	GVL_Motion.aValves[2].rValvePositionAngle[6] := 6000;
-	
-	GVL_Motion.aValves[3].rValvePositionAngle[1] := 0;
-	GVL_Motion.aValves[3].rValvePositionAngle[2] := 1200;
-	GVL_Motion.aValves[3].rValvePositionAngle[3] := 2400;
-	GVL_Motion.aValves[3].rValvePositionAngle[4] := 3600;
-	GVL_Motion.aValves[3].rValvePositionAngle[5] := 4800;
-	GVL_Motion.aValves[3].rValvePositionAngle[6] := 6000;
-	
-	GVL_Motion.aValves[4].rValvePositionAngle[1] := 0;
-	GVL_Motion.aValves[4].rValvePositionAngle[2] := 1200;
-	GVL_Motion.aValves[4].rValvePositionAngle[3] := 2400;
-	GVL_Motion.aValves[4].rValvePositionAngle[4] := 3600;
-	GVL_Motion.aValves[4].rValvePositionAngle[5] := 4800;
-	GVL_Motion.aValves[4].rValvePositionAngle[6] := 6000;
-	
-	GVL_Motion.aValves[5].rValvePositionAngle[1] := 0;
-	GVL_Motion.aValves[5].rValvePositionAngle[2] := 1200;
-	GVL_Motion.aValves[5].rValvePositionAngle[3] := 2400;
-	GVL_Motion.aValves[5].rValvePositionAngle[4] := 3600;
-	GVL_Motion.aValves[5].rValvePositionAngle[5] := 4800;
-	GVL_Motion.aValves[5].rValvePositionAngle[6] := 6000;
-	
-	bValvesPositionAssignment := TRUE;
+//Pumps Settings Assignment
+IF NOT bPumpsSettingsAssignment THEN
+	FOR i := 1 TO 10 DO
+		GVL_Motion.aPumps[i].Rotary.rSpeed := 900; //1800º/sec with is equal to 300 revs/min
+		GVL_Motion.aPumps[i].Rotary.rAcceleration := 500; //Standard Acceleration based on motor speed
+		GVL_Motion.aPumps[i].Rotary.rDeceleration := 500; //Standard Acceleration based on motor speed
+	END_FOR
+	bPumpsSettingsAssignment := TRUE;
 END_IF
 
 //Pumps Home sensor bit
@@ -95,7 +76,7 @@ IF NOT bFirstVariablesAssignment THEN
 	//Default Motors Parameters
 	//Motor M1 parameters
 	GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
-	GVL_HMI.HMIParameters.aM1Position[2]			:= -315; // [mm] M1 Motor Seal Position
+	GVL_HMI.HMIParameters.aM1Position[2]			:= -318; // [mm] M1 Motor Seal Position
 	GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
 	GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
 	GVL_HMI.HMIParameters.rM1Velocity				:= 15;
@@ -154,6 +135,12 @@ END_IF
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
+      <LineId Id="336" Count="3" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="343" Count="1" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="340" Count="0" />
       <LineId Id="295" Count="1" />
       <LineId Id="201" Count="0" />
       <LineId Id="299" Count="0" />
@@ -161,14 +148,13 @@ END_IF
       <LineId Id="309" Count="2" />
       <LineId Id="301" Count="0" />
       <LineId Id="300" Count="0" />
+      <LineId Id="324" Count="2" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="334" Count="1" />
+      <LineId Id="332" Count="1" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="328" Count="0" />
       <LineId Id="313" Count="0" />
-      <LineId Id="202" Count="0" />
-      <LineId Id="250" Count="0" />
-      <LineId Id="253" Count="32" />
-      <LineId Id="251" Count="0" />
-      <LineId Id="286" Count="1" />
-      <LineId Id="252" Count="0" />
-      <LineId Id="127" Count="0" />
       <LineId Id="126" Count="0" />
       <LineId Id="128" Count="2" />
       <LineId Id="132" Count="6" />

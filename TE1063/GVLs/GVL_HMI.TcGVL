@@ -29,8 +29,6 @@ VAR_GLOBAL
 	
 	eMachineMode		 : E_MachineMode; //Machine mode selection from HMI
 	
-	HMIStartAnimation	 : BOOL := TRUE;
-	
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
 	
 	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
@@ -96,13 +94,12 @@ VAR_GLOBAL
 	aManualMotorsCmd 	: ARRAY[1..3] OF ST_MotorCommand;
     aManualValvesCmd 	: ARRAY[1..5] OF ST_ValveCommand;
     aManualPumpsCmd  	: ARRAY[1..10] OF ST_PumpCommand;
-	bRunPumpsBySpeedBt 	: BOOL;
-	bRunPumpsByVolumeBt : BOOL;
-	bStopPumpsBt 		: BOOL;
+	bRunPumpsBySpeedBt 		: BOOL;
+	bRunPumpsByVolumeBt 	: BOOL;
+	bRunPumpsByDistanceBt 	: BOOL;
+	bStopPumpsBt 			: BOOL;
 	
-	//Level Sensors
-	rSolventLevels 	: ARRAY[1..4] OF REAL;
-	rWasteLevel	 	: REAL;
+	iTestDistance : UINT := 0;
 	
 END_VAR]]></Declaration>
   </GVL>

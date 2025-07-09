@@ -54,6 +54,8 @@ VAR
 	rValvePosition 	: ARRAY[1..5] OF LREAL;
 	rLinearPumpPosition 	: ARRAY[1..10] OF LREAL;
 	rRotaryPumpPosition 	: ARRAY[1..10] OF LREAL;
+	
+	stPumpStatus : ARRAY[1..10] OF ST_ActuatorStatus;
 			
 	// ########## Retain valves position ####################
  	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
@@ -116,6 +118,19 @@ IF bDebug1 THEN // open linear pumps
 				NOT GVL_Motion.aPumpsLinear[10].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2);
 END_IF
 
+IF bDebug3 THEN
+	stPumpStatus[1] := GVL_Motion.aPumpsRotary[1].GetStatus();
+	stPumpStatus[2] := GVL_Motion.aPumpsRotary[2].GetStatus();
+	stPumpStatus[3] := GVL_Motion.aPumpsRotary[3].GetStatus();
+	stPumpStatus[4] := GVL_Motion.aPumpsRotary[4].GetStatus();
+	stPumpStatus[5] := GVL_Motion.aPumpsRotary[5].GetStatus();
+	stPumpStatus[6] := GVL_Motion.aPumpsRotary[6].GetStatus();
+	stPumpStatus[7] := GVL_Motion.aPumpsRotary[7].GetStatus();
+	stPumpStatus[8] := GVL_Motion.aPumpsRotary[8].GetStatus();
+	stPumpStatus[9] := GVL_Motion.aPumpsRotary[9].GetStatus();
+	stPumpStatus[10] := GVL_Motion.aPumpsRotary[10].GetStatus();
+END_IF
+
 IF bDebug2 THEN // See axis actual position 
 	rM1Position[1] 	:= GVL_Motion.aMotors[1].GetPosition();
 	rM1Position[2] 	:= GVL_Motion.aMotors[2].GetPosition();
@@ -163,11 +178,11 @@ IF bDebug5 THEN
 END_IF
 
 IF bDebug6 THEN
-	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3 ,iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug7 THEN
-	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
 END_IF
 
 IF bDebug9 THEN
@@ -282,6 +297,12 @@ END_IF
       <LineId Id="4950" Count="3" />
       <LineId Id="4955" Count="4" />
       <LineId Id="4712" Count="0" />
+      <LineId Id="6491" Count="0" />
+      <LineId Id="6489" Count="0" />
+      <LineId Id="6492" Count="0" />
+      <LineId Id="6496" Count="4" />
+      <LineId Id="6502" Count="3" />
+      <LineId Id="6493" Count="0" />
       <LineId Id="4165" Count="0" />
       <LineId Id="3967" Count="0" />
       <LineId Id="4927" Count="0" />

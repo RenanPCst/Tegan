@@ -47,19 +47,19 @@ END_VAR]]></Declaration>
 		bMoveValves := bExecute;
         // Moves all 6-position valves to position 5
 		IF NOT fbValveMoveDone[1] THEN
-			fbValveMoveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iValveID := 1, iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+			fbValveMoveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[1].rTargetVel, rAcc := GVL_Motion.aValves[1].rAcceleration, rDec := GVL_Motion.aValves[1].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[2] THEN
-			fbValveMoveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iValveID := 2, iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+			fbValveMoveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[2].rTargetVel, rAcc := GVL_Motion.aValves[2].rAcceleration, rDec := GVL_Motion.aValves[2].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[3] THEN
-			fbValveMoveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+			fbValveMoveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[3].rTargetVel, rAcc := GVL_Motion.aValves[3].rAcceleration, rDec := GVL_Motion.aValves[3].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[4] THEN
-			fbValveMoveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iValveID := 4, iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+			fbValveMoveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[4].rTargetVel, rAcc := GVL_Motion.aValves[4].rAcceleration, rDec := GVL_Motion.aValves[4].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[5] THEN
-			fbValveMoveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iValveID := 5, iPosition := 5, rVelocity := 15, rAcc := 15, rDec := 15);
+			fbValveMoveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[5].rTargetVel, rAcc := GVL_Motion.aValves[5].rAcceleration, rDec := GVL_Motion.aValves[5].rDeceleration);
 		END_IF	
         
 		stStatus[1] := GVL_Motion.aValvesObj[1].GetStatus();
@@ -131,7 +131,7 @@ END_VAR]]></Declaration>
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := rScaledPressure * 0.50; //TODO: Just for testing purposes... need to be adjusted to 0.95
+			rClosedSystemPressure := rScaledPressure * 0.01; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
 			tonMonitoring(in := bPressureInput, PT := tMonitorTime);

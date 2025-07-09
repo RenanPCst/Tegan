@@ -15,8 +15,13 @@ rM2MotorPositionPerc : LREAL;  // Motor Actual Position Scaled 0-100
 cM2MinPosition       : LREAL := 0.0; // Minimum expected Value
 cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value)
 
+//Pumps Animation and status
+aPumpStatus		: ARRAY[1..10] OF ST_ActuatorStatus;
+
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
+
+i : INT;
 
 END_VAR
 ]]></Declaration>
@@ -38,6 +43,22 @@ ACT_M2Animation();
 
 //Calibration Box presence
 GVL_HMI.bHMICalibrationBox := GVL_IO.gDigInputs.bCalibrationBoxPresent;
+
+//Valves Angle
+GVL_HMI.HMIAnimation.aValveAngle[1]	:= GVL_Motion.aValves[1].rActualPosition / 60;
+GVL_HMI.HMIAnimation.aValveAngle[2]	:= GVL_Motion.aValves[2].rActualPosition / 60;;
+GVL_HMI.HMIAnimation.aValveAngle[3]	:= GVL_Motion.aValves[3].rActualPosition / 60;;
+GVL_HMI.HMIAnimation.aValveAngle[4]	:= GVL_Motion.aValves[4].rActualPosition / 60;;
+GVL_HMI.HMIAnimation.aValveAngle[5]	:= GVL_Motion.aValves[5].rActualPosition / 60;;
+
+//Pumps status Running or busy
+IF GVL_HMI.eMachineMode = E_MachineMode.MANUAL THEN
+	FOR i := 1 TO 10 DO
+		aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
+		GVL_HMI.aManualPumpsCmd[i].bBusy := aPumpStatus[i].bBusy;
+	END_FOR
+END_IF
+
 
 //Doors hide/visible 
 GVL_HMI.HMIAnimation.bHMIDoorOpen[1] := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk;
@@ -67,33 +88,7 @@ fbBlinkDoor[6](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3, tPeriod :
 GVL_HMI.HMIAnimation.bHMIDoorBlink[6] := fbBlinkDoor[6].bBlink;
 
 
-(* </Controls Animation> *********************************************************************************************** *)
-
-(* <Manual Moviment> *************************************************************************************************** *)
-
-//Temporary constants for testing purpose
-GVL_HMI.HMIDigOutputs.aValveAngle[1]	:= 240.5;
-GVL_HMI.HMIDigOutputs.aValveAngle[2]	:= 239.8;
-GVL_HMI.HMIDigOutputs.aValveAngle[3]	:= 240.1;
-GVL_HMI.HMIDigOutputs.aValveAngle[4]	:= 240.3;
-GVL_HMI.HMIDigOutputs.aValveAngle[5]	:= 249.7;
-
-GVL_HMI.HMIDigOutputs.aValvePosition[1]	:= 5;
-GVL_HMI.HMIDigOutputs.aValvePosition[2]	:= 5;
-GVL_HMI.HMIDigOutputs.aValvePosition[3]	:= 5;
-GVL_HMI.HMIDigOutputs.aValvePosition[4]	:= 5;
-GVL_HMI.HMIDigOutputs.aValvePosition[5]	:= 5;
-
-
-
-(* Old set on bottle levels for testing purposes
-GVL_HMI.HMIDigOutputs.aRinseLevel[1]	:= 64;
-GVL_HMI.HMIDigOutputs.aRinseLevel[2]	:= 47;
-GVL_HMI.HMIDigOutputs.aRinseLevel[3]	:= 87;
-GVL_HMI.HMIDigOutputs.aRinseLevel[4]	:= 14;
-
-GVL_HMI.HMIDigOutputs.aWasteLevel		:= 82;
-*)]]></ST>
+(* </Controls Animation> *********************************************************************************************** *)]]></ST>
     </Implementation>
     <Action Name="ACT_M1Animation" Id="{5ca7e550-b195-4047-b743-192dee895467}">
       <Implementation>
@@ -102,13 +97,13 @@ IF GVL_Motion.bInitialHomingDone THEN
 	// Read the end of scale value
 	cM1MaxPosition := GVL_HMI.HMIParameters.aM1Position[2];	
 
-	// Ler posição do motor
+	// Read motor Position
 	rM1MotorPosition := GVL_Motion.aMotors[1].GetPosition();
 	
 	// Scaling the motor position (0 = 0%, -320 = 100%)
 	rM1MotorPositionPerc := ((rM1MotorPosition - cM1MinPosition) / (cM1MaxPosition - cM1MinPosition)) * 100.0;
 	
-	// Limita valor entre 0 e 100%
+	// Limits value in the range 0 and 100%
 	IF rM1MotorPositionPerc < 0 THEN
 		rM1MotorPositionPerc := 0;
 	ELSIF rM1MotorPositionPerc > 100 THEN
@@ -129,13 +124,13 @@ IF GVL_Motion.bInitialHomingDone THEN
 	// Read the end of scale value
 	cM2MaxPosition := GVL_HMI.HMIParameters.aM2Position[4]; //Calibration Position witch is the most away position the motor will reach	
 
-	// Ler posição do motor
+	// Read motor Position
 	rM2MotorPosition := GVL_Motion.aMotors[2].GetPosition();
 	
 	// Scaling the motor position (0 = 0%, -320 = 100%)
 	rM2MotorPositionPerc := ((rM2MotorPosition - cM2MinPosition) / (cM2MaxPosition - cM2MinPosition)) * 100.0;
 	
-	// Limita valor entre 0 e 100%
+	// Limits value in the range 0 and 100%
 	IF rM2MotorPositionPerc < 0 THEN
 		rM2MotorPositionPerc := 0;
 	ELSIF rM2MotorPositionPerc > 100 THEN
@@ -153,7 +148,19 @@ END_IF]]></ST>
       <LineId Id="338" Count="0" />
       <LineId Id="337" Count="0" />
       <LineId Id="339" Count="0" />
-      <LineId Id="341" Count="1" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="413" Count="4" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="436" Count="1" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="458" Count="0" />
+      <LineId Id="453" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="449" Count="0" />
+      <LineId Id="342" Count="0" />
       <LineId Id="384" Count="0" />
       <LineId Id="388" Count="4" />
       <LineId Id="387" Count="0" />
@@ -173,14 +180,6 @@ END_IF]]></ST>
       <LineId Id="346" Count="0" />
       <LineId Id="340" Count="0" />
       <LineId Id="266" Count="0" />
-      <LineId Id="302" Count="0" />
-      <LineId Id="301" Count="0" />
-      <LineId Id="267" Count="12" />
-      <LineId Id="335" Count="1" />
-      <LineId Id="318" Count="0" />
-      <LineId Id="280" Count="5" />
-      <LineId Id="85" Count="0" />
-      <LineId Id="319" Count="0" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_M1Animation">
       <LineId Id="2" Count="20" />

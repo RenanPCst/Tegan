@@ -38,8 +38,11 @@ VAR
     bStopExecute     : BOOL;
     bStopRequested   : BOOL;
 	bStopDone		 : BOOL;
-
+	
+	//GetStatus()
     status        	 : ST_ActuatorStatus;
+	lastPosition 	 : LREAL := 0.0;
+    bDetectedMovement: BOOL  := FALSE;
     debugSensorValue : BOOL;
 	
 	//Home()
@@ -150,9 +153,19 @@ END_VAR
         <ST><![CDATA[// Get unified status struct with all feedback for HMI/diagnostics
 fbReadPos(Axis := Axis, Enable := TRUE);
 status.fPosition := fbReadPos.Position;
-status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.Busy;
+status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.Busy OR bDetectedMovement;
 status.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
 status.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error OR fbMoveVel.Error;
+
+// Detecta movimento comparando posição atual com a última
+IF ABS(fbReadPos.Position - lastPosition) > 0.1 THEN // Limiar pode ser ajustado
+    bDetectedMovement := TRUE;
+ELSE
+    bDetectedMovement := FALSE;
+END_IF
+
+lastPosition := fbReadPos.Position;
+
 // Prioritize error messages by source
 IF status.bError THEN
 	status.eState := E_ActuatorState.eError;
@@ -168,6 +181,7 @@ IF status.bError THEN
 		status.sMessage := 'Error in Home';
 	END_IF
 END_IF;
+
 //return
 GetStatus := status;
 ]]></ST>
@@ -420,7 +434,6 @@ END_IF]]></ST>
     <Method Name="MoveValve" Id="{0efdf2ac-cd7b-4dd3-893f-1eab65963717}">
       <Declaration><![CDATA[METHOD MoveValve : BOOL
 VAR_INPUT
-	iValveID  : USINT;
 	iPosition : USINT;
 	rVelocity : LREAL;
 	rAcc	  : LREAL;
@@ -429,11 +442,16 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Map logical valve position to angular position
-IF (iValveID >= 1) AND (iValveID <= 5) AND (iPosition >= 1) AND (iPosition <= 6) THEN
-    rTargetAngle := GVL_Motion.aValves[iValveID].rValvePositionAngle[iPosition];
+CASE iPosition OF
+    1: rTargetAngle := 0.0;
+    2: rTargetAngle := 1200.0;
+    3: rTargetAngle := 2400.0;
+    4: rTargetAngle := 3600.0;
+    5: rTargetAngle := 4800.0;
+    6: rTargetAngle := 6000.0;
 ELSE
-    rTargetAngle := 0.0; // fallback
-END_IF
+    rTargetAngle := 0;
+END_CASE
 
 // Reuse the same logic from MoveAbsolute
 IF NOT bMoveValveRequested THEN
@@ -746,9 +764,15 @@ END_IF
     <LineIds Name="FB_MotorWrapper.GetStatus">
       <LineId Id="6" Count="0" />
       <LineId Id="26" Count="0" />
-      <LineId Id="8" Count="12" />
+      <LineId Id="8" Count="3" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="6" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="12" Count="8" />
       <LineId Id="31" Count="1" />
       <LineId Id="21" Count="3" />
+      <LineId Id="37" Count="0" />
       <LineId Id="27" Count="0" />
       <LineId Id="25" Count="0" />
       <LineId Id="5" Count="0" />
@@ -821,8 +845,8 @@ END_IF
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
       <LineId Id="31" Count="0" />
-      <LineId Id="102" Count="3" />
-      <LineId Id="100" Count="0" />
+      <LineId Id="130" Count="8" />
+      <LineId Id="122" Count="0" />
       <LineId Id="106" Count="0" />
       <LineId Id="108" Count="4" />
       <LineId Id="107" Count="0" />

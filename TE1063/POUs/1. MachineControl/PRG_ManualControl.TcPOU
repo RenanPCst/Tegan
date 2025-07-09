@@ -13,8 +13,10 @@ VAR
 	aPumpsDirection		  : ARRAY[1..10] OF E_PumpDirection;
 	aPumpsSpeed			  : ARRAY[1..10] OF REAL;
 	aPumpsVolume		  : ARRAY[1..10] OF REAL;
+	aPumpsDistance		  : ARRAY[1..10] OF UINT;
 	bRunPumpsBySpeed	  : BOOL := FALSE;
 	bRunPumpsByVolume	  : BOOL := FALSE;
+	bRunPumpsByDistance	  : BOOL := FALSE;
 	
 	aMotorBusy	: ARRAY[1..3] OF BOOL;
 	
@@ -123,7 +125,7 @@ END_IF
 (*<Valve 1>*)
 //Move Valve 1 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[1].bMove THEN
-	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iValveID := 1, iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
+	GVL_HMI.aManualValvesCmd[1].bMove := NOT GVL_Motion.aValvesObj[1].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[1].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 1 by HMI manual mode button
@@ -135,7 +137,7 @@ END_IF
 (*<Valve 2>*)
 //Move Valve 2 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[2].bMove THEN
-	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iValveID := 2, iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
+	GVL_HMI.aManualValvesCmd[2].bMove := NOT GVL_Motion.aValvesObj[2].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[2].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 2 by HMI manual mode button
@@ -147,7 +149,7 @@ END_IF
 (*<Valve 3>*)
 //Move Valve 3 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[3].bMove THEN
-	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iValveID := 3, iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
+	GVL_HMI.aManualValvesCmd[3].bMove := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[3].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 3 by HMI manual mode button
@@ -159,7 +161,7 @@ END_IF
 (*<Valve 4>*)
 //Move Valve 4 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[4].bMove THEN
-	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iValveID := 4, iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
+	GVL_HMI.aManualValvesCmd[4].bMove := NOT GVL_Motion.aValvesObj[4].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[4].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 4 by HMI manual mode button
@@ -171,7 +173,7 @@ END_IF
 (*<Valve 5>*)
 //Move Valve 5 by HMI combobox manual mode
 IF GVL_HMI.aManualValvesCmd[5].bMove THEN
-	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iValveID := 5, iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
+	GVL_HMI.aManualValvesCmd[5].bMove := NOT GVL_Motion.aValvesObj[5].MoveValve( iPosition := GVL_HMI.aManualValvesCmd[5].iTargetPos ,rVelocity := 1500, rAcc := 1000, rDec := 1000);
 END_IF
 
 //Stop Moviment Valve 5 by HMI manual mode button
@@ -186,7 +188,7 @@ IF GVL_HMI.bRunPumpsBySpeedBt THEN //Fill up the pump arrays and trigger pumps
 	FOR i := 1 TO 10 DO
 		aPumpsActivated[i] := GVL_HMI.aManualPumpsCmd[i].bActive;
 		aPumpsDirection[i] := GVL_HMI.aManualPumpsCmd[i].eDirection;
-		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed;
+		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed * 6;
 	END_FOR
 	bRunPumpsBySpeed := TRUE;
 	GVL_HMI.bRunPumpsBySpeedBt := FALSE;
@@ -201,14 +203,32 @@ IF GVL_HMI.bRunPumpsByVolumeBt THEN //Fill up the pump arrays and trigger pumps
 	FOR i := 1 TO 10 DO
 		aPumpsActivated[i] := GVL_HMI.aManualPumpsCmd[i].bActive;
 		aPumpsDirection[i] := GVL_HMI.aManualPumpsCmd[i].eDirection;
-		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed;
+		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed * 6;
 		aPumpsVolume[i] := GVL_HMI.aManualPumpsCmd[i].rVolume;
 	END_FOR
+	bRunPumpsByVolume := TRUE;
+	GVL_HMI.bRunPumpsByVolumeBt := FALSE;
 END_IF
 IF bRunPumpsByVolume THEN //pumps movement
 	bRunPumpsByVolume := NOT fbPumpsController.MoveByVolume(aPumpIds := aPumpsActivated, aVolume := aPumpsVolume, aPumpDirection := aPumpsDirection, aVelocity := aPumpsSpeed);
 END_IF
 (*<\Move by Volume>*)
+
+(*<Move by Distance>*)
+IF GVL_HMI.bRunPumpsByDistanceBt THEN //Fill up the pump arrays and trigger pumps 
+	FOR i := 1 TO 10 DO
+		aPumpsActivated[i] := GVL_HMI.aManualPumpsCmd[i].bActive;
+		aPumpsDirection[i] := GVL_HMI.aManualPumpsCmd[i].eDirection;
+		aPumpsSpeed[i] := GVL_HMI.aManualPumpsCmd[i].rSpeed * 6;
+		aPumpsDistance[i] := GVL_HMI.aManualPumpsCmd[i].iDistance;
+	END_FOR
+	bRunPumpsByDistance := TRUE;
+	GVL_HMI.bRunPumpsByDistanceBt := FALSE;
+END_IF
+IF bRunPumpsByDistance THEN //pumps movement
+	bRunPumpsByDistance := NOT fbPumpsController.MoveByDistance(aPumpIds := aPumpsActivated, aRevolutions := aPumpsDistance, aPumpDirection := aPumpsDirection, aVelocity := aPumpsSpeed);
+END_IF
+(*<\Move by Distance>*)
 
 (*<Stop All Pumps>*)
 IF GVL_HMI.bStopPumpsBt THEN
@@ -320,9 +340,12 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       <LineId Id="1074" Count="0" />
       <LineId Id="1012" Count="0" />
       <LineId Id="1032" Count="8" />
+      <LineId Id="1108" Count="1" />
       <LineId Id="1042" Count="0" />
       <LineId Id="1071" Count="2" />
       <LineId Id="1031" Count="0" />
+      <LineId Id="1111" Count="14" />
+      <LineId Id="1110" Count="0" />
       <LineId Id="1029" Count="0" />
       <LineId Id="1026" Count="2" />
       <LineId Id="1025" Count="0" />

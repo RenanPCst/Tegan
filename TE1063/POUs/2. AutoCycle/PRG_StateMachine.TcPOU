@@ -175,7 +175,7 @@ CASE CurrentState OF
 	
 			//step forward to step ahead
 			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
-				CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead
+				CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead
 			END_IF;
 	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
@@ -201,18 +201,13 @@ CASE CurrentState OF
 	END_IF
 	
     E_MachineStates.RECOVERY_PHASE:
-       (*
+      
 		 //Setup and execute FB_RecoveryPhase
-        fbRecoveryPhase(
-            RecipeParameters := GVL_RecipeParameters,  	//recipe parameters reference 
-            aValveConfigs := ValveConfigs,             	//6position valves reference
-            aSolenoidSets := aSolenoidSets,            	//passing solenoids sets 
-            bExecute := TRUE                           	//init trigger
-        );
+        fbRecoveryPhase(bExecute := TRUE);
 
         //checking the RecoveryPhaseFB results
-        bRecoverySuccess := RecoveryPhaseFB.bSuccess;
-        bRecoveryError := RecoveryPhaseFB.bError;
+        bRecoverySuccess := fbRecoveryPhase.bSuccess;
+        bRecoveryError := fbRecoveryPhase.bError;
 
         //state transitions based oon fb returns
         IF bRecoveryError THEN
@@ -221,7 +216,6 @@ CASE CurrentState OF
         ELSIF bRecoverySuccess THEN
             CurrentState := E_MachineStates.DRYING_PHASE; //step forward to step ahead
         END_IF;
-	*)
 	
     E_MachineStates.WASHING_PHASE: //TODO
         IF TRUE THEN //washing sequence
@@ -303,7 +297,8 @@ END_IF;]]></ST>
       <LineId Id="1826" Count="44" />
       <LineId Id="1898" Count="50" />
       <LineId Id="1961" Count="10" />
-      <LineId Id="2002" Count="54" />
+      <LineId Id="2002" Count="36" />
+      <LineId Id="2044" Count="11" />
       <LineId Id="2151" Count="0" />
       <LineId Id="2057" Count="36" />
       <LineId Id="5" Count="0" />
