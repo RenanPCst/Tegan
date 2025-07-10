@@ -145,8 +145,12 @@ CASE GVL_HMI.eMachineMode OF
 	
 		PRG_SystemReady();
 		
-		IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN
+		IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable THEN
+			IF NOT GVL_HMI.bIncoherenceDetected THEN
 				GVL_HMI.eMachineMode := E_MachineMode.AUTO_CYCLE;
+			ELSE
+				GVL_HMI.bIncoherenceAlert := TRUE;
+			END_IF
         END_IF
 		
 END_CASE
@@ -221,7 +225,10 @@ END_CASE
       <LineId Id="236" Count="0" />
       <LineId Id="235" Count="0" />
       <LineId Id="383" Count="0" />
-      <LineId Id="233" Count="1" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="608" Count="2" />
       <LineId Id="232" Count="0" />
       <LineId Id="226" Count="0" />
       <LineId Id="107" Count="0" />
