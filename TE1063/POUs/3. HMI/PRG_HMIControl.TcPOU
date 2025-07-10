@@ -88,22 +88,35 @@ fbBlinkDoor[6](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3, tPeriod :
 GVL_HMI.HMIAnimation.bHMIDoorBlink[6] := fbBlinkDoor[6].bBlink;
 
 
-(* </Controls Animation> *********************************************************************************************** *)
+(* <\Controls Animation> *********************************************************************************************** *)
 
-(* <HMI Alerts> ******************************************************************************************************* *)
+(* <Machine Settings> ************************************************************************************************** *)
+IF GVL_HMI.bSaveParametersBt THEN
+	GVL_Settings.stMachineParam := GVL_HMI.HMIParameters;
+	GVL_HMI.bSaveParametersBt := FALSE;
+	GVL_HMI.bSaveParametersDone := TRUE;
+END_IF
+
+IF GVL_HMI.bReloadHMIParameters THEN
+	 GVL_HMI.HMIParameters := GVL_Settings.stMachineParam;
+	 GVL_HMI.bReloadHMIParameters := FALSE;
+END_IF
+(* <\Machine Settings> ************************************************************************************************** *)
+
+(* <HMI Alerts> ******************************************************************************************************** *)
 
 //Auto Cycle Incoherence [when there is something missing to start the auto cycle] 
 GVL_HMI.bIncoherenceDetected := NOT GVL_Recipe.bIsThereRecipeActivated;
 
 
-(* </HMI Alerts> ******************************************************************************************************* *)]]></ST>
+(* <\HMI Alerts> ******************************************************************************************************* *)]]></ST>
     </Implementation>
     <Action Name="ACT_M1Animation" Id="{5ca7e550-b195-4047-b743-192dee895467}">
       <Implementation>
         <ST><![CDATA[//M1 Motor vertical Axis Animation
 IF GVL_Motion.bInitialHomingDone THEN
 	// Read the end of scale value
-	cM1MaxPosition := GVL_HMI.HMIParameters.aM1Position[2];	
+	cM1MaxPosition := GVL_Settings.stMachineParam.aM1Position[2];	
 
 	// Read motor Position
 	rM1MotorPosition := GVL_Motion.aMotors[1].GetPosition();
@@ -130,7 +143,7 @@ END_IF]]></ST>
 //M2 Motor vertical Axis Animation
 IF GVL_Motion.bInitialHomingDone THEN
 	// Read the end of scale value
-	cM2MaxPosition := GVL_HMI.HMIParameters.aM2Position[4]; //Calibration Position witch is the most away position the motor will reach	
+	cM2MaxPosition := GVL_Settings.stMachineParam.aM2Position[4]; //Calibration Position witch is the most away position the motor will reach	
 
 	// Read motor Position
 	rM2MotorPosition := GVL_Motion.aMotors[2].GetPosition();
@@ -188,6 +201,16 @@ END_IF]]></ST>
       <LineId Id="346" Count="0" />
       <LineId Id="340" Count="0" />
       <LineId Id="266" Count="0" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="493" Count="0" />
+      <LineId Id="496" Count="1" />
+      <LineId Id="499" Count="1" />
+      <LineId Id="498" Count="0" />
+      <LineId Id="502" Count="0" />
+      <LineId Id="501" Count="0" />
+      <LineId Id="505" Count="1" />
+      <LineId Id="504" Count="0" />
+      <LineId Id="495" Count="0" />
       <LineId Id="487" Count="0" />
       <LineId Id="484" Count="0" />
       <LineId Id="492" Count="0" />

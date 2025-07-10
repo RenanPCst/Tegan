@@ -43,10 +43,10 @@ MotorsActualPosition();
 (*<M1 Motor>*)
 //Move M1 by HMI combobox manual mode
 IF GVL_HMI.aManualMotorsCmd[1].bRun THEN
-	GVL_HMI.aManualMotorsCmd[1].bRun := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_HMI.HMIParameters.aM1Position[GVL_HMI.aManualMotorsCmd[1].iPosition],
-                        														rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
-                        														rAcc := GVL_HMI.HMIParameters.rM1Accleration,
-                       															rDec := GVL_HMI.HMIParameters.rM1Deceleration
+	GVL_HMI.aManualMotorsCmd[1].bRun := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.aManualMotorsCmd[1].iPosition],
+                        														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+                        														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+                       															rDec := GVL_Settings.stMachineParam.rM1Deceleration
 																				);
 END_IF
 //Stop Moviment M1 by HMI manual mode button
@@ -64,14 +64,14 @@ rActualPosM3 := rMotorsActualPosition[3];
 CASE iTargetPosM2 OF
     3: // Fill Vials
         bAllowMoveM2 := (
-            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[2]) <= rTol OR
-            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[3]) <= rTol OR
-            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[4]) <= rTol OR
-            ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[5]) <= rTol
+            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[2]) <= rTol OR
+            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[3]) <= rTol OR
+            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[4]) <= rTol OR
+            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[5]) <= rTol
         );
 
     4: // Calibration
-        bAllowMoveM2 := ABS(rActualPosM3 - GVL_HMI.HMIParameters.aM3Position[6]) <= rTol;
+        bAllowMoveM2 := ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[6]) <= rTol;
 
     ELSE
         bAllowMoveM2 := TRUE;
@@ -81,10 +81,10 @@ END_CASE
 IF GVL_HMI.aManualMotorsCmd[2].bRun THEN
     IF bAllowMoveM2 THEN
         GVL_HMI.aManualMotorsCmd[2].bRun := NOT GVL_Motion.aMotors[2].MoveAbsolute(
-            rPosition := GVL_HMI.HMIParameters.aM2Position[iTargetPosM2],
-            rVelocity := GVL_HMI.HMIParameters.rM2Velocity,
-            rAcc := GVL_HMI.HMIParameters.rM2Accleration,
-            rDec := GVL_HMI.HMIParameters.rM2Deceleration
+            rPosition := GVL_Settings.stMachineParam.aM2Position[iTargetPosM2],
+            rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+            rAcc := GVL_Settings.stMachineParam.rM2Accleration,
+            rDec := GVL_Settings.stMachineParam.rM2Deceleration
         );
     ELSE
         GVL_HMI.aManualMotorsCmd[2].bRun := FALSE;
@@ -101,16 +101,16 @@ END_IF
 (*<M3 Motor>*)
 //Interlock by M2 Position
 IF GVL_HMI.aManualMotorsCmd[3].bRun THEN
-    IF ABS(rMotorsActualPosition[2] - GVL_HMI.HMIParameters.aM2Position[1]) > rTol THEN
+    IF ABS(rMotorsActualPosition[2] - GVL_Settings.stMachineParam.aM2Position[1]) > rTol THEN
         //If M2 it is not in Home Position, M3 move cannot be done
         GVL_HMI.aManualMotorsCmd[3].bRun := FALSE;
         // TODO: Block flag or alarm
     ELSE
         GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(
-            rPosition := GVL_HMI.HMIParameters.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
-            rVelocity := GVL_HMI.HMIParameters.rM3Velocity,
-            rAcc := GVL_HMI.HMIParameters.rM3Accleration,
-            rDec := GVL_HMI.HMIParameters.rM3Deceleration
+            rPosition := GVL_Settings.stMachineParam.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
+            rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+            rAcc := GVL_Settings.stMachineParam.rM3Accleration,
+            rDec := GVL_Settings.stMachineParam.rM3Deceleration
         );
     END_IF
 END_IF

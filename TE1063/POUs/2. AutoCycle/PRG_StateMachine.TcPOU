@@ -60,20 +60,13 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// If the reset signal is TRUE or the stop button is pressed, it returns to UNINITIALIZED
-IF NOT GVL_Safety.bSafetyEnable OR NOT GVL_IO.gDigInputs.bStopButton THEN
-	CurrentState := E_MachineStates.INIT;
-END_IF;
-
-//Sequence
+      <ST><![CDATA[//Sequence
 CASE CurrentState OF
 	
     E_MachineStates.INIT: 	//Initialization stage - checking powersuply, doors and air supply
-	
-		GVL_IO.gDigOutputs.bStartIndicator := TRUE; //Turn on the start indicator once the system already started
 		
 		//Event Trigger Info State - Checking Initialization
-		sSystem := 'StateMachine.INIT'; sMessage := 'Cheking Safe Conditions!';
+		sSystem := 'StateMachine.INIT'; sMessage := 'Cheking Safety Conditions!';
 		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
 		ResetEventTrigger();
 		
@@ -165,7 +158,7 @@ CASE CurrentState OF
 				bSealStages := FALSE;
 			END_IF
 			
-			fbSealStages( bExecute := bSealStages);
+			fbSealStages( bExecute := bSealStages );
 				
 			//error check
 			IF fbSealStages.bSealError THEN
@@ -262,22 +255,33 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//Reset the flags and FB's
-//CurrentState := E_MachineStates.INIT;
+        <ST><![CDATA[// Reset FBs and flags
+fbInitChecks(bExecute := FALSE, bReset := TRUE);
+fbAirFlowCheck(bExecute := FALSE, bReset := TRUE);
+fbSealStages(bExecute := FALSE);
+fbLeakTest(bExecute := FALSE);
+fbRecoveryPhase(bExecute := FALSE);
+fbEventHandler(bExecute := FALSE);
 
-bInitCheckDone 		:= FALSE;
-bInitError			:= FALSE;
-fbInitChecks   (bExecute  := FALSE, bReset := TRUE);
-fbAirFlowCheck (bExecute  := FALSE, bReset := TRUE);
-	bAirSupplyStable 	  := FALSE;
-	bAirSupplyError 	  := FALSE;
+// Reset State flags
+bInitCheckDone := FALSE;
+bInitError := FALSE;
+bAirSupplyStable := FALSE;
+bAirSupplyError := FALSE;
+bSealSuccess := FALSE;
+bSealError := FALSE;
+bTestCompleted := FALSE;
+bTestFailed := FALSE;
+sTestErrorMessage := '';
+bRecoverySuccess := FALSE;
+bRecoveryError := FALSE;
+bErrorFlag := FALSE;
+bExecuteEvent := FALSE;
+bEventDone := FALSE;
 
-//fbSealStages.Reset();
-
-// Send Reset Return
-IF fbSealStages.Reset() THEN
+// FB's Reset
+IF fbSealStages.Reset() AND fbRecoveryPhase.Reset() AND fbLeakTest.Reset() THEN
 	Reset := TRUE;
-	RETURN;
 ELSE
 	Reset := FALSE;
 END_IF
@@ -294,8 +298,8 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="PRG_StateMachine">
-      <LineId Id="2209" Count="4" />
-      <LineId Id="1831" Count="39" />
+      <LineId Id="1831" Count="4" />
+      <LineId Id="1838" Count="32" />
       <LineId Id="1898" Count="50" />
       <LineId Id="1961" Count="10" />
       <LineId Id="2002" Count="36" />
@@ -305,9 +309,7 @@ END_IF;]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.Reset">
-      <LineId Id="25" Count="8" />
-      <LineId Id="36" Count="1" />
-      <LineId Id="40" Count="6" />
+      <LineId Id="50" Count="28" />
       <LineId Id="19" Count="0" />
       <LineId Id="21" Count="0" />
       <LineId Id="20" Count="0" />

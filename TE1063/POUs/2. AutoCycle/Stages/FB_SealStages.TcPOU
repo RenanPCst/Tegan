@@ -38,7 +38,7 @@ END_VAR
     <Implementation>
       <ST><![CDATA[//Get the M1 Motor actual position
 rActualPosition := GVL_Motion.aMotors[1].GetPosition();
-rTargetPosition := GVL_HMI.HMIParameters.aM1Position[2];
+rTargetPosition := GVL_Settings.stMachineParam.aM1Position[2];
 bInPosition := ABS(rActualPosition - rTargetPosition) <= rTolerance;
 
 IF bExecute THEN
@@ -62,10 +62,10 @@ IF bExecute THEN
 		// Step 1: Move to pre-position with deceleration offset
 		IF NOT bMoveM1Pos1 THEN
 			bMoveM1Pos1 := GVL_Motion.aMotors[1].MoveAbsolute(
-				rPosition := rTargetPosition + GVL_HMI.HMIParameters.fM1PositionDeceleration,
-				rVelocity := GVL_HMI.HMIParameters.rM1Velocity,
-				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
-				rDec := GVL_HMI.HMIParameters.rM1Deceleration
+				rPosition := rTargetPosition + GVL_Settings.stMachineParam.fM1PositionDeceleration,
+				rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+				rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+				rDec := GVL_Settings.stMachineParam.rM1Deceleration
 			);
 		END_IF
 
@@ -80,9 +80,9 @@ IF bExecute THEN
 		IF NOT bMoveM1Pos2 AND tonStartMove2.Q THEN
 			bMoveM1Pos2 := GVL_Motion.aMotors[1].MoveAbsolute(
 				rPosition := rTargetPosition,
-				rVelocity := GVL_HMI.HMIParameters.rM1PrecisionVelocity,
-				rAcc := GVL_HMI.HMIParameters.rM1Accleration,
-				rDec := GVL_HMI.HMIParameters.rM1Deceleration
+				rVelocity := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+				rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+				rDec := GVL_Settings.stMachineParam.rM1Deceleration
 			);
 		END_IF
 	END_IF
@@ -132,7 +132,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Reset Flags
-bSealSuccess		:= FALSE;
+bSealSuccess	:= FALSE;
 bSealError  	:= FALSE;
 bInPosition		:= FALSE;
 bMoveM1Pos1		:= FALSE; 	

@@ -21,9 +21,7 @@ VAR_GLOBAL
 	
 	HMIDigInputs		 : ST_HMIDigInputs;  //Digital Inputs data from HMI
 	HMIDigOutputs		 : ST_HMIDigOutputs; //Digital Outputs data for HMI
-	
-	HMIParameters		 : ST_HMIParameters; //Parameters from HMI inputs
-	
+
 	HMIAnimation		 : ST_HMIAnimation; //Variables needed to animate the HMI
 	bHMICalibrationBox	 : BOOL; //Calibration Box presence
 	
@@ -85,11 +83,16 @@ VAR_GLOBAL
 	bCalLeakTestFail		: BOOL := FALSE;
 	bCalLeakTestError		: BOOL := FALSE;
 	rCalLealTestPressure	: LREAL;
-	
-	
 	// <\Calibration> ############################################################################################################################
 	
-	//Manual Motors Moviment
+	// Machine Settings
+	HMIParameters		 : ST_HMIParameters; // Parameters from HMI inputs
+	bReloadHMIParameters : BOOL := FALSE;
+	bSaveParametersBt	 : BOOL := FALSE; 	// Save Parameters from HMI
+	bSaveParametersDone	 : BOOL := FALSE;	// Save Parameters Done flag from PLC
+ 	bSaveParametersError : BOOL := FALSE;	// Save Parameters Error flag from PLC
+	
+	// Manual Motors Moviment
 	ManualMov	: ST_MotorsJog;
 	
 	aManualMotorsCmd 	: ARRAY[1..3] OF ST_MotorCommand;
