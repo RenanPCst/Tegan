@@ -1,0 +1,151 @@
+<div id="Desktop" data-tchmi-type="TcHmi.Controls.System.TcHmiView" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width-mode="Content" data-tchmi-min-width="100" data-tchmi-min-width-unit="%" data-tchmi-height-mode="Content" data-tchmi-min-height="100" data-tchmi-min-height-unit="%" data-tchmi-creator-viewport-width="1080" data-tchmi-creator-viewport-height="1920" data-tchmi-max-height="1920" data-tchmi-max-width="1080">
+<div id="TcHmiRegion_Header" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="140" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="1080" data-tchmi-width-unit="px" data-tchmi-target-content="Contents/Content_Header.content">
+</div>
+<div id="TcHmiRegion_HeadBar" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="140" data-tchmi-top-unit="px" data-tchmi-width="1080" data-tchmi-width-unit="px" data-tchmi-target-content="Contents/Content_HeadBar.content">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.bIncoherenceAlert%/s%",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.bIncoherenceAlert%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Incoherence detected! Please Activate a Recipe.\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_HMI.bIncoherenceAlert%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiRegion_Index" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="1200" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="200" data-tchmi-top-unit="px" data-tchmi-width="1080" data-tchmi-width-unit="px" data-tchmi-target-content="Contents/Content_Home.content">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.eMachineMode%/s%",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 3
+                },
+                "compareOperator": "==",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 4
+                },
+                "compareOperator": "==",
+                "logic": "OR"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRegion_Index::TargetContent%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/ContentPath",
+                  "value": "Contents/Content_Home.content"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiRegion_EventLogger" data-tchmi-type="TcHmi.Controls.System.TcHmiRegion" data-tchmi-height="520" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="1400" data-tchmi-top-unit="px" data-tchmi-width="1080" data-tchmi-width-unit="px" data-tchmi-target-content="Contents/Content_EventLogger.content">
+</div>
+<div id="TcHmiPopup_ManualMode" data-tchmi-type="TcHmi.Controls.System.TcHmiPopup" data-tchmi-height="400" data-tchmi-height-unit="px" data-tchmi-left="290" data-tchmi-left-unit="px" data-tchmi-top="760" data-tchmi-top-unit="px" data-tchmi-width="500" data-tchmi-width-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-target-file" type="application/json">
+{
+  "path": "Contents/Content_Popup_ManualMode.content"
+}
+</script>
+</div>
+<div id="TcHmiPopup_SaveSettings" data-tchmi-type="TcHmi.Controls.System.TcHmiPopup" data-tchmi-height="400" data-tchmi-height-unit="px" data-tchmi-left="290" data-tchmi-left-unit="px" data-tchmi-top="760" data-tchmi-top-unit="px" data-tchmi-width="500" data-tchmi-width-unit="px">
+
+<script data-tchmi-target-attribute="data-tchmi-target-file" type="application/json">
+{
+  "path": "Contents/Content_Popup_SaveSettings.content"
+}
+</script>
+</div>
+</div>

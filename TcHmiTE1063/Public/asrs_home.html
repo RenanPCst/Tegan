@@ -1,0 +1,183 @@
+<!-- TwinCAT HMI Home Template - Visual Design Enhanced -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ASRS Home</title>
+    <style>
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 1080px;
+            height: 1200px;
+            overflow: hidden;
+        }
+
+        .machine-index {
+            width: 1080px;
+            height: 1200px;
+            background-color: transparent;
+            padding: 0;
+            box-sizing: border-box;
+            position: relative;
+            font-family: sans-serif;
+        }
+
+        .machine-container {
+            position: relative;
+            width: 900px;
+            height: 1000px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .control-buttons {
+            position: absolute;
+            top: 100px;
+            right: 10px; /* ajustado para aparecer dentro do iframe */
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #999;
+        }
+
+        .bottle {
+            position: absolute;
+            top: 700px;
+            width: 80px;
+            height: 200px;
+            border: 2px solid #7f8c8d;
+            background: rgba(236, 240, 241, 0.5);
+        }
+
+        .bottle-left {
+            left: 100px;
+        }
+
+        .bottle-right {
+            left: 200px;
+        }
+
+        .half {
+            width: 50%;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.5s ease-in-out, background-color 0.5s ease-in-out;
+        }
+
+        .left {
+            left: 0;
+        }
+
+        .right {
+            right: 0;
+        }
+
+        .level {
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            background-color: red; /* cor visível temporária */
+        }
+
+        .waste-bottle {
+            position: absolute;
+            top: 700px;
+            left: 320px;
+            width: 60px;
+            height: 200px;
+            border: 2px solid #7f8c8d;
+            background: rgba(236, 240, 241, 0.5);
+        }
+
+            .waste-bottle .level {
+                width: 100%;
+                position: absolute;
+                bottom: 0;
+                background-color: #2ecc71;
+                transition: height 0.5s ease-in-out, background-color 0.5s ease-in-out;
+            }
+    </style>
+</head>
+<body>
+    <div class="machine-index">
+        <div class="machine-container">
+            <div class="bottle bottle-left">
+                <div class="level half left" id="bottle1-level"></div>
+                <div class="level half right" id="bottle2-level"></div>
+            </div>
+            <div class="bottle bottle-right">
+                <div class="level half left" id="bottle3-level"></div>
+                <div class="level half right" id="bottle4-level"></div>
+            </div>
+            <div class="waste-bottle">
+                <div class="level" id="waste-level"></div>
+            </div>
+            <div class="control-buttons">
+                <img class="control-btn" id="start-btn" src="Resources/Custom/Images/BT_WhiteOff.png">
+                <img class="control-btn" id="stop-btn" src="Resources/Custom/Images/BT_Black.png">
+                <img class="control-btn" id="reset-btn" src="Resources/Custom/Images/BT_BlueOff.png">
+                <img class="control-btn" id="onoff-btn" src="Resources/Custom/Images/BT_GreenOff.png">
+                <img class="control-btn" id="emergency1-btn" src="Resources/Custom/Images/EmergencyStopOFF.png">
+                <img class="control-btn" id="emergency2-btn" src="Resources/Custom/Images/EmergencyStopOFF.png">
+            </div>
+        </div>
+    </div>
+    <script>console.log('ASRS Home HTML loaded');
+    TcHmi.EventProvider.register('onInitialized', function () {
+      console.log('TcHmi Initialized');
+
+      TcHmi.Symbol.readEx2('%s%GVL_HMIVariables.HMIDigOuputs.bHMIStartButton%/s%', function(data) {
+        console.log('Start button read:', data);
+        if (data.error === TcHmi.Errors.NONE) {
+          document.getElementById('start-btn').src = `Resources/Custom/Images/${data.value ? 'BT_WhiteOn.png' : 'BT_WhiteOff.png'}`;
+        }
+      });
+      TcHmi.Symbol.readEx2('%s%GVL_HMIVariables.HMIDigOuputs.bHMIResetButton%/s%', function(data) {
+        console.log('Reset button read:', data);
+        if (data.error === TcHmi.Errors.NONE) {
+          document.getElementById('reset-btn').src = `Resources/Custom/Images/${data.value ? 'BT_BlueON.png' : 'BT_BlueOff.png'}`;
+        }
+      });
+      TcHmi.Symbol.readEx2('%s%GVL_HMIVariables.HMIDigOuputs.bHMIEStopFront%/s%', function(data) {
+        console.log('E-Stop front read:', data);
+        if (data.error === TcHmi.Errors.NONE) {
+          document.getElementById('emergency1-btn').src = `Resources/Custom/Images/${data.value ? 'EmergencyStopON.png' : 'EmergencyStopOFF.png'}`;
+        }
+      });
+      TcHmi.Symbol.readEx2('%s%GVL_HMIVariables.HMIDigOuputs.bHMIEStopSide%/s%', function(data) {
+        console.log('E-Stop side read:', data);
+        if (data.error === TcHmi.Errors.NONE) {
+          document.getElementById('emergency2-btn').src = `Resources/Custom/Images/${data.value ? 'EmergencyStopON.png' : 'EmergencyStopOFF.png'}`;
+        }
+      });
+
+      const bottleLevels = [75, 40, 20, 5];
+      bottleLevels.forEach((level, i) => {
+        const el = document.getElementById(`bottle${i + 1}-level`);
+        if (!el) return;
+        let color = '#2ecc71';
+        if (level < 25) color = '#f1c40f';
+        if (level < 10) color = '#e74c3c';
+        el.style.height = `${level}%`;
+        el.style.backgroundColor = color;
+      });
+
+      let wasteLevel = 80;
+      const wasteEl = document.getElementById('waste-level');
+      if (wasteEl) {
+        let wasteColor = '#2ecc71';
+        if (wasteLevel > 75) wasteColor = '#f1c40f';
+        if (wasteLevel > 90) wasteColor = '#e74c3c';
+        wasteEl.style.height = `${wasteLevel}%`;
+        wasteEl.style.backgroundColor = wasteColor;
+      }
+    });</script>
+</body>
+</html>

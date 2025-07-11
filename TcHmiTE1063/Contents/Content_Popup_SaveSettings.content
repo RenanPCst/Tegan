@@ -1,0 +1,166 @@
+<div id="Content1" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="480" data-tchmi-height="350">
+
+<div id="TcHmiRectangle_popUpBackground_18" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="350" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="480" data-tchmi-width-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "angle": 0.0,
+  "stopPoints": [
+    {
+      "color": "rgba(17, 57, 91, 1)",
+      "stop": "25%"
+    },
+    {
+      "color": "rgba(42, 93, 139, 1)",
+      "stop": "75%"
+    }
+  ]
+}
+</script>
+</div>
+<div id="TcHmiTextblock_34" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-text="Are you sure about changing the parameters?" data-tchmi-top="65" data-tchmi-top-unit="px" data-tchmi-width="350" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="26" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center">
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+</div>
+<div id="TcHmiButton_ManualModeYes_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-text="Yes" data-tchmi-top="219" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ManualModeYes_5.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "(function () {",
+          "    console.log(\"Starting HMI parameter save process...\");",
+          "",
+          "    var fields = [",
+          "        // Inverted inputs",
+          "        { input: 'TcHmiNumericInput_aM1_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM1Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM1_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM1Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_4', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[3]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_4', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[3]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_5', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[4]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_6', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[5]%/s%', invert: true },",
+          "",
+          "        // Direct inputs",
+          "        { input: 'TcHmiNumericInput_aM1_Velocity', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Velocity', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Velocity', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_Acceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Acceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Acceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_Deceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Deceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Deceleration', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_PrecisionVelocity', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1PrecisionVelocity%/s%' }",
+          "    ];",
+          "",
+          "    let i = 0;",
+          "",
+          "    function writeNext() {",
+          "        if (i >= fields.length) {",
+          "            // All parameters written — now trigger the PLC to save",
+          "            console.log(\"All values written. Sending trigger...\");",
+          "",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bSaveParametersBt%/s%', true, function (triggerResult) {",
+          "                if (triggerResult.error !== TcHmi.Errors.NONE) {",
+          "                    alert(\"Error writing trigger bSaveParametersBt!\");",
+          "                    return;",
+          "                }",
+          "",
+          "                // Polling PLC for success or error",
+          "                let pollCount = 0;",
+          "                const pollInterval = setInterval(function () {",
+          "                    TcHmi.Symbol.readEx2('%s%PLC1.GVL_HMI.bSaveParametersDone%/s%', function (done) {",
+          "                        TcHmi.Symbol.readEx2('%s%PLC1.GVL_HMI.bSaveParametersError%/s%', function (error) {",
+          "                            if (done.value === true) {",
+          "                                clearInterval(pollInterval);",
+          "                                alert(\"Parameters saved successfully!\");",
+          "                                TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bSaveParametersDone%/s%', false);",
+          "                            } else if (error.value === true) {",
+          "                                clearInterval(pollInterval);",
+          "                                alert(\"Error saving parameters!\");",
+          "                                TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bSaveParametersError%/s%', false);",
+          "                            } else if (++pollCount > 40) {",
+          "                                clearInterval(pollInterval);",
+          "                                alert(\"Timeout: No response from PLC.\");",
+          "                            }",
+          "                        });",
+          "                    });",
+          "                }, 100); // every 100ms, max ~4s",
+          "            });",
+          "",
+          "            return;",
+          "        }",
+          "",
+          "        let field = fields[i++];",
+          "        let ctrl = TcHmi.Controls.get(field.input);",
+          "",
+          "        if (!ctrl) {",
+          "            console.warn(\"Control not found:\", field.input);",
+          "            writeNext(); // Skip and continue",
+          "            return;",
+          "        }",
+          "",
+          "        let val = ctrl.getValue();",
+          "        if (field.invert) val = -Math.abs(val);",
+          "",
+          "        TcHmi.Symbol.writeEx(field.symbol, val, function (res) {",
+          "            if (res.error !== TcHmi.Errors.NONE) {",
+          "                alert(\"Error writing: \" + field.symbol);",
+          "                console.error(\"Write error:\", res.error);",
+          "                return;",
+          "            }",
+          "",
+          "            writeNext(); // Write next field",
+          "        });",
+          "    }",
+          "",
+          "    // Start writing loop",
+          "    writeNext();",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_SaveSettings",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiButton_ManualModeNo_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="265" data-tchmi-left-unit="px" data-tchmi-text="No" data-tchmi-top="219" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ManualModeNo_5.onPressed",
+    "actions": [
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_SaveSettings",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+</div>
