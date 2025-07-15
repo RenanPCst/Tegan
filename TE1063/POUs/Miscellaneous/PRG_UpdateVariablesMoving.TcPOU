@@ -3,6 +3,13 @@
   <POU Name="PRG_UpdateVariablesMoving" Id="{8cee1700-2e8b-41ec-ad51-7968702f1049}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
+	bFirstVariablesAssignment : BOOL := FALSE;
+	bValvesSettingsAssignment : BOOL := FALSE;
+	bPumpsFactorAssignment	  : BOOL := FALSE;
+	bPumpsSettingsAssignment  : BOOL := FALSE;
+	
+	i : UINT := 1;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -17,32 +24,171 @@ GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFee
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
 
+//Valves Settings Assignment
+IF NOT bValvesSettingsAssignment THEN
+	FOR i := 1 TO 5 DO
+		GVL_Motion.aValves[i].rTargetVel := 1500;
+		GVL_Motion.aValves[i].rAcceleration := 1000;
+		GVL_Motion.aValves[i].rDeceleration := 1000;
+	END_FOR
+	bValvesSettingsAssignment := TRUE;
+END_IF
+
+//Pumps factor Assignment [ml/rev]
+IF NOT bPumpsFactorAssignment THEN
+	GVL_Motion.aPumps[1].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[2].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactor := 0.138;
+	GVL_Motion.aPumps[4].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[7].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[8].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[9].Rotary.rPumpFactor := 0.28;
+	GVL_Motion.aPumps[10].Rotary.rPumpFactor := 0.28;
+	bPumpsFactorAssignment := TRUE;
+END_IF
+
+//Pumps Settings Assignment
+IF NOT bPumpsSettingsAssignment THEN
+	FOR i := 1 TO 10 DO
+		GVL_Motion.aPumps[i].Rotary.rSpeed := 1800; //1800º/sec with is equal to 300 revs/min
+		GVL_Motion.aPumps[i].Rotary.rAcceleration := 900; //Standard Acceleration based on motor speed
+		GVL_Motion.aPumps[i].Rotary.rDeceleration := 900; //Standard Acceleration based on motor speed
+	END_FOR
+	bPumpsSettingsAssignment := TRUE;
+END_IF
+
+//Pumps Home sensor bit
+GVL_Motion.aPumps[1].Linear.bHomeSensorState := GVL_Motion.aPumps[1].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[2].Linear.bHomeSensorState := GVL_Motion.aPumps[2].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[3].Linear.bHomeSensorState := GVL_Motion.aPumps[3].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[4].Linear.bHomeSensorState := GVL_Motion.aPumps[4].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[5].Linear.bHomeSensorState := GVL_Motion.aPumps[5].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[6].Linear.bHomeSensorState := GVL_Motion.aPumps[6].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[7].Linear.bHomeSensorState := GVL_Motion.aPumps[7].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[8].Linear.bHomeSensorState := GVL_Motion.aPumps[8].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[9].Linear.bHomeSensorState := GVL_Motion.aPumps[9].Linear.iHomeSensor.0; 
+GVL_Motion.aPumps[10].Linear.bHomeSensorState := GVL_Motion.aPumps[10].Linear.iHomeSensor.0; 
+
 //temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
-//Default Motors Parameters
-//Motor M1 parameters
-GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
-GVL_HMI.HMIParameters.aM1Position[2]			:= -315; // [mm] M1 Motor Seal Position
-GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
-GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
-GVL_HMI.HMIParameters.rM1Velocity				:= 15;
-GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
-GVL_HMI.HMIParameters.rM1Accleration			:= 15;
-GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
-
-GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 // [mm] M2 Motor Home Position
-GVL_HMI.HMIParameters.aM2Position[4]	:= -170; // [mm] M2 Motor Calibration Position
-GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 // [mm/s] M2 Motor Velocity
-
-GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 // [mm] M3 Motor Home Position / Waste Position
-GVL_HMI.HMIParameters.aM3Position[6] 	:= -120; // [mm] M3 Motor Calibration Position
-GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 // [mm/s] M3 Motor Velocity]]></ST>
+IF NOT bFirstVariablesAssignment THEN
+	//Default Motors Parameters
+	//Motor M1 parameters
+	(*
+	GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
+	GVL_HMI.HMIParameters.aM1Position[2]			:= -318; // [mm] M1 Motor Seal Position
+	GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
+	GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
+	GVL_HMI.HMIParameters.rM1Velocity				:= 15;
+	GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
+	GVL_HMI.HMIParameters.rM1Accleration			:= 15;
+	GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
+	
+	GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 	// [mm] M2 Motor Home Position 
+	GVL_HMI.HMIParameters.aM2Position[2] 	:= -40;  	// [mm] M2 Waste Position
+	GVL_HMI.HMIParameters.aM2Position[3] 	:= -70;	 	// [mm] M2 Fill Vials Position
+	GVL_HMI.HMIParameters.aM2Position[4]	:= -180; 	// [mm] M2 Calibration Position
+	GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 	// [mm/s] M2 Motor Velocity
+	GVL_HMI.HMIParameters.rM2Accleration 	:= 10; 	 	// [mm/s2] M2 Motor Acceleration
+	GVL_HMI.HMIParameters.rM2Deceleration 	:= 10; 	 	// [mm/s2] M2 Motor Deceleration
+	
+	GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 	// [mm] M3 Motor Home Position 
+	GVL_HMI.HMIParameters.aM3Position[2] 	:= -160; 	// [mm] M3 VialLine1 Position
+	GVL_HMI.HMIParameters.aM3Position[3] 	:= -187; 	// [mm] M3 VialLine2 Position
+	GVL_HMI.HMIParameters.aM3Position[4] 	:= -213;  	// [mm] M3 VialLine3 Position
+	GVL_HMI.HMIParameters.aM3Position[5] 	:= -239; 	// [mm] M3 VialLine4 Position
+	GVL_HMI.HMIParameters.aM3Position[6] 	:= -115; 	// [mm] M3 Calibration Position
+	GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 	// [mm/s] M3 Motor Velocity
+	GVL_HMI.HMIParameters.rM3Accleration 	:= 10; 	 	// [mm/s2] M3 Motor Acceleration
+	GVL_HMI.HMIParameters.rM3Deceleration 	:= 10; 	 	// [mm/s2] M3 Motor Deceleration
+	*)
+	//Default Homing Motors settings
+	GVL_Motion.M1Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M1Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M1Motor.rHomeVel 	:= 15.0;
+	GVL_Motion.M2Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M2Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M2Motor.rHomeVel 	:= 15.0;
+	GVL_Motion.M3Motor.rHomeAcc 	:= 20.0;
+	GVL_Motion.M3Motor.rHomeDec 	:= 20.0;
+	GVL_Motion.M3Motor.rHomeVel 	:= 15.0;
+	
+	FOR i :=1 TO 5 DO
+		GVL_Motion.aValves[i].rHomeAcc := 400.0;
+		GVL_Motion.aValves[i].rHomeDec := 400.0;
+		GVL_Motion.aValves[i].rHomeVel := 500.0;
+	END_FOR
+	
+	FOR i :=1 TO 10 DO
+		GVL_Motion.aPumps[i].Linear.rHomeAcc := 2.0;
+		GVL_Motion.aPumps[i].Linear.rHomeDec := 2.0;
+		GVL_Motion.aPumps[i].Linear.rHomeVel := 1.0;
+	END_FOR
+	
+	bFirstVariablesAssignment := TRUE;
+	
+END_IF
+]]></ST>
     </Implementation>
     <LineIds Name="PRG_UpdateVariablesMoving">
       <LineId Id="39" Count="4" />
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
-      <LineId Id="75" Count="18" />
+      <LineId Id="336" Count="3" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="343" Count="1" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="295" Count="1" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="302" Count="5" />
+      <LineId Id="309" Count="2" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="324" Count="2" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="334" Count="1" />
+      <LineId Id="332" Count="1" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="128" Count="2" />
+      <LineId Id="132" Count="6" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="103" Count="1" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="105" Count="9" />
+      <LineId Id="178" Count="1" />
+      <LineId Id="115" Count="1" />
+      <LineId Id="180" Count="1" />
+      <LineId Id="117" Count="2" />
+      <LineId Id="186" Count="2" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="191" Count="1" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="140" Count="1" />
+      <LineId Id="143" Count="1" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="153" Count="1" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="155" Count="1" />
+      <LineId Id="161" Count="2" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="166" Count="1" />
+      <LineId Id="170" Count="1" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="100" Count="0" />
       <LineId Id="69" Count="0" />
     </LineIds>
   </POU>

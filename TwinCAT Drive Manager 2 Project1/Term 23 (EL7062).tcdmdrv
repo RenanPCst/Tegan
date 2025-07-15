@@ -493,7 +493,7 @@
               </Parameter>
               <Parameter>
                 <PropertyName>MaxApplicationSpeed</PropertyName>
-                <Value>16.75516</Value>
+                <Value>94.24778</Value>
               </Parameter>
             </Load>
             <Controller>
@@ -581,7 +581,7 @@
         </Send>
         <Recv>
           <BitStart>944</BitStart>
-          <BitLength>160</BitLength>
+          <BitLength>176</BitLength>
         </Recv>
         <Sm2>
           <Type>Outputs</Type>
@@ -603,6 +603,7 @@
           <Pdo>6656</Pdo>
           <Pdo>6657</Pdo>
           <Pdo>6662</Pdo>
+          <Pdo>6669</Pdo>
           <Pdo>6784</Pdo>
           <Pdo>6785</Pdo>
           <Pdo>6790</Pdo>
@@ -836,7 +837,7 @@ Bit 14 - 15 : reserved</Comment>
             <DataType>UDINT</DataType>
           </Entry>
         </TxPdo>
-        <TxPdo>
+        <TxPdo Sm="3">
           <Index>#x1a0d</Index>
           <Name>DRV Info data 3 Channel 1</Name>
           <Entry>
@@ -845,6 +846,14 @@ Bit 14 - 15 : reserved</Comment>
             <BitLen>16</BitLen>
             <Name>Info data 3</Name>
             <DataType>UINT</DataType>
+            <AdsInfo>
+              <AmsAddress>
+                <AmsPort>11</AmsPort>
+              </AmsAddress>
+              <IndexGroup>50593904</IndexGroup>
+              <IndexOffset>-2147483520</IndexOffset>
+              <Length>2</Length>
+            </AdsInfo>
           </Entry>
         </TxPdo>
         <TxPdo Fixed="true">
@@ -1523,7 +1532,7 @@ Bit 3 - 7 : reserved</Comment>
                 <AmsPort>11</AmsPort>
               </AmsAddress>
               <IndexGroup>50593904</IndexGroup>
-              <IndexOffset>-2147483520</IndexOffset>
+              <IndexOffset>-2147483518</IndexOffset>
               <Length>4</Length>
             </AdsInfo>
           </Entry>
@@ -1556,7 +1565,7 @@ Bit 14 - 15 : reserved</Comment>
                 <AmsPort>11</AmsPort>
               </AmsAddress>
               <IndexGroup>50593904</IndexGroup>
-              <IndexOffset>-2147483516</IndexOffset>
+              <IndexOffset>-2147483514</IndexOffset>
               <Length>2</Length>
             </AdsInfo>
           </Entry>
@@ -1619,7 +1628,7 @@ Bit 14 - 15 : reserved</Comment>
                 <AmsPort>11</AmsPort>
               </AmsAddress>
               <IndexGroup>50593904</IndexGroup>
-              <IndexOffset>-2147483514</IndexOffset>
+              <IndexOffset>-2147483512</IndexOffset>
               <Length>4</Length>
             </AdsInfo>
           </Entry>
@@ -3463,7 +3472,7 @@ Bit 8 - 15 : reserved</Comment>
               <Pdo ChannelNo="2">#x1a81</Pdo>
             </Sm>
           </AlternativeSmMapping>
-          <AlternativeSmMapping Default="1" Selected="true">
+          <AlternativeSmMapping Default="1">
             <Name>Cyclic synchronous position mode (CSP)</Name>
             <Sm No="2">
               <Pdo ChannelNo="1">#x1600</Pdo>
@@ -3602,7 +3611,7 @@ Bit 8 - 15 : reserved</Comment>
               <Ccs>1</Ccs>
               <Index>7187</Index>
               <SubIndex>0</SubIndex>
-              <Data>0600001a011a061a801a811a861a</Data>
+              <Data>0700001a011a061a0d1a801a811a861a</Data>
             </InitCmd>
             <InitCmd>
               <Transition>IP</Transition>
@@ -3808,7 +3817,7 @@ Bit 8 - 15 : reserved</Comment>
               <Ccs>1</Ccs>
               <Index>33041</Index>
               <SubIndex>27</SubIndex>
-              <Data>a0000000</Data>
+              <Data>84030000</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -3880,7 +3889,7 @@ Bit 8 - 15 : reserved</Comment>
               <Ccs>1</Ccs>
               <Index>33032</Index>
               <SubIndex>19</SubIndex>
-              <Data>00010000</Data>
+              <Data>00040000</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -3889,7 +3898,16 @@ Bit 8 - 15 : reserved</Comment>
               <Ccs>1</Ccs>
               <Index>33040</Index>
               <SubIndex>4</SubIndex>
-              <Data>00</Data>
+              <Data>01</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[FB Settings ENC Ch.1 / Encoder Increments per Revolution]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>32776</Index>
+              <SubIndex>19</SubIndex>
+              <Data>c8000000</Data>
             </InitCmd>
           </InitCmds>
           <CanOpenType>47</CanOpenType>
@@ -4336,7 +4354,7 @@ Bit 8 - 15 : reserved</Comment>
           <Cmd>5</Cmd>
           <Adp>1022</Adp>
           <Ado>2072</Ado>
-          <Data>0019140020000100</Data>
+          <Data>0019160020000100</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>
@@ -4356,7 +4374,7 @@ Bit 8 - 15 : reserved</Comment>
           <Cmd>5</Cmd>
           <Adp>1022</Adp>
           <Ado>1552</Ado>
-          <Data>1c000001140000070019000101000000</Data>
+          <Data>1c000001160000070019000101000000</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>

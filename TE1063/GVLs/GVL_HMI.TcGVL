@@ -12,34 +12,99 @@ VAR_GLOBAL
 	bHMIAlarmLampAmbar	 : BOOL;
 	bHMIAlarmLampGreen	 : BOOL;
 	
+	//Info Screen
+	stInfo				: ST_InfoPage;
+	
 	//Cycle Control
 	bBtStartCycle		 : BOOL := FALSE; //Button Start Cycle from HMI
 	bBtStopCycle		 : BOOL := FALSE; //Button Start Cycle from HMI
 	
 	HMIDigInputs		 : ST_HMIDigInputs;  //Digital Inputs data from HMI
 	HMIDigOutputs		 : ST_HMIDigOutputs; //Digital Outputs data for HMI
-	
-	HMIParameters		 : ST_HMIParameters; //Parameters from HMI inputs
-	
+
 	HMIAnimation		 : ST_HMIAnimation; //Variables needed to animate the HMI
+	bHMICalibrationBox	 : BOOL; //Calibration Box presence
 	
 	eMachineMode		 : E_MachineMode; //Machine mode selection from HMI
 	
-	HMIStartAnimation	 : BOOL := TRUE;
-	
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
+	bIncoherenceAlert	 : BOOL := FALSE; //Incoherence alert to show an alert on HMI. Event trigger DesktopView 
 	
-	//Recipe Handle
-	aAvailableFiles         : ARRAY[1..50] OF ST_RecipeInfo;
+	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
+	sCountdownText		 : STRING(64);
+	
+	//User Management
+	stUsers          : ARRAY[1..50] OF ST_User;  // Até 20 usuários
+    iLoggedUserID    : INT := -1;                // -1 = ninguém logado
+    dtCurrentLogin   : DT;
+    tSessionStart    : TIME;
+	
+	// <Recipe> Variables needed to handle recipe #################################################################################################
+	aAvailableFiles         : ARRAY[0..49] OF ST_RecipeFileInfo;
     iFileCount              : INT;
-
+	
     bRefreshRecipeList      : BOOL; 			//List the recipe files from HMI
     bRecipeLoadFromFile	 	: BOOL := FALSE; 	//load recipe button from HMI
+	bReloadRecipeDatagrids	: BOOL := FALSE;	//Reload the recipe in stCurrentRecipe to the datagrids if the cancel button is pressed when creating new recipe
 	bRecipeLoaded			: BOOL;
     sSelectedRecipeName     : STRING(255); 		// Selected name from hmi list popup
-	
 	bRecipeCorrectLoaded	: BOOL; //Flag to identify if there is a recipe loaded to proceed with the recovery
+	bRecipeLoadFailed		: BOOL; //Flag to identify if there was any error loading the recipe file
+	
 	bSettingsCorrectLoaded	: BOOL; //Flag to identify if the settings parameters were loaded correctly from json configuration file
+	
+	bRecipeActivateButton	: BOOL := FALSE; //Activate Recipe command from recipe activate button 
+	bRecipeActivateDone		: BOOL := FALSE; //Activate done flag after command from recipe activate button
+	bRecipeActivateError	: BOOL := FALSE; //Activate Error flag after command from recipe activate button
+	
+	bRecipeSaveButton		: BOOL := FALSE; //save command from recipe save button
+	bRecipeSaveDone			: BOOL := FALSE; //Save done flag after save command from recipe save button
+	bRecipeSaveError		: BOOL := FALSE; //Save Error flag after save command from recipe save button
+	
+	stDeleteRecipeInfo		: ST_RecipeFileInfo;
+	bDeleteRecipeButton		: BOOL := FALSE; //Delete button Action - Open delete popup
+	bDeleteRecipeConfirm	: BOOL := FALSE; //Delete confirmation action
+	bDeleteRecipeError		: BOOL := FALSE;
+	bDeleteRecipeDone		: BOOL := FALSE;
+	
+	bNewRecipeButton		: BOOL := FALSE; //New Recipe button on recipe screen.
+	
+	//Recipe HMI View - data needs to be transposed for better view and handled by HMI
+	stRecipeInfo		 : ST_RecipeInfo;
+	aSolventAndTimesRows : ARRAY[1..3] OF ST_HMI_SolventAndTimeRow;
+	aVolumeRows 		 : ARRAY[1..10] OF ST_HMI_VolumesRow; // 1:T/IC, 2:S0, ..., 10:F
+	aOtherParamsRows 	 : ARRAY[1..8] OF ST_HMI_OtherParamsRow;
+	// <\Recipe> #################################################################################################################################
+	
+	// <Calibration> Variables needed to handle calibration tasks from HMI #######################################################################
+	
+	bCalLeakTestButton		: BOOL := FALSE;
+	bCalLeakTestPass		: BOOL := FALSE;
+	bCalLeakTestFail		: BOOL := FALSE;
+	bCalLeakTestError		: BOOL := FALSE;
+	rCalLealTestPressure	: LREAL;
+	// <\Calibration> ############################################################################################################################
+	
+	// Machine Settings
+	HMIParameters		 : ST_HMIParameters; // Parameters from HMI inputs
+	bReloadHMIParameters : BOOL := FALSE;
+	bSaveParametersBt	 : BOOL := FALSE; 	// Save Parameters from HMI
+	bSaveParametersDone	 : BOOL := FALSE;	// Save Parameters Done flag from PLC
+ 	bSaveParametersError : BOOL := FALSE;	// Save Parameters Error flag from PLC
+	
+	// Manual Motors Moviment
+	ManualMov	: ST_MotorsJog;
+	
+	aManualMotorsCmd 	: ARRAY[1..3] OF ST_MotorCommand;
+    aManualValvesCmd 	: ARRAY[1..5] OF ST_ValveCommand;
+    aManualPumpsCmd  	: ARRAY[1..10] OF ST_PumpCommand;
+	bRunPumpsBySpeedBt 		: BOOL;
+	bRunPumpsByVolumeBt 	: BOOL;
+	bRunPumpsByDistanceBt 	: BOOL;
+	bStopPumpsBt 			: BOOL;
+	
+	iTestDistance : UINT := 0;
+	
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_SystemInfo" Id="{3ecda4e7-3da9-4b19-a635-328f489eb573}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SystemInfo
+VAR
+	bSystemInfoLoaded : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT bSystemInfoLoaded THEN
+	
+	GVL_HMI.stInfo.sApplication := 'Automated Sample Recovery System';
+	GVL_HMI.stInfo.sProjectId := 'TE 1063';
+	GVL_HMI.stInfo.sTwincatVersion := 'v3.1 4024.5, Runtime v3.1.4024.53';
+	GVL_HMI.stInfo.sVSVersion := 'VS 2017 Shell v15.0.35116.124 D15.9';
+	GVL_HMI.stInfo.rSoftwareVersion := 0.0;
+	GVL_HMI.stInfo.sDate := 'September 2025';
+	
+	bSystemInfoLoaded := TRUE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SystemInfo">
+      <LineId Id="9" Count="9" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

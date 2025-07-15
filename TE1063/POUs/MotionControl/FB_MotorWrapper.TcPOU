@@ -14,13 +14,16 @@ VAR
 	// MC2 Motion Function Blocks
     fbPower       : MC_Power;
     fbReset       : MC_Reset;
+	fbReadStatus  : MC_ReadStatus;
     fbMoveAbs     : MC_MoveAbsolute;
     fbMoveRel     : MC_MoveRelative;
 	fbMoveVel	  : MC_MoveVelocity;
+	fbSetPos	  : MC_SetPosition;
     fbHome        : MC_Home;
 	fbReadPos	  : MC_ReadActualPosition;
     fbStop        : MC_Stop;
 	fbHalt		  : MC_Halt;
+	fbJog		  : MC_Jog;
     rTrigStop     : R_TRIG;
 
     fSetPosAbs    : LREAL;
@@ -35,14 +38,19 @@ VAR
     bStopExecute     : BOOL;
     bStopRequested   : BOOL;
 	bStopDone		 : BOOL;
-
-    status        	 : ST_ActuatorStatus;
+	
+	//GetStatus()
+    stStatus       	 : ST_ActuatorStatus;
+	stReadStatus	 : ST_AxisReadStatus;
+	lastPosition 	 : LREAL := 0.0;
+    bDetectedMovement: BOOL  := FALSE;
     debugSensorValue : BOOL;
 	
 	//Home()
 	bStartDelay		 : BOOL := FALSE;
 	tonHoming 		 : TON;
 	bhomeExecute	 : BOOL := FALSE;
+	bHomeRequest 	 : BOOL := FALSE;
 
 	bExecuteMove	 : BOOL;
 	bHomeSensorValue : BOOL;
@@ -52,20 +60,39 @@ VAR
 	bWaitingForStop	: BOOL;
 	bStartHoming	: BOOL;
 	
+	//ReadStatus()
+	bReadStatusExecute 	: BOOL;
+    bReadStatusRequested: BOOL;
+	
 	//MoveAbs()
 	bMoveAbsExecute 	: BOOL;
     bMoveAbsRequested 	: BOOL;
 	bMoveAbsDone		: BOOL;
+	
+	//MoveRel()
+	bMoveRelExecute 	: BOOL;
+    bMoveRelRequested 	: BOOL;
+	bMoveRelDone		: BOOL;
 	
 	//MoveValve()
 	rTargetAngle		: LREAL;
 	bMoveValveExecute 	: BOOL;
     bMoveValveRequested : BOOL;
 	
+	//MoveVel()
+	bMoveVelExecute 	: BOOL;
+    bMoveVelRequested 	: BOOL;
+	bMoveVelDone		: BOOL;
+	
 	//Reset()
 	bResetExecute 		: BOOL;
     bResetRequested 	: BOOL;
 	bResetDone			: BOOL;
+	
+	//SetPosition()
+	bSetPosExecute 		: BOOL;
+    bSetPosRequested	: BOOL;
+	bSetPosDone			: BOOL;
 	
 	
 END_VAR
@@ -81,8 +108,8 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// Disable (Remove power from axis)
 fbPower(Axis := Axis, Enable := FALSE);
-status.bEnabled := FALSE;
-status.eState := E_ActuatorState.eDisabled;
+stStatus.bEnabled := FALSE;
+stStatus.eState := E_ActuatorState.eDisabled;
 Disable := TRUE;]]></ST>
       </Implementation>
     </Method>
@@ -94,14 +121,14 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// Call MC_Power to enable axis
 fbPower(Axis := Axis, Enable := TRUE, Enable_Positive := TRUE, Enable_Negative := TRUE);
-status.bEnabled := fbPower.Status;
-status.bError := fbPower.Error;
-status.iErrorCode := fbPower.ErrorID;
+stStatus.bEnabled := fbPower.Status;
+stStatus.bError := fbPower.Error;
+stStatus.iErrorCode := fbPower.ErrorID;
 IF fbPower.Error THEN
-	status.eState := E_ActuatorState.eError;
-	status.sMessage := 'Error in PowerUp';
+	stStatus.eState := E_ActuatorState.eError;
+	stStatus.sMessage := 'Error in PowerUp';
 ELSE
-	status.eState := E_ActuatorState.eActive;
+	stStatus.eState := E_ActuatorState.eActive;
 END_IF;
 
 Enable := fbPower.Status;]]></ST>
@@ -126,33 +153,49 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// Get unified status struct with all feedback for HMI/diagnostics
 fbReadPos(Axis := Axis, Enable := TRUE);
-status.fPosition := fbReadPos.Position;
-status.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy;
-status.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
-status.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error;
+stStatus.fPosition := fbReadPos.Position;
+stStatus.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.Busy OR bDetectedMovement;
+stStatus.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
+stStatus.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error OR fbMoveVel.Error;
+
+// Detecta movimento comparando posição atual com a última
+IF ABS(fbReadPos.Position - lastPosition) > 0.1 THEN // Limiar pode ser ajustado
+    bDetectedMovement := TRUE;
+ELSE
+    bDetectedMovement := FALSE;
+END_IF
+
+lastPosition := fbReadPos.Position;
+
 // Prioritize error messages by source
-IF status.bError THEN
-	status.eState := E_ActuatorState.eError;
+IF stStatus.bError THEN
+	stStatus.eState := E_ActuatorState.eError;
 	IF fbPower.Error THEN
-		status.sMessage := 'Error in PowerUp';
+		stStatus.sMessage := 'Error in PowerUp';
 	ELSIF fbMoveAbs.Error THEN
-		status.sMessage := 'Error in MoveAbsolute';
+		stStatus.sMessage := 'Error in MoveAbsolute';
 	ELSIF fbMoveRel.Error THEN
-		status.sMessage := 'Error in MoveRelative';
+		stStatus.sMessage := 'Error in MoveRelative';
+	ELSIF fbMoveVel.Error THEN
+		stStatus.sMessage := 'Error in MoveVelocity';
 	ELSIF fbHome.Error THEN
-		status.sMessage := 'Error in Home';
+		stStatus.sMessage := 'Error in Home';
 	END_IF
 END_IF;
+
 //return
-GetStatus := status;
+GetStatus := stStatus;
 ]]></ST>
       </Implementation>
     </Method>
     <Method Name="Home" Id="{771f97a4-e7d4-481b-b233-9c33c798e61d}">
       <Declaration><![CDATA[METHOD Home : BOOL
 VAR_INPUT
-	bHomeRequest : BOOL;
 	pHomeSensor : POINTER TO BOOL; // home sensor pointer
+	rVelocity : LREAL;
+    rAcc      : LREAL;
+    rDec      : LREAL;
+	
 END_VAR
 VAR
 	 rTrigHome : R_TRIG;
@@ -163,6 +206,7 @@ END_VAR
         <ST><![CDATA[bHomeSensorValue  := pHomeSensor^;
 IF NOT bHomeRequest THEN
 	Home := FALSE;
+	bHomeRequest := TRUE;
 END_IF
 
 IF NOT GVL_Motion.bInitialHomingDone THEN
@@ -186,8 +230,8 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 	END_IF
 	
 	IF bHomeSensorValue THEN
-		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := 15.0, Acceleration := 20.0, Deceleration := 20.0, direction := 1);
-		status.sMessage := 'Seeking home sensor...';
+		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := rVelocity, Acceleration := rAcc, Deceleration := rDec, direction := 1); //15, 20, 20
+		stStatus.sMessage := 'Seeking home sensor...';
 		bStopExecute := TRUE;
 	ELSE
 		bExecuteMove := FALSE;
@@ -205,31 +249,34 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 	
 	IF tonHoming.Q THEN
 		bhomeExecute := TRUE;
-		status.sMessage := 'Executing MC_Home...';
+		stStatus.sMessage := 'Executing MC_Home...';
 	END_IF
 	
 	fbHome(Axis := Axis, Execute := bhomeExecute, Position := 0.0, HomingMode := MC_Direct);
 	
 	IF fbHome.Done THEN
-		status.eState := E_ActuatorState.eIdle;
-		status.bError := FALSE;
-		status.bDone := TRUE;
-		status.sMessage := 'Homing completed';
+		stStatus.eState := E_ActuatorState.eIdle;
+		stStatus.bError := FALSE;
+		stStatus.bDone := TRUE;
+		stStatus.sMessage := 'Homing completed';
 		bStartDelay  := FALSE;
 		bhomeExecute := FALSE;
 		tonHoming.IN := FALSE;
 		bHomeInProgress := FALSE;
 		GVL_Motion.bMotorsHomeDone := TRUE;
+		bHomeRequest := FALSE;
 		Home := TRUE;
+		RETURN;
 	ELSIF fbHome.Error THEN
-		status.eState := E_ActuatorState.eError;
-		status.bError := TRUE;
-		status.iErrorCode := fbHome.ErrorID;
-		status.sMessage := 'Error in Homing';
+		stStatus.eState := E_ActuatorState.eError;
+		stStatus.bError := TRUE;
+		stStatus.iErrorCode := fbHome.ErrorID;
+		stStatus.sMessage := 'Error in Homing';
 		bhomeExecute := FALSE;
 		bStartDelay  := FALSE;
 		tonHoming.IN := FALSE;
 		bHomeInProgress := FALSE;
+		bHomeRequest := FALSE;
 		Home := FALSE;
 	ELSE
 		Home := FALSE;
@@ -254,59 +301,81 @@ END_IF
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="Jog" Id="{3fad885f-82d0-4ede-add0-67a44b600103}">
+      <Declaration><![CDATA[METHOD Jog : BOOL
+VAR_INPUT
+	bFwd : BOOL;
+	bBwd : BOOL;
+	//rVelocity : LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call the internal motion block
+fbJog(
+    Axis := Axis,
+    JogForward := bFwd,
+    JogBackwards := bBwd,
+    Mode := MC_JOGMODE_STANDARD_FAST,
+);
+
+// Update actuator status
+stStatus.bBusy := fbJog.Busy;
+stStatus.bDone := fbJog.Done;
+stStatus.bError := fbJog.Error;
+stStatus.iErrorCode := fbJog.ErrorID;
+
+Jog := fbJog.Busy;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="MoveAbsolute" Id="{3c2d0047-9043-4f3b-b941-8126a4eab227}">
       <Declaration><![CDATA[METHOD MoveAbsolute : BOOL
 VAR_INPUT
-	Position : LREAL;
-    Velocity : LREAL := 10.0;
-    Acc      : LREAL := 20.0;
-    Dec      : LREAL := 20.0;
+	rPosition : LREAL;
+    rVelocity : LREAL := 10.0;
+    rAcc      : LREAL := 20.0;
+    rDec      : LREAL := 20.0;
 END_VAR
 VAR
-    Execute : BOOL := TRUE;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Absolute motion command (position, velocity, acceleration, deceleration)
-// Gera o pulso uma vez quando solicitado
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
 IF NOT bMoveAbsRequested THEN
     bMoveAbsExecute := TRUE;
     bMoveAbsRequested := TRUE;
 END_IF
 
-// Chamada do bloco
+// Call the internal motion block
 fbMoveAbs(
     Axis := Axis,
-    Position := Position,
+    Position := rPosition,
     Execute := bMoveAbsExecute,
-    Velocity := Velocity,
-    Acceleration := Acc,
-    Deceleration := Dec
+    Velocity := rVelocity,
+    Acceleration := rAcc,
+    Deceleration := rDec
 );
 
-// Atualiza status
-status.bBusy := fbMoveAbs.Busy;
-status.bDone := fbMoveAbs.Done;
-status.bError := fbMoveAbs.Error;
-status.iErrorCode := fbMoveAbs.ErrorID;
+// Update actuator status
+stStatus.bBusy := fbMoveAbs.Busy;
+stStatus.bDone := fbMoveAbs.Done;
+stStatus.bError := fbMoveAbs.Error;
+stStatus.iErrorCode := fbMoveAbs.ErrorID;
 
 IF fbMoveAbs.Busy THEN
-	bMoveAbsExecute := FALSE;
+    bMoveAbsExecute := FALSE;
 END_IF
 
 IF fbMoveAbs.Error THEN
-    status.eState := E_ActuatorState.eError;
-    status.sMessage := 'Error in MoveAbsolute';
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in Move Motor';
 END_IF
 
 IF bMoveAbsRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
     bMoveAbsRequested := FALSE;
     MoveAbsolute := TRUE;
-	RETURN;
+    RETURN;
 ELSE
     MoveAbsolute := FALSE;
 END_IF
-
-
 
 
 ]]></ST>
@@ -321,23 +390,46 @@ VAR_INPUT
     Dec      : LREAL := 20.0;
 END_VAR
 VAR
-    Execute : BOOL := TRUE;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Relative motion command (distance, velocity, acceleration, deceleration)
-fbMoveRel(Axis := Axis, Distance := Distance, Execute := Execute, Velocity := Velocity, Acceleration := Acc, Deceleration := Dec);
-status.bBusy := fbMoveRel.Busy;
-status.bDone := fbMoveRel.Done;
-status.bError := fbMoveRel.Error;
-status.iErrorCode := fbMoveRel.ErrorID;
-IF fbMoveRel.Error THEN
-	status.eState := E_ActuatorState.eError;
-	status.sMessage := 'Error in MoveRelative';
-END_IF;
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bMoveRelRequested THEN
+    bMoveRelExecute := TRUE;
+    bMoveRelRequested := TRUE;
+END_IF
 
-//Return
-MoveRelative := fbMoveRel.Done;]]></ST>
+IF fbMoveRel.Busy THEN
+    bMoveRelExecute := FALSE;
+END_IF
+
+// Call the internal motion block
+fbMoveRel(
+    Axis := Axis,
+    Distance := Distance,
+    Execute := bMoveRelExecute,
+    Velocity := Velocity,
+    Acceleration := Acc,
+    Deceleration := Dec
+);
+
+// Update actuator status
+stStatus.bBusy := fbMoveRel.Busy;
+stStatus.bDone := fbMoveRel.Done;
+stStatus.bError := fbMoveRel.Error;
+stStatus.iErrorCode := fbMoveRel.ErrorID;
+
+IF fbMoveRel.Error THEN
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in Move Motor';
+END_IF
+
+IF bMoveRelRequested AND NOT fbMoveRel.Busy AND NOT fbMoveRel.Error THEN
+    bMoveRelRequested := FALSE;
+    MoveRelative := TRUE;
+    RETURN;
+ELSE
+    MoveRelative := FALSE;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="MoveValve" Id="{0efdf2ac-cd7b-4dd3-893f-1eab65963717}">
@@ -353,13 +445,13 @@ END_VAR
         <ST><![CDATA[// Map logical valve position to angular position
 CASE iPosition OF
     1: rTargetAngle := 0.0;
-    2: rTargetAngle := 60.0;
-    3: rTargetAngle := 120.0;
-    4: rTargetAngle := 180.0;
-    5: rTargetAngle := 240.0;
-    6: rTargetAngle := 300.0;
+    2: rTargetAngle := 1200.0;
+    3: rTargetAngle := 2400.0;
+    4: rTargetAngle := 3600.0;
+    5: rTargetAngle := 4800.0;
+    6: rTargetAngle := 6000.0;
 ELSE
-    rTargetAngle := 0.0;
+    rTargetAngle := 0;
 END_CASE
 
 // Reuse the same logic from MoveAbsolute
@@ -367,6 +459,7 @@ IF NOT bMoveValveRequested THEN
     bMoveValveExecute := TRUE;
     bMoveValveRequested := TRUE;
 END_IF
+
 
 // Call the internal motion block
 fbMoveAbs(
@@ -379,18 +472,18 @@ fbMoveAbs(
 );
 
 // Update actuator status
-status.bBusy := fbMoveAbs.Busy;
-status.bDone := fbMoveAbs.Done;
-status.bError := fbMoveAbs.Error;
-status.iErrorCode := fbMoveAbs.ErrorID;
+stStatus.bBusy := fbMoveAbs.Busy;
+stStatus.bDone := fbMoveAbs.Done;
+stStatus.bError := fbMoveAbs.Error;
+stStatus.iErrorCode := fbMoveAbs.ErrorID;
 
 IF fbMoveAbs.Busy THEN
     bMoveValveExecute := FALSE;
 END_IF
 
 IF fbMoveAbs.Error THEN
-    status.eState := E_ActuatorState.eError;
-    status.sMessage := 'Error in MoveValve';
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in MoveValve';
 END_IF
 
 IF bMoveValveRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
@@ -399,6 +492,104 @@ IF bMoveValveRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
     RETURN;
 ELSE
     MoveValve := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveVelocity" Id="{88eea3e3-3d47-49a5-8a94-a24aaca29cb6}">
+      <Declaration><![CDATA[METHOD MoveVelocity : BOOL
+VAR_INPUT
+    rVelocity  : LREAL := 10.0;
+    rAcc       : LREAL := 20.0;
+    rDec       : LREAL := 20.0;
+	iDirection : E_PumpDirection;
+END_VAR
+
+VAR
+	mcDirection: MC_Direction;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bMoveVelRequested THEN
+    bMoveVelExecute := TRUE;
+    bMoveVelRequested := TRUE;
+END_IF
+
+// Get the corect direction
+IF iDirection = E_PumpDirection.Forward THEN
+	mcDirection := MC_Direction.MC_Positive_Direction;
+	ELSE IF iDirection = E_PumpDirection.Backward THEN
+		mcDirection := MC_Direction.MC_Negative_Direction;
+	ELSE
+		mcDirection := MC_Direction.MC_Current_Direction;
+	END_IF
+END_IF
+
+// Call the internal motion block
+fbMoveVel( 	Axis := Axis,
+			Execute := bMoveVelExecute,
+			Velocity := rVelocity,
+			Direction := mcDirection,
+			Acceleration := rAcc,
+			Deceleration := rDec
+);
+			
+// Update actuator status
+stStatus.bBusy := fbMoveVel.Busy;
+stStatus.bError := fbMoveVel.Error;
+stStatus.iErrorCode := fbMoveVel.ErrorID;
+
+IF fbMoveVel.Busy THEN
+    bMoveVelExecute := FALSE;
+END_IF
+
+IF fbMoveVel.Error THEN
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in Move Motor';
+END_IF
+
+IF bMoveVelRequested AND NOT fbMoveVel.Busy AND NOT fbMoveVel.Error THEN
+    bMoveVelRequested := FALSE;
+    MoveVelocity := TRUE;
+    RETURN;
+ELSE
+    MoveVelocity := FALSE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ReadStatus" Id="{75b26eb2-c886-42bf-86aa-71bae3e05caa}">
+      <Declaration><![CDATA[METHOD ReadStatus : ST_AxisReadStatus
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//Method to read status by MC_ReadStatus
+Axis.ReadStatus();
+
+//Filling up stReadStatus
+stReadStatus.Disabled :=  Axis.Status.Disabled;
+stReadStatus.Error := Axis.Status.Error;
+stReadStatus.ErrorID := Axis.Status.ErrorID;
+stReadStatus.Homed := Axis.Status.Homed;
+stReadStatus.Operational := Axis.Status.Operational;
+stReadStatus.StandStill := Axis.Status.StandStill;
+
+//Return
+ReadStatus := stReadStatus;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ReadValveStatus" Id="{42b9d689-2539-4c89-af9c-94ac21a9a691}">
+      <Declaration><![CDATA[METHOD ReadValveStatus : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Axis.ReadStatus();
+
+IF Axis.Status.Error AND Axis.Status.ErrorID = 16#00004466 THEN
+    ReadValveStatus := FALSE;
+ELSE
+    ReadValveStatus := NOT Axis.Status.Error AND NOT Axis.Status.Disabled;
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -418,18 +609,18 @@ END_IF
 IF bResetRequested THEN
     fbReset(Axis := Axis, Execute := bResetExecute);
 
-    status.bError := fbReset.Error;
-    status.iErrorCode := fbReset.ErrorID;
+    stStatus.bError := fbReset.Error;
+    stStatus.iErrorCode := fbReset.ErrorID;
 
     IF fbReset.Error THEN
-        status.eState := E_ActuatorState.eError;
-        status.sMessage := 'Error in Reset';
+        stStatus.eState := E_ActuatorState.eError;
+        stStatus.sMessage := 'Error in Reset';
         Reset := FALSE;
     ELSE
-        status.bError := FALSE;
-        status.iErrorCode := 0;
-        status.eState := E_ActuatorState.eIdle;
-        status.sMessage := '';
+        stStatus.bError := FALSE;
+        stStatus.iErrorCode := 0;
+        stStatus.eState := E_ActuatorState.eIdle;
+        stStatus.sMessage := '';
     END_IF;
 	
 	IF bResetDone THEN
@@ -450,6 +641,49 @@ END_IF
 Reset := FALSE;
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetPosition" Id="{a529999b-02b0-40ec-9986-934333a30507}">
+      <Declaration><![CDATA[METHOD SetPosition : BOOL
+VAR_INPUT
+	rPosition : LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+IF NOT bSetPosRequested THEN
+    bSetPosExecute := TRUE;
+    bSetPosRequested := TRUE;
+END_IF
+
+// Call the internal motion block
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);
+
+// Update actuator status
+stStatus.bBusy := fbSetPos.Busy;
+stStatus.bDone := fbSetPos.Done;
+stStatus.bError := fbSetPos.Error;
+stStatus.iErrorCode := fbSetPos.ErrorID;
+
+IF fbSetPos.busy THEN
+    bSetPosExecute := FALSE;
+END_IF
+
+IF fbSetPos.Error THEN
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in motor Set Position';
+END_IF
+
+IF bSetPosRequested AND NOT fbSetPos.Busy AND NOT fbSetPos.Error THEN
+    bSetPosRequested := FALSE;
+    SetPosition := TRUE;
+    RETURN;
+ELSE
+    SetPosition := FALSE;
+END_IF
+
+// Call the internal motion block
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);]]></ST>
       </Implementation>
     </Method>
     <Method Name="Stop" Id="{27336d58-d763-4c6d-b6e1-79be37906c83}">
@@ -479,20 +713,20 @@ IF fbStop.Done THEN
 	bStopDone := TRUE;
 END_IF
 
-status.bError := fbStop.Error;
-status.iErrorCode := fbStop.ErrorID;
+stStatus.bError := fbStop.Error;
+stStatus.iErrorCode := fbStop.ErrorID;
 
 IF fbStop.Error THEN
-	status.eState := E_ActuatorState.eError;
-	status.sMessage := 'Error in Stop';
+	stStatus.eState := E_ActuatorState.eError;
+	stStatus.sMessage := 'Error in Stop';
 	Stop := FALSE;
 END_IF
 
 IF bStopDone AND NOT fbStop.Busy AND NOT bStopRequested THEN
-	status.bError := FALSE;
-	status.iErrorCode := 0;
-	status.eState := E_ActuatorState.eIdle;
-	status.sMessage := 'Axis Stopped';
+	stStatus.bError := FALSE;
+	stStatus.iErrorCode := 0;
+	stStatus.eState := E_ActuatorState.eIdle;
+	stStatus.sMessage := 'Axis Stopped';
 	bStopDone := FALSE;
 	Stop := TRUE;
 	RETURN;
@@ -522,14 +756,24 @@ END_IF
     <LineIds Name="FB_MotorWrapper.GetStatus">
       <LineId Id="6" Count="0" />
       <LineId Id="26" Count="0" />
-      <LineId Id="8" Count="16" />
+      <LineId Id="8" Count="3" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="6" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="12" Count="8" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="21" Count="3" />
+      <LineId Id="37" Count="0" />
       <LineId Id="27" Count="0" />
       <LineId Id="25" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Home">
       <LineId Id="371" Count="0" />
-      <LineId Id="505" Count="2" />
+      <LineId Id="505" Count="1" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="507" Count="0" />
       <LineId Id="428" Count="0" />
       <LineId Id="427" Count="0" />
       <LineId Id="484" Count="0" />
@@ -543,7 +787,13 @@ END_IF
       <LineId Id="521" Count="0" />
       <LineId Id="518" Count="0" />
       <LineId Id="509" Count="0" />
-      <LineId Id="435" Count="48" />
+      <LineId Id="435" Count="35" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="472" Count="8" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="481" Count="2" />
       <LineId Id="429" Count="0" />
       <LineId Id="485" Count="0" />
       <LineId Id="503" Count="0" />
@@ -562,34 +812,69 @@ END_IF
       <LineId Id="372" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
+    <LineIds Name="FB_MotorWrapper.Jog">
+      <LineId Id="61" Count="5" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="69" Count="5" />
+      <LineId Id="53" Count="0" />
+    </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveAbsolute">
-      <LineId Id="6" Count="0" />
-      <LineId Id="52" Count="14" />
-      <LineId Id="127" Count="0" />
-      <LineId Id="73" Count="4" />
-      <LineId Id="128" Count="2" />
-      <LineId Id="107" Count="0" />
-      <LineId Id="99" Count="0" />
-      <LineId Id="79" Count="7" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="87" Count="1" />
-      <LineId Id="32" Count="0" />
-      <LineId Id="108" Count="0" />
+      <LineId Id="196" Count="36" />
       <LineId Id="115" Count="0" />
       <LineId Id="117" Count="0" />
       <LineId Id="105" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveRelative">
-      <LineId Id="6" Count="0" />
-      <LineId Id="17" Count="8" />
-      <LineId Id="34" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="33" Count="0" />
+      <LineId Id="49" Count="4" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="96" Count="1" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="54" Count="15" />
+      <LineId Id="74" Count="11" />
+      <LineId Id="48" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveValve">
-      <LineId Id="31" Count="44" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="130" Count="8" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="108" Count="4" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="48" Count="27" />
       <LineId Id="77" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.MoveVelocity">
+      <LineId Id="6" Count="4" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="69" Count="1" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="25" Count="18" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.ReadStatus">
+      <LineId Id="90" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="81" Count="6" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="89" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.ReadValveStatus">
+      <LineId Id="6" Count="5" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
@@ -602,6 +887,16 @@ END_IF
       <LineId Id="71" Count="3" />
       <LineId Id="21" Count="0" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MotorWrapper.SetPosition">
+      <LineId Id="6" Count="4" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="22" Count="20" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
       <LineId Id="85" Count="3" />

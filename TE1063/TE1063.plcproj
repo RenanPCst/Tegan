@@ -36,6 +36,9 @@
     <Compile Include="DUTs\E_SolenoidSet.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\E_WashingState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\HMI\ST_HMIAnimation.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -45,7 +48,22 @@
     <Compile Include="DUTs\HMI\ST_HMIDigOutputs.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\HMI\ST_HMIManual.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\HMI\ST_HMIParameters.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\HMI\ST_InfoPage.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\HMI\ST_MotorsJog.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ifmLvlSensors\E_LevelSensorID.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ifmLvlSensors\ST_KQ1000_Data.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\IO\ST_AX8108.TcDUT">
@@ -81,6 +99,18 @@
     <Compile Include="DUTs\IO\ST_EP9208.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\ManualControl\E_PumpDirection.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ManualControl\ST_MotorCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ManualControl\ST_PumpCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\ManualControl\ST_ValveCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DUTs\MotionControl\E_ActuatorState.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -88,6 +118,21 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\MotionControl\ST_ActuatorStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\MotionControl\ST_AxisReadStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\MotionControl\ST_Motor.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Recipe\ST_HMI_OtherParamsRow.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Recipe\ST_HMI_SolventAndTimeRow.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Recipe\ST_HMI_VolumesRow.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\Recipe\ST_Recipe.TcDUT">
@@ -120,9 +165,6 @@
     <Compile Include="DUTs\ST_MethodParameter.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DUTs\ST_Motor.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="DUTs\ST_PumpError.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -135,6 +177,15 @@
     <Compile Include="DUTs\ST_ValveError.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DUTs\UserManagement\E_UserGroup.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\UserManagement\ST_User.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\UserManagement\ST_UserStats.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GVLs\GVL_Alarm.TcGVL">
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
@@ -144,6 +195,14 @@
       <LinkAlways>true</LinkAlways>
     </Compile>
     <Compile Include="GVLs\GVL_IO.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="GVLs\GVL_Reports.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="GVLs\GVL_Retain.TcGVL">
       <SubType>Code</SubType>
       <LinkAlways>true</LinkAlways>
     </Compile>
@@ -166,118 +225,100 @@
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_AlarmHandler.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\PRG_StateMachine.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_ErrorHandler.TcPOU">
+    <Compile Include="POUs\3. HMI\PRG_HMIControl.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_EventHandler.TcPOU">
+    <Compile Include="POUs\5. Calibration\PRG_Calibration.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_SensorScaling.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Hardware Control\FB_SolenoidControl.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\FB_TCPClient.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_AirFlowCheck.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Hardware Control\FB_HomePosition.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_DryingPhase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Hardware Control\FB_MotorsPowerUp.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_InitChecks.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Hardware Control\FB_PumpControl.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_LeakTest.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Hardware Control\FB_SolenoidControl.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_RecoveryPhase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Hardware Control\FB_ValvePositionControl.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_SealStages.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_GetPosition.TcPOU">
+    <Compile Include="POUs\2. AutoCycle\Stages\FB_WashingPhase.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MCMoveAbsolute.TcPOU">
+    <Compile Include="POUs\7. EventsAndAlarms\FB_AlarmHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MCMoveRelative.TcPOU">
+    <Compile Include="POUs\7. EventsAndAlarms\FB_ErrorHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MCPower.TcPOU">
+    <Compile Include="POUs\7. EventsAndAlarms\FB_EventHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MotorControl.TcPOU">
+    <Compile Include="POUs\Functions\F_REAL_TO_STRING_2DEC.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MotorsReset.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_MoveVelocity.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Motion\FB_StopMotion.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_AirFlowCheck.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_DryingPhase.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_HardwareInit.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_InitChecks.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_LeakTest.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_RecoveryPhase.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_SealStages.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\FBs\Stages\FB_WashingPhase.TcPOU">
+    <Compile Include="POUs\Functions\F_ROUND_REAL.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Functions\F_VolumeToSteps.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_Calibration.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_ManualControl.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_HMIControl.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_MasterControl.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_ManualControl.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_SafetyHandle.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_MasterControl.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_StoppedState.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_SafetyHandle.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_SystemInit.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_StateMachine.TcPOU">
+    <Compile Include="POUs\1. MachineControl\PRG_SystemReady.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_StoppedState.TcPOU">
+    <Compile Include="POUs\Levels\FB_KQ1000_Parser.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_SystemInit.TcPOU">
+    <Compile Include="POUs\Levels\FB_LevelSensors.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MachineControl\PRG_SystemReady.TcPOU">
+    <Compile Include="POUs\Levels\PRG_LevelHandler.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Miscellaneous\FB_Blink.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Miscellaneous\FB_SensorScaling.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Miscellaneous\FB_TCPClient.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Miscellaneous\PRG_RetainValveAngles.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Miscellaneous\PRG_SystemInfo.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Miscellaneous\PRG_ShutdownPLC.TcPOU">
@@ -289,6 +330,9 @@
     <Compile Include="POUs\Miscellaneous\PRG_UpdateVariablesMoving.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\MotionControl\FB_AllPumpsController.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\MotionControl\FB_MotorWrapper.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -298,16 +342,22 @@
     <Compile Include="POUs\MotionControl\PRG_AxisAssignment.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecipeHandle\FB_ListRecipeFiles.TcPOU">
+    <Compile Include="POUs\4. RecipeHandle\FB_DeleteRecipe.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecipeHandle\FB_LoadRecipe.TcPOU">
+    <Compile Include="POUs\4. RecipeHandle\FB_ListRecipeFiles.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecipeHandle\FB_RecipeHeaderHandler.TcPOU">
+    <Compile Include="POUs\4. RecipeHandle\FB_LoadRecipe.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\RecipeHandle\PRG_RecipeManager.TcPOU">
+    <Compile Include="POUs\4. RecipeHandle\FB_RecipeHeaderHandler.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\4. RecipeHandle\FB_SaveRecipe.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\4. RecipeHandle\PRG_RecipeManager.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Visualization Manager.TcVMO">
@@ -326,20 +376,26 @@
     <Folder Include="DUTs\IO" />
     <Folder Include="DUTs\HMI" />
     <Folder Include="DUTs\MotionControl" />
+    <Folder Include="DUTs\ManualControl" />
+    <Folder Include="DUTs\ifmLvlSensors" />
+    <Folder Include="DUTs\UserManagement" />
     <Folder Include="DUTs\Report" />
     <Folder Include="DUTs\Safety" />
     <Folder Include="DUTs\Recipe" />
     <Folder Include="GVLs" />
-    <Folder Include="POUs\FBs" />
-    <Folder Include="POUs\FBs\Motion" />
-    <Folder Include="POUs\FBs\Hardware Control" />
-    <Folder Include="POUs\FBs\Stages" />
+    <Folder Include="POUs\2. AutoCycle" />
+    <Folder Include="POUs\2. AutoCycle\Hardware Control" />
+    <Folder Include="POUs\2. AutoCycle\Stages" />
     <Folder Include="POUs\Functions" />
     <Folder Include="POUs\Miscellaneous" />
-    <Folder Include="POUs\MachineControl" />
+    <Folder Include="POUs\1. MachineControl" />
     <Folder Include="POUs\MotionControl" />
-    <Folder Include="POUs\Reports" />
-    <Folder Include="POUs\RecipeHandle" />
+    <Folder Include="POUs\5. Calibration" />
+    <Folder Include="POUs\3. HMI" />
+    <Folder Include="POUs\6. Reports" />
+    <Folder Include="POUs\4. RecipeHandle" />
+    <Folder Include="POUs\7. EventsAndAlarms" />
+    <Folder Include="POUs\Levels" />
     <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>
@@ -389,6 +445,9 @@
       <Namespace>VisuNativeControl</Namespace>
       <SystemLibrary>true</SystemLibrary>
       <ResolverGuid>2717eb6a-dd07-4c66-8d8d-cacebd7b18ae</ResolverGuid>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Math">
+      <DefaultResolution>Tc2_Math, * (Beckhoff Automation GmbH)</DefaultResolution>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_MC2">
       <DefaultResolution>Tc2_MC2, * (Beckhoff Automation GmbH)</DefaultResolution>

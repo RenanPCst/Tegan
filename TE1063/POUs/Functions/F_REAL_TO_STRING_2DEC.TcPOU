@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_REAL_TO_STRING_2DEC" Id="{d8bf5b28-4404-4c3e-abb8-62859f0da5ec}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_REAL_TO_STRING_2DEC : STRING
+VAR_INPUT
+	rInput : REAL;
+END_VAR
+VAR
+	iInt    : DINT;
+    iDec    : DINT;
+    rTmp    : REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[iInt := TRUNC(rInput);
+rTmp := ABS(rInput - iInt);            // decimal part
+iDec := TRUNC((rTmp * 100.0) + 0.5);   // manual rounding
+
+IF rInput >= 0.0 THEN
+    F_REAL_TO_STRING_2DEC := CONCAT( DINT_TO_STRING(iInt), CONCAT('.', DINT_TO_STRING(iDec)) );
+ELSE
+    F_REAL_TO_STRING_2DEC := CONCAT('-', CONCAT( DINT_TO_STRING(ABS(iInt)), CONCAT('.', DINT_TO_STRING(iDec)) ));
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="F_REAL_TO_STRING_2DEC">
+      <LineId Id="12" Count="7" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

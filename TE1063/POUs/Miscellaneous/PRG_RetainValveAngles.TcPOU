@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_RetainValveAngles" Id="{dce46249-3f56-4707-99ea-4406d584198b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_RetainValveAngles
+VAR
+	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
+    bValveStatus      : ARRAY[1..5] OF BOOL;
+    i                 : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR i := 1 TO 5 DO
+	
+	bValveStatus[i] := GVL_Motion.aValvesObj[i].ReadValveStatus();
+
+	IF bValveStatus[i] THEN
+		IF bSetValvePosition[i] AND GVL_Retain.bPositionIsValid[i] THEN
+			GVL_Motion.bValvesPositionRecovered := TRUE; // Permissive flag for repositioning valves after shutdown
+			// Tentativa única de restaurar a posição
+			bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(rPosition := GVL_Retain.rValveLastPosition[i]);
+		ELSE
+			// Armazena a posição continuamente enquanto motor está energizado
+			GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
+			GVL_Retain.bPositionIsValid[i] := TRUE;
+		END_IF
+	ELSE
+		// Motor não energizado: reseta flag para setar posição ao religar
+		bSetValvePosition[i] := TRUE;
+	END_IF
+END_FOR]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_RetainValveAngles">
+      <LineId Id="6" Count="17" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

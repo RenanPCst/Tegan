@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_MasterControl" Id="{a4cbd161-85e0-4c8d-ae27-b2066d5dd82b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_MasterControl
+VAR
+	eMachineModePrev 	: E_MachineMode := E_MachineMode.STOPPED;
+	bModeChanged	 	: BOOL := FALSE;
+	bResetStateMachine	: BOOL := FALSE;
+	bResetSMDone		: BOOL := FALSE;
+	bStoppedResetDone	: BOOL := FALSE;
+	
+	//Triggers
+	rTriggerStopButton	: R_TRIG;
+	rTriggerStartButton	: R_TRIG;
+	
+	//PowerUp Variables
+	tonPowerUp				: ton;
+	bPowerUpTimerComplete	: BOOL := FALSE;
+	bPowerUpDone			: BOOL := FALSE;
+	
+	//System Initializing Variables
+	tonSystemInitialize		: ton;
+	rTrigEnterSystemInit 	: R_TRIG;
+	bInitResetStarted    	: BOOL := FALSE;
+    bInitResetCompleted  	: BOOL := FALSE;
+	bSystemInitTimerStart	: BOOL := FALSE;
+	bSystemInitReseted		: BOOL := FALSE;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// System Power Up Timer
+tonPowerUp( IN 	:= TRUE, 
+			PT 	:= T#2S,	
+			Q 	=> bPowerUpTimerComplete);
+
+IF bPowerUpTimerComplete AND NOT bPowerUpDone THEN
+	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+	bPowerUpDone := TRUE; // Indicates que the initialization is already happened
+END_IF
+
+// Mode Change Monitoring
+bModeChanged := (GVL_HMI.eMachineMode <> eMachineModePrev);
+eMachineModePrev := GVL_HMI.eMachineMode;
+
+//bResetStateMachine := bModeChanged AND (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE);
+
+// Buttons Triggers
+rTriggerStartButton(CLK := GVL_IO.gDigInputs.bStartButton);
+rTriggerStopButton(CLK := GVL_IO.gDigInputs.bStopButton);
+
+//Reset Button Blinking
+IF (GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT) AND NOT GVL_Safety. bSafetyEnable THEN
+	GVL_IO.gDigOutputs.bResetIndicator := GVL_Safety.bResetButtonBlink;
+END_IF
+
+// Stop Button monitoring
+IF rTriggerStopButton.Q AND NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
+	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+END_IF
+
+//Safety Enable Monitoring
+IF NOT GVL_Safety.bSafetyEnable THEN
+	GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+END_IF
+
+//Reset the Reset flags every time gets out of auto cycle
+IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
+	bResetSMDone := FALSE;
+	bResetStateMachine := TRUE;
+END_IF
+
+//Resets PRG_SystemIniti *********************************************************************************************
+//rTrigEnterSystemInit(CLK := NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING));
+
+IF (GVL_HMI.eMachineMode <> E_MachineMode.SYSTEM_INITIALIZING) AND NOT bSystemInitReseted THEN
+	bSystemInitReseted := PRG_SystemInit.Reset();
+	IF bSystemInitReseted THEN
+		bSystemInitTimerStart := FALSE; //Reset timer every time is not in System Initializing
+	END_IF
+END_IF
+//**********************************************************************************************************************
+//Reset the Stopped state flags every time gets out of Stopped State
+IF NOT (GVL_HMI.eMachineMode = E_MachineMode.STOPPED) THEN
+	bStoppedResetDone := PRG_StoppedState.Reset();
+END_IF
+
+// Main Master controll logic
+CASE GVL_HMI.eMachineMode OF
+
+    E_MachineMode.AUTO_CYCLE: 	// Entry from Stopped state
+		IF bResetStateMachine THEN
+			bResetSMDone := PRG_StateMachine.Reset(); //Resets the state machine everytime entry this case
+		END_IF; 
+		
+		IF bResetSMDone THEN
+			bResetStateMachine := FALSE;
+    		PRG_StateMachine(); // calls the state machine
+		END_IF
+
+    E_MachineMode.MANUAL:		// Entry from HMI Selection
+        PRG_ManualControl(); 
+
+    E_MachineMode.CALIBRATION:	// Entry from HMI Selection
+        PRG_Calibration();
+
+        IF PRG_Calibration.bCalibrationFinished THEN
+            GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+			PRG_Calibration.Reset(); //TODO
+        END_IF
+
+    E_MachineMode.IMEDIATE_FAULT: //Entry from Safety Monitoring
+        //PRG_SafetyHandle();
+
+        IF GVL_Safety.bSafetyEnable THEN
+            GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
+        END_IF
+
+    E_MachineMode.STOPPED:		// Entry from Stop Button or Imediate Fault
+        IF bStoppedResetDone THEN
+			PRG_StoppedState();
+		END_IF
+		
+        IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable AND PRG_StoppedState.bStopAllMotorsDone THEN //only change the state if all motors were stopped
+			bStoppedResetDone := FALSE;
+            GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
+        END_IF
+	
+	E_MachineMode.SYSTEM_INITIALIZING: // Entry when the machine is first power up to do the homing of the motors
+	
+       	tonSystemInitialize(IN := bSystemInitTimerStart, PT := T#2S);
+		
+		bSystemInitReseted := FALSE;
+		bSystemInitTimerStart := TRUE;
+		
+		IF GVL_Safety.bSafetyEnable AND tonSystemInitialize.Q THEN
+			PRG_SystemInit(); // Run init procedure
+		END_IF
+		// Transition to SYSTEM_READY when initialization completes
+		IF PRG_SystemInit.bDone AND tonSystemInitialize.Q THEN
+			GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_READY;
+		END_IF
+		
+	E_MachineMode.SYSTEM_READY:	// Entry when the start button was pressed on Stop State.
+	
+		PRG_SystemReady();
+		
+		IF rTriggerStartButton.Q AND GVL_Safety.bSafetyEnable THEN
+			IF NOT GVL_HMI.bIncoherenceDetected THEN
+				GVL_HMI.eMachineMode := E_MachineMode.AUTO_CYCLE;
+			ELSE
+				GVL_HMI.bIncoherenceAlert := TRUE;
+			END_IF
+        END_IF
+		
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_MasterControl">
+      <LineId Id="138" Count="7" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="159" Count="2" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="199" Count="1" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="115" Count="2" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="123" Count="2" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="409" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="435" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="481" Count="3" />
+      <LineId Id="550" Count="1" />
+      <LineId Id="476" Count="4" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="168" Count="1" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="63" Count="2" />
+      <LineId Id="74" Count="3" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="126" Count="2" />
+      <LineId Id="91" Count="3" />
+      <LineId Id="378" Count="1" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="487" Count="1" />
+      <LineId Id="578" Count="0" />
+      <LineId Id="580" Count="0" />
+      <LineId Id="579" Count="0" />
+      <LineId Id="489" Count="6" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="608" Count="2" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

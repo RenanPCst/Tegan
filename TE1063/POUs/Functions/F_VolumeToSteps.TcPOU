@@ -3,7 +3,7 @@
   <POU Name="F_VolumeToSteps" Id="{25d1f51c-9d43-4775-9a00-54ad1198621b}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION F_VolumeToSteps : REAL
 VAR_INPUT
-	fVolume 		: REAL; // Volume in µL
+	rVolume 		: REAL; // Volume in mL
     iPumpIndex 		: INT;  // Pump index 1..10
 END_VAR
 VAR
@@ -11,7 +11,7 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Use individual calibration for each pump
-F_VolumeToSteps := fVolume / GVL_Settings.aPumpCalibration[iPumpIndex];]]></ST>
+F_VolumeToSteps := (rVolume / GVL_Motion.aPumps[iPumpIndex].Rotary.rPumpFactor) * 360;]]></ST>
     </Implementation>
     <LineIds Name="F_VolumeToSteps">
       <LineId Id="22" Count="0" />
