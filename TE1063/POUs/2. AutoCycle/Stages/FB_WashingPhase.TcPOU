@@ -4,6 +4,7 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_WashingPhase
 
 VAR_INPUT
+	bExecute : BOOL;
 END_VAR
 
 VAR_OUTPUT
@@ -12,13 +13,127 @@ VAR_OUTPUT
 END_VAR
 
 VAR
+	bStart : BOOL := FALSE;
+	eWashingState : E_WashingState := E_WashingState.Idle;
+	
+	iStepCounter : UINT := 0;
+	bMovementComplete : BOOL := FALSE;
+	
+	bDebug	: ARRAY[1..20] OF BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//bWashingDone := //Verdadeiro quando a etapa de lavagem for concluída]]></ST>
+      <ST><![CDATA[//bWashingDone := //Verdadeiro quando a etapa de lavagem for concluída
+IF NOT bStart THEN
+	eWashingState := E_WashingState.Idle;
+	bStart := bExecute;
+END_IF
+
+CASE eWashingState OF
+
+    E_WashingState.Idle:
+		//Provide HMI animation details
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Starting'; 
+		GVL_HMI.HMIAnimation.rLoadBarWashing  := 0;
+		
+        IF bStart THEN
+            eWashingState := E_WashingState.Metering_Wash1;
+        END_IF;
+
+    E_WashingState.Metering_Wash1:
+	IF bDebug[1] THEN
+        MeteringWash1(); 
+        IF bMovementComplete THEN
+            eWashingState := E_WashingState.Recirculate_Wash1;
+			iStepCounter := 0;
+            bMovementComplete := FALSE;
+        END_IF
+	END_IF
+	
+	E_WashingState.Recirculate_Wash1:
+	IF bDebug[1] THEN
+        MeteringWash1(); 
+        IF bMovementComplete THEN
+            eWashingState := E_WashingState.Recirculate_Wash1;
+			iStepCounter := 0;
+            bMovementComplete := FALSE;
+        END_IF
+	END_IF
+
+END_CASE
+	]]></ST>
     </Implementation>
+    <Action Name="FillJars" Id="{3918b628-ba7d-4ae8-b5bc-d73985505edc}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MeteringWash1" Id="{1decf6d4-da28-46f3-9729-bc5433bc5840}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="MeteringWash2" Id="{b8ee806b-dc2d-472b-b37a-cbeb41b28cea}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="RecirculateWash1" Id="{6f5b6cb3-cb61-465b-8b32-08b9d3c51ceb}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="RecirculateWash2" Id="{8f07f6b8-d579-4fe5-92f4-a972dfebd8c5}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="Reset" Id="{4c979a62-156d-4b75-bff1-5fe048c801a0}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="WasteWash" Id="{91f8329f-33e3-4c86-9423-745adb5605df}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="FB_WashingPhase">
       <LineId Id="9" Count="0" />
+      <LineId Id="24" Count="7" />
+      <LineId Id="33" Count="5" />
+      <LineId Id="40" Count="10" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="71" Count="7" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="63" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.FillJars">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.MeteringWash1">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.MeteringWash2">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.RecirculateWash1">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.RecirculateWash2">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.Reset">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WashingPhase.WasteWash">
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

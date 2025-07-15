@@ -7,21 +7,34 @@ VAR_OUTPUT
 END_VAR
 VAR
 	fbLeakTest : FB_LeakTest;
+	bLeakTestReset : BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Leak Test request from HMI
+      <ST><![CDATA[IF GVL_HMI.bCalLeakTestButton THEN
+	bLeakTestReset := FALSE;
+END_IF
+
+// Leak Test request from HMI
 fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S, rSystemPressure => GVL_HMI.rCalLealTestPressure);
 
 // Leak Test post treatment
 IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
 	GVL_HMI.bCalLeakTestPass := TRUE;
+	GVL_HMI.bCalLeakTestError := FALSE;
 	GVL_HMI.bCalLeakTestButton := FALSE;
+	IF NOT bLeakTestReset THEN
+		bLeakTestReset := fbLeakTest.Reset();
+	END_IF
 END_IF
 
 IF fbLeakTest.bLeakTestError THEN
 	GVL_HMI.bCalLeakTestError := TRUE;
+	GVL_HMI.bCalLeakTestPass := FALSE;
 	GVL_HMI.bCalLeakTestButton := FALSE;
+	IF NOT bLeakTestReset THEN
+		bLeakTestReset := fbLeakTest.Reset();
+	END_IF
 END_IF
 ]]></ST>
     </Implementation>
@@ -35,18 +48,26 @@ END_VAR
       </Implementation>
     </Method>
     <LineIds Name="PRG_Calibration">
+      <LineId Id="44" Count="2" />
+      <LineId Id="43" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="28" Count="0" />
       <LineId Id="19" Count="0" />
       <LineId Id="18" Count="0" />
       <LineId Id="20" Count="0" />
+      <LineId Id="50" Count="0" />
       <LineId Id="22" Count="0" />
+      <LineId Id="38" Count="2" />
       <LineId Id="21" Count="0" />
       <LineId Id="24" Count="0" />
       <LineId Id="16" Count="0" />
       <LineId Id="27" Count="0" />
-      <LineId Id="25" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="26" Count="0" />
       <LineId Id="15" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">

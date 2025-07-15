@@ -54,7 +54,7 @@ END_VAR
       <ST><![CDATA[// Step 1: Enable all motors and valves ****************************************************************************************************
 IF NOT bEnableDone THEN
 	IF NOT GVL_Motion.bInitialHomingDone THEN
-		FOR i := 1 TO 3 DO
+		FOR i := 1 TO 3 DO //TEMP: Motor 1 Out
 			aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
 		END_FOR
 	
@@ -69,7 +69,7 @@ IF NOT bEnableDone THEN
 			aRotaryPumpsEnabled[i] := GVL_Motion.aPumpsRotary[i].Enable();
 		END_FOR
 		
-		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3];
+		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3]; //TEMP: Motor 1 Out
 		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
 		bAllLinearPumpsEnabled  := aLinearPumpsEnabled[1] AND aLinearPumpsEnabled[2] AND aLinearPumpsEnabled[3] AND aLinearPumpsEnabled[4] AND aLinearPumpsEnabled[5] AND aLinearPumpsEnabled[6] AND aLinearPumpsEnabled[7] AND aLinearPumpsEnabled[8] AND aLinearPumpsEnabled[9] AND aLinearPumpsEnabled[10]; 
 		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
@@ -86,9 +86,8 @@ END_IF
 // Step 2: Reset all motors and valves ******************************************************************************************************
 IF NOT bAllResetDone AND bEnableDone THEN
 	
-
 	IF NOT bResetCheck[1] THEN
-		bResetCheck[1] := GVL_Motion.aMotors[1].Reset();
+		bResetCheck[1] := GVL_Motion.aMotors[1].Reset(); //TEMP: Motor 1 Out
 	END_IF
 	IF NOT bResetCheck[2] THEN
 			bResetCheck[2] := GVL_Motion.aMotors[2].Reset();
@@ -140,7 +139,7 @@ IF NOT bAllResetDone AND bEnableDone THEN
 	END_IF
 	IF NOT bResetCheck[18] THEN
 			bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
-	END_IF(*
+	END_IF//(*
 	IF NOT bResetCheck[19] THEN
 			bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
 	END_IF
@@ -170,15 +169,15 @@ IF NOT bAllResetDone AND bEnableDone THEN
 	END_IF
 	IF NOT bResetCheck[28] THEN
 			bResetCheck[28] := GVL_Motion.aPumpsRotary[10].Reset();
-	END_IF*)
+	END_IF//*)
 	//Check if all motors reset was done
-	IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND bResetCheck[4] AND 
+	IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND bResetCheck[4] AND //TEMP: Motor 1 Out
        bResetCheck[5] AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] AND
        bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
        bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
-       bResetCheck[17] AND bResetCheck[18] (*AND bResetCheck[19] AND bResetCheck[20] AND
+       bResetCheck[17] AND bResetCheck[18] AND bResetCheck[19] AND bResetCheck[20] AND
 	   bResetCheck[21] AND bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
-	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28]*) THEN
+	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28] THEN
 		bAllResetDone := TRUE;
 	ELSE
 		bAllResetDone := FALSE;
@@ -200,8 +199,8 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
     IF NOT GVL_Motion.bInitialHomingDone THEN
         bPerformHoming := TRUE;
 
-        // Start homing for vertical motors (Stage Collection and Sample Recovery Vertical)
-        bHomeMotorDone[1] := GVL_Motion.aMotors[1].Home(
+        // Start homing for vertical motors (Stage Collection and Sample Recovery Vertical) 
+        bHomeMotorDone[1] := GVL_Motion.aMotors[1].Home( //TEMP: Motor 1 Out
             pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home),
 			rVelocity := GVL_Motion.M1Motor.rHomeVel,
 			rAcc := GVL_Motion.M1Motor.rHomeAcc,
@@ -215,7 +214,7 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
         );
 
         // If both vertical motors finished homing
-        IF bHomeMotorDone[1] AND bHomeMotorDone[2] THEN
+        IF bHomeMotorDone[1] AND bHomeMotorDone[2] THEN //TEMP: Motor 1 Out
             bVerticalMotorsDone := TRUE;
         END_IF
 
@@ -260,9 +259,9 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 			END_IF
 		END_IF        
 		
-		
+		(*
 		//Check if all pumps completed their move
-		bLinearPumpsDone := bHomePumpDone[1] AND bHomePumpDone[2] AND bHomePumpDone[3] AND bHomePumpDone[4] AND bHomePumpDone[5] AND bHomePumpDone[6] AND bHomePumpDone[7] AND bHomePumpDone[8] AND bHomePumpDone[9] AND bHomePumpDone[10];
+		bLinearPumpsDone := bHomePumpDone[1] AND bHomePumpDone[2] AND (*bHomePumpDone[3] AND*) bHomePumpDone[4] AND bHomePumpDone[5] AND bHomePumpDone[6] AND bHomePumpDone[7] AND bHomePumpDone[8] AND bHomePumpDone[9] AND bHomePumpDone[10];
 		
 		//Homing Linear Pumps 1 to 10. 
 		IF NOT bHomePumpDone[1] THEN
@@ -278,14 +277,14 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 													  				rAcc := GVL_Motion.aPumps[2].Linear.rHomeAcc, 
 													  				rDec := GVL_Motion.aPumps[2].Linear.rHomeDec
 													  				);
-		END_IF
+		END_IF(*
 		IF NOT bHomePumpDone[3] THEN
 			bHomePumpDone[3] := GVL_Motion.aPumpsLinear[3].Home( pHomeSensor := ADR(GVL_Motion.aPumps[3].Linear.iHomeSensor.0), 
 													  				rVelocity := GVL_Motion.aPumps[3].Linear.rHomeVel, 
 													  				rAcc := GVL_Motion.aPumps[3].Linear.rHomeAcc, 
 													  				rDec := GVL_Motion.aPumps[3].Linear.rHomeDec
 													  				);
-		END_IF
+		END_IF*)
 		IF NOT bHomePumpDone[4] THEN
 			bHomePumpDone[4] := GVL_Motion.aPumpsLinear[4].Home( pHomeSensor := ADR(GVL_Motion.aPumps[4].Linear.iHomeSensor.0), 
 													  				rVelocity := GVL_Motion.aPumps[4].Linear.rHomeVel, 
@@ -335,22 +334,22 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 													  				rDec := GVL_Motion.aPumps[10].Linear.rHomeDec
 													  				);
 		END_IF
-		
+		*)
 		// If all motors and valves completed their homing, finalize
-        IF bLinearMotorsHomingDone AND bValvesHomingDone AND bLinearPumpsDone THEN 
+        IF bLinearMotorsHomingDone AND bValvesHomingDone (*AND bLinearPumpsDone*) THEN 
             bPerformHoming := FALSE;
             bStartedAction := TRUE;
         END_IF	
 		
     ELSE
 		// Confirm linear motor 3 is done
-		bLinearMotorsHomingDone := bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3];
-	
+		bLinearMotorsHomingDone := (*bMoveMotorDone[1] AND*) bMoveMotorDone[2] AND bMoveMotorDone[3]; //TEMP: Motor 1 Out
+		(*
         // If homing has already been done, move motors and valves to zero/default position
-        IF NOT bMoveMotorDone[1] THEN //Move Motor 1
+        IF NOT bMoveMotorDone[1] THEN //Move Motor 1 //TEMP: Motor 1 Out
 			bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 10, rDec := 10);
         END_IF
-		
+		*)
 		IF NOT bMoveMotorDone[2] THEN //Move Motor 2
 			bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 10, rDec := 10);
         END_IF
@@ -381,9 +380,9 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 				bHomeValveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[5].rHomeVel, rAcc := GVL_Motion.aValves[5].rHomeAcc, rDec := GVL_Motion.aValves[5].rHomeDec);
 			END_IF
 		END_IF
-		
+		(*
 		//Check if all pumps completed their move
-		bLinearPumpsDone := bHomePumpDone[1] AND bHomePumpDone[2] AND bHomePumpDone[3] AND bHomePumpDone[4] AND bHomePumpDone[5] AND bHomePumpDone[6] AND bHomePumpDone[7] AND bHomePumpDone[8] AND bHomePumpDone[9] AND bHomePumpDone[10];
+		bLinearPumpsDone := bHomePumpDone[1] AND bHomePumpDone[2] AND (*bHomePumpDone[3] AND*) bHomePumpDone[4] AND bHomePumpDone[5] AND bHomePumpDone[6] AND bHomePumpDone[7] AND bHomePumpDone[8] AND bHomePumpDone[9] AND bHomePumpDone[10];
 		
 		//Move all linear pumps to position 0.
 		IF NOT bHomePumpDone[1] THEN
@@ -398,12 +397,12 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 													  					rDec := GVL_Motion.aPumps[2].Linear.rHomeDec
 													  					);
 		END_IF
-		IF NOT bHomePumpDone[3] THEN
+		(*IF NOT bHomePumpDone[3] THEN
 			bHomePumpDone[3] := GVL_Motion.aPumpsLinear[3].MoveAbsolute( rPosition := -9, rVelocity := GVL_Motion.aPumps[3].Linear.rHomeVel, 
 													  					rAcc := GVL_Motion.aPumps[3].Linear.rHomeAcc, 
 													  					rDec := GVL_Motion.aPumps[3].Linear.rHomeDec
 													  					);
-		END_IF
+		END_IF*)
 		IF NOT bHomePumpDone[4] THEN
 			bHomePumpDone[4] := GVL_Motion.aPumpsLinear[4].MoveAbsolute( rPosition := -9, rVelocity := GVL_Motion.aPumps[4].Linear.rHomeVel, 
 													  					rAcc := GVL_Motion.aPumps[4].Linear.rHomeAcc, 
@@ -446,9 +445,9 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
 													  					rDec := GVL_Motion.aPumps[10].Linear.rHomeDec
 													  					);
 		END_IF
-		
+		*)
 		// If all motors and valves completed their homing, finalize
-        IF bLinearMotorsHomingDone AND bValvesHomingDone AND bLinearPumpsDone THEN 
+        IF bLinearMotorsHomingDone AND bValvesHomingDone (*AND bLinearPumpsDone*) THEN 
             bStartedAction := TRUE;
         END_IF
 		
@@ -459,7 +458,7 @@ END_IF
 IF bStartedAction THEN
 	bAllDone := TRUE;
 	
-	FOR i := 1 TO 3 DO
+	FOR i := 2 TO 3 DO //TEMP: Motor 1 Out
 		stStatus := GVL_Motion.aMotors[i].GetStatus();
 	
 		// If any motor is not done yet
@@ -614,7 +613,8 @@ END_IF
       <LineId Id="1310" Count="0" />
       <LineId Id="1312" Count="0" />
       <LineId Id="1213" Count="0" />
-      <LineId Id="690" Count="26" />
+      <LineId Id="690" Count="10" />
+      <LineId Id="702" Count="14" />
       <LineId Id="718" Count="8" />
       <LineId Id="1216" Count="1" />
       <LineId Id="727" Count="0" />

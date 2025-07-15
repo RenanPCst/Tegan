@@ -20,6 +20,7 @@ VAR
     sOldFile      : STRING(256);
     sOldBackup    : STRING(256);
 	sTempStr 	  : STRING(64);
+	iTempNumb	  : DINT;
     fbFileOpen    : FB_FileOpen;
     fbFileWrite   : FB_FileWrite;
     fbFileClose   : FB_FileClose;
@@ -148,7 +149,8 @@ CASE iStep OF
 			fbJson.AddStringMember(objOtherParams, 'tAgitate1Time', sTempStr);
 			sTempStr := TIME_TO_STRING(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time);
 			fbJson.AddStringMember(objOtherParams, 'tAgitate2Time', sTempStr);
-			fbJson.AddIntMember(objOtherParams, 'iVialsToFill', GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill);
+			iTempNumb := TO_DINT(GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill);
+			fbJson.AddIntMember(objOtherParams, 'iVialsToFill', iTempNumb);
 			fbJson.AddDoubleMember(objOtherParams, 'rVialPrimeVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol);
 			fbJson.AddDoubleMember(objOtherParams, 'rVial1FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol);
 			fbJson.AddDoubleMember(objOtherParams, 'rVials2_4FillVol', GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol);
@@ -286,7 +288,9 @@ END_CASE]]></ST>
       <LineId Id="556" Count="0" />
       <LineId Id="428" Count="0" />
       <LineId Id="557" Count="0" />
-      <LineId Id="429" Count="4" />
+      <LineId Id="429" Count="0" />
+      <LineId Id="725" Count="0" />
+      <LineId Id="430" Count="3" />
       <LineId Id="558" Count="0" />
       <LineId Id="434" Count="3" />
       <LineId Id="672" Count="0" />

@@ -144,7 +144,7 @@ CASE CurrentState OF
 						bDone      	=> bEventDone
 					);
 					ResetEventTrigger(); //Reset the Error Event
-					CurrentState := E_MachineStates.SEAL_STAGES; // Move to the next state jumping Hardware Init because it was done by Master control System Initializing state. 
+					CurrentState := E_MachineStates.RECOVERY_PHASE; //E_MachineStates.SEAL_STAGES; //TEMP: Motor 1 Out 
 				END_IF;
 			END_IF;	
 		//END_IF//temporary Debug Manual variable ************************************************************************************
@@ -168,7 +168,7 @@ CASE CurrentState OF
 	
 			//step forward to step ahead
 			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
-				CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead
+				CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:
 			END_IF;
 	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
@@ -207,16 +207,16 @@ CASE CurrentState OF
             CurrentState := E_MachineStates.ERROR_STATE;
             GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //raise alarm/red light
         ELSIF bRecoverySuccess THEN
-            CurrentState := E_MachineStates.DRYING_PHASE; //step forward to step ahead
+            CurrentState := E_MachineStates.WASHING_PHASE; //step forward to step ahead
         END_IF;
 	
     E_MachineStates.WASHING_PHASE: //TODO
-        IF TRUE THEN //washing sequence
+        (*IF TRUE THEN //washing sequence
             CurrentState := E_MachineStates.DRYING_PHASE;
         ELSE
             bErrorFlag := TRUE;
             CurrentState := E_MachineStates.ERROR_STATE;
-        END_IF;
+        END_IF;*)
 
     E_MachineStates.DRYING_PHASE: //TODO
         IF TRUE THEN //drying sequence

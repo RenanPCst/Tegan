@@ -101,7 +101,7 @@ END_VAR]]></Declaration>
 
     PRESSURIZE:
         // Waits for the pressurization time to complete
-        tonPressuring(IN := bPressureTime, PT := T#2S);
+        tonPressuring(IN := bPressureTime, PT := T#5S);
         IF tonPressuring.Q THEN
             // Switches solenoids to LEAKTESTMONITORING configuration before monitoring begins
             fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
@@ -127,11 +127,10 @@ END_VAR]]></Declaration>
 		bPressureInput := TRUE;
 		IF bPressureInput THEN
         	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rLeakTestPressureSensor, iSensorID := 3, rPressure => rScaledPressure);
-			rSystemPressure := rScaledPressure;
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := rScaledPressure * 0.01; //TODO: Just for testing purposes... need to be adjusted to 0.95
+			rClosedSystemPressure := rScaledPressure * 0.95; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
 			tonMonitoring(in := bPressureInput, PT := tMonitorTime);
@@ -153,6 +152,9 @@ END_VAR]]></Declaration>
 				eState := ERROR;
 			END_IF;
 		END_IF
+		//Pressure output for monitoring
+		GVL_HMI.rCalLealTestPressure := rScaledPressure;
+		rSystemPressure := rScaledPressure;
 
     DONE:
 		bLeakTestDone := TRUE;
@@ -192,6 +194,11 @@ bPressureTime := FALSE;
 bPressureTaken := FALSE;
 bExecuteEvent := FALSE;
 bEventDone := FALSE;
+bLeakTestError := FALSE;
+bLeakTestDone := FALSE;
+
+tonPressuring(in := FALSE);
+tonMonitoring(in := FALSE);
 
 // Send Reset Return
 IF NOT bLeakTestDone AND NOT bLeakTestError THEN
@@ -214,9 +221,10 @@ END_IF;]]></ST>
     <LineIds Name="FB_LeakTest">
       <LineId Id="596" Count="15" />
       <LineId Id="613" Count="14" />
-      <LineId Id="629" Count="59" />
-      <LineId Id="770" Count="0" />
-      <LineId Id="689" Count="41" />
+      <LineId Id="629" Count="84" />
+      <LineId Id="805" Count="1" />
+      <LineId Id="804" Count="0" />
+      <LineId Id="714" Count="16" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.Reset">
@@ -226,6 +234,10 @@ END_IF;]]></ST>
       <LineId Id="48" Count="1" />
       <LineId Id="13" Count="0" />
       <LineId Id="55" Count="1" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="65" Count="0" />
       <LineId Id="51" Count="0" />
       <LineId Id="14" Count="5" />
       <LineId Id="5" Count="0" />
