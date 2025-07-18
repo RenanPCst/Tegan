@@ -6426,7 +6426,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{7A3EEB27-6BC8-3BD0-DCE8-9C75761BF7C0}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{55FB747E-EB51-9AA8-6F78-637661015063}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6518,14 +6518,14 @@ External Setpoint Generation:
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{985A3944-06A0-6B12-5746-55142C90A109}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
@@ -6536,17 +6536,6 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
@@ -7131,6 +7120,17 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>REAL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -7144,13 +7144,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -7192,19 +7192,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bInResetSignal</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7471,6 +7458,19 @@ M1 Motor Safety]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.iM4STOErrorAck</Name>
 							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
@@ -7699,7 +7699,7 @@ M1 Motor Safety]]></Comment>
 			<PlcAuxTask Affinity="#x00000001"/>
 		</Plc>
 		<Safety>
-			<Project GUID="{80E8059B-70AF-4BCB-BB68-A04F5BA304B2}" Name="PLC_Safe_1" PrjFilePath="PLC_Safe_1\PLC_Safe_1.splcproj" TmcFilePath="PLC_Safe_1\PLC_Safe_1.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="PLC_Safe_1" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010020" KeepUnrestoredLinks="2">
 					<Name>PLC_Safe_1 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7714,7 +7714,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{FD6179BA-EC30-42E2-A4EF-AC4E5A1C373F}" Name="AX8000_Drive" PrjFilePath="AX8000_Drive\AX8000_Drive.splcproj" TmcFilePath="AX8000_Drive\AX8000_Drive.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="AX8000_Drive" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010010" KeepUnrestoredLinks="2">
 					<Name>AX8000_Drive Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7729,7 +7729,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{B79C21A7-47FB-4525-90D2-60C77577483B}" Name="M4Valve1" PrjFilePath="M4Valve1\M4Valve1.splcproj" TmcFilePath="M4Valve1\M4Valve1.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="M4Valve1" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010030" KeepUnrestoredLinks="2">
 					<Name>M4Valve1 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7744,7 +7744,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{45244C04-B571-4B5F-8ADE-DC932EFDE5D4}" Name="M5_Valve2" PrjFilePath="M5_Valve2\M5_Valve2.splcproj" TmcFilePath="M5_Valve2\M5_Valve2.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="M5_Valve2" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010040" KeepUnrestoredLinks="2">
 					<Name>M5_Valve2 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7759,7 +7759,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{EAD4EF5C-8E56-47CE-BC5E-6DBCB41B273E}" Name="M8_Valve5" PrjFilePath="M8_Valve5\M8_Valve5.splcproj" TmcFilePath="M8_Valve5\M8_Valve5.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="M8_Valve5" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010070" KeepUnrestoredLinks="2">
 					<Name>M8_Valve5 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7774,7 +7774,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{94C1BA61-46C2-4CC2-A5D7-959CE7243A0D}" Name="M7Valve4" PrjFilePath="M7Valve4\M7Valve4.splcproj" TmcFilePath="M7Valve4\M7Valve4.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="M7Valve4" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010060" KeepUnrestoredLinks="2">
 					<Name>M7Valve4 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -7789,7 +7789,7 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{B784D50B-3074-40C5-B467-8E70DCA6D1E3}" Name="M6_Valve.3" PrjFilePath="M6_Valve.3\M6_Valve.3.splcproj" TmcFilePath="M6_Valve.3\M6_Valve.3.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="M6_Valve.3" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010050" KeepUnrestoredLinks="2">
 					<Name>M6_Valve.3 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">

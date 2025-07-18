@@ -225,6 +225,33 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.E_IconState": {
+            "attributes": {
+                "generate_implicit_init_function": "",
+                "qualified_only": "",
+                "strict": ""
+            },
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "options": [
+                {
+                    "label": "Waiting",
+                    "value": 0
+                },
+                {
+                    "label": "InProgress",
+                    "value": 1
+                },
+                {
+                    "label": "Completed",
+                    "value": 2
+                }
+            ],
+            "type": "integer"
+        },
         "PLC1.E_MachineMode": {
             "attributes": {
                 "generate_implicit_init_function": "",
@@ -366,7 +393,7 @@
                             "$ref": "#/definitions/PLC1.ARRAY_1..6_OF-BOOL"
                         },
                         {
-                            "propertyOrder": 22
+                            "propertyOrder": 29
                         }
                     ]
                 },
@@ -377,7 +404,77 @@
                         },
                         {
                             "comment": "Doors hide/visible",
-                            "propertyOrder": 21
+                            "propertyOrder": 28
+                        }
+                    ]
+                },
+                "eIconStateAirFlow": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 15
+                        }
+                    ]
+                },
+                "eIconStateDry": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 20
+                        }
+                    ]
+                },
+                "eIconStateHardware": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 16
+                        }
+                    ]
+                },
+                "eIconStateLeakTest": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 17
+                        }
+                    ]
+                },
+                "eIconStateRecovery": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 18
+                        }
+                    ]
+                },
+                "eIconStateSafety": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 14
+                        }
+                    ]
+                },
+                "eIconStateWashing": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_IconState"
+                        },
+                        {
+                            "propertyOrder": 19
                         }
                     ]
                 },
@@ -437,7 +534,7 @@
                             "$ref": "tchmi:general#/definitions/REAL"
                         },
                         {
-                            "comment": "Pumps Linear and Rotary Animation\r\nProgress Circle Bar / Text Animation",
+                            "comment": "Pumps Linear and Rotary Animation\r\nProgress Circle Bar | Text | State Animation",
                             "propertyOrder": 7
                         }
                     ]
@@ -487,7 +584,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 15
+                            "propertyOrder": 22
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -498,7 +595,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 20
+                            "propertyOrder": 27
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -509,7 +606,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 16
+                            "propertyOrder": 23
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -520,7 +617,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 17
+                            "propertyOrder": 24
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -531,7 +628,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 18
+                            "propertyOrder": 25
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -542,7 +639,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 14
+                            "propertyOrder": 21
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -553,7 +650,7 @@
                     "allOf": [
                         {
                             "maxLength": 64,
-                            "propertyOrder": 19
+                            "propertyOrder": 26
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
@@ -5044,6 +5141,33 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bMachineModeBlinking": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bMachineModeBlinking",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Machine Mode Blinking"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bMachineModeScan": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bMachineModeScan",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bNewRecipeButton": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -5268,6 +5392,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bResetM1MotorBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bResetM1MotorBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "TEMP\r\nMotor M1 Reset button"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bRunPumpsByDistanceBt": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -5435,6 +5576,23 @@
                     },
                     {
                         "comment": "Count down time for shutdown or rebooting PLC"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.sActivatedRecipeHomeNaming": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::sActivatedRecipeHomeNaming",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 256
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
                     }
                 ]
             },
@@ -6972,6 +7130,8 @@
                 "PLC1.GVL_HMI.bHomeLampBlueState": 3,
                 "PLC1.GVL_HMI.bIncoherenceAlert": 3,
                 "PLC1.GVL_HMI.bIncoherenceDetected": 3,
+                "PLC1.GVL_HMI.bMachineModeBlinking": 3,
+                "PLC1.GVL_HMI.bMachineModeScan": 3,
                 "PLC1.GVL_HMI.bNewRecipeButton": 3,
                 "PLC1.GVL_HMI.bRecipeActivateButton": 3,
                 "PLC1.GVL_HMI.bRecipeActivateDone": 3,
@@ -6986,6 +7146,7 @@
                 "PLC1.GVL_HMI.bRefreshRecipeList": 3,
                 "PLC1.GVL_HMI.bReloadHMIParameters": 3,
                 "PLC1.GVL_HMI.bReloadRecipeDatagrids": 3,
+                "PLC1.GVL_HMI.bResetM1MotorBt": 3,
                 "PLC1.GVL_HMI.bRunPumpsByDistanceBt": 3,
                 "PLC1.GVL_HMI.bRunPumpsBySpeedBt": 3,
                 "PLC1.GVL_HMI.bRunPumpsByVolumeBt": 3,
@@ -6999,6 +7160,7 @@
                 "PLC1.GVL_HMI.iTestDistance": 3,
                 "PLC1.GVL_HMI.rCalLealTestPressure": 3,
                 "PLC1.GVL_HMI.rTimeCountingDown": 3,
+                "PLC1.GVL_HMI.sActivatedRecipeHomeNaming": 3,
                 "PLC1.GVL_HMI.sActualUserName": 3,
                 "PLC1.GVL_HMI.sCountdownText": 3,
                 "PLC1.GVL_HMI.sSelectedRecipeName": 3,

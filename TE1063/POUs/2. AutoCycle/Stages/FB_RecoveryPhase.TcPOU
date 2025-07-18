@@ -55,8 +55,12 @@ VAR
     bTimerStarted   : BOOL := FALSE;
 	bSoakTimerDone  : BOOL := FALSE;
 	
-	//Metering Rinse 2
-	
+	// Progress Bar Timing
+	rTotalEstimatedTimeSec : REAL := 0.0;
+	rElapsedTimeSec : REAL := 0.0;
+	rAccumulatedProgress : REAL := 0.0;
+	tStartTime : TIME := T#0s;
+	bProgressInitDone : BOOL := FALSE;
 	
 	//Debug Variables
 	bDebug : ARRAY[1..20] OF BOOL;
@@ -66,8 +70,17 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF NOT bStart THEN
+	tStartTime := TIME();
+	rTotalEstimatedTimeSec := EstimateTotalTime();
 	eRecoveryState := E_RecoveryState.Idle;
+	bProgressInitDone := TRUE;
 	bStart := bExecute;
+END_IF
+
+IF bProgressInitDone AND (eRecoveryState <> E_RecoveryState.Idle) AND (eRecoveryState <> E_RecoveryState.Completed) THEN
+	rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0; // convert to seconds
+
+	GVL_HMI.HMIAnimation.rLoadBarRecovery := MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
 CASE eRecoveryState OF
@@ -77,6 +90,7 @@ CASE eRecoveryState OF
 		//Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Starting'; 
 		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 0;
+		GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.InProgress;
 		
         IF bStart THEN
             eRecoveryState := E_RecoveryState.Metering_Solvent1;
@@ -235,6 +249,7 @@ CASE eRecoveryState OF
     E_RecoveryState.Completed:
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Completed'; 
 		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 100;
+		GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Completed;
 		bDone := TRUE;
 		bSuccess := TRUE;
 
@@ -247,8 +262,8 @@ END_CASE;
 CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Solvent Lines'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
+		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines R1'; 
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
 		iStepCounter := 1;
 		
     1: // Setar válvulas para posição 5 (Recirculação)
@@ -311,8 +326,8 @@ END_CASE
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning the lines'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 60;
+		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines'; 
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 60;
 		iStepCounter := 1;
 		
     1: // Setar válvulas para posição 5 (Recirculação)
@@ -368,13 +383,125 @@ END_CASE
 END_CASE]]></ST>
       </Implementation>
     </Action>
+    <Method Name="EstimateTotalTime" Id="{5a7388ad-dbe5-46cf-8db1-7675e96f6014}">
+      <Declaration><![CDATA[METHOD PRIVATE EstimateTotalTime : REAL
+VAR_INPUT
+END_VAR
+VAR
+	i : INT;
+	iRow : INT;
+    rTotalTime : REAL := 0.0;
+    rMaxPumpTime : REAL;
+    rTmpTime : REAL;
+	aPumpVolume : ARRAY[1..10] OF REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// --- MOTORS M2 and M3 ---
+// Movements are sequential, so times are summed
+rTotalTime := rTotalTime
+    + (ABS(GVL_Settings.stMachineParam.aM2Position[3] - GVL_Settings.stMachineParam.aM2Position[1]) / GVL_Settings.stMachineParam.rM2Velocity) * 4
+    + (ABS(GVL_Settings.stMachineParam.aM3Position[4] - GVL_Settings.stMachineParam.aM3Position[1]) / GVL_Settings.stMachineParam.rM3Velocity) * 4;
+
+// --- VALVES ---
+// Valves move in parallel, so estimate per group of 5 valves per switch
+// Estimated 0.8s per position change, 8 total changes
+rTotalTime := rTotalTime + 0.8 * 8;
+
+
+// --- TIMERS ---
+// Add the Agitation and Soak durations directly (in seconds)
+rTotalTime := rTotalTime + TO_REAL(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time) / 1000.0;
+rTotalTime := rTotalTime + TO_REAL(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time) / 1000.0;
+rTotalTime := rTotalTime + TO_REAL(GVL_Recipe.stActiveRecipe.stOtherParams.tSoakTime) / 1000.0;
+
+
+// --- PUMPS ---
+// Pumps move in parallel. We always use the slowest pump as reference for each phase.
+
+// Metering Solvent 1
+rMaxPumpTime := 0;
+aPumpVolume[1] := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + 10;
+aPumpVolume[2] := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + 10;
+aPumpVolume[3] := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + 10;
+aPumpVolume[4] := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + 10;
+aPumpVolume[5] := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + 10;
+aPumpVolume[6] := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + 10;
+aPumpVolume[7] := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + 10;
+aPumpVolume[8] := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + 10;
+aPumpVolume[9] := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + 10;
+aPumpVolume[10] := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + 10;
+
+FOR i := 1 TO 10 DO
+    rTmpTime := F_VolumeToSteps(rVolume := aPumpVolume[i], iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+    IF rTmpTime > rMaxPumpTime THEN rMaxPumpTime := rTmpTime; END_IF
+END_FOR
+rTotalTime := rTotalTime + rMaxPumpTime;
+
+// Metering Solvent 2
+rMaxPumpTime := 0;
+aPumpVolume[1] := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + 10;
+aPumpVolume[2] := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + 10;
+aPumpVolume[3] := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + 10;
+aPumpVolume[4] := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + 10;
+aPumpVolume[5] := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + 10;
+aPumpVolume[6] := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + 10;
+aPumpVolume[7] := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + 10;
+aPumpVolume[8] := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + 10;
+aPumpVolume[9] := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + 10;
+aPumpVolume[10] := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + 10;
+FOR i := 1 TO 10 DO
+    rTmpTime := F_VolumeToSteps(rVolume := aPumpVolume[i], iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+    IF rTmpTime > rMaxPumpTime THEN rMaxPumpTime := rTmpTime; END_IF
+END_FOR
+rTotalTime := rTotalTime + rMaxPumpTime;
+
+// Prime Needles
+rMaxPumpTime := 0;
+FOR i := 1 TO 10 DO
+    rTmpTime := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+    IF rTmpTime > rMaxPumpTime THEN rMaxPumpTime := rTmpTime; END_IF
+END_FOR
+rTotalTime := rTotalTime + rMaxPumpTime;
+
+// Fill Vials Rows 1–4
+FOR iRow := 1 TO GVL_Recipe.stActiveRecipe.stOtherParams.iVialsToFill DO
+    rMaxPumpTime := 0;
+    FOR i := 1 TO 10 DO
+        IF iRow = 1 THEN
+            rTmpTime := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+        ELSE
+            rTmpTime := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+        END_IF
+        IF rTmpTime > rMaxPumpTime THEN 
+			rMaxPumpTime := rTmpTime; 
+		END_IF
+    END_FOR
+    rTotalTime := rTotalTime + rMaxPumpTime;
+END_FOR
+
+// Waste Remaining Solvent
+rMaxPumpTime := 0;
+
+FOR i := 1 TO 10 DO
+    rTmpTime := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2], iPumpIndex := i) / GVL_Motion.aPumps[i].Rotary.rSpeed;
+    IF rTmpTime > rMaxPumpTime THEN
+ 		rMaxPumpTime := rTmpTime; 
+	END_IF
+	
+END_FOR
+rTotalTime := rTotalTime + rMaxPumpTime;
+
+EstimateTotalTime := rTotalTime + 240;]]></ST>
+      </Implementation>
+    </Method>
     <Action Name="Fill_Vials_Row_1" Id="{175ea493-1eff-4a16-bd97-613f6d5c4b1b}">
       <Implementation>
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R1'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 70;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 70;
 		iStepCounter := 1;
 		
     1: // Set Valves into position 6 - Needles
@@ -478,7 +605,7 @@ END_CASE]]></ST>
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R2'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 75;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 75;
 		iStepCounter := 1;
 		
     1: // Set Valves into position 6 - Needles
@@ -584,7 +711,7 @@ END_CASE]]></ST>
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R3'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 80;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 80;
 		iStepCounter := 1;
 		
     1: // Set Valves into position 6 - Needles
@@ -690,7 +817,7 @@ END_CASE]]></ST>
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R4'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 85;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 85;
 		iStepCounter := 1;
 		
     1: // Set Valves into position 6 - Needles
@@ -824,7 +951,7 @@ GetPumpVolume := volume;]]></ST>
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 1'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 10;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 10;
 		iStepCounter := 1;
 	
     1: // Initialization: Reset solenoids and set valves
@@ -854,16 +981,16 @@ GetPumpVolume := volume;]]></ST>
 		END_IF
         
 	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1], iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1], iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1], iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1], iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1], iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1], iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1], iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1], iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1], iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1], iPumpIndex := 10);
+		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + 10, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + 10, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + 10, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + 10, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + 10, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + 10, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + 10, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + 10, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + 10, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + 10, iPumpIndex := 10);
 		
 		iStepCounter := 4;
 		
@@ -897,7 +1024,7 @@ END_CASE
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 2'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 40;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 40;
 		iStepCounter := 1;
 	
     1: // Initialization: Reset solenoids and set valves
@@ -927,16 +1054,16 @@ END_CASE
 		END_IF
         
 	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2], iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2], iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2], iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2], iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2], iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2], iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2], iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2], iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2], iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2], iPumpIndex := 10);
+		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + 10, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + 10, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + 10, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + 10, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + 10, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + 10, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + 10, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + 10, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + 10, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + 10, iPumpIndex := 10);
 		
 		iStepCounter := 4;
 		
@@ -970,7 +1097,7 @@ END_CASE
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Mix Solvents 1 and 2'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 50;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 50;
 		iStepCounter := 1;
 		
     1: // Setar válvulas para posição 5 (Recirculação)
@@ -1032,7 +1159,7 @@ END_CASE]]></ST>
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Needles'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 65;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 65;
 		iStepCounter := 1;
 	
     1: // Set valves for Needles position
@@ -1098,7 +1225,7 @@ END_CASE
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Recirculate Solvent'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 20;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 20;
 		iStepCounter := 1;
 		
     1: // Setar válvulas para posição 5 (Recirculação)
@@ -1195,6 +1322,22 @@ END_FOR
 bTimerStarted   := FALSE;
 bSoakTimerDone  := FALSE;
 
+//Icon progress reset
+GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.rLoadBarLeakTest := 0;
+GVL_HMI.HMIAnimation.rLoadBarRecovery := 0;
+GVL_HMI.HMIAnimation.rLoadBarWashing := 0;
+GVL_HMI.HMIAnimation.rLoadBarDry := 0;
+
+tStartTime := T#0S;
+rElapsedTimeSec := 0.0;
+rTotalEstimatedTimeSec := 0.0;
+bProgressInitDone := FALSE;
+GVL_HMI.HMIAnimation.rLoadBarRecovery := 0.0;
+
 IF NOT bInitComplete AND NOT bErrorDetected THEN
 	Reset := TRUE;
 	RETURN;
@@ -1211,7 +1354,7 @@ END_IF
       <Implementation>
         <ST><![CDATA[//Provide HMI animation details
 GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Solvent Soak'; 
-GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
+//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
 
 // Initialize the Soak timer
 bTimerStarted := TRUE;
@@ -1239,7 +1382,7 @@ END_IF
 	
 	0: //Provide HMI animation details
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Waste Solvent'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 90;
+		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 90;
 		iStepCounter := 1;
 		
     1: // Set Valves into position 6 - Needles
@@ -1340,7 +1483,17 @@ END_CASE]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_RecoveryPhase">
-      <LineId Id="851" Count="11" />
+      <LineId Id="851" Count="0" />
+      <LineId Id="1189" Count="0" />
+      <LineId Id="1211" Count="0" />
+      <LineId Id="1191" Count="0" />
+      <LineId Id="1218" Count="0" />
+      <LineId Id="1209" Count="0" />
+      <LineId Id="854" Count="0" />
+      <LineId Id="1213" Count="4" />
+      <LineId Id="1212" Count="0" />
+      <LineId Id="855" Count="7" />
+      <LineId Id="1181" Count="0" />
       <LineId Id="868" Count="106" />
       <LineId Id="1008" Count="11" />
       <LineId Id="981" Count="0" />
@@ -1358,7 +1511,9 @@ END_CASE]]></ST>
       <LineId Id="992" Count="5" />
       <LineId Id="1049" Count="0" />
       <LineId Id="998" Count="1" />
-      <LineId Id="1051" Count="2" />
+      <LineId Id="1051" Count="1" />
+      <LineId Id="1182" Count="0" />
+      <LineId Id="1053" Count="0" />
       <LineId Id="1118" Count="0" />
       <LineId Id="1006" Count="1" />
       <LineId Id="9" Count="0" />
@@ -1376,6 +1531,24 @@ END_CASE]]></ST>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1and2">
       <LineId Id="2" Count="56" />
       <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.EstimateTotalTime">
+      <LineId Id="57" Count="23" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="150" Count="8" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="81" Count="7" />
+      <LineId Id="160" Count="8" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="89" Count="23" />
+      <LineId Id="129" Count="1" />
+      <LineId Id="113" Count="5" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="119" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="131" Count="2" />
+      <LineId Id="125" Count="2" />
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Fill_Vials_Row_1">
       <LineId Id="2" Count="23" />
@@ -1536,6 +1709,15 @@ END_CASE]]></ST>
       <LineId Id="68" Count="0" />
       <LineId Id="55" Count="0" />
       <LineId Id="46" Count="2" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="97" Count="3" />
+      <LineId Id="87" Count="3" />
+      <LineId Id="85" Count="0" />
       <LineId Id="60" Count="0" />
       <LineId Id="58" Count="0" />
       <LineId Id="61" Count="0" />
