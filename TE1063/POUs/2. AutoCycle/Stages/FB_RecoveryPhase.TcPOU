@@ -14,7 +14,6 @@ END_VAR
 
 VAR
 	eRecoveryState : E_RecoveryState := E_RecoveryState.Idle;
-    bInitComplete : BOOL := FALSE;
 
     fbSolenoidControl : FB_SolenoidControl;
 	
@@ -25,12 +24,9 @@ VAR
 
     iStepCounter : INT := 0;
     i : USINT; //loop for index
-	
-	//Timers
-	timerAgitate : TON;
+
 	// Control flags
 	bStart		: BOOL := FALSE;
-	bDone		: BOOL := FALSE;
     bMoveM2 	: BOOL := FALSE;
 	bMoveM3		: BOOL := FALSE;
     bMovementComplete : BOOL := FALSE;
@@ -40,13 +36,8 @@ VAR
 	bMoveValveDone		 : ARRAY[1..5] OF BOOL;
 	bMovePumpDone		 : ARRAY[1..10] OF BOOL;
 	fDistance        	 : ARRAY[1..10] OF REAL;
-    bAllValvesInPosition : BOOL := TRUE;
-    bAllPumpsDone        : BOOL := TRUE;
-	bMoveValvesDone		 : ARRAY[1..5] OF BOOL;
 	
 	//Recirculate Solvent 1
-	bAllValvesInPos  : BOOL := FALSE;
-    bMovementStarted : BOOL := FALSE;
     fAgitationTime   : REAL := 0;
 	fCalcDistance	 : ARRAY[1..10] OF REAL;
 	
@@ -58,22 +49,14 @@ VAR
 	// Progress Bar Timing
 	rTotalEstimatedTimeSec : REAL := 0.0;
 	rElapsedTimeSec : REAL := 0.0;
-	rAccumulatedProgress : REAL := 0.0;
-	tStartTime : TIME := T#0s;
+	tStartTime : TIME := T#0S;
 	bProgressInitDone : BOOL := FALSE;
 	
-	//Debug Variables
-	bDebug : ARRAY[1..20] OF BOOL;
-	
-
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF NOT bStart THEN
-	tStartTime := TIME();
-	rTotalEstimatedTimeSec := EstimateTotalTime();
 	eRecoveryState := E_RecoveryState.Idle;
-	bProgressInitDone := TRUE;
 	bStart := bExecute;
 END_IF
 
@@ -86,20 +69,25 @@ END_IF
 CASE eRecoveryState OF
 
     E_RecoveryState.Idle:
-		bDone := FALSE;
-		//Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Starting'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 0;
-		GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.InProgress;
+		bSuccess := FALSE;
+		bError := FALSE;
 		
         IF bStart THEN
+			//Start time calculation
+			tStartTime := TIME();
+			rTotalEstimatedTimeSec := EstimateTotalTime();
+			bProgressInitDone := TRUE;
+			//Provide HMI animation details
+			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Starting'; 
+			GVL_HMI.HMIAnimation.rLoadBarRecovery  := 0;
+			GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.InProgress;
+			//Move to next step
             eRecoveryState := E_RecoveryState.Metering_Solvent1;
-            bInitComplete  := FALSE;
         END_IF;
 
     E_RecoveryState.Metering_Solvent1:
 
-        MeteringSolvent1(); //OK
+        MeteringSolvent1(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Recirculate_Solvent1;
 			iStepCounter := 0;
@@ -109,7 +97,7 @@ CASE eRecoveryState OF
 
     E_RecoveryState.Recirculate_Solvent1:
 
-        RecirculateSolvent1(); //OK
+        RecirculateSolvent1(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Solvent_Soak;
 			iStepCounter := 0;
@@ -119,7 +107,7 @@ CASE eRecoveryState OF
 	
     E_RecoveryState.Solvent_Soak:
 
-        SolventSoak(); //onReview
+        SolventSoak(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Cleaning_Lines_S1;
 			iStepCounter := 0;
@@ -127,11 +115,11 @@ CASE eRecoveryState OF
         END_IF
 
 
-    E_RecoveryState.Cleaning_Lines_S1: //*
+    E_RecoveryState.Cleaning_Lines_S1:
 
-        CleaningLinesSolvent1(); //onReview
+        CleaningLinesSolvent1();
         IF bMovementComplete THEN
-            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] <> 0 THEN
+            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] <> 0 THEN //check if two solvents is needed to recovery 
                 eRecoveryState := E_RecoveryState.Metering_Solvent2;
 				iStepCounter := 0;
             	bMovementComplete := FALSE;
@@ -146,7 +134,7 @@ CASE eRecoveryState OF
 
     E_RecoveryState.Metering_Solvent2:
 
-        MeteringSolvent2(); //onReview
+        MeteringSolvent2(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Mix_Solvent1_2;
 			iStepCounter := 0;
@@ -156,7 +144,7 @@ CASE eRecoveryState OF
 
     E_RecoveryState.Mix_Solvent1_2:
 
-        MixSolvent1and2(); //onReview
+        MixSolvent1and2(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Cleaning_Lines_S1_S2;
 			iStepCounter := 0;
@@ -166,7 +154,7 @@ CASE eRecoveryState OF
 	
     E_RecoveryState.Cleaning_Lines_S1_S2:
 	
-        CleaningLinesSolvent1and2(); //onReview
+        CleaningLinesSolvent1and2(); 
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Prime_Needles;
 			iStepCounter := 0;
@@ -188,7 +176,7 @@ CASE eRecoveryState OF
 	
         Fill_Vials_Row_1();
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 1 THEN
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 1 THEN //Check how many vials lines will be filled
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_2;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
@@ -202,7 +190,7 @@ CASE eRecoveryState OF
 	
         Fill_Vials_Row_2();
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 2 THEN
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 2 THEN //Check how many vials lines will be filled
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_3;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
@@ -216,7 +204,7 @@ CASE eRecoveryState OF
 	
         Fill_Vials_Row_3();
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 3 THEN
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 3 THEN //Check how many vials lines will be filled
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_4;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
@@ -250,7 +238,6 @@ CASE eRecoveryState OF
 		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Completed'; 
 		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 100;
 		GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Completed;
-		bDone := TRUE;
 		bSuccess := TRUE;
 
 END_CASE;
@@ -492,7 +479,7 @@ FOR i := 1 TO 10 DO
 END_FOR
 rTotalTime := rTotalTime + rMaxPumpTime;
 
-EstimateTotalTime := rTotalTime + 240;]]></ST>
+EstimateTotalTime := rTotalTime + 180;]]></ST>
       </Implementation>
     </Method>
     <Action Name="Fill_Vials_Row_1" Id="{175ea493-1eff-4a16-bd97-613f6d5c4b1b}">
@@ -981,16 +968,16 @@ GetPumpVolume := volume;]]></ST>
 		END_IF
         
 	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + 10, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + 10, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + 10, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + 10, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + 10, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + 10, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + 10, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + 10, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + 10, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + 10, iPumpIndex := 10);
+		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
 		
 		iStepCounter := 4;
 		
@@ -1054,16 +1041,16 @@ END_CASE
 		END_IF
         
 	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + 10, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + 10, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + 10, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + 10, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + 10, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + 10, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + 10, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + 10, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + 10, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + 10, iPumpIndex := 10);
+		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
 		
 		iStepCounter := 4;
 		
@@ -1182,16 +1169,16 @@ END_CASE]]></ST>
 		END_IF
         
 	2: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 20, iPumpIndex := 10);
+		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
 		
 		iStepCounter := 3;
 		
@@ -1289,28 +1276,20 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//Init Flags
-bInitComplete 	:= FALSE;
-bErrorDetected  := FALSE;
 nPumpWithError  := 0;
 nErrorID   		:= 0;
 iStepCounter 	:= 0;
+eRecoveryState := E_RecoveryState.Idle;
 
 //Output flags
 bSuccess := FALSE;
 bError := FALSE;
 
 // Control flags
-bStart	  		:= FALSE;
-bDone	  		:= FALSE;
+bStart := FALSE;
 bMovementComplete := FALSE;
 
-//Metering Rinse 1
-bAllValvesInPosition  := TRUE;
-bAllPumpsDone         := TRUE;
-
 //Recirculate Solvent 1
-bAllValvesInPos   	:= FALSE;
-bMovementStarted 	:= FALSE;
 fAgitationTime    	:= 0;
 
 FOR i := 1 TO 10 DO
@@ -1325,12 +1304,8 @@ bSoakTimerDone  := FALSE;
 //Icon progress reset
 GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
-GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Waiting;
-GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.rLoadBarLeakTest := 0;
 GVL_HMI.HMIAnimation.rLoadBarRecovery := 0;
-GVL_HMI.HMIAnimation.rLoadBarWashing := 0;
-GVL_HMI.HMIAnimation.rLoadBarDry := 0;
 
 tStartTime := T#0S;
 rElapsedTimeSec := 0.0;
@@ -1338,7 +1313,7 @@ rTotalEstimatedTimeSec := 0.0;
 bProgressInitDone := FALSE;
 GVL_HMI.HMIAnimation.rLoadBarRecovery := 0.0;
 
-IF NOT bInitComplete AND NOT bErrorDetected THEN
+IF NOT bSuccess AND NOT bError THEN
 	Reset := TRUE;
 	RETURN;
 ELSE
@@ -1484,17 +1459,22 @@ END_CASE]]></ST>
     </Action>
     <LineIds Name="FB_RecoveryPhase">
       <LineId Id="851" Count="0" />
-      <LineId Id="1189" Count="0" />
-      <LineId Id="1211" Count="0" />
       <LineId Id="1191" Count="0" />
-      <LineId Id="1218" Count="0" />
       <LineId Id="1209" Count="0" />
       <LineId Id="854" Count="0" />
       <LineId Id="1213" Count="4" />
       <LineId Id="1212" Count="0" />
-      <LineId Id="855" Count="7" />
-      <LineId Id="1181" Count="0" />
-      <LineId Id="868" Count="106" />
+      <LineId Id="855" Count="3" />
+      <LineId Id="1285" Count="1" />
+      <LineId Id="868" Count="1" />
+      <LineId Id="1297" Count="0" />
+      <LineId Id="1295" Count="1" />
+      <LineId Id="1294" Count="0" />
+      <LineId Id="1288" Count="2" />
+      <LineId Id="1287" Count="0" />
+      <LineId Id="1292" Count="0" />
+      <LineId Id="870" Count="0" />
+      <LineId Id="872" Count="102" />
       <LineId Id="1008" Count="11" />
       <LineId Id="981" Count="0" />
       <LineId Id="1020" Count="0" />
@@ -1513,7 +1493,6 @@ END_CASE]]></ST>
       <LineId Id="998" Count="1" />
       <LineId Id="1051" Count="1" />
       <LineId Id="1182" Count="0" />
-      <LineId Id="1053" Count="0" />
       <LineId Id="1118" Count="0" />
       <LineId Id="1006" Count="1" />
       <LineId Id="9" Count="0" />
@@ -1693,16 +1672,16 @@ END_CASE]]></ST>
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Reset">
       <LineId Id="56" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="15" Count="2" />
+      <LineId Id="16" Count="1" />
       <LineId Id="19" Count="0" />
+      <LineId Id="104" Count="0" />
       <LineId Id="73" Count="2" />
       <LineId Id="23" Count="0" />
       <LineId Id="76" Count="0" />
-      <LineId Id="24" Count="2" />
-      <LineId Id="29" Count="2" />
-      <LineId Id="35" Count="1" />
-      <LineId Id="38" Count="4" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="42" Count="0" />
       <LineId Id="69" Count="0" />
       <LineId Id="66" Count="1" />
       <LineId Id="77" Count="0" />
@@ -1713,9 +1692,9 @@ END_CASE]]></ST>
       <LineId Id="82" Count="0" />
       <LineId Id="96" Count="0" />
       <LineId Id="81" Count="0" />
-      <LineId Id="94" Count="1" />
       <LineId Id="84" Count="0" />
-      <LineId Id="97" Count="3" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="100" Count="0" />
       <LineId Id="87" Count="3" />
       <LineId Id="85" Count="0" />
       <LineId Id="60" Count="0" />
