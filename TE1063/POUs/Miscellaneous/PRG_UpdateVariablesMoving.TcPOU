@@ -3,10 +3,11 @@
   <POU Name="PRG_UpdateVariablesMoving" Id="{8cee1700-2e8b-41ec-ad51-7968702f1049}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
-	bFirstVariablesAssignment : BOOL := FALSE;
-	bValvesSettingsAssignment : BOOL := FALSE;
-	bPumpsFactorAssignment	  : BOOL := FALSE;
-	bPumpsSettingsAssignment  : BOOL := FALSE;
+	bFirstVariablesAssignment  : BOOL := FALSE;
+	bValvesSettingsAssignment  : BOOL := FALSE;
+	bPumpsFactorAssignment	   : BOOL := FALSE;
+	bPumpsSettingsAssignment   : BOOL := FALSE;
+	bPumpsDeadVolumeAssignment : BOOL := FALSE;
 	
 	i : UINT := 1;
 	
@@ -47,6 +48,20 @@ IF NOT bPumpsFactorAssignment THEN
 	GVL_Motion.aPumps[9].Rotary.rPumpFactor := 0.28;
 	GVL_Motion.aPumps[10].Rotary.rPumpFactor := 0.28;
 	bPumpsFactorAssignment := TRUE;
+END_IF
+
+//Pumps line dead Volume pipes/tubing Assignment [ml]
+IF NOT bPumpsDeadVolumeAssignment THEN
+	GVL_Motion.aPumps[1].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[2].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[3].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[4].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[5].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[6].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[7].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[8].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[9].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[10].Rotary.rDeadVolume := 10.0;
 END_IF
 
 //Pumps Settings Assignment
@@ -149,6 +164,12 @@ END_IF
       <LineId Id="309" Count="2" />
       <LineId Id="301" Count="0" />
       <LineId Id="300" Count="0" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="376" Count="8" />
+      <LineId Id="374" Count="0" />
       <LineId Id="324" Count="2" />
       <LineId Id="331" Count="0" />
       <LineId Id="334" Count="1" />

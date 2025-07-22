@@ -40,6 +40,10 @@ END_VAR]]></Declaration>
     IDLE:
         // Waits for the execution command to start the test
         IF bExecute AND NOT (bLeakTestDone OR bLeakTestError) THEN
+			//Provide HMI animation details
+			GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Starting'; 
+			GVL_HMI.HMIAnimation.rLoadBarLeakTest  := 0;
+			GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.InProgress;
             eState := POSITION_VALVES;
         END_IF;
 
@@ -157,6 +161,9 @@ END_VAR]]></Declaration>
 		rSystemPressure := rScaledPressure;
 
     DONE:
+		//Provide HMI animation details
+		GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Completed;
+		
 		bLeakTestDone := TRUE;
         // Successfully completed the leak test
 		IF NOT bExecute THEN
@@ -219,12 +226,19 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_LeakTest">
-      <LineId Id="596" Count="15" />
+      <LineId Id="596" Count="3" />
+      <LineId Id="842" Count="2" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="600" Count="11" />
       <LineId Id="613" Count="14" />
       <LineId Id="629" Count="84" />
       <LineId Id="805" Count="1" />
       <LineId Id="804" Count="0" />
-      <LineId Id="714" Count="16" />
+      <LineId Id="714" Count="1" />
+      <LineId Id="846" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="849" Count="0" />
+      <LineId Id="716" Count="14" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.Reset">

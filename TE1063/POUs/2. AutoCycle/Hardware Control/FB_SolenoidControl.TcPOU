@@ -13,12 +13,20 @@ END_VAR
 
 VAR
     eState        : (IDLE, SET_VALVES, DONE);
+	bStart : BOOL := FALSE; //Start flag
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE eState OF
+      <ST><![CDATA[IF NOT bStart THEN
+	eState := IDLE;
+	bStart := bExecute;
+END_IF
+
+CASE eState OF
     IDLE:
-        IF bExecute AND NOT bDone THEN
+		bDone := FALSE; //Resets done flag
+        IF bStart THEN
             eState := SET_VALVES;
         END_IF;
 
@@ -53,7 +61,14 @@ END_VAR
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="FB_SolenoidControl">
-      <LineId Id="21" Count="26" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="23" Count="24" />
       <LineId Id="64" Count="5" />
       <LineId Id="48" Count="0" />
       <LineId Id="9" Count="0" />

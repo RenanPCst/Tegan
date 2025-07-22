@@ -20,6 +20,10 @@ aPumpStatus		: ARRAY[1..10] OF ST_ActuatorStatus;
 
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
+fbHMIScan	: FB_Blink;
+
+//Icons Animation
+bFirstIconSet : BOOL := FALSE;
 
 i : INT;
 
@@ -59,6 +63,9 @@ IF GVL_HMI.eMachineMode = E_MachineMode.MANUAL THEN
 	END_FOR
 END_IF
 
+//Scan period for hmi refresh
+fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
+GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
 
 //Doors hide/visible 
 GVL_HMI.HMIAnimation.bHMIDoorOpen[1] := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk;
@@ -90,6 +97,26 @@ GVL_HMI.HMIAnimation.bHMIDoorBlink[6] := fbBlinkDoor[6].bBlink;
 
 (* <\Controls Animation> *********************************************************************************************** *)
 
+(* <Icons Animation> *************************************************************************************************** *)
+IF NOT bFirstIconSet THEN
+	GVL_HMI.HMIAnimation.eIconStateSafety := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Waiting;
+	GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Waiting;
+	bFirstIconSet := TRUE;
+END_IF
+
+IF GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT THEN
+	GVL_HMI.HMIAnimation.eIconStateSafety := E_IconState.Waiting;
+ELSE
+	GVL_HMI.HMIAnimation.eIconStateSafety := E_IconState.Completed;
+END_IF
+
+(* <\Icons Animation> *************************************************************************************************** *)
+
 (* <Machine Settings> ************************************************************************************************** *)
 IF GVL_HMI.bSaveParametersBt THEN
 	GVL_Settings.stMachineParam := GVL_HMI.HMIParameters;
@@ -108,8 +135,19 @@ END_IF
 //Auto Cycle Incoherence [when there is something missing to start the auto cycle] 
 GVL_HMI.bIncoherenceDetected := NOT GVL_Recipe.bIsThereRecipeActivated;
 
+IF GVL_Recipe.bIsThereRecipeActivated THEN
+	GVL_HMI.sActivatedRecipeHomeNaming := concat(GVL_Recipe.stActiveRecipe.stInfo.sMethodName,concat(' | Created by ', concat(GVL_Recipe.stActiveRecipe.stInfo.sCreatedBy,concat(' on ', DATE_TO_STRING(GVL_Recipe.stActiveRecipe.stInfo.dCreationDate)))));
+ELSE
+	GVL_HMI.sActivatedRecipeHomeNaming := 'There is no Recipe Activated';
+END_IF
 
-(* <\HMI Alerts> ******************************************************************************************************* *)]]></ST>
+(* <\HMI Alerts> ******************************************************************************************************* *)
+
+
+(* <TEMP ******************************************************************************************************* *)
+IF GVL_HMI.bResetM1MotorBt THEN
+	GVL_HMI.bResetM1MotorBt := NOT GVL_Motion.aMotors[1].Reset();
+END_IF]]></ST>
     </Implementation>
     <Action Name="ACT_M1Animation" Id="{5ca7e550-b195-4047-b743-192dee895467}">
       <Implementation>
@@ -131,9 +169,9 @@ IF GVL_Motion.bInitialHomingDone THEN
 		rM1MotorPositionPerc := 100;
 	END_IF
 	
-	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 455 + (TO_REAL(rM1MotorPositionPerc)*1.35); //Adding y pixel home and sending the scaled value throug GVL_HMI
+	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 0 + (TO_REAL(rM1MotorPositionPerc)*1.35); //Adding y pixel home and sending the scaled value throug GVL_HMI
 ELSE
-	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 455; //Default Value
+	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 0; //Default Value
 END_IF]]></ST>
       </Implementation>
     </Action>
@@ -158,9 +196,9 @@ IF GVL_Motion.bInitialHomingDone THEN
 		rM2MotorPositionPerc := 100;
 	END_IF
 	
-	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 455 + TO_REAL(rM2MotorPositionPerc); //Adding y pixel home and sending the scaled value throug GVL_HMI
+	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 0 + TO_REAL(rM2MotorPositionPerc); //Adding y pixel home and sending the scaled value throug GVL_HMI
 ELSE
-	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 455; //Default Value
+	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 0; //Default Value
 END_IF]]></ST>
       </Implementation>
     </Action>
@@ -179,7 +217,10 @@ END_IF]]></ST>
       <LineId Id="459" Count="0" />
       <LineId Id="458" Count="0" />
       <LineId Id="453" Count="0" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="608" Count="0" />
       <LineId Id="341" Count="0" />
+      <LineId Id="609" Count="0" />
       <LineId Id="449" Count="0" />
       <LineId Id="342" Count="0" />
       <LineId Id="384" Count="0" />
@@ -201,6 +242,18 @@ END_IF]]></ST>
       <LineId Id="346" Count="0" />
       <LineId Id="340" Count="0" />
       <LineId Id="266" Count="0" />
+      <LineId Id="530" Count="1" />
+      <LineId Id="538" Count="1" />
+      <LineId Id="543" Count="5" />
+      <LineId Id="541" Count="0" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="619" Count="0" />
+      <LineId Id="533" Count="0" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="622" Count="1" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="534" Count="0" />
+      <LineId Id="532" Count="0" />
       <LineId Id="494" Count="0" />
       <LineId Id="493" Count="0" />
       <LineId Id="496" Count="1" />
@@ -216,8 +269,16 @@ END_IF]]></ST>
       <LineId Id="492" Count="0" />
       <LineId Id="483" Count="0" />
       <LineId Id="485" Count="0" />
-      <LineId Id="490" Count="1" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="490" Count="0" />
+      <LineId Id="612" Count="0" />
+      <LineId Id="614" Count="1" />
+      <LineId Id="613" Count="0" />
+      <LineId Id="491" Count="0" />
       <LineId Id="489" Count="0" />
+      <LineId Id="576" Count="1" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="578" Count="2" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_M1Animation">
       <LineId Id="2" Count="20" />

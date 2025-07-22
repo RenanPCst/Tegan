@@ -16,6 +16,9 @@ VAR
     bShutdownRequest    : BOOL := FALSE;
     bRebootRequest      : BOOL := FALSE;
 	
+	tRebootTime		: TIME := T#10S;
+	tShutdownTime	: TIME := T#60S;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -40,8 +43,8 @@ IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSuppl
     END_IF
 
     IF bWriteDone THEN
-        tSafeShutdown(IN := TRUE, PT := T#60S);
-		GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tSafeShutdown.ET)/1000;
+        tSafeShutdown(IN := TRUE, PT := tShutdownTime);
+		GVL_HMI.rTimeCountingDown := (TIME_TO_DWORD(tShutdownTime)/1000) - (TIME_TO_DWORD(tSafeShutdown.ET)/1000);
     END_IF
 ELSE
     // Reset shutdown timer and write flag if no shutdown condition

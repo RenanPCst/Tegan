@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_ReportPostRun" Id="{9809ba5e-eaba-4976-b6bb-c1e3d4c5098c}">
+    <Declaration><![CDATA[TYPE ST_ReportPostRun :
+STRUCT
+    sPrintGeneratedBy : STRING(50); // Name of the operator who triggered the PDF generation (optional)
+
+    dtExecutionStart  : DT; // Date and time when the ASRS run started
+    dtExecutionEnd    : DT; // Date and time when the ASRS run completed
+
+    sMethodName       : STRING(100); // Name of the method/recipe executed
+    iMethodRevision   : INT; // Revision number of the method
+    sCreatedBy        : STRING(50); // User who originally created the method
+    dtCreatedOn       : DT; // Date and time when the method was created
+
+    aSolventNumber    : ARRAY[1..4] OF INT; // Solvent index used in each step
+    aStepTime_sec     : ARRAY[1..4] OF INT; // Step duration in seconds
+    aStepRPM          : ARRAY[1..4] OF INT; // RPM used in each step
+
+    rSoakTime_sec     : REAL; // Soaking time in seconds
+    rAgitate1Time_sec : REAL; // Agitation phase 1 duration in seconds
+    rAgitate2Time_sec : REAL; // Agitation phase 2 duration in seconds
+    iVialsToFill      : INT;  // Number of vials to fill
+    rVialPrimeVol_ml  : REAL; // Volume used to prime the vial in milliliters
+    rVial1FillVol_ml  : REAL; // Fill volume for the first vial in milliliters
+    rVials2to4FillVol_ml : REAL; // Fill volume for vials 2 to 4 in milliliters
+    rAirDryTime_sec   : REAL; // Air drying time in seconds
+
+    aVolumeData : ARRAY[1..10] OF ST_VolumeLine; // Volume information for each pump/stage
+
+    sAnalystName  : STRING(50); // Name of the analyst who ran the sample
+    iRunNumber    : DINT; // Unique identifier for the run
+    iCalibrationNumber : DINT; // Calibration number used during the run
+    sComment      : STRING(100); // Optional comment about the run
+
+    sSoftwareVersion : STRING(20); // Software version of the ASRS system
+    iMasterRevision  : INT; // Master configuration revision
+    iSettingsRevision : INT; // System settings revision
+    iMeterVelocityRPM : INT; // Velocity for metering flow, in RPM
+    iRunVelocityRPM   : INT; // Runtime velocity, in RPM
+    rEmptyTubesFactor_ml : REAL; // Calibration factor for empty tubes in milliliters
+    rFillTubesFactor_ml  : REAL; // Calibration factor for filled tubes in milliliters
+
+    aSolvents : ARRAY[1..4] OF ST_SolventInfo; // Detailed solvent information used in the run
+    aEvents   : ARRAY[1..10] OF ST_RunEvent; // Chronological list of events (start, complete, etc.)
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

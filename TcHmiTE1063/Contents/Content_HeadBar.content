@@ -26,18 +26,11 @@
 
 <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
 {
-  "color": "rgba(193, 193, 193, 1)"
+  "color": "rgba(154, 154, 154, 1)"
 }
 </script>
 
-<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-[
-  {
-    "event": "TcHmiRectangle_1.onAttached",
-    "actions": []
-  }
-]
-</script>
+
 </div>
 <div id="TcHmiDateTimeDisplay" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDateTimeDisplay" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="80" data-tchmi-left-unit="px" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-width="200" data-tchmi-width-unit="px" data-tchmi-time-display-layout="DateTimeSingleLine" data-tchmi-text-font-style="Normal" data-tchmi-text-font-weight="Bold" data-tchmi-text-font-size="20">
 
@@ -65,7 +58,7 @@
 
 <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
 {
-  "color": "rgba(47, 76, 117, 1)"
+  "color": "rgba(47, 76, 117, 0)"
 }
 </script>
 </div>
@@ -80,7 +73,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_HMI.eMachineMode%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "SwitchCase",
@@ -435,50 +428,118 @@
             },
             "actions": [
               {
-                "objectType": "WriteToSymbol",
+                "objectType": "Condition",
                 "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "SYSTEM READY"
-                },
-                "asyncWait": true
-              },
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:framework#/definitions/Color",
-                  "value": {
-                    "angle": 0.0,
-                    "stopPoints": [
+                "parts": [
+                  {
+                    "if": [
                       {
-                        "color": "rgba(5, 85, 62, 1)",
-                        "stop": "0.37%"
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "symbolExpression": "%s%PLC1.GVL_HMI.bMachineModeBlinking%/s%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": true
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "value": "SYSTEM READY"
+                        },
+                        "asyncWait": true
                       },
                       {
-                        "color": "rgba(37, 178, 139, 1)",
-                        "stop": "70.15%"
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "angle": 0.0,
+                            "stopPoints": [
+                              {
+                                "color": "rgba(27, 107, 2, 1)",
+                                "stop": "0.37%"
+                              },
+                              {
+                                "color": "rgba(43, 181, 0, 1)",
+                                "stop": "70.15%"
+                              }
+                            ]
+                          }
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/SolidColor",
+                          "value": {
+                            "color": "rgba(255, 255, 255, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "value": "SYSTEM READY"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(255, 255, 255, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/SolidColor",
+                          "value": {
+                            "color": "rgba(36, 147, 1, 1)"
+                          }
+                        },
+                        "asyncWait": true
                       }
                     ]
                   }
-                },
-                "asyncWait": true
-              },
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:framework#/definitions/SolidColor",
-                  "value": {
-                    "color": "rgba(255, 255, 255, 1)"
-                  }
-                },
+                ],
                 "asyncWait": true
               }
             ]

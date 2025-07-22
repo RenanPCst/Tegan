@@ -30,8 +30,14 @@ VAR_GLOBAL
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
 	bIncoherenceAlert	 : BOOL := FALSE; //Incoherence alert to show an alert on HMI. Event trigger DesktopView 
 	
+	sActivatedRecipeHomeNaming : STRING(256);
+	
 	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
 	sCountdownText		 : STRING(64);
+	
+	//Machine Mode Blinking
+	bMachineModeBlinking : BOOL := FALSE;
+	bMachineModeScan	 : BOOL := FALSE;
 	
 	//User Management
 	stUsers          : ARRAY[1..50] OF ST_User;  // Até 20 usuários
@@ -104,6 +110,10 @@ VAR_GLOBAL
 	bStopPumpsBt 			: BOOL;
 	
 	iTestDistance : UINT := 0;
+	
+	//TEMP
+	//Motor M1 Reset button
+	bResetM1MotorBt : BOOL := FALSE;
 	
 END_VAR]]></Declaration>
   </GVL>
