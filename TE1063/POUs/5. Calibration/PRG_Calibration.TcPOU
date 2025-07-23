@@ -8,6 +8,14 @@ END_VAR
 VAR
 	fbLeakTest : FB_LeakTest;
 	bLeakTestReset : BOOL := FALSE;
+	
+	fbCalibrationManager : FB_CalibrationManager;
+
+    bStartCalibrationPrev : BOOL;
+    bStartCalibrationEdge : BOOL;
+	
+	iLastRepSetpoint : INT := -1;
+    i : INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -36,6 +44,34 @@ IF fbLeakTest.bLeakTestError THEN
 		bLeakTestReset := fbLeakTest.Reset();
 	END_IF
 END_IF
+
+// Distribute the number of replicates for all pumps selected
+IF GVL_Calibration.iReplicatesSetpoint <> iLastRepSetpoint THEN
+    FOR i := 1 TO 10 DO
+        IF GVL_Calibration.aCalibPumps[i].bSelected THEN
+            GVL_Calibration.aCalibPumps[i].iReplicates := GVL_Calibration.iReplicatesSetpoint;
+        END_IF
+    END_FOR;
+    iLastRepSetpoint := GVL_Calibration.iReplicatesSetpoint;
+END_IF 
+
+//Calibration procedure trigger
+bStartCalibrationEdge := GVL_Calibration.bStartCalibration AND NOT bStartCalibrationPrev;
+bStartCalibrationPrev := GVL_Calibration.bStartCalibration;
+
+//calibration procedure calling
+fbCalibrationManager(
+    bExecute := bStartCalibrationEdge,
+    bAbort := GVL_Calibration.bAbortCalibration,
+    eSolvent := GVL_Calibration.eCalibSolvent,
+    aPumpSettings := GVL_Calibration.aCalibPumps,
+    tDelayStart := GVL_Calibration.tDelayStart,
+    bPrintReport := GVL_Calibration.bPrintWhenComplete,
+    aPumpResults => GVL_Calibration.aCalibPumps,
+    bDone => GVL_Calibration.bCalibrationDone,
+    bBusy => GVL_Calibration.bCalibrationRunning,
+    sStatus => GVL_Calibration.sGlobalStatus
+);
 ]]></ST>
     </Implementation>
     <Method Name="Reset" Id="{27813d8d-2df7-44d9-b974-4b44cba9f55d}">
@@ -68,7 +104,15 @@ END_VAR
       <LineId Id="48" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="26" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="101" Count="7" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="65" Count="2" />
       <LineId Id="15" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="69" Count="11" />
+      <LineId Id="68" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
       <LineId Id="5" Count="0" />

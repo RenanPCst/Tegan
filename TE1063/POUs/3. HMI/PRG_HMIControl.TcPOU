@@ -16,7 +16,8 @@ cM2MinPosition       : LREAL := 0.0; // Minimum expected Value
 cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value)
 
 //Pumps Animation and status
-aPumpStatus		: ARRAY[1..10] OF ST_ActuatorStatus;
+aPumpStatus			: ARRAY[1..10] OF ST_ActuatorStatus;
+fbBlinkPumpArrow	: ARRAY[1..10] OF FB_Blink;
 
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
@@ -24,6 +25,10 @@ fbHMIScan	: FB_Blink;
 
 //Icons Animation
 bFirstIconSet : BOOL := FALSE;
+
+//EStops Buttons
+fbBlinkEStopSide	: FB_Blink;
+fbBlinkEStopFront	: FB_Blink;
 
 i : INT;
 
@@ -33,8 +38,10 @@ END_VAR
       <ST><![CDATA[//Buttons Indicators -------------------------------------------------------------------------------------------------
 GVL_HMI.HMIDigOutputs.bHMIResetButton 	:= GVL_IO.gDigOutputs.bResetIndicator;
 GVL_HMI.HMIDigOutputs.bHMIStartButton	:= GVL_IO.gDigOutputs.bStartIndicator;
-GVL_HMI.HMIDigOutputs.bHMIEStopSide		:= NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2);
-GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);
+fbBlinkEStopSide(bEnable := NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2), tPeriod := T#1S); //EStop Button located on side Flashing FB
+fbBlinkEStopFront(bEnable := NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2), tPeriod := T#1S);  //EStop Button located on front Flashing FB
+GVL_HMI.HMIDigOutputs.bHMIEStopSide		:= fbBlinkEStopSide.bBlink;
+GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= fbBlinkEStopFront.bBlink;
 
 //Alarm Lamp Indicator for HMI ---------------------------------------------------------------------------------------
 GVL_HMI.HMIDigOutputs.bAlarmLampRed 	:= GVL_IO.gDigOutputs.bTowerRedLight; 	//Red Light
@@ -60,6 +67,15 @@ IF GVL_HMI.eMachineMode = E_MachineMode.MANUAL THEN
 	FOR i := 1 TO 10 DO
 		aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
 		GVL_HMI.aManualPumpsCmd[i].bBusy := aPumpStatus[i].bBusy;
+	END_FOR
+END_IF
+
+//Pumps Animation | Calibration Screen
+IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
+	FOR i := 1 TO 10 DO
+		aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
+		fbBlinkPumpArrow[i](bEnable := aPumpStatus[i].bBusy, tPeriod := T#1S);
+		GVL_HMI.HMIAnimation.aPumpingArrowFwd[i] := fbBlinkPumpArrow[i].bBlink;
 	END_FOR
 END_IF
 
@@ -203,7 +219,10 @@ END_IF]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="PRG_HMIControl">
-      <LineId Id="252" Count="13" />
+      <LineId Id="252" Count="2" />
+      <LineId Id="669" Count="0" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="255" Count="10" />
       <LineId Id="338" Count="0" />
       <LineId Id="337" Count="0" />
       <LineId Id="339" Count="0" />
@@ -217,6 +236,12 @@ END_IF]]></ST>
       <LineId Id="459" Count="0" />
       <LineId Id="458" Count="0" />
       <LineId Id="453" Count="0" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="655" Count="2" />
+      <LineId Id="662" Count="0" />
+      <LineId Id="658" Count="1" />
+      <LineId Id="654" Count="0" />
       <LineId Id="610" Count="0" />
       <LineId Id="608" Count="0" />
       <LineId Id="341" Count="0" />
