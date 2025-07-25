@@ -94,14 +94,14 @@ END_VAR
         sStatus := 'Requesting weight from scale...';
         fbScale.sRemoteHost := '192.168.0.100';
         fbScale.nRemotePort := 10001;
-        fbScale.bTrigger := TRUE;
+        fbScale.bExecute := TRUE;
         eStep := E_CalibStep.WAIT_WEIGHT;
 
     E_CalibStep.WAIT_WEIGHT:
         fbScale();
         IF fbScale.bConnectionDone AND NOT fbScale.bError THEN
             aPumpResults[iPumpIndex].rActualVolume := fbScale.fWeight; // peso em mL
-            fbScale.bTrigger := FALSE;
+            fbScale.bExecute := FALSE;
             eStep := E_CalibStep.EVALUATE;
         ELSIF fbScale.bError THEN
             aPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.FAILED;

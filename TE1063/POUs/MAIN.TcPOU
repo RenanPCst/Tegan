@@ -248,19 +248,16 @@ END_IF
 fbTcpClient(
     sRemoteHost 	:= GVL_Settings.aBalanceIP,		//Server Ip address
     nRemotePort 	:= GVL_Settings.nBalancePort,	//Server communication Port
-    bTrigger 		:= bStartCommunication,				//Triggers the communication
-    tStateDelay 	:= tAdjustableDelay,  				//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
-    sParsedResponse	=> sResponseMessage, 				//Personalized Resposse message
-    fWeight 		=> fMeasuredWeight, 				//Parsed LReal Weight meassured if eveything goes ok
-	bConnectionDone	=> bConnectionDone,					//Communication Finished
-    bBusy 			=> ,								//Busy status
-    bError 			=> ,								//Error status
-    nErrorID 		=> 									//Error ID if in error
+    bExecute 		:= bStartCommunication,				//Triggers the communication
+    tStateDelay 	:= tAdjustableDelay  				//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
 );
 
 // Reset Trigger after FB finished
-IF bConnectionDone THEN
-    bStartCommunication := FALSE;
+IF fbTcpClient.bConnectionDone THEN
+	sResponseMessage := fbTcpClient.sParsedResponse;
+	fMeasuredWeight := fbTcpClient.fWeight;
+    bStartCommunication := NOT fbTcpClient.Reset();
+	
 END_IF
 
 //<\Balance Test>---------------------------------------------------------------------------------------------------------------------------------
@@ -272,82 +269,7 @@ END_IF
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
-      <LineId Id="3102" Count="3" />
-      <LineId Id="5685" Count="0" />
-      <LineId Id="3568" Count="0" />
-      <LineId Id="3567" Count="0" />
-      <LineId Id="3784" Count="0" />
-      <LineId Id="3873" Count="1" />
-      <LineId Id="4065" Count="0" />
-      <LineId Id="5796" Count="0" />
-      <LineId Id="5976" Count="0" />
-      <LineId Id="5684" Count="0" />
-      <LineId Id="5875" Count="0" />
-      <LineId Id="5879" Count="1" />
-      <LineId Id="6197" Count="0" />
-      <LineId Id="5882" Count="0" />
-      <LineId Id="6198" Count="0" />
-      <LineId Id="5884" Count="13" />
-      <LineId Id="5877" Count="0" />
-      <LineId Id="3651" Count="0" />
-      <LineId Id="3106" Count="0" />
-      <LineId Id="4161" Count="0" />
-      <LineId Id="4714" Count="0" />
-      <LineId Id="4716" Count="0" />
-      <LineId Id="4950" Count="3" />
-      <LineId Id="4955" Count="4" />
-      <LineId Id="4712" Count="0" />
-      <LineId Id="6491" Count="0" />
-      <LineId Id="6489" Count="0" />
-      <LineId Id="6492" Count="0" />
-      <LineId Id="6496" Count="4" />
-      <LineId Id="6502" Count="3" />
-      <LineId Id="6493" Count="0" />
-      <LineId Id="4165" Count="0" />
-      <LineId Id="3967" Count="0" />
-      <LineId Id="4927" Count="0" />
-      <LineId Id="4948" Count="1" />
-      <LineId Id="4947" Count="0" />
-      <LineId Id="4930" Count="4" />
-      <LineId Id="4936" Count="1" />
-      <LineId Id="4940" Count="2" />
-      <LineId Id="4172" Count="1" />
-      <LineId Id="4819" Count="3" />
-      <LineId Id="6259" Count="0" />
-      <LineId Id="6261" Count="8" />
-      <LineId Id="6260" Count="0" />
-      <LineId Id="4171" Count="0" />
-      <LineId Id="6070" Count="0" />
-      <LineId Id="6409" Count="0" />
-      <LineId Id="6426" Count="0" />
-      <LineId Id="6412" Count="0" />
-      <LineId Id="6105" Count="0" />
-      <LineId Id="4176" Count="0" />
-      <LineId Id="4280" Count="0" />
-      <LineId Id="4179" Count="0" />
-      <LineId Id="4382" Count="2" />
-      <LineId Id="4381" Count="0" />
-      <LineId Id="4388" Count="2" />
-      <LineId Id="4387" Count="0" />
-      <LineId Id="4395" Count="2" />
-      <LineId Id="4394" Count="0" />
-      <LineId Id="4499" Count="0" />
-      <LineId Id="4605" Count="1" />
-      <LineId Id="4603" Count="0" />
-      <LineId Id="4607" Count="2" />
-      <LineId Id="3653" Count="0" />
-      <LineId Id="6059" Count="7" />
-      <LineId Id="5068" Count="0" />
-      <LineId Id="5063" Count="0" />
-      <LineId Id="3654" Count="0" />
-      <LineId Id="3673" Count="0" />
-      <LineId Id="3669" Count="0" />
-      <LineId Id="3674" Count="0" />
-      <LineId Id="3691" Count="0" />
-      <LineId Id="3668" Count="0" />
-      <LineId Id="3657" Count="0" />
-      <LineId Id="3652" Count="0" />
-      <LineId Id="3107" Count="58" />
+      <LineId Id="6870" Count="198" />
       <LineId Id="3172" Count="0" />
     </LineIds>
   </POU>
