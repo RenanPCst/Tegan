@@ -23,6 +23,9 @@ END_VAR
 	bLeakTestReset := FALSE;
 END_IF
 
+//Instancing and calling fbScaleDevice object
+GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePort := GVL_Settings.nBalancePort);
+
 // Leak Test request from HMI
 fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S, rSystemPressure => GVL_HMI.rCalLealTestPressure);
 
@@ -60,6 +63,7 @@ bStartCalibrationEdge := GVL_Calibration.bStartCalibration AND NOT bStartCalibra
 bStartCalibrationPrev := GVL_Calibration.bStartCalibration;
 
 //calibration procedure calling
+(*
 fbCalibrationManager(
     bExecute := bStartCalibrationEdge,
     bAbort := GVL_Calibration.bAbortCalibration,
@@ -72,6 +76,8 @@ fbCalibrationManager(
     bBusy => GVL_Calibration.bCalibrationRunning,
     sStatus => GVL_Calibration.sGlobalStatus
 );
+GVL_Calibration.sGlobalStatus := fbCalibrationManager.sStatus;
+*)
 ]]></ST>
     </Implementation>
     <Method Name="Reset" Id="{27813d8d-2df7-44d9-b974-4b44cba9f55d}">
@@ -85,6 +91,9 @@ END_VAR
     </Method>
     <LineIds Name="PRG_Calibration">
       <LineId Id="44" Count="2" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="125" Count="0" />
       <LineId Id="43" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="5" Count="0" />
@@ -111,7 +120,11 @@ END_VAR
       <LineId Id="15" Count="0" />
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
-      <LineId Id="69" Count="11" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="70" Count="10" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="128" Count="0" />
       <LineId Id="68" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">

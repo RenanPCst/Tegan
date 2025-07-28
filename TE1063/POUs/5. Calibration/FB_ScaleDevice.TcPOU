@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ScaleDevice" Id="{61aa2783-8d7b-4a50-a982-014b2d41abdc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ScaleDevice
+VAR_INPUT
+    sRemoteHost : STRING := '192.168.1.100';
+    nRemotePort : UINT := 8001;
+END_VAR
+
+VAR_OUTPUT
+	bWeightReady : BOOL;
+    bBusy        : BOOL;
+    bError       : BOOL;
+    nErrorID     : UDINT;
+END_VAR
+
+VAR
+    fbTcpClient     : FB_TcpClient;
+    bExecuteRequest : BOOL;
+    bRequestDone    : BOOL;
+    sRawResponse    : STRING(255);
+    rLastWeight     : LREAL;
+    sLastMessage    : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Chamado continuamente para manter o FB pronto
+IF bExecuteRequest OR fbTcpClient.bBusy THEN
+	fbTcpClient(
+		sRemoteHost := sRemoteHost,
+		nRemotePort := nRemotePort,
+		bExecute := bExecuteRequest,
+		tStateDelay := T#500MS,
+		bConnectionDone => bRequestDone,
+		sResponse => sRawResponse,
+		bError => bError,
+		nErrorID => nErrorID
+	);
+END_IF
+
+IF fbTcpClient.bConnectionDone THEN
+    bExecuteRequest := FALSE;
+    rLastWeight := F_ParseWeight(sRawResponse);
+    sLastMessage := CONCAT('Weight: ', LREAL_TO_STRING(rLastWeight));
+	bWeightReady := TRUE;
+END_IF
+]]></ST>
+    </Implementation>
+    <Method Name="RequestWeight" Id="{cd501a59-3fb3-4ee3-b78a-6533885392ec}">
+      <Declaration><![CDATA[METHOD RequestWeight : LREAL
+VAR_OUTPUT
+    bSuccess : BOOL;
+    sMessage : STRING;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT bExecuteRequest AND NOT fbTcpClient.bBusy THEN
+    bExecuteRequest := TRUE;
+END_IF
+
+IF fbTcpClient.bConnectionDone THEN
+    RequestWeight := rLastWeight;
+    bSuccess := TRUE;
+    sMessage := sLastMessage;
+ELSE
+    bSuccess := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{5ccb7417-dde1-4fb5-b36f-0de8a7f97a72}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bWeightReady := FALSE;
+bBusy        := FALSE;
+bError       := FALSE;
+nErrorID     := 0;
+bExecuteRequest := FALSE;
+bRequestDone    := FALSE;
+sRawResponse    := '';
+rLastWeight     := 0.0;
+sLastMessage    := '';
+
+IF fbTcpClient.Reset() AND NOT bWeightReady THEN
+	Reset := TRUE;
+ELSE
+	Reset := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ScaleDevice">
+      <LineId Id="209" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="210" Count="3" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="214" Count="4" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="219" Count="4" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ScaleDevice.RequestWeight">
+      <LineId Id="12" Count="8" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ScaleDevice.Reset">
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="3" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

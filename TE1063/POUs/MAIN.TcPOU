@@ -16,6 +16,8 @@ VAR
     	sResponseMessage			: STRING(255);
     	bStartCommunication			: BOOL 			:= FALSE;  
     	tAdjustableDelay			: TIME 			:= T#100MS;  //Configured time between the states.
+		bRequestWeight				: BOOL 			:= FALSE;
+		rScaleWeight				: LREAL := 0;  
 		
 	//Event Logger call and testing
 	fbEventHandler		: FB_EventHandler;
@@ -254,10 +256,19 @@ fbTcpClient(
 
 // Reset Trigger after FB finished
 IF fbTcpClient.bConnectionDone THEN
-	sResponseMessage := fbTcpClient.sParsedResponse;
+	sResponseMessage := fbTcpClient.sResponse;
 	fMeasuredWeight := fbTcpClient.fWeight;
     bStartCommunication := NOT fbTcpClient.Reset();
 	
+END_IF
+
+GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePort := GVL_Settings.nBalancePort);
+// Em qualquer PRG
+IF bRequestWeight THEN
+    rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
+	IF GVL_Calibration.fbScaleDevice.bWeightReady THEN
+		bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
+	END_IF
 END_IF
 
 //<\Balance Test>---------------------------------------------------------------------------------------------------------------------------------
@@ -269,7 +280,13 @@ END_IF
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
-      <LineId Id="6870" Count="198" />
+      <LineId Id="6870" Count="191" />
+      <LineId Id="7153" Count="0" />
+      <LineId Id="7133" Count="0" />
+      <LineId Id="7137" Count="2" />
+      <LineId Id="7147" Count="2" />
+      <LineId Id="7140" Count="0" />
+      <LineId Id="7062" Count="6" />
       <LineId Id="3172" Count="0" />
     </LineIds>
   </POU>

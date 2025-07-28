@@ -35,15 +35,53 @@
     "event": "TcHmiButton_CalStart.onPressed",
     "actions": [
       {
-        "objectType": "WriteToSymbol",
+        "objectType": "JavaScript",
         "active": true,
-        "symbolExpression": "%s%PLC1.GVL_HMIVariables.HMIDigInputs::bHMIEStartCalibration%/s%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:general#/definitions/BOOL",
-          "value": true
-        },
-        "asyncWait": true
+        "sourceLines": [
+          "(function () {",
+          "    const checkbox = TcHmi.Controls.get('TcHmiCheckbox_CalEnabledPump1');",
+          "    const input = TcHmi.Controls.get('TcHmiNumericInput_TargetVolumePump1');",
+          "",
+          "    if (!checkbox) {",
+          "        console.error('❌ Checkbox TcHmiCheckbox_CalEnabledPump1 not found');",
+          "        return;",
+          "    }",
+          "",
+          "    if (!input) {",
+          "        console.error('❌ NumericInput TcHmiNumericInput_TargetVolumePump1 not found');",
+          "        return;",
+          "    }",
+          "",
+          "    const state = checkbox.getToggleState();",
+          "    const isChecked = (state === 'Active');",
+          "    const targetVolume = input.getValue();",
+          "",
+          "    console.log('✅ Checkbox state:', state, '| isChecked:', isChecked);",
+          "    console.log('✅ Target volume:', targetVolume);",
+          "",
+          "    // Escreve o bSelected",
+          "    TcHmi.Symbol.writeEx('%s%PLC1.GVL_Calibration.aCalibPumps.1.bSelected%/s%', isChecked, function (data) {",
+          "        if (data.error === TcHmi.Errors.NONE) {",
+          "            console.log('✅ bSelected written successfully');",
+          "        } else {",
+          "            console.error('❌ Error writing bSelected:', data);",
+          "        }",
+          "    });",
+          "",
+          "    // Escreve o rTargetVolume",
+          "    TcHmi.Symbol.writeEx('%s%PLC1.GVL_Calibration.aCalibPumps.1.rTargetVolume%/s%', targetVolume, function (data) {",
+          "        if (data.error === TcHmi.Errors.NONE) {",
+          "            console.log('✅ rTargetVolume written successfully');",
+          "        } else {",
+          "            console.error('❌ Error writing rTargetVolume:', data);",
+          "        }",
+          "    });",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
@@ -1752,7 +1790,7 @@
 <div id="TcHmiTextblock_230" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="385" data-tchmi-left-unit="px" data-tchmi-text="Status" data-tchmi-top="612" data-tchmi-top-unit="px" data-tchmi-width="164" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="18" data-tchmi-text-font-weight="Bold" data-tchmi-zindex="1">
 
 </div>
-<div id="TcHmiRectangle_47" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="566" data-tchmi-left-unit="px" data-tchmi-top="659" data-tchmi-top-unit="px" data-tchmi-width="468" data-tchmi-width-unit="px" data-tchmi-creator-locked="True" data-tchmi-zindex="1">
+<div id="TcHmiRectangle_47" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="566" data-tchmi-left-unit="px" data-tchmi-top="659" data-tchmi-top-unit="px" data-tchmi-width="468" data-tchmi-width-unit="px" data-tchmi-zindex="1">
 
 <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
 {
