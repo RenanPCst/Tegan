@@ -649,7 +649,7 @@
               </Parameter>
               <Parameter>
                 <PropertyName>GearRatioMotorSide</PropertyName>
-                <Value>12</Value>
+                <Value>20</Value>
               </Parameter>
               <Parameter>
                 <PropertyName>GearRatioLoadSide</PropertyName>
@@ -742,7 +742,7 @@
         </Send>
         <Recv>
           <BitStart>2704</BitStart>
-          <BitLength>136</BitLength>
+          <BitLength>152</BitLength>
         </Recv>
         <Recv>
           <BitStart>13776</BitStart>
@@ -766,6 +766,7 @@
           <Enable>1</Enable>
           <Pdo>6688</Pdo>
           <Pdo>6694</Pdo>
+          <Pdo>6706</Pdo>
           <Pdo>6711</Pdo>
         </Sm3>
         <Sm4>
@@ -1359,7 +1360,7 @@
               <Ccs>1</Ccs>
               <Index>6706</Index>
               <SubIndex>0</SubIndex>
-              <Data>0000</Data>
+              <Data>010010007760</Data>
             </InitCmd>
             <InitCmd Fixed="true" CompleteAccess="true">
               <Transition>PS</Transition>
@@ -1440,7 +1441,7 @@
               <Ccs>1</Ccs>
               <Index>7187</Index>
               <SubIndex>0</SubIndex>
-              <Data>0300201a261a371a</Data>
+              <Data>0400201a261a321a371a</Data>
             </InitCmd>
             <InitCmd Fixed="true" CompleteAccess="true">
               <Transition>PS</Transition>
@@ -2106,7 +2107,7 @@
               <Ccs>1</Ccs>
               <Index>12608</Index>
               <SubIndex>1</SubIndex>
-              <Data>df74913b</Data>
+              <Data>0ad7a33b</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2115,7 +2116,7 @@
               <Ccs>1</Ccs>
               <Index>12608</Index>
               <SubIndex>2</SubIndex>
-              <Data>6f12033c</Data>
+              <Data>0ad7233c</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2169,7 +2170,7 @@
               <Ccs>1</Ccs>
               <Index>12301</Index>
               <SubIndex>5</SubIndex>
-              <Data>0000100000000000</Data>
+              <Data>5555010000000000</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2178,7 +2179,7 @@
               <Ccs>1</Ccs>
               <Index>12301</Index>
               <SubIndex>6</SubIndex>
-              <Data>0000100000000000</Data>
+              <Data>5555010000000000</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2187,7 +2188,7 @@
               <Ccs>1</Ccs>
               <Index>12301</Index>
               <SubIndex>7</SubIndex>
-              <Data>00007042</Data>
+              <Data>0000f041</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2196,7 +2197,7 @@
               <Ccs>1</Ccs>
               <Index>12301</Index>
               <SubIndex>8</SubIndex>
-              <Data>0000f041</Data>
+              <Data>00002041</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2215,6 +2216,33 @@
               <Index>12288</Index>
               <SubIndex>2</SubIndex>
               <Data>0100</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[Ch A VeloCtrl parameters mappable / Load inertia/mass]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>12608</Index>
+              <SubIndex>7</SubIndex>
+              <Data>18150332</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[Ch A PosCtrl parameters mappable / Position control proportional gain]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>12480</Index>
+              <SubIndex>1</SubIndex>
+              <Data>0000803f</Data>
+            </InitCmd>
+            <InitCmd>
+              <Transition>PS</Transition>
+              <Comment><![CDATA[Ch A Advanced tuning command parameters / Excitation signal type]]></Comment>
+              <Timeout>0</Timeout>
+              <Ccs>1</Ccs>
+              <Index>12301</Index>
+              <SubIndex>3</SubIndex>
+              <Data>01</Data>
             </InitCmd>
             <InitCmd>
               <Transition>PS</Transition>
@@ -2605,7 +2633,7 @@
           <Cmd>5</Cmd>
           <Adp>1033</Adp>
           <Ado>2072</Ado>
-          <Data>002a110020000100</Data>
+          <Data>002a130020000100</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>
@@ -2645,7 +2673,7 @@
           <Cmd>5</Cmd>
           <Adp>1033</Adp>
           <Ado>1552</Ado>
-          <Data>f800000111000007002a000101000000</Data>
+          <Data>f800000113000007002a000101000000</Data>
           <Cnt>1</Cnt>
           <Retries>3</Retries>
         </InitCmd>
@@ -4179,9 +4207,24 @@
         <Module>
           <Name>Ch A</Name>
           <ModuleIdent>6964816</ModuleIdent>
-          <TxPdo>
+          <TxPdo Sm="3">
             <Index DependOnSlot="true">#x1a32</Index>
             <Name>Ch A TorqueControl Inputs</Name>
+            <Entry>
+              <Index DependOnSlotGroup="true">#x6077</Index>
+              <SubIndex>0</SubIndex>
+              <BitLen>16</BitLen>
+              <Name>Ch A Torque/force actual value</Name>
+              <DataType>INT</DataType>
+              <AdsInfo>
+                <AmsAddress>
+                  <AmsPort>11</AmsPort>
+                </AmsAddress>
+                <IndexGroup>50593904</IndexGroup>
+                <IndexOffset>-2147483295</IndexOffset>
+                <Length>2</Length>
+              </AdsInfo>
+            </Entry>
           </TxPdo>
           <TxPdo Su="1">
             <Index DependOnSlot="true">#x1b12</Index>
@@ -4263,7 +4306,7 @@
                   <AmsPort>11</AmsPort>
                 </AmsAddress>
                 <IndexGroup>50593904</IndexGroup>
-                <IndexOffset>-2147483295</IndexOffset>
+                <IndexOffset>-2147483293</IndexOffset>
                 <Length>2</Length>
               </AdsInfo>
             </Entry>

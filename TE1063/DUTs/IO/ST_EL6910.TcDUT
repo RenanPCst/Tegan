@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_EL6910" Id="{aaf43b9a-35f4-47fb-9cde-28ee85b55347}">
+    <Declaration><![CDATA[TYPE ST_EL6910 :
+STRUCT
+	// TERMINAL - EL6910 EtherCAT Coupler (Term 3)
+	qSafetyRun                          	AT %Q*          :   BOOL;  	// Terminal 3 Start Safety
+	qSafetyErrorAck							AT %Q* 			: 	BOOL;	// Terminal 3 Safety Acknowl
+	iSafetyFBError	 						AT %I*			: 	BOOL;	// Terminal 3 At least one FB is in error condition
+	qLockDoorsCommand						AT %Q*			:	BOOL;	// Terminal 3 Unlock all dors command
+	qSafetyAirPresureOK                     AT %Q*          :   BOOL;   // Terminal 3 Safety Air Presure Check
+	iSafetyRunning                          AT %I*          :   BOOL;   // Terminal 3 TwinSAFE running
+	iSafetyComError 						AT %I*	 		: 	BOOL;	// Terminal 3 Communication error
+	iSafetyOutError				     		AT %I*			:	BOOL;	// Terminal 3 Some other TwinSAFE error
+	iSafetyOK								AT %I*			:	BOOL;	// Terminal 3 Safety outputs active - all safety gear OK
+	iBypassDoor3Command						AT %I*			:	BOOL;	// Terminal 3 Safety inputs Alias bypass door 3
+	nEL6910State							AT %I*			:	UINT;	// EL6910 State from IO Terminal Info Data	
+	bEL6910State							AT %I*			:	BOOL;	// EL6910 State from IO Terminal Info Data	
+	sEL6910Status											:	STRING(200);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

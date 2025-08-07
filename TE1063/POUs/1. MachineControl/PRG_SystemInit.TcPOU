@@ -61,7 +61,6 @@ IF NOT bEnableDone THEN
 		FOR i := 1 TO 5 DO
 			aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
 		END_FOR
-		
 		FOR i := 1 TO 10 DO
 			aLinearPumpsEnabled[i] := GVL_Motion.aPumpsLinear[i].Enable();
 		END_FOR
@@ -75,6 +74,7 @@ IF NOT bEnableDone THEN
 		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
 		bAllPumpsEnabled := bAllLinearPumpsEnabled AND bAllRotaryPumpsEnabled;
 		
+		//TODO: Time out to show error in the screen on every step
 		IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllPumpsEnabled THEN
 			bEnableDone := TRUE;
 		END_IF
@@ -602,7 +602,6 @@ END_IF
     </Method>
     <LineIds Name="PRG_SystemInit">
       <LineId Id="679" Count="9" />
-      <LineId Id="1204" Count="0" />
       <LineId Id="1206" Count="1" />
       <LineId Id="1205" Count="0" />
       <LineId Id="1315" Count="1" />
@@ -613,6 +612,7 @@ END_IF
       <LineId Id="1310" Count="0" />
       <LineId Id="1312" Count="0" />
       <LineId Id="1213" Count="0" />
+      <LineId Id="1503" Count="0" />
       <LineId Id="690" Count="10" />
       <LineId Id="702" Count="14" />
       <LineId Id="718" Count="8" />

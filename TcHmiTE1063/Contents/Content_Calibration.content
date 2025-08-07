@@ -39,45 +39,84 @@
         "active": true,
         "sourceLines": [
           "(function () {",
-          "    const checkbox = TcHmi.Controls.get('TcHmiCheckbox_CalEnabledPump1');",
-          "    const input = TcHmi.Controls.get('TcHmiNumericInput_TargetVolumePump1');",
-          "",
-          "    if (!checkbox) {",
-          "        console.error('❌ Checkbox TcHmiCheckbox_CalEnabledPump1 not found');",
-          "        return;",
-          "    }",
-          "",
-          "    if (!input) {",
-          "        console.error('❌ NumericInput TcHmiNumericInput_TargetVolumePump1 not found');",
-          "        return;",
-          "    }",
-          "",
-          "    const state = checkbox.getToggleState();",
-          "    const isChecked = (state === 'Active');",
-          "    const targetVolume = input.getValue();",
-          "",
-          "    console.log('✅ Checkbox state:', state, '| isChecked:', isChecked);",
-          "    console.log('✅ Target volume:', targetVolume);",
-          "",
-          "    // Escreve o bSelected",
-          "    TcHmi.Symbol.writeEx('%s%PLC1.GVL_Calibration.aCalibPumps.1.bSelected%/s%', isChecked, function (data) {",
-          "        if (data.error === TcHmi.Errors.NONE) {",
-          "            console.log('✅ bSelected written successfully');",
-          "        } else {",
-          "            console.error('❌ Error writing bSelected:', data);",
+          "    // 1. Calibration Box Validation",
+          "    TcHmi.Symbol.readEx2('%s%PLC1.GVL_IO.gDigInputs.bCalibrationBoxPresent%/s%', function (data) {",
+          "        if (data.error !== TcHmi.Errors.NONE || !data.value) {",
+          "            alert('Calibration reservoir is not detected. Please check its position.');",
+          "            return;",
           "        }",
-          "    });",
           "",
-          "    // Escreve o rTargetVolume",
-          "    TcHmi.Symbol.writeEx('%s%PLC1.GVL_Calibration.aCalibPumps.1.rTargetVolume%/s%', targetVolume, function (data) {",
-          "        if (data.error === TcHmi.Errors.NONE) {",
-          "            console.log('✅ rTargetVolume written successfully');",
-          "        } else {",
-          "            console.error('❌ Error writing rTargetVolume:', data);",
+          "        // 2. Acceptance Criteria Validation",
+          "        let acceptanceInput = TcHmi.Controls.get('TcHmiNumericInput_AcceptanceCriteria');",
+          "        let acceptanceValue = acceptanceInput?.getValue?.() ?? 0;",
+          "        if (acceptanceValue === 0) {",
+          "            alert('Acceptance Criteria cannot be zero.');",
+          "            return;",
           "        }",
+          "",
+          "        // 3. if enabled, Delay Validation",
+          "        let cbDelay = TcHmi.Controls.get('TcHmiCheckbox_DelayStart');",
+          "        let delayInput = TcHmi.Controls.get('TcHmiNumericInput_DelayTimeMin');",
+          "        let delayState = cbDelay?.getToggleState?.();",
+          "        let delayEnabled = (delayState === 'Active');",
+          "        let delayValue = delayInput?.getValue?.() ?? 0;",
+          "",
+          "        if (delayEnabled && delayValue === 0) {",
+          "            alert('Delay time must be greater than zero if delay is enabled.');",
+          "            return;",
+          "        }",
+          "",
+          "        // 4. Pumps Validation",
+          "        let atLeastOneSelected = false;",
+          "        let hasZeroVolume = false;",
+          "",
+          "        for (let i = 0; i < 10; i++) {",
+          "            let checkbox = TcHmi.Controls.get('TcHmiCheckbox_CalEnabledPump' + (i + 1));",
+          "            let input = TcHmi.Controls.get('TcHmiNumericInput_TargetVolumePump' + (i + 1));",
+          "",
+          "            let isSelected = checkbox?.getToggleState?.() === 'Active';",
+          "            let volume = input?.getValue?.() ?? 0;",
+          "",
+          "            if (isSelected) {",
+          "                atLeastOneSelected = true;",
+          "                if (volume === 0) {",
+          "                    hasZeroVolume = true;",
+          "                }",
+          "            }",
+          "        }",
+          "",
+          "        if (!atLeastOneSelected) {",
+          "            alert('Select at least one pump.');",
+          "            return;",
+          "        }",
+          "",
+          "        if (hasZeroVolume) {",
+          "            alert('One or more selected pumps have target volume = 0.');",
+          "            return;",
+          "        }",
+          "",
+          "        // 5. If all validation passed then writing the symbols",
+          "        for (let i = 0; i < 10; i++) {",
+          "            let checkbox = TcHmi.Controls.get('TcHmiCheckbox_CalEnabledPump' + (i + 1));",
+          "            let input = TcHmi.Controls.get('TcHmiNumericInput_TargetVolumePump' + (i + 1));",
+          "",
+          "            let isChecked = checkbox?.getToggleState?.() === 'Active';",
+          "            let volume = input?.getValue?.() ?? 0;",
+          "",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.aCalibPumps[' + i + ']::bSelected%/s%', isChecked);",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.aCalibPumps[' + i + ']::rTargetVolume%/s%', volume);",
+          "        }",
+          "",
+          "        TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.rAcceptanceCriteria%/s%', acceptanceValue);",
+          "        TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.iReplicatesSetpoint%/s%', replicatesValue);",
+          "",
+          "        if (delayEnabled) {",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.iDelayTimeMin%/s%', delayValue);",
+          "        }",
+          "\t\t// Start flag",
+          "        TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.HMIDigInputs::bHMIEStartCalibration%/s%', true);",
           "    });",
-          "})();",
-          ""
+          "})();"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -2609,5 +2648,67 @@
 </script>
 </div>
 <div id="TcHmi_Controls_Beckhoff_TcHmiImage_115" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="230" data-tchmi-left-unit="px" data-tchmi-src="Resources/Custom/Images/Machine/CalibrationBox.svg" data-tchmi-top="1099" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-zindex="2">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_IO.gDigInputs.bCalibrationBoxPresent%/s%",
+    "actions": [
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "symbolExpression": "%s%PLC1.GVL_IO.gDigInputs.bCalibrationBoxPresent%/s%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/BOOL",
+              "value": false
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_TcHmiImage_115::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/BOOL",
+              "value": true
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_TcHmiImage_115::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
 </div>
 </div>

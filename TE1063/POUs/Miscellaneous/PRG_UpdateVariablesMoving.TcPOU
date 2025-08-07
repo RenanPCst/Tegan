@@ -14,7 +14,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF NOT GVL_IO.gDigInputs.bAccessDoorInterlockFdbk1 AND NOT GVL_IO.gDigInputs.bAccessDoorInterlockFdbk2 AND NOT GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3 THEN
+      <ST><![CDATA[IF NOT GVL_IO.gDigInputs.bAccessDoor4InterlockFdbk AND NOT GVL_IO.gDigInputs.bAccessDoor5InterlockFdbk AND NOT GVL_IO.gDigInputs.bAccessDoor6InterlockFdbk THEN
 	GVL_Safety.SafetyOutputs.bBelowDoorsFeedback := TRUE;
 ELSE
 	GVL_Safety.SafetyOutputs.bBelowDoorsFeedback := FALSE;
@@ -88,36 +88,6 @@ GVL_Motion.aPumps[10].Linear.bHomeSensorState := GVL_Motion.aPumps[10].Linear.iH
 
 //temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
 IF NOT bFirstVariablesAssignment THEN
-	//Default Motors Parameters
-	//Motor M1 parameters
-	(*
-	GVL_HMI.HMIParameters.aM1Position[1] 			:= 0; 	 // [mm] M1 Motor Home Position
-	GVL_HMI.HMIParameters.aM1Position[2]			:= -318; // [mm] M1 Motor Seal Position
-	GVL_HMI.HMIParameters.aM1Position[3]			:= -280; // [mm] M1 Motor Dry Position
-	GVL_HMI.HMIParameters.fM1PositionDeceleration 	:= 50;
-	GVL_HMI.HMIParameters.rM1Velocity				:= 15;
-	GVL_HMI.HMIParameters.rM1PrecisionVelocity		:= 5;
-	GVL_HMI.HMIParameters.rM1Accleration			:= 15;
-	GVL_HMI.HMIParameters.rM1Deceleration 			:= 15;
-	
-	GVL_HMI.HMIParameters.aM2Position[1] 	:= 0; 	 	// [mm] M2 Motor Home Position 
-	GVL_HMI.HMIParameters.aM2Position[2] 	:= -40;  	// [mm] M2 Waste Position
-	GVL_HMI.HMIParameters.aM2Position[3] 	:= -70;	 	// [mm] M2 Fill Vials Position
-	GVL_HMI.HMIParameters.aM2Position[4]	:= -180; 	// [mm] M2 Calibration Position
-	GVL_HMI.HMIParameters.rM2Velocity	 	:= 10; 	 	// [mm/s] M2 Motor Velocity
-	GVL_HMI.HMIParameters.rM2Accleration 	:= 10; 	 	// [mm/s2] M2 Motor Acceleration
-	GVL_HMI.HMIParameters.rM2Deceleration 	:= 10; 	 	// [mm/s2] M2 Motor Deceleration
-	
-	GVL_HMI.HMIParameters.aM3Position[1] 	:= 0; 	 	// [mm] M3 Motor Home Position 
-	GVL_HMI.HMIParameters.aM3Position[2] 	:= -160; 	// [mm] M3 VialLine1 Position
-	GVL_HMI.HMIParameters.aM3Position[3] 	:= -187; 	// [mm] M3 VialLine2 Position
-	GVL_HMI.HMIParameters.aM3Position[4] 	:= -213;  	// [mm] M3 VialLine3 Position
-	GVL_HMI.HMIParameters.aM3Position[5] 	:= -239; 	// [mm] M3 VialLine4 Position
-	GVL_HMI.HMIParameters.aM3Position[6] 	:= -115; 	// [mm] M3 Calibration Position
-	GVL_HMI.HMIParameters.rM3Velocity	 	:= 10; 	 	// [mm/s] M3 Motor Velocity
-	GVL_HMI.HMIParameters.rM3Accleration 	:= 10; 	 	// [mm/s2] M3 Motor Acceleration
-	GVL_HMI.HMIParameters.rM3Deceleration 	:= 10; 	 	// [mm/s2] M3 Motor Deceleration
-	*)
 	//Default Homing Motors settings
 	GVL_Motion.M1Motor.rHomeAcc 	:= 20.0;
 	GVL_Motion.M1Motor.rHomeDec 	:= 20.0;
@@ -182,18 +152,6 @@ END_IF
       <LineId Id="132" Count="6" />
       <LineId Id="75" Count="1" />
       <LineId Id="98" Count="0" />
-      <LineId Id="103" Count="1" />
-      <LineId Id="358" Count="0" />
-      <LineId Id="105" Count="9" />
-      <LineId Id="178" Count="1" />
-      <LineId Id="115" Count="1" />
-      <LineId Id="180" Count="1" />
-      <LineId Id="117" Count="2" />
-      <LineId Id="186" Count="2" />
-      <LineId Id="190" Count="0" />
-      <LineId Id="99" Count="0" />
-      <LineId Id="191" Count="1" />
-      <LineId Id="120" Count="0" />
       <LineId Id="140" Count="1" />
       <LineId Id="143" Count="1" />
       <LineId Id="150" Count="1" />

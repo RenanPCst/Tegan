@@ -544,9 +544,9 @@
         "active": true,
         "sourceLines": [
           "(function () {",
-          "    const elementId = 'TcHmiRectangle_BWasteLevel'; // Adjust for other tanks",
-          "    const symbol = 'PLC1.GVL_HMI.HMIAnimation::rWasteLevel'; // Index for B3",
-          "    const maxHeight = 141;",
+          "    const elementId = 'TcHmiRectangle_BWasteLevel'; ",
+          "    const symbol = 'PLC1.GVL_HMI.HMIAnimation::rWasteLevel';",
+          "    const maxHeight = 92; // <-- altura real do retângulo",
           "    const updateIntervalMs = 500;",
           "",
           "    const element = document.getElementById(elementId);",
@@ -565,28 +565,34 @@
           "            if (data.error === TcHmi.Errors.NONE) {",
           "                const value = data.value;",
           "",
+          "                // Clamp 0–100 and convert to pixel height",
           "                const height = Math.min(Math.max(value, 0), 100) / 100 * maxHeight;",
-          "                element.style.clipPath = `inset(${maxHeight - height}px 0px 0px 0px)`;",
           "",
-          "                let color = 'rgba(0, 150, 255, 0.6)';",
-          "                if (value <= 25) {",
-          "                    color = 'rgba(255, 0, 0, 0.6)';",
-          "                } else if (value <= 50) {",
-          "                    color = 'rgba(255, 210, 0, 0.7)';",
+          "                // Animate from bottom to top",
+          "                const topInset = maxHeight - height;",
+          "                element.style.clipPath = `inset(${topInset}px 0px 0px 0px)`;",
+          "",
+          "                // Inverted color logic for waste level",
+          "                let color;",
+          "                if (value > 70) {",
+          "                    color = 'rgba(255, 0, 0, 0.6)'; // RED",
+          "                } else if (value > 50) {",
+          "                    color = 'rgba(255, 210, 0, 0.7)'; // YELLOW",
+          "                } else {",
+          "                    color = 'rgba(0, 150, 255, 0.6)'; // BLUE",
           "                }",
           "",
           "                element.style.backgroundColor = color;",
+          "",
           "            } else {",
           "                console.error('Failed to read symbol:', symbol, data.error);",
           "            }",
           "        });",
           "    }",
           "",
-          "    // Start interval",
           "    intervalId = setInterval(updateLevel, updateIntervalMs);",
-          "    updateLevel(); // Initial update",
+          "    updateLevel();",
           "",
-          "    // Stop interval when control is unloaded",
           "    if (TcHmi.EventProvider && TcHmi.EventProvider.register) {",
           "        TcHmi.EventProvider.register('TcHmi_Controls_System_TcHmiControl_Unloaded', function (e) {",
           "            if (e.control.getId() === elementId) {",
@@ -620,25 +626,94 @@
     "event": "TcHmi_Controls_Beckhoff_CalibrationBt.onPressed",
     "actions": [
       {
-        "objectType": "WriteToSymbol",
+        "objectType": "Condition",
         "active": true,
-        "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
-          "value": 2
-        },
-        "asyncWait": true
-      },
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiRegion_Index::TargetContent%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/ContentPath",
-          "value": "Contents/Content_Calibration.content"
-        },
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 5
+                },
+                "compareOperator": "!=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 4
+                },
+                "compareOperator": "!=",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 2
+                },
+                "compareOperator": "!=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Calibration mode can only be activated when the system is in 'Stopped' or 'System Ready' state!\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_HMI.eMachineMode%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:server#/definitions/PLC1.E_MachineMode",
+                  "value": 2
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRegion_Index::TargetContent%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/ContentPath",
+                  "value": "Contents/Content_Calibration.content"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
         "asyncWait": true
       }
     ]
