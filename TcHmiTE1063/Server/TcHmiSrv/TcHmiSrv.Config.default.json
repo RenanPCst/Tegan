@@ -251,6 +251,24 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.ARRAY_1..5_OF-REAL": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "maxItems": 5,
+            "minItems": 5,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..5_OF-ST_AMI8000IOInfo": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_AMI8000IOInfo"
+            },
+            "maxItems": 5,
+            "minItems": 5,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..5_OF-ST_ValveCommand": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_ValveCommand"
@@ -299,6 +317,15 @@
         "PLC1.ARRAY_1..8_OF-ST_HMI_OtherParamsRow": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_HMI_OtherParamsRow"
+            },
+            "maxItems": 8,
+            "minItems": 8,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..8_OF-USINT": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/USINT"
             },
             "maxItems": 8,
             "minItems": 8,
@@ -474,6 +501,142 @@
                 }
             ],
             "type": "integer"
+        },
+        "PLC1.ST_AL1333": {
+            "properties": {
+                "bQualifierIOLink": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.ARRAY_1..8_OF-BOOL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "bStateIOLink": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.ARRAY_1..8_OF-BOOL"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "nQualifierIOLink": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.ARRAY_1..8_OF-USINT"
+                        },
+                        {
+                            "attributes": {
+                                "TcAddressType": "Input"
+                            },
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "nStateIOLink": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.ARRAY_1..8_OF-USINT"
+                        },
+                        {
+                            "attributes": {
+                                "TcAddressType": "Input"
+                            },
+                            "propertyOrder": 2
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_AMI8000IOInfo": {
+            "properties": {
+                "bAxisError": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "bAxisHomed": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "bAxisOperational": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "bNotMoving": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "nErrorCode": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UDINT"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                },
+                "rActualPosition": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "rActualTorque": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "rActualVelocity": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                }
+            },
+            "type": "object"
         },
         "PLC1.ST_AX8101IOInfo": {
             "properties": {
@@ -5448,6 +5611,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.aIOAMI8000": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::aIOAMI8000",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..5_OF-ST_AMI8000IOInfo"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.aIOBox1": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::aIOBox1",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..8_OF-REAL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.aIOTerm04": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6675,6 +6858,108 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_IO.bAL1333Box1State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAL1333Box1State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.bAMI8000Box10State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAMI8000Box10State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.bAMI8000Box11State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAMI8000Box11State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.bAMI8000Box12State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAMI8000Box12State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.bAMI8000Box8State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAMI8000Box8State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.bAMI8000Box9State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::bAMI8000Box9State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Control flag from terminal state"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_IO.bAX8108T34State": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -7316,6 +7601,111 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_IO.nAL1333Box1State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAL1333Box1State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.nAMI8000Box10State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAMI8000Box10State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.nAMI8000Box11State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAMI8000Box11State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.nAMI8000Box12State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAMI8000Box12State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.nAMI8000Box8State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAMI8000Box8State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.nAMI8000Box9State": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::nAMI8000Box9State",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UINT"
+                    },
+                    {
+                        "comment": "Terminal State from IO Terminal Info Data"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_IO.nAX8108T34State": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -7917,6 +8307,108 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_IO.sAL1333Box1Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAL1333Box1Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.sAMI8000Box10Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAMI8000Box10Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.sAMI8000Box11Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAMI8000Box11Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.sAMI8000Box12Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAMI8000Box12Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.sAMI8000Box8Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAMI8000Box8Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.sAMI8000Box9Status": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::sAMI8000Box9Status",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 200
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_IO.sAX8108T34Status": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -8458,6 +8950,16 @@
                         "$ref": "tchmi:general#/definitions/String"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.stAL1333info": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::stAL1333info",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_AL1333"
             },
             "USEMAPPING": true
         },
@@ -9908,6 +10410,8 @@
                 "PLC1.GVL_HMI.ManualMov": 3,
                 "PLC1.GVL_HMI.aAvailableFiles": 3,
                 "PLC1.GVL_HMI.aCalibPumps": 3,
+                "PLC1.GVL_HMI.aIOAMI8000": 3,
+                "PLC1.GVL_HMI.aIOBox1": 3,
                 "PLC1.GVL_HMI.aIOTerm04": 3,
                 "PLC1.GVL_HMI.aIOTerm05": 3,
                 "PLC1.GVL_HMI.aIOTerm06": 3,
@@ -10034,6 +10538,12 @@
                 "PLC1.GVL_HMIVariables.bBtStartCycle": 3,
                 "PLC1.GVL_HMIVariables.bBtStopCycle": 3,
                 "PLC1.GVL_HMIVariables.bHomeLampBlueState": 3,
+                "PLC1.GVL_IO.bAL1333Box1State": 3,
+                "PLC1.GVL_IO.bAMI8000Box10State": 3,
+                "PLC1.GVL_IO.bAMI8000Box11State": 3,
+                "PLC1.GVL_IO.bAMI8000Box12State": 3,
+                "PLC1.GVL_IO.bAMI8000Box8State": 3,
+                "PLC1.GVL_IO.bAMI8000Box9State": 3,
                 "PLC1.GVL_IO.bAX8108T34State": 3,
                 "PLC1.GVL_IO.bAX8620T33State": 3,
                 "PLC1.GVL_IO.bEK1100T01State": 3,
@@ -10077,6 +10587,12 @@
                 "PLC1.GVL_IO.bInAckSignal": 3,
                 "PLC1.GVL_IO.bInResetSignal": 3,
                 "PLC1.GVL_IO.gDigInputs.bCalibrationBoxPresent": 3,
+                "PLC1.GVL_IO.nAL1333Box1State": 3,
+                "PLC1.GVL_IO.nAMI8000Box10State": 3,
+                "PLC1.GVL_IO.nAMI8000Box11State": 3,
+                "PLC1.GVL_IO.nAMI8000Box12State": 3,
+                "PLC1.GVL_IO.nAMI8000Box8State": 3,
+                "PLC1.GVL_IO.nAMI8000Box9State": 3,
                 "PLC1.GVL_IO.nAX8108T34State": 3,
                 "PLC1.GVL_IO.nAX8620T33State": 3,
                 "PLC1.GVL_IO.nEK1100T01State": 3,
@@ -10109,6 +10625,12 @@
                 "PLC1.GVL_IO.nEL7211T16State": 3,
                 "PLC1.GVL_IO.nEL9410T12State": 3,
                 "PLC1.GVL_IO.nEL9576T14State": 3,
+                "PLC1.GVL_IO.sAL1333Box1Status": 3,
+                "PLC1.GVL_IO.sAMI8000Box10Status": 3,
+                "PLC1.GVL_IO.sAMI8000Box11Status": 3,
+                "PLC1.GVL_IO.sAMI8000Box12Status": 3,
+                "PLC1.GVL_IO.sAMI8000Box8Status": 3,
+                "PLC1.GVL_IO.sAMI8000Box9Status": 3,
                 "PLC1.GVL_IO.sAX8108T34Status": 3,
                 "PLC1.GVL_IO.sAX8620T33Status": 3,
                 "PLC1.GVL_IO.sEK1100T01Status": 3,
@@ -10141,6 +10663,7 @@
                 "PLC1.GVL_IO.sEL7211T16Status": 3,
                 "PLC1.GVL_IO.sEL9410T12Status": 3,
                 "PLC1.GVL_IO.sEL9576T14Status": 3,
+                "PLC1.GVL_IO.stAL1333info": 3,
                 "PLC1.GVL_IO.stEL6910": 3,
                 "PLC1.GVL_Motion.M1Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M2Motor.rActualPosition": 3,
