@@ -28,6 +28,14 @@
     "DEFAULTTIMEZONE": "client",
     "DEFAULTUSERGROUP": "__SystemUsers",
     "DEFINITIONS": {
+        "PLC1.ARRAY_0..20_OF-UDINT": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/UDINT"
+            },
+            "maxItems": 21,
+            "minItems": 21,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..42_OF-STRING-80": {
             "items": {
                 "$ref": "tchmi:general#/definitions/STRING%2880%29"
@@ -5127,6 +5135,16 @@
             "MAPPING": "PLC1::GVL_Constant::aIOList",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..42_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Constant.aIOPageStarts": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Constant::aIOPageStarts",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..20_OF-UDINT"
             },
             "USEMAPPING": true
         },
@@ -10375,6 +10393,7 @@
                 "Login": 3,
                 "Logout": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
+                "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_HMI.HMIAnimation": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aSolventLevel": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aValveAngle": 3,

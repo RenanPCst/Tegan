@@ -1258,7 +1258,30 @@
               "valueType": "tchmi:general#/definitions/UDINT",
               "value": 39
             },
-            "actions": []
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRegion::TargetContent%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/ContentPath",
+                  "value": "Contents/IOContents/IOPage19.content"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_PageNumber::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "19"
+                },
+                "asyncWait": true
+              }
+            ]
           },
           {
             "caseValue": {
@@ -1266,7 +1289,61 @@
               "valueType": "tchmi:general#/definitions/UDINT",
               "value": 40
             },
-            "actions": []
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRegion::TargetContent%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/ContentPath",
+                  "value": "Contents/IOContents/IOPage20.content"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_PageNumber::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "20"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UDINT",
+              "value": 41
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRegion::TargetContent%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/ContentPath",
+                  "value": "Contents/IOContents/IOPage20.content"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_PageNumber::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "20"
+                },
+                "asyncWait": true
+              }
+            ]
           }
         ],
         "asyncWait": true
@@ -1315,17 +1392,30 @@
         "active": true,
         "sourceLines": [
           "(function () {",
-          "    const symbol = '%s%PLC1.GVL_HMI.nSelectedIO%/s%';",
-          "    TcHmi.Symbol.readEx2(symbol, function (data) {",
-          "        if (data.error === TcHmi.Errors.NONE) {",
-          "            let current = data.value;",
-          "            if (current < 41) {",
-          "                TcHmi.Symbol.writeEx(symbol, current + 2, function (result) {});",
-          "            } else {",
-          "                alert('Last page');",
-          "            }",
-          "        }",
-          "    });",
+          "  // Keep this list updated as the switch case of the IO Region. ",
+          "  const IO_PAGE_STARTS = [",
+          "    0, 1, 3, 5, 7, 9, 11, 13, 15, 17,",
+          "    19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 40",
+          "  ];",
+          "",
+          "  const symIdx = '%s%PLC1.GVL_HMI.nSelectedIO%/s%';",
+          "",
+          "  TcHmi.Symbol.readEx2(symIdx, function (data) {",
+          "    if (data.error !== TcHmi.Errors.NONE) return;",
+          "",
+          "    const current = Number(data.value);",
+          "",
+          "    let page = 0;",
+          "    for (let i = 0; i < IO_PAGE_STARTS.length; i++) {",
+          "      if (current >= IO_PAGE_STARTS[i]) page = i; else break;",
+          "    }",
+          "",
+          "    if (page < IO_PAGE_STARTS.length - 1) {",
+          "      TcHmi.Symbol.writeEx(symIdx, IO_PAGE_STARTS[page + 1], function () {});",
+          "    } else {",
+          "      alert('Last page');",
+          "    }",
+          "  });",
           "})();"
         ],
         "injectContextObject": false,
@@ -1349,18 +1439,31 @@
         "active": true,
         "sourceLines": [
           "(function () {",
-          "    const symbol = '%s%PLC1.GVL_HMI.nSelectedIO%/s%';",
-          "    TcHmi.Symbol.readEx2(symbol, function (data) {",
-          "        if (data.error === TcHmi.Errors.NONE) {",
-          "            let current = data.value;",
-          "            if (current > 0) {",
-          "                TcHmi.Symbol.writeEx(symbol, current - 2, function (result) {});",
-          "            } else {",
-          "                alert('First page');",
-          "            }",
-          "        }",
-          "    });",
-          "})();"
+          "  const IO_PAGE_STARTS = [",
+          "    0, 1, 3, 5, 7, 9, 11, 13, 15, 17,",
+          "    19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 40",
+          "  ];",
+          "",
+          "  const symIdx = '%s%PLC1.GVL_HMI.nSelectedIO%/s%';",
+          "",
+          "  TcHmi.Symbol.readEx2(symIdx, function (data) {",
+          "    if (data.error !== TcHmi.Errors.NONE) return;",
+          "",
+          "    const current = Number(data.value);",
+          "",
+          "    let page = 0;",
+          "    for (let i = 0; i < IO_PAGE_STARTS.length; i++) {",
+          "      if (current >= IO_PAGE_STARTS[i]) page = i; else break;",
+          "    }",
+          "",
+          "    if (page > 0) {",
+          "      TcHmi.Symbol.writeEx(symIdx, IO_PAGE_STARTS[page - 1], function () {});",
+          "    } else {",
+          "      alert('First page');",
+          "    }",
+          "  });",
+          "})();",
+          ""
         ],
         "injectContextObject": false,
         "asyncWait": true,
