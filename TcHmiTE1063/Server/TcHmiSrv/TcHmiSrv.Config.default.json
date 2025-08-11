@@ -61,6 +61,15 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.ARRAY_1..10_OF-LREAL": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/LREAL"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-ST_CalibrationPump": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_CalibrationPump"
@@ -5994,6 +6003,46 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bCalLinearPumpsEnableBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsEnableBt",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalLinearPumpsHomeBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsHomeBt",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalLinearPumpsMoveBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsMoveBt",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalLinearPumpsStopBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsStopBt",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bDeleteRecipeButton": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6150,6 +6199,16 @@
                         "comment": "Incoherence Monitoring that could block master controll to enter in autoCycle"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bLinearPumpOldPosition": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bLinearPumpOldPosition",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-LREAL"
             },
             "USEMAPPING": true
         },
@@ -6650,6 +6709,41 @@
             "MAPPING": "PLC1::GVL_HMI::rCalLealTestPressure",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/LREAL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.rLinearPumpsLastAdjustDate": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::rLinearPumpsLastAdjustDate",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/DATE"
+                    },
+                    {
+                        "comment": "Linear pumps last adjusted Date"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.rLinearPumpsLastAdjustUser": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::rLinearPumpsLastAdjustUser",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Linear pumps last adjusted username",
+                        "maxLength": 128
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -9052,6 +9146,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.0.Linear.iOperational": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[0]::Linear::iOperational",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 14
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.0.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10463,6 +10577,10 @@
                 "PLC1.GVL_HMI.bCalLeakTestError": 3,
                 "PLC1.GVL_HMI.bCalLeakTestFail": 3,
                 "PLC1.GVL_HMI.bCalLeakTestPass": 3,
+                "PLC1.GVL_HMI.bCalLinearPumpsEnableBt": 3,
+                "PLC1.GVL_HMI.bCalLinearPumpsHomeBt": 3,
+                "PLC1.GVL_HMI.bCalLinearPumpsMoveBt": 3,
+                "PLC1.GVL_HMI.bCalLinearPumpsStopBt": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeButton": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeConfirm": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeCorfim": 3,
@@ -10475,6 +10593,7 @@
                 "PLC1.GVL_HMI.bHomeLampBlueState": 3,
                 "PLC1.GVL_HMI.bIncoherenceAlert": 3,
                 "PLC1.GVL_HMI.bIncoherenceDetected": 3,
+                "PLC1.GVL_HMI.bLinearPumpOldPosition": 3,
                 "PLC1.GVL_HMI.bMachineModeBlinking": 3,
                 "PLC1.GVL_HMI.bMachineModeScan": 3,
                 "PLC1.GVL_HMI.bNewRecipeButton": 3,
@@ -10511,6 +10630,8 @@
                 "PLC1.GVL_HMI.nSelectedIO": 3,
                 "PLC1.GVL_HMI.rAcceptanceCriteria": 3,
                 "PLC1.GVL_HMI.rCalLealTestPressure": 3,
+                "PLC1.GVL_HMI.rLinearPumpsLastAdjustDate": 3,
+                "PLC1.GVL_HMI.rLinearPumpsLastAdjustUser": 3,
                 "PLC1.GVL_HMI.rTimeCountingDown": 3,
                 "PLC1.GVL_HMI.sActivatedRecipeHomeNaming": 3,
                 "PLC1.GVL_HMI.sActualUserName": 3,
@@ -10687,6 +10808,7 @@
                 "PLC1.GVL_Motion.M1Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M2Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M3Motor.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.0.Linear.iOperational": 3,
                 "PLC1.GVL_Motion.aPumps.0.Linear.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.1.Linear.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.2.Linear.rActualPosition": 3,

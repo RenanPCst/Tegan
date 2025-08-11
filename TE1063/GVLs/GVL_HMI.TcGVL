@@ -130,11 +130,19 @@ VAR_GLOBAL
 	bCalLeakTestPass		: BOOL := FALSE;
 	bCalLeakTestFail		: BOOL := FALSE;
 	bCalLeakTestError		: BOOL := FALSE;
+	bCalLinearPumpsEnableBt	: BOOL := FALSE;
+	bCalLinearPumpsHomeBt	: BOOL := FALSE;
+	bCalLinearPumpsMoveBt	: BOOL := FALSE;
+	bCalLinearPumpsStopBt	: BOOL := FALSE;
+	bLinearPumpOldPosition	: ARRAY[1..10] OF LREAL;
 	rCalLealTestPressure	: LREAL;
 	aCalibPumps         	: ARRAY[1..10] OF ST_CalibrationPump;
+	aCalibLinearPumps		: ARRAY[1..10] OF ST_LinearPumpCalibration;
 	iReplicatesSetpoint		: INT;
 	rAcceptanceCriteria		: LREAL;
 	iDelayStart         	: INT;
+	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
+	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date
 	
 	// <\Calibration> ############################################################################################################################
 	
