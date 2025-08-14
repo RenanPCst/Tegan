@@ -17,7 +17,8 @@ cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value
 
 //Pumps Animation and status
 aPumpStatus			: ARRAY[1..10] OF ST_ActuatorStatus;
-fbBlinkPumpArrow	: ARRAY[1..10] OF FB_Blink;
+fbBlinkPumpArrowFWD	: ARRAY[1..10] OF FB_Blink;
+fbBlinkPumpArrowBWD	: ARRAY[1..10] OF FB_Blink;
 
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
@@ -53,6 +54,16 @@ GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; /
 ACT_M1Animation();
 ACT_M2Animation();
 
+(* <Linear Pumps Old Position> ----------------------------------------------------------------------------------------- *)
+// display linear pumps old position saved on persistent memory when in Calibration Mode
+IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
+	FOR i := 1 TO 10 DO
+		GVL_HMI.aCalibLinearPumps[i].rOldPosition := GVL_Retain.rLinearPumpOldPosition[i];
+		//pump factor
+		GVL_HMI.aCalibLinearPumps[i].rPumpFactor := GVL_Motion.aPumps[1].Rotary.rPumpFactor;
+	END_FOR
+END_IF
+
 (* <Safety Controls> ----------------------------------------------------------------------------------------------------*)
 
 ton500ms(IN := NOT ton500ms.Q, PT := T#500MS);
@@ -79,15 +90,11 @@ END_IF
 
 //Pumps Animation | Calibration Screen
 IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
-	FOR i := 1 TO 10 DO
-		aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
-		fbBlinkPumpArrow[i](bEnable := aPumpStatus[i].bBusy, tPeriod := T#1S);
-		GVL_HMI.HMIAnimation.aPumpingArrowFwd[i] := fbBlinkPumpArrow[i].bBlink;
-	END_FOR
+	ACT_CalibrationArrows();
 END_IF
 
 //Scan period for hmi refresh
-IF GVL_HMI.eMachineMode <> E_MachineMode.CALIBRATION AND GVL_HMI.eMachineMode <> E_MachineMode.IMEDIATE_FAULT AND GVL_HMI.eMachineMode <> E_MachineMode.MANUAL THEN
+IF GVL_HMI.eMachineMode <> E_MachineMode.CALIBRATION AND GVL_HMI.eMachineMode <> E_MachineMode.MANUAL THEN
 	fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
 	GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
 ELSE
@@ -177,6 +184,28 @@ IF GVL_HMI.bResetM1MotorBt THEN
 	GVL_HMI.bResetM1MotorBt := NOT GVL_Motion.aMotors[1].Reset();
 END_IF]]></ST>
     </Implementation>
+    <Action Name="ACT_CalibrationArrows" Id="{79e47b94-61cf-47c5-8acf-43afca6d34ed}">
+      <Implementation>
+        <ST><![CDATA[(* Pumps arrow animation *)
+//Get pump Status
+FOR i := 1 TO 10 DO
+	aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
+END_FOR
+
+//Blink aPumpMovingFwd[i] if moving forward
+FOR i := 1 TO 10 DO
+	fbBlinkPumpArrowFWD[i]( bEnable := aPumpStatus[i].bMovingFwd, tPeriod := T#500MS );
+	GVL_HMI.HMIAnimation.aPumpingArrowFwd[i] := fbBlinkPumpArrowFWD[i].bBlink;
+END_FOR
+
+//Blink aPumpMovingBwd[i] if moving backwards
+FOR i := 1 TO 10 DO
+	fbBlinkPumpArrowBWD[i]( bEnable := aPumpStatus[i].bMovingBck, tPeriod := T#500MS );
+	GVL_HMI.HMIAnimation.aPumpingArrowBwd[i] := fbBlinkPumpArrowBWD[i].bBlink;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="ACT_IOControls" Id="{9ed40c73-f032-4eec-b4aa-fa2f87be3486}">
       <Implementation>
         <ST><![CDATA[
@@ -279,7 +308,7 @@ GVL_HMI.aIOTerm12[2] := GVL_IO.bEL9410USStatus;
 
 (* <EL3058 Terminal 13> -------------------------------------------------------------------------------------------------------------*)
 GVL_HMI.aIOTerm13[1] := GVL_IO.gAnalogInputs.rMainPressureSupplyInput;
-GVL_HMI.aIOTerm13[2] := GVL_IO.gAnalogInputs.rLeakTestPressureSensor;
+GVL_HMI.aIOTerm13[2] := 0.0;
 GVL_HMI.aIOTerm13[3] := GVL_IO.gAnalogInputs.rPressureRegulatorInput;
 GVL_HMI.aIOTerm13[3] := 0.0;
 
@@ -318,7 +347,7 @@ GVL_HMI.aIOTerm17[3] := GVL_IO.bEL3022ChAError;
 GVL_HMI.aIOTerm17[4] := GVL_IO.bEL3022ChBUnderRange;
 GVL_HMI.aIOTerm17[5] := GVL_IO.bEL3022ChBOverRange;
 GVL_HMI.aIOTerm17[6] := GVL_IO.bEL3022ChBError;
-GVL_HMI.aIOTerm17Values[1] := 0.0;
+GVL_HMI.aIOTerm17Values[1] := GVL_IO.gAnalogInputs.rLeakTestPressureSensor;
 GVL_HMI.aIOTerm17Values[2] := 0.0;
 
 (* <EL1809 Terminal 18> -------------------------------------------------------------------------------------------------------------*)
@@ -649,6 +678,13 @@ END_IF]]></ST>
       <LineId Id="669" Count="0" />
       <LineId Id="671" Count="0" />
       <LineId Id="255" Count="10" />
+      <LineId Id="817" Count="1" />
+      <LineId Id="825" Count="0" />
+      <LineId Id="820" Count="1" />
+      <LineId Id="823" Count="0" />
+      <LineId Id="862" Count="1" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="822" Count="0" />
       <LineId Id="745" Count="0" />
       <LineId Id="338" Count="0" />
       <LineId Id="780" Count="0" />
@@ -669,9 +705,8 @@ END_IF]]></ST>
       <LineId Id="453" Count="0" />
       <LineId Id="652" Count="0" />
       <LineId Id="651" Count="0" />
-      <LineId Id="655" Count="2" />
-      <LineId Id="662" Count="0" />
-      <LineId Id="658" Count="1" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="659" Count="0" />
       <LineId Id="654" Count="0" />
       <LineId Id="610" Count="0" />
       <LineId Id="608" Count="0" />
@@ -738,6 +773,22 @@ END_IF]]></ST>
       <LineId Id="576" Count="1" />
       <LineId Id="575" Count="0" />
       <LineId Id="578" Count="2" />
+    </LineIds>
+    <LineIds Name="PRG_HMIControl.ACT_CalibrationArrows">
+      <LineId Id="3" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="14" Count="3" />
+      <LineId Id="8" Count="0" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_IOControls">
       <LineId Id="3" Count="1" />

@@ -17,7 +17,7 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Balance's response parse and intepretation
-IF LEFT(sResponse, 3) = 'S S' THEN  //Check if the response is a acceptable weigth value
+IF LEFT(sResponse, 3) = 'S S' OR LEFT(sResponse, 3) = 'S D' THEN  //Check if the response is a acceptable weigth value
 	//Remove controll char of the end of the string (CR LF)
 	sResponse := LEFT(sResponse, LEN(sResponse) - 2);
 	
@@ -42,16 +42,17 @@ IF LEFT(sResponse, 3) = 'S S' THEN  //Check if the response is a acceptable weig
 		sValueOnly := MID(sResponse, iEnd - iStart + 1, iStart);  //Extract the wegth without the meassure unit
 		F_ParseWeight := STRING_TO_REAL(sValueOnly);  //String to Real convertion
 	ELSE
-		F_ParseWeight := -1.0;
+		F_ParseWeight := 9998.0;
 	END_IF
+ELSE
+	F_ParseWeight := 9999.0;
 END_IF
 
 
 ]]></ST>
     </Implementation>
     <LineIds Name="F_ParseWeight">
-      <LineId Id="172" Count="1" />
-      <LineId Id="176" Count="25" />
+      <LineId Id="232" Count="29" />
       <LineId Id="218" Count="0" />
       <LineId Id="126" Count="0" />
       <LineId Id="95" Count="0" />

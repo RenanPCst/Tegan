@@ -42,6 +42,10 @@ VAR
     iAllowableFail   : INT := 2;
     iMaxReplicates   : INT := 2;
 	
+	bMoveMotorM2	 : BOOL := FALSE;
+	bMoveMotorM3	 : BOOL := FALSE;
+	bMoveValve		 : ARRAY[1..5] OF BOOL;
+	
 	aPumpStatus : ST_ActuatorStatus;
 	
 	i : USINT;
@@ -67,10 +71,60 @@ END_VAR
         sStatus := 'Waiting delay...';
         IF tonCalDelay.Q THEN
             bRequestWeight := TRUE;
-            eStep := E_CalibStep.WEIGH_BEFORE;
+            eStep := E_CalibStep.POSITION_MOTORS;
 			tonCalDelay(IN := FALSE);
         END_IF
 
+	E_CalibStep.POSITION_MOTORS:
+		
+		sStatus := 'Positioning the Motors M2 and M3';
+		
+		IF NOT bMoveMotorM2 THEN
+			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+				rPosition := GVL_Settings.stMachineParam.aM2Position[4], 
+				rVelocity := GVL_Settings.stMachineParam.rM2Velocity, 
+				rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
+				rDec := GVL_Settings.stMachineParam.rM2Deceleration
+				);
+		END_IF
+	
+		IF NOT bMoveMotorM3 AND bMoveMotorM2 THEN
+			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+				rPosition := GVL_Settings.stMachineParam.aM3Position[6], 
+				rVelocity := GVL_Settings.stMachineParam.rM3Velocity, 
+				rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
+				rDec := GVL_Settings.stMachineParam.rM3Deceleration
+				);
+		END_IF
+		
+		IF bMoveMotorM2 AND bMoveMotorM3 THEN
+			bMoveMotorM2 := FALSE;
+			bMoveMotorM3 := FALSE;
+			eStep := E_CalibStep.POSITION_VALVES;
+		END_IF
+		
+	E_CalibStep.POSITION_VALVES:
+		
+		sStatus := 'Positioning Valves to Position 6';
+		FOR i := 1 TO 5 DO
+			IF NOT bMoveValve[i] THEN
+			bMoveValve[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
+																 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
+																 rAcc := GVL_Motion.aValves[i].rAcceleration, 
+																 rDec := GVL_Motion.aValves[i].rDeceleration 
+																);
+			END_IF
+		END_FOR
+		
+		IF bMoveValve[1] AND bMoveValve[2] AND bMoveValve[3] AND bMoveValve[4] AND bMoveValve[5] THEN
+			FOR i := 1 TO 5 DO
+				bMoveValve[i] := FALSE;
+				eStep := E_CalibStep.WEIGH_BEFORE;
+			END_FOR
+			
+		END_IF
+		
+	
     E_CalibStep.WEIGH_BEFORE:
 		sStatus := 'Requesting weight...';
         IF bRequestWeight THEN
@@ -82,7 +136,8 @@ END_VAR
 				sStatus := CONCAT('Weight Received: ', CONCAT(TO_STRING(rWeightBefore),'g'));
             END_IF
         END_IF
-
+	
+		
     E_CalibStep.WITHDRAW_BACKWARD:
         FOR i := 1 TO 10 DO
             aPumpMask[i] := FALSE;
@@ -198,9 +253,37 @@ END_VAR
             bRequestWeight := TRUE;
             eStep := E_CalibStep.WEIGH_BEFORE;
         ELSE
-            eStep := E_CalibStep.COMPLETE;
+            eStep := E_CalibStep.HOMING_MOTORS;
         END_IF
+		
+	E_CalibStep.HOMING_MOTORS:
 
+		sStatus := 'Homing the Motors M2 and M3';
+		
+		IF NOT bMoveMotorM3 THEN
+			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+				rPosition := GVL_Settings.stMachineParam.aM3Position[1], 
+				rVelocity := GVL_Settings.stMachineParam.rM3Velocity, 
+				rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
+				rDec := GVL_Settings.stMachineParam.rM3Deceleration
+				);
+		END_IF
+		
+		IF NOT bMoveMotorM2 AND bMoveMotorM3 THEN
+			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+				rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
+				rVelocity := GVL_Settings.stMachineParam.rM2Velocity, 
+				rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
+				rDec := GVL_Settings.stMachineParam.rM2Deceleration
+				);
+		END_IF
+		
+		IF bMoveMotorM2 AND bMoveMotorM3 THEN
+			bMoveMotorM2 := FALSE;
+			bMoveMotorM3 := FALSE;
+			eStep := E_CalibStep.WEIGH_BEFORE;
+		END_IF
+	
     E_CalibStep.COMPLETE:
         sStatus := 'Calibration Completed';
         bDone := TRUE;
@@ -217,11 +300,44 @@ END_CASE
       <LineId Id="398" Count="0" />
       <LineId Id="400" Count="2" />
       <LineId Id="535" Count="0" />
-      <LineId Id="403" Count="2" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="615" Count="0" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="654" Count="1" />
+      <LineId Id="625" Count="1" />
+      <LineId Id="628" Count="4" />
+      <LineId Id="627" Count="0" />
+      <LineId Id="617" Count="0" />
+      <LineId Id="616" Count="0" />
+      <LineId Id="635" Count="4" />
+      <LineId Id="633" Count="1" />
+      <LineId Id="641" Count="0" />
+      <LineId Id="647" Count="0" />
+      <LineId Id="649" Count="0" />
+      <LineId Id="651" Count="1" />
+      <LineId Id="650" Count="0" />
+      <LineId Id="648" Count="0" />
+      <LineId Id="739" Count="3" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="766" Count="3" />
+      <LineId Id="764" Count="0" />
+      <LineId Id="756" Count="0" />
+      <LineId Id="755" Count="0" />
+      <LineId Id="770" Count="1" />
+      <LineId Id="774" Count="1" />
+      <LineId Id="777" Count="0" />
+      <LineId Id="776" Count="0" />
+      <LineId Id="772" Count="1" />
+      <LineId Id="746" Count="0" />
+      <LineId Id="743" Count="0" />
+      <LineId Id="405" Count="0" />
       <LineId Id="520" Count="0" />
       <LineId Id="406" Count="5" />
       <LineId Id="521" Count="0" />
-      <LineId Id="412" Count="14" />
+      <LineId Id="412" Count="2" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="415" Count="11" />
       <LineId Id="525" Count="0" />
       <LineId Id="427" Count="0" />
       <LineId Id="429" Count="4" />
@@ -253,7 +369,16 @@ END_CASE
       <LineId Id="562" Count="0" />
       <LineId Id="484" Count="4" />
       <LineId Id="563" Count="0" />
-      <LineId Id="489" Count="27" />
+      <LineId Id="489" Count="19" />
+      <LineId Id="618" Count="1" />
+      <LineId Id="656" Count="2" />
+      <LineId Id="668" Count="7" />
+      <LineId Id="681" Count="0" />
+      <LineId Id="683" Count="6" />
+      <LineId Id="682" Count="0" />
+      <LineId Id="676" Count="4" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="509" Count="7" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

@@ -246,22 +246,6 @@ END_IF
 
 //<Balance Test>---------------------------------------------------------------------------------------------------------------------------------
 
-// FB_TCPClient instance to handle the connection with the Balance and interpretate it's response
-fbTcpClient(
-    sRemoteHost 	:= GVL_Settings.aBalanceIP,		//Server Ip address
-    nRemotePort 	:= GVL_Settings.nBalancePort,	//Server communication Port
-    bExecute 		:= bStartCommunication,				//Triggers the communication
-    tStateDelay 	:= tAdjustableDelay  				//Time delay between the steps [closeAll > Connection > Send > Receive > Parse > Close Connection]
-);
-
-// Reset Trigger after FB finished
-IF fbTcpClient.bConnectionDone THEN
-	sResponseMessage := fbTcpClient.sResponse;
-	fMeasuredWeight := fbTcpClient.fWeight;
-    bStartCommunication := NOT fbTcpClient.Reset();
-	
-END_IF
-
 GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePort := GVL_Settings.nBalancePort);
 // Em qualquer PRG
 IF bRequestWeight THEN
@@ -280,7 +264,7 @@ END_IF
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
-      <LineId Id="6870" Count="191" />
+      <LineId Id="6870" Count="175" />
       <LineId Id="7153" Count="0" />
       <LineId Id="7133" Count="0" />
       <LineId Id="7137" Count="2" />

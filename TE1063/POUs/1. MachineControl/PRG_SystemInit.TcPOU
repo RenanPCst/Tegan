@@ -192,7 +192,7 @@ END_IF
 // Step 3: If the process hasn't started yet **************************************************************************************************
 IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
     // If the system hasn't performed homing yet
-    IF NOT GVL_Motion.bInitialHomingDone THEN
+    IF NOT GVL_Motion.bInitialHomingDone THEN //First time machine starts, homing the motors.
         bPerformHoming := TRUE;
 
         // Start homing for vertical motors (Stage Collection and Sample Recovery Vertical) 
@@ -226,7 +226,7 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
         END_IF
 
         // Confirm linear motor 3 is done
-        IF bHomeMotorDone[3] THEN
+        IF bHomeMotorDone[1] AND bHomeMotorDone[2] AND bHomeMotorDone[3] THEN
             bLinearMotorsHomingDone := TRUE;
         END_IF
 		
@@ -262,7 +262,7 @@ IF NOT bStartedAction AND bAllResetDone AND tonResetDelay.Q THEN
             bStartedAction := TRUE;
         END_IF	
 		
-    ELSE
+    ELSE //If the machine already did the home before, just move to zero position
 		// Confirm linear motor 3 is done
 		bLinearMotorsHomingDone := bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3];
 		

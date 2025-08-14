@@ -88,6 +88,15 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.ARRAY_1..10_OF-ST_LinearPumpCalibration": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_LinearPumpCalibration"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-ST_PumpCommand": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_PumpCommand"
@@ -271,6 +280,15 @@
         "PLC1.ARRAY_1..5_OF-REAL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "maxItems": 5,
+            "minItems": 5,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..5_OF-STRING-80": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
             },
             "maxItems": 5,
             "minItems": 5,
@@ -1947,6 +1965,71 @@
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_LinearPumpCalibration": {
+            "properties": {
+                "bActivate": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "bEnabled": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "bHomed": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "rNewPosition": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "rOldPosition": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "rPumpFactor": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 5
                         }
                     ]
                 }
@@ -5157,6 +5240,16 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Constant.aSolventsAvailable": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Constant::aSolventsAvailable",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..5_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.HMIAnimation": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -5625,6 +5718,16 @@
                         "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..49_OF-ST_RecipeFileInfo"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.aCalibLinearPumps": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::aCalibLinearPumps",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-ST_LinearPumpCalibration"
             },
             "USEMAPPING": true
         },
@@ -6202,16 +6305,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bLinearPumpOldPosition": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bLinearPumpOldPosition",
-            "SCHEMA": {
-                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-LREAL"
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.bMachineModeBlinking": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6702,11 +6795,11 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.rCalLealTestPressure": {
+        "PLC1.GVL_HMI.rCalLeakTestPressure": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::rCalLealTestPressure",
+            "MAPPING": "PLC1::GVL_HMI::rCalLeakTestPressure",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/LREAL"
             },
@@ -10508,6 +10601,7 @@
                 "Logout": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
+                "PLC1.GVL_Constant.aSolventsAvailable": 3,
                 "PLC1.GVL_HMI.HMIAnimation": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aSolventLevel": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aValveAngle": 3,
@@ -10542,6 +10636,7 @@
                 "PLC1.GVL_HMI.HMI_SelectedMode": 3,
                 "PLC1.GVL_HMI.ManualMov": 3,
                 "PLC1.GVL_HMI.aAvailableFiles": 3,
+                "PLC1.GVL_HMI.aCalibLinearPumps": 3,
                 "PLC1.GVL_HMI.aCalibPumps": 3,
                 "PLC1.GVL_HMI.aIOAMI8000": 3,
                 "PLC1.GVL_HMI.aIOBox1": 3,
@@ -10629,6 +10724,7 @@
                 "PLC1.GVL_HMI.iTestDistance": 3,
                 "PLC1.GVL_HMI.nSelectedIO": 3,
                 "PLC1.GVL_HMI.rAcceptanceCriteria": 3,
+                "PLC1.GVL_HMI.rCalLeakTestPressure": 3,
                 "PLC1.GVL_HMI.rCalLealTestPressure": 3,
                 "PLC1.GVL_HMI.rLinearPumpsLastAdjustDate": 3,
                 "PLC1.GVL_HMI.rLinearPumpsLastAdjustUser": 3,

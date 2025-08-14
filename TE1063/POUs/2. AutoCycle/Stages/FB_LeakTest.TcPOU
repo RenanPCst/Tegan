@@ -44,6 +44,8 @@ END_VAR]]></Declaration>
 			GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Starting'; 
 			GVL_HMI.HMIAnimation.rLoadBarLeakTest  := 0;
 			GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.InProgress;
+			tonMonitoring(in := FALSE);
+			tonPressuring(IN := FALSE);
             eState := POSITION_VALVES;
         END_IF;
 
@@ -105,7 +107,7 @@ END_VAR]]></Declaration>
 
     PRESSURIZE:
         // Waits for the pressurization time to complete
-        tonPressuring(IN := bPressureTime, PT := T#5S);
+        tonPressuring(IN := bPressureTime, PT := T#20S);
         IF tonPressuring.Q THEN
             // Switches solenoids to LEAKTESTMONITORING configuration before monitoring begins
             fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
@@ -157,7 +159,7 @@ END_VAR]]></Declaration>
 			END_IF;
 		END_IF
 		//Pressure output for monitoring
-		GVL_HMI.rCalLealTestPressure := rScaledPressure;
+		GVL_HMI.rCalLeakTestPressure := rScaledPressure;
 		rSystemPressure := rScaledPressure;
 
     DONE:
@@ -229,6 +231,7 @@ END_IF;]]></ST>
       <LineId Id="596" Count="3" />
       <LineId Id="842" Count="2" />
       <LineId Id="841" Count="0" />
+      <LineId Id="920" Count="1" />
       <LineId Id="600" Count="11" />
       <LineId Id="613" Count="14" />
       <LineId Id="629" Count="36" />
