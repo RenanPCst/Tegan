@@ -11,11 +11,14 @@ VAR
 	bRequestMoveByVol		: BOOL := FALSE;
 	bRequestMoveByDistance	: BOOL := FALSE;
 	bRequestStopAllPumps	: BOOL := FALSE;
+	bRequestMoveLinearPumps : BOOL := FALSE;
 	
 	bMoveVelocityPumps	: ARRAY[1..10] OF BOOL;
 	bMoveDistancePumps	: ARRAY[1..10] OF BOOL;
 	bMoveRelativePumps	: ARRAY[1..10] OF BOOL;
+	bMoveLinearPumps	: ARRAY[1..10] OF BOOL;
 	bStopRotaryPump 	: ARRAY[1..10] OF BOOL;
+	bStopLinearPump		: ARRAY[1..10] OF BOOL;
 	
 	rDistanceByVol		: ARRAY[1..10] OF REAL;
 	
@@ -281,6 +284,15 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="MoveLinearPumps" Id="{105a3340-0fa2-4a65-877a-bb5f9b418cf0}">
+      <Declaration><![CDATA[METHOD MoveLinearPumps : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="StopAllPumps" Id="{34ba740c-c4d4-4e5f-b07e-c264940d9963}">
       <Declaration><![CDATA[METHOD StopAllPumps : BOOL
 VAR_INPUT
@@ -389,6 +401,9 @@ END_IF]]></ST>
       <LineId Id="179" Count="1" />
       <LineId Id="178" Count="0" />
       <LineId Id="109" Count="38" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AllPumpsController.MoveLinearPumps">
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_AllPumpsController.StopAllPumps">

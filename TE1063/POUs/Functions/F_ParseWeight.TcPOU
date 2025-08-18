@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_ParseWeight" Id="{b24bb9ad-eba0-4eb4-95b8-eb3e8b6abcbc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_ParseWeight : LREAL
+VAR_INPUT
+    sResponse : STRING(255);
+END_VAR
+
+VAR
+    sCleaned    : STRING(255);
+    sValueOnly  : STRING(50);
+    iStart      : INT;
+    iEnd        : INT;
+    i           : INT;
+    sChar       : STRING(1);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Balance's response parse and intepretation
+IF LEFT(sResponse, 3) = 'S S' OR LEFT(sResponse, 3) = 'S D' THEN  //Check if the response is a acceptable weigth value
+	//Remove controll char of the end of the string (CR LF)
+	sResponse := LEFT(sResponse, LEN(sResponse) - 2);
+	
+	//Look up for the first numeric char (passing initial spaces)
+	iStart := 4;  // To begin after the char "S S "
+	WHILE (iStart <= LEN(sResponse)) AND MID(sResponse, 1, iStart) = CHR(32) DO
+		iStart := iStart + 1;
+	END_WHILE;
+
+	//Find ou the number ending (Before weight unit messure)
+	iEnd := iStart + 1;
+	WHILE (iEnd <= LEN(sResponse)) AND 
+	((MID(sResponse, 1, iEnd) <> 'k' OR MID(sResponse, 1, iEnd) <> 'g')) DO
+		iEnd := iEnd + 1;
+	END_WHILE
+
+	//Back 1 char to not include the weight unit
+	iEnd := iEnd - 1;
+
+	//Extract and weigth convertion
+	IF (iStart > 0) AND (iEnd >= iStart) THEN
+		sValueOnly := MID(sResponse, iEnd - iStart + 1, iStart);  //Extract the wegth without the meassure unit
+		F_ParseWeight := STRING_TO_REAL(sValueOnly);  //String to Real convertion
+	ELSE
+		F_ParseWeight := 9998.0;
+	END_IF
+ELSE
+	F_ParseWeight := 9999.0;
+END_IF
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="F_ParseWeight">
+      <LineId Id="232" Count="29" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

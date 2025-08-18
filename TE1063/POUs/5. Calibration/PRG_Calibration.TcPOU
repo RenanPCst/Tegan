@@ -8,6 +8,25 @@ END_VAR
 VAR
 	fbLeakTest : FB_LeakTest;
 	bLeakTestReset : BOOL := FALSE;
+	
+	fbCalibrationManager : FB_CalibrationManager;
+
+    bStartCalibrationPrev : BOOL;
+    bStartCalibrationEdge : BOOL;
+	
+	iLastRepSetpoint : INT := -1;
+    i : INT;
+	
+	bLinearPumpsEnabled		: BOOL := FALSE;
+	bLinearPumpsHomed		: BOOL := FALSE;
+	bLinearPumpsOldPosStart	: BOOL := FALSE;
+	bLinearPumpsOldPosDone	: BOOL := FALSE;
+	bLinearPumpsMove		: BOOL := FALSE;
+	aLinearPumpsEnable 		: ARRAY[1..10] OF BOOL;
+	aLinearPumpsHoming 		: ARRAY[1..10] OF BOOL;
+	bLinearPumpsOldPosMove	: ARRAY[1..10] OF BOOL;
+	aLinearPumpsMoveDone 	: ARRAY[1..10] OF BOOL; // Tracks per-axis move completion
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -15,8 +34,13 @@ END_VAR
 	bLeakTestReset := FALSE;
 END_IF
 
+(* Scale *) //------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Instancing and calling fbScaleDevice object
+GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePort := GVL_Settings.nBalancePort);
+
+(* Leak Test *) //--------------------------------------------------------------------------------------------------------------------------------------------------------
 // Leak Test request from HMI
-fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S, rSystemPressure => GVL_HMI.rCalLealTestPressure);
+fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S);
 
 // Leak Test post treatment
 IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
@@ -36,19 +60,395 @@ IF fbLeakTest.bLeakTestError THEN
 		bLeakTestReset := fbLeakTest.Reset();
 	END_IF
 END_IF
-]]></ST>
+
+(* Calibration Procedure *) //---------------------------------------------------------------------------------------------------------------------------------------------
+//Calibration procedure trigger
+IF GVL_HMI.HMIDigInputs.bHMIEStartCalibration THEN
+	GVL_Calibration.bStartCalibration := TRUE;
+	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
+	GVL_HMI.HMIDigInputs.bHMIEStartCalibration := FALSE;
+	GVL_Calibration.iReplicatesSetpoint := GVL_HMI.iReplicatesSetpoint;
+	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.rAcceptanceCriteria;
+	GVL_Calibration.tDelayStart := TO_TIME(GVL_HMI.iDelayStart*1000*60); //int convertion from minutes to ms
+END_IF
+
+IF GVL_IO.gDigInputs.bCalibrationBoxPresent THEN
+	bStartCalibrationEdge := GVL_Calibration.bStartCalibration AND NOT bStartCalibrationPrev;
+	bStartCalibrationPrev := GVL_Calibration.bStartCalibration;
+ELSE
+	GVL_Calibration.bStartCalibration := FALSE;
+END_IF
+
+
+//calibration procedure calling
+(*
+fbCalibrationManager(
+    bExecute := bStartCalibrationEdge,
+    bAbort := GVL_Calibration.bAbortCalibration,
+    eSolvent := GVL_Calibration.eCalibSolvent,
+    aPumpSettings := GVL_Calibration.aCalibPumps,
+    tDelayStart := GVL_Calibration.tDelayStart,
+    bPrintReport := GVL_Calibration.bPrintWhenComplete,
+    aPumpResults => GVL_Calibration.aCalibPumps,
+    bDone => GVL_Calibration.bCalibrationDone,
+    bBusy => GVL_Calibration.bCalibrationRunning,
+    sStatus => GVL_Calibration.sGlobalStatus
+);
+GVL_Calibration.sGlobalStatus := fbCalibrationManager.sStatus;
+*)
+
+IF fbCalibrationManager.bDone THEN
+	GVL_HMI.HMIDigInputs.bHMIEStartCalibration := FALSE;
+	//fbCalibrationManager.Reset();
+END_IF
+
+(* Linear Pumps Enable *) //---------------------------------------------------------------------------------------------------------------------------------------------
+IF GVL_HMI.bCalLinearPumpsEnableBt THEN
+    // Ensure we have the latest HMI snapshot
+    GVL_Calibration.aCalibLinearPumps := GVL_HMI.aCalibLinearPumps;
+
+    IF EnableLinearPumps() THEN
+        // English: Operation finished successfully
+        GVL_HMI.bCalLinearPumpsEnableBt := FALSE;
+    END_IF
+END_IF
+
+(* Linear Pumps Homing *) //---------------------------------------------------------------------------------------------------------------------------------------------
+IF GVL_HMI.bCalLinearPumpsHomeBt THEN
+    // Ensure we have the latest HMI snapshot
+    GVL_Calibration.aCalibLinearPumps := GVL_HMI.aCalibLinearPumps;
+
+    IF HomeLinearPumps() THEN
+        GVL_HMI.bCalLinearPumpsHomeBt := FALSE;
+    END_IF
+END_IF
+
+(* Linear Pumps Moving *) //---------------------------------------------------------------------------------------------------------------------------------------------
+IF GVL_HMI.bCalLinearPumpsMoveBt THEN
+    // Ensure we have the latest HMI snapshot
+    GVL_Calibration.aCalibLinearPumps := GVL_HMI.aCalibLinearPumps;
+
+    IF MoveLinearPumps() THEN
+        GVL_HMI.bCalLinearPumpsMoveBt := FALSE;
+    END_IF
+END_IF
+
+(* Linear Pumps Stop - stops ALL pumps regardless of selection *) // ---------------------------------------------------------------------------------------------------
+IF GVL_HMI.bCalLinearPumpsStopBt THEN
+    // Immediately requests a "Stop" on every linear pump.
+    FOR i := 1 TO 10 DO
+        GVL_Motion.aPumpsLinear[i].Stop();
+        // Clear any local latches
+        aLinearPumpsEnable[i] := FALSE;
+        aLinearPumpsHoming[i] := FALSE;
+        bLinearPumpsOldPosMove[i] := FALSE;
+    END_FOR
+    // Reset trigger
+    GVL_HMI.bCalLinearPumpsStopBt := FALSE;
+END_IF]]></ST>
     </Implementation>
+    <Method Name="EnableLinearPumps" Id="{22115b95-e372-40ed-a15e-77965f9e6360}">
+      <Declaration><![CDATA[METHOD EnableLinearPumps : BOOL
+VAR_INPUT
+END_VAR
+VAR
+    bAnySelected : BOOL;
+    bAllOperational : BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Track if at least one pump is selected
+bAnySelected := FALSE;
+bAllOperational := TRUE;
+
+// Issue enable only for selected pumps
+FOR i := 1 TO 10 DO
+    IF GVL_Calibration.aCalibLinearPumps[i].bActivate THEN
+        bAnySelected := TRUE;
+        // Call axis enable if not yet operational
+        IF NOT IsAxisOperational(iAxis := i) THEN
+            // Fire the enable command to the axis object
+            aLinearPumpsEnable[i] := GVL_Motion.aPumpsLinear[i].Enable();
+        END_IF
+        // After command, check current status
+        IF NOT IsAxisOperational(iAxis := i) THEN
+            bAllOperational := FALSE; // At least one still not operational
+        END_IF
+    END_IF
+END_FOR
+
+// No selection: nothing to do (fail-safe FALSE)
+IF NOT bAnySelected THEN
+    EnableLinearPumps := FALSE; // Nothing selected
+    RETURN;
+END_IF
+
+// Finish when all selected are operational
+IF bAllOperational THEN
+    // Clear latches
+    FOR i := 1 TO 10 DO
+        aLinearPumpsEnable[i] := FALSE;
+    END_FOR
+    EnableLinearPumps := TRUE;
+	RETURN;
+ELSE
+    EnableLinearPumps := FALSE;
+END_IF
+
+(*------------------------------------------------------------------------------------------*)
+(*
+//Enabling Linear Pumps
+FOR i := 1 TO 10 DO
+	aLinearPumpsEnable[i] := GVL_Motion.aPumpsLinear[i].Enable();
+END_FOR
+
+//Testing if all motors were anabled
+IF aLinearPumpsEnable[1] AND aLinearPumpsEnable[2] AND aLinearPumpsEnable[3] AND aLinearPumpsEnable[4] AND aLinearPumpsEnable[5] AND aLinearPumpsEnable[6] AND aLinearPumpsEnable[7] AND aLinearPumpsEnable[8] AND aLinearPumpsEnable[9] AND aLinearPumpsEnable[10] THEN
+	FOR i := 1 TO 10 DO
+		aLinearPumpsEnable[i] := FALSE;
+	END_FOR
+	EnableLinearPumps := TRUE;
+	RETURN;
+ELSE
+	EnableLinearPumps := FALSE;
+END_IF
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HomeLinearPumps" Id="{6200dfda-dea4-466c-9cdb-75115aff6d05}">
+      <Declaration><![CDATA[METHOD HomeLinearPumps : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	bAnySelected : BOOL;
+	bAllHomed : BOOL;
+	bAllOldPosMovesDone : BOOL;
+	bAllPumpsHomedone : BOOL;
+	rPositionTolerance : REAL := 0.05;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bAnySelected := FALSE;
+// 1) Trigger homing only for selected & operational axes
+FOR i := 1 TO 10 DO
+    IF GVL_Calibration.aCalibLinearPumps[i].bActivate THEN
+        bAnySelected := TRUE;
+
+        // Interlock: must be Operational before Home
+        IF IsAxisOperational(iAxis := i) THEN
+            // If not homed yet, keep requesting Home
+            IF NOT aLinearPumpsHoming[i] THEN
+                aLinearPumpsHoming[i] := GVL_Motion.aPumpsLinear[i].Home(
+                    pHomeSensor := ADR(GVL_Motion.aPumps[i].Linear.iHomeSensor.0),
+                    rVelocity   := GVL_Motion.aPumps[i].Linear.rHomeVel,
+                    rAcc        := GVL_Motion.aPumps[i].Linear.rHomeAcc,
+                    rDec        := GVL_Motion.aPumps[i].Linear.rHomeDec
+                );
+            END_IF
+        ELSE
+            // Not operational -> cannot home yet
+            bAllHomed := FALSE;
+        END_IF
+	ELSE
+		aLinearPumpsHoming[i] := TRUE;
+    END_IF
+END_FOR
+
+// If none selected, nothing to do
+IF NOT bAnySelected THEN
+    HomeLinearPumps := FALSE;
+    RETURN;
+END_IF
+
+// 2) After all selected are homed, move them to OldPosition
+bAllHomed := aLinearPumpsHoming[1] AND aLinearPumpsHoming[2] AND aLinearPumpsHoming[3] AND aLinearPumpsHoming[4] AND aLinearPumpsHoming[5] AND aLinearPumpsHoming[6] AND aLinearPumpsHoming[7] AND aLinearPumpsHoming[8] AND aLinearPumpsHoming[9] AND aLinearPumpsHoming[10];
+
+IF bAllHomed THEN
+    bLinearPumpsOldPosStart := TRUE;
+END_IF
+
+// 3) Move to old position only the selected pumps
+IF bLinearPumpsOldPosStart THEN
+	FOR i := 1 TO 10 DO
+		IF GVL_Calibration.aCalibLinearPumps[i].bActivate THEN
+			IF NOT bLinearPumpsOldPosMove[i] THEN
+				bLinearPumpsOldPosMove[i] := GVL_Motion.aPumpsLinear[i].MoveAbsolute(
+					rPosition := GVL_Retain.rLinearPumpOldPosition[i],
+					rVelocity := GVL_Motion.aPumps[i].Linear.rHomeVel,
+					rAcc      := GVL_Motion.aPumps[i].Linear.rHomeAcc,
+					rDec      := GVL_Motion.aPumps[i].Linear.rHomeDec
+				);
+			END_IF
+			IF GVL_Motion.aPumps[i].Linear.rActualPos <= (GVL_Motion.aPumps[i].Linear.rActualPos + rPositionTolerance) AND  GVL_Motion.aPumps[i].Linear.rActualPos >= (GVL_Motion.aPumps[i].Linear.rActualPos - rPositionTolerance) THEN
+				bLinearPumpsOldPosMove[i] := TRUE;
+			END_IF
+		ELSE
+			bLinearPumpsOldPosMove[i] := TRUE;
+		END_IF
+	END_FOR
+END_IF
+
+bAllOldPosMovesDone := bLinearPumpsOldPosMove[1] AND bLinearPumpsOldPosMove[2] AND bLinearPumpsOldPosMove[3] AND bLinearPumpsOldPosMove[4] AND bLinearPumpsOldPosMove[5] AND bLinearPumpsOldPosMove[6] AND bLinearPumpsOldPosMove[7] AND bLinearPumpsOldPosMove[8] AND bLinearPumpsOldPosMove[9] AND bLinearPumpsOldPosMove[10];
+
+// 4) Completion and cleanup
+IF bAllHomed AND bAllOldPosMovesDone THEN
+    FOR i := 1 TO 10 DO
+        aLinearPumpsHoming[i] := FALSE;
+        bLinearPumpsOldPosMove[i] := FALSE;
+    END_FOR
+    bLinearPumpsOldPosStart := FALSE;
+	bAllHomed	:= FALSE;
+	bAllPumpsHomedone := FALSE;
+    HomeLinearPumps := TRUE;
+	RETURN;
+ELSE
+    HomeLinearPumps := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsAxisHomed" Id="{f46bd424-1b13-4226-b5e9-51bcc113183d}">
+      <Declaration><![CDATA[METHOD IsAxisHomed : BOOL
+VAR_INPUT
+	iAxis : INT; // axis linear pumps index
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Returns TRUE if axis i is homed in NC
+CASE iAxis OF
+    1: IsAxisHomed := GVL_HMI.stIOTerm23.bAxisHomed[1]; 
+    2: IsAxisHomed := GVL_HMI.stIOTerm24.bAxisHomed[1];
+    3: IsAxisHomed := GVL_HMI.stIOTerm25.bAxisHomed[1];
+    4: IsAxisHomed := GVL_HMI.stIOTerm26.bAxisHomed[1];
+    5: IsAxisHomed := GVL_HMI.stIOTerm27.bAxisHomed[1];
+    6: IsAxisHomed := GVL_HMI.stIOTerm28.bAxisHomed[1];
+    7: IsAxisHomed := GVL_HMI.stIOTerm29.bAxisHomed[1];
+    8: IsAxisHomed := GVL_HMI.stIOTerm30.bAxisHomed[1];
+    9: IsAxisHomed := GVL_HMI.stIOTerm31.bAxisHomed[1];
+    10: IsAxisHomed := GVL_HMI.stIOTerm32.bAxisHomed[1];
+ELSE
+    IsAxisHomed := FALSE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsAxisOperational" Id="{f15d06ef-67aa-4699-b856-e63278cb7261}">
+      <Declaration><![CDATA[METHOD IsAxisOperational : BOOL
+VAR_INPUT
+	iAxis : INT; // axis linear pumps index
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Returns TRUE if axis i is operational (enabled) in NC
+CASE iAxis OF
+    1: IsAxisOperational := GVL_HMI.stIOTerm23.bAxisOperational[1]; 
+    2: IsAxisOperational := GVL_HMI.stIOTerm24.bAxisOperational[1];
+    3: IsAxisOperational := GVL_HMI.stIOTerm25.bAxisOperational[1];
+    4: IsAxisOperational := GVL_HMI.stIOTerm26.bAxisOperational[1];
+    5: IsAxisOperational := GVL_HMI.stIOTerm27.bAxisOperational[1];
+    6: IsAxisOperational := GVL_HMI.stIOTerm28.bAxisOperational[1];
+    7: IsAxisOperational := GVL_HMI.stIOTerm29.bAxisOperational[1];
+    8: IsAxisOperational := GVL_HMI.stIOTerm30.bAxisOperational[1];
+    9: IsAxisOperational := GVL_HMI.stIOTerm31.bAxisOperational[1];
+    10: IsAxisOperational := GVL_HMI.stIOTerm32.bAxisOperational[1];
+ELSE
+    IsAxisOperational := FALSE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveLinearPumps" Id="{a0c275c8-aa7c-4658-a9aa-22f5e5559463}">
+      <Declaration><![CDATA[METHOD MoveLinearPumps : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	bAnySelected : BOOL;
+    bAllMovesDone : BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bAnySelected := FALSE;
+
+FOR i := 1 TO 10 DO
+    IF GVL_Calibration.aCalibLinearPumps[i].bActivate THEN
+        bAnySelected := TRUE;
+
+        // Interlocks: must be Operational and Homed before move
+        IF IsAxisOperational(iAxis := i) AND IsAxisHomed(iAxis := i) THEN
+            // Issue move if not already "in progress/done" (implement your latch if needed)
+            // We'll reuse bLinearPumpsOldPosMove[] as generic "move latch"
+            IF NOT bLinearPumpsOldPosMove[i] THEN
+                bLinearPumpsOldPosMove[i] := GVL_Motion.aPumpsLinear[i].MoveAbsolute(
+                    rPosition := GVL_Calibration.aCalibLinearPumps[i].rNewPosition,
+                    rVelocity := GVL_Motion.aPumps[i].Linear.rHomeVel,
+                    rAcc      := GVL_Motion.aPumps[i].Linear.rHomeAcc,
+                    rDec      := GVL_Motion.aPumps[i].Linear.rHomeDec
+                );
+            END_IF
+        ELSE
+            // Interlock not satisfied -> cannot move
+            bAllMovesDone := FALSE;
+        END_IF
+	ELSE
+		bLinearPumpsOldPosMove[i] := TRUE;
+    END_IF
+END_FOR
+
+IF NOT bAnySelected THEN
+    MoveLinearPumps := FALSE; // nothing selected
+    RETURN;
+END_IF
+
+bAllMovesDone := bLinearPumpsOldPosMove[1] AND bLinearPumpsOldPosMove[2] AND bLinearPumpsOldPosMove[3] AND 
+				 bLinearPumpsOldPosMove[4] AND bLinearPumpsOldPosMove[5] AND bLinearPumpsOldPosMove[6] AND 
+				 bLinearPumpsOldPosMove[7] AND bLinearPumpsOldPosMove[8] AND bLinearPumpsOldPosMove[9] AND 
+				 bLinearPumpsOldPosMove[10];
+
+IF bAllMovesDone THEN
+    // Clear latches for next command
+    FOR i := 1 TO 10 DO
+        bLinearPumpsOldPosMove[i] := FALSE;
+    END_FOR
+	bAllMovesDone := FALSE;
+	bAnySelected := FALSE;
+    MoveLinearPumps := TRUE;
+	RETURN;
+ELSE
+    MoveLinearPumps := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Reset" Id="{27813d8d-2df7-44d9-b974-4b44cba9f55d}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[]]></ST>
+        <ST><![CDATA[//Reset Calibration Flags
+bLeakTestReset := FALSE;
+
+bStartCalibrationPrev := FALSE;
+bStartCalibrationEdge := FALSE;
+
+
+bLinearPumpsEnabled		 := FALSE;
+bLinearPumpsHomed		 := FALSE;
+bLinearPumpsOldPosStart	 := FALSE;
+bLinearPumpsOldPosDone	 := FALSE;
+
+FOR i := 1 TO 10 DO
+	aLinearPumpsEnable[i] := FALSE;
+	aLinearPumpsHoming[i] := FALSE;
+	bLinearPumpsOldPosMove[i] := FALSE;
+END_FOR
+
+Reset := TRUE;
+RETURN;
+]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="PRG_Calibration">
       <LineId Id="44" Count="2" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="187" Count="0" />
       <LineId Id="43" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="5" Count="0" />
@@ -68,9 +468,115 @@ END_VAR
       <LineId Id="48" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="26" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="156" Count="1" />
+      <LineId Id="159" Count="4" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="167" Count="2" />
+      <LineId Id="166" Count="0" />
       <LineId Id="15" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="70" Count="10" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="295" Count="7" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="303" Count="6" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="310" Count="6" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="263" Count="1" />
+      <LineId Id="282" Count="8" />
+      <LineId Id="292" Count="1" />
+      <LineId Id="262" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.EnableLinearPumps">
+      <LineId Id="68" Count="10" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="108" Count="3" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="87" Count="15" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="103" Count="1" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.HomeLinearPumps">
+      <LineId Id="660" Count="1" />
+      <LineId Id="913" Count="0" />
+      <LineId Id="663" Count="12" />
+      <LineId Id="914" Count="2" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="908" Count="1" />
+      <LineId Id="681" Count="8" />
+      <LineId Id="697" Count="18" />
+      <LineId Id="1035" Count="0" />
+      <LineId Id="1037" Count="1" />
+      <LineId Id="910" Count="1" />
+      <LineId Id="716" Count="19" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.IsAxisHomed">
+      <LineId Id="25" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.IsAxisOperational">
+      <LineId Id="25" Count="13" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.MoveLinearPumps">
+      <LineId Id="48" Count="0" />
+      <LineId Id="50" Count="16" />
+      <LineId Id="72" Count="3" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="76" Count="6" />
+      <LineId Id="102" Count="4" />
+      <LineId Id="83" Count="5" />
+      <LineId Id="107" Count="1" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="90" Count="1" />
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
+      <LineId Id="9" Count="2" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="18" Count="5" />
+      <LineId Id="26" Count="2" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="34" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

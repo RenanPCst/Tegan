@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_CalibrationPump" Id="{cc96bbb7-d820-4fe1-9698-211e4cf738fd}">
+    <Declaration><![CDATA[TYPE ST_CalibrationPump :
+STRUCT
+	bSelected       : BOOL;              // Se a bomba está selecionada para calibração
+    rTargetVolume   : REAL;              // Volume desejado (em mL)
+    rActualVolume   : REAL;              // Último volume medido (em mL)
+    iFailures       : INT;               // Contador de falhas da bomba
+    bAdjustment     : BOOL;              // Se um ajuste foi necessário
+    eStatus         : E_CalibrationStatus; // Estado atual da bomba
+    bBusy           : BOOL;              // Se a bomba está em operação
+    tStartTime      : TIME;              // Timestamp do início da calibração
+    tElapsed        : TIME;              // Tempo decorrido da calibração
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -45,6 +45,48 @@ VAR_GLOBAL
     dtCurrentLogin   : DT;
     tSessionStart    : TIME;
 	
+	// <IO Screen> Variables for IO Screen use (*-----------------------------------------------------------------------------------------------)
+	
+	nSelectedIO		: UDINT; // Selection made by IO screen combobox
+	
+	aIOTerm04		: ARRAY[1..8] OF BOOL;
+	aIOTerm05		: ARRAY[1..8] OF BOOL; 
+	aIOTerm06		: ARRAY[1..8] OF BOOL; 
+	aIOTerm07		: ARRAY[1..4] OF BOOL; 
+	aIOTerm08		: ARRAY[1..4] OF BOOL;
+	aIOTerm09		: ARRAY[1..16] OF BOOL;
+	aIOTerm10		: ARRAY[1..16] OF BOOL;
+	aIOTerm11		: ARRAY[1..4] OF BOOL;   
+	aIOTerm12		: ARRAY[1..2] OF BOOL;
+	aIOTerm13		: ARRAY[1..8] OF REAL;
+	aIOTerm14		: ARRAY[1..8] OF BOOL;
+   	iIOTerm14DCIn	: UDINT;
+	aIOTerm15		: ARRAY[1..3] OF BOOL;
+	aIOTerm15Values : ARRAY[1..3] OF LREAL;
+	iIOTerm15ErrorCode	: UDINT;
+	aIOTerm16		: ARRAY[1..3] OF BOOL;
+	aIOTerm16Values : ARRAY[1..3] OF LREAL;
+	iIOTerm16ErrorCode	: UDINT;
+	aIOTerm17		: ARRAY[1..6] OF BOOL;
+	aIOTerm17Values : ARRAY[1..2] OF LREAL;
+	aIOTerm18		: ARRAY[1..16] OF BOOL;
+	aIOTerm19		: ARRAY[1..4] OF BOOL; 
+	stIOTerm23		: ST_EL7062IOInfo;
+	stIOTerm24		: ST_EL7062IOInfo;
+	stIOTerm25		: ST_EL7062IOInfo;
+	stIOTerm26		: ST_EL7062IOInfo;
+	stIOTerm27		: ST_EL7062IOInfo;
+	stIOTerm28		: ST_EL7062IOInfo;
+	stIOTerm29		: ST_EL7062IOInfo;
+	stIOTerm30		: ST_EL7062IOInfo;
+	stIOTerm31		: ST_EL7062IOInfo;
+	stIOTerm32		: ST_EL7062IOInfo;
+	stIOTerm34		: ST_AX8101IOInfo;
+	aIOBox1			: ARRAY[1..8] OF REAL;
+	aIOAMI8000		: ARRAY[1..5] OF ST_AMI8000IOInfo;
+	
+	// <\IO Screen>  (*-------------------------------------------------------------------------------------------------------------------------)
+	
 	// <Recipe> Variables needed to handle recipe #################################################################################################
 	aAvailableFiles         : ARRAY[0..49] OF ST_RecipeFileInfo;
     iFileCount              : INT;
@@ -88,7 +130,19 @@ VAR_GLOBAL
 	bCalLeakTestPass		: BOOL := FALSE;
 	bCalLeakTestFail		: BOOL := FALSE;
 	bCalLeakTestError		: BOOL := FALSE;
-	rCalLealTestPressure	: LREAL;
+	bCalLinearPumpsEnableBt	: BOOL := FALSE;
+	bCalLinearPumpsHomeBt	: BOOL := FALSE;
+	bCalLinearPumpsMoveBt	: BOOL := FALSE;
+	bCalLinearPumpsStopBt	: BOOL := FALSE;
+	rCalLeakTestPressure	: LREAL;
+	aCalibPumps         	: ARRAY[1..10] OF ST_CalibrationPump;
+	aCalibLinearPumps		: ARRAY[1..10] OF ST_LinearPumpCalibration;
+	iReplicatesSetpoint		: INT;
+	rAcceptanceCriteria		: LREAL;
+	iDelayStart         	: INT;
+	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
+	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date
+	
 	// <\Calibration> ############################################################################################################################
 	
 	// Machine Settings

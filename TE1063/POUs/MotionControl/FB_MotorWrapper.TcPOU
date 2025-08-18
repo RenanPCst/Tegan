@@ -43,6 +43,7 @@ VAR
     stStatus       	 : ST_ActuatorStatus;
 	stReadStatus	 : ST_AxisReadStatus;
 	lastPosition 	 : LREAL := 0.0;
+	deltaPos 		 : LREAL;
     bDetectedMovement: BOOL  := FALSE;
     debugSensorValue : BOOL;
 	
@@ -68,6 +69,21 @@ VAR
 	bMoveAbsExecute 	: BOOL;
     bMoveAbsRequested 	: BOOL;
 	bMoveAbsDone		: BOOL;
+	rtMoveAbsDone 		: R_TRIG; 
+    tonMoveAbs    		: TON;    
+    tMoveAbsTout  		: TIME := T#60S;
+	bMoveAbsSeenBusy 	: BOOL; 
+	tonAbsInWin         : TON;         // estabilidade da janela de posição
+	rAbsPosTol          : LREAL := 0.001; // tolerância (ajuste ao teu unit)
+	tAbsStable          : TIME  := T#100MS; // estabilidade da janela
+	tonAbsTimeout       : TON;         // timeout opcional
+	tAbsTimeout         : TIME  := T#60S;   // ajuste conforme curso do eixo
+	fbReadVel        	: MC_ReadActualVelocity; // se ainda não existir no FB
+	tonVelStill      	: TON;                   // estabilidade de "velocidade ~ 0"
+	vTolStill        	: LREAL := 0.0001;       // tolerância de velocidade
+	rVelAbs          	: LREAL;                 // auxiliar
+	rActPrev         	: LREAL;                 // opcional, se preferir medir Δpos
+	
 	
 	//MoveRel()
 	bMoveRelExecute 	: BOOL;
@@ -158,11 +174,26 @@ stStatus.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.B
 stStatus.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
 stStatus.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error OR fbMoveVel.Error;
 
-// Detecta movimento comparando posição atual com a última
-IF ABS(fbReadPos.Position - lastPosition) > 0.1 THEN // Limiar pode ser ajustado
-    bDetectedMovement := TRUE;
+// Calc the position diference
+deltaPos := fbReadPos.Position - lastPosition;
+
+IF ABS(deltaPos) > 0.1 THEN
+    // Detects forward movement
+    IF deltaPos > 0 THEN
+		stStatus.bMovingFwd := TRUE;
+		stStatus.bMovingBck := FALSE;
+		bDetectedMovement   := TRUE;
+    // Detects backward movement
+    ELSIF deltaPos < 0 THEN
+        stStatus.bMovingFwd := FALSE;
+        stStatus.bMovingBck := TRUE;
+		bDetectedMovement   := TRUE;
+    END_IF
 ELSE
-    bDetectedMovement := FALSE;
+    // No movement
+    stStatus.bMovingFwd := FALSE;
+    stStatus.bMovingBck := FALSE;
+	bDetectedMovement   := FALSE;
 END_IF
 
 lastPosition := fbReadPos.Position;
@@ -209,7 +240,7 @@ IF NOT bHomeRequest THEN
 	bHomeRequest := TRUE;
 END_IF
 
-IF NOT GVL_Motion.bInitialHomingDone THEN
+//IF NOT GVL_Motion.bInitialHomingDone THEN
 	
 	IF bHomeRequest AND NOT bHomeInProgress AND bHomeSensorValue THEN
 		bExecuteMove 	:= TRUE;
@@ -281,7 +312,7 @@ IF NOT GVL_Motion.bInitialHomingDone THEN
 	ELSE
 		Home := FALSE;
 	END_IF
-ELSE
+(*ELSE
 	
 	IF fbMoveAbs.Done THEN 
 		bHomeinProgress := FALSE;
@@ -296,7 +327,7 @@ ELSE
 	
 
 	
-END_IF
+END_IF*)
 
 ]]></ST>
       </Implementation>
@@ -336,49 +367,61 @@ VAR_INPUT
     rDec      : LREAL := 20.0;
 END_VAR
 VAR
+	rAct : LREAL;
+    rErr : LREAL;
+    bInWin : BOOL;
+    bStandStill : BOOL;
+	opts : ST_MoveOptions;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+        <ST><![CDATA[// Disparo
 IF NOT bMoveAbsRequested THEN
     bMoveAbsExecute := TRUE;
     bMoveAbsRequested := TRUE;
 END_IF
 
-// Call the internal motion block
+// Chamada do bloco
+opts.IgnorePositionMonitoring := TRUE;   // as demais ficam FALSE por padrão
+
 fbMoveAbs(
     Axis := Axis,
     Position := rPosition,
     Execute := bMoveAbsExecute,
     Velocity := rVelocity,
     Acceleration := rAcc,
-    Deceleration := rDec
+    Deceleration := rDec,
+	options := opts
 );
 
-// Update actuator status
+// Derruba Execute assim que o bloco “agarra”
+IF fbMoveAbs.Busy OR fbMoveAbs.Done OR fbMoveAbs.Error OR fbMoveAbs.CommandAborted THEN
+    bMoveAbsExecute := FALSE;
+END_IF
+
+// Status
 stStatus.bBusy := fbMoveAbs.Busy;
 stStatus.bDone := fbMoveAbs.Done;
 stStatus.bError := fbMoveAbs.Error;
 stStatus.iErrorCode := fbMoveAbs.ErrorID;
 
-IF fbMoveAbs.Busy THEN
-    bMoveAbsExecute := FALSE;
+// Finalização — pedindo Done de verdade
+IF bMoveAbsRequested AND fbMoveAbs.Done THEN
+    bMoveAbsRequested := FALSE;
+    MoveAbsolute := TRUE;
+    RETURN;
 END_IF
 
+// Abort/erro
+IF fbMoveAbs.CommandAborted THEN
+    stStatus.eState := E_ActuatorState.eError;
+    stStatus.sMessage := 'Command aborted';
+END_IF
 IF fbMoveAbs.Error THEN
     stStatus.eState := E_ActuatorState.eError;
     stStatus.sMessage := 'Error in Move Motor';
 END_IF
 
-IF bMoveAbsRequested AND NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Error THEN
-    bMoveAbsRequested := FALSE;
-    MoveAbsolute := TRUE;
-    RETURN;
-ELSE
-    MoveAbsolute := FALSE;
-END_IF
-
-
-]]></ST>
+MoveAbsolute := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="MoveRelative" Id="{f57948ef-5e1c-4cbd-b496-9bd6108f8456}">
@@ -681,9 +724,10 @@ IF bSetPosRequested AND NOT fbSetPos.Busy AND NOT fbSetPos.Error THEN
 ELSE
     SetPosition := FALSE;
 END_IF
-
+(*
 // Call the internal motion block
-fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);]]></ST>
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);
+*)]]></ST>
       </Implementation>
     </Method>
     <Method Name="Stop" Id="{27336d58-d763-4c6d-b6e1-79be37906c83}">
@@ -758,7 +802,15 @@ END_IF
       <LineId Id="26" Count="0" />
       <LineId Id="8" Count="3" />
       <LineId Id="38" Count="0" />
-      <LineId Id="40" Count="6" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="54" Count="2" />
+      <LineId Id="69" Count="2" />
+      <LineId Id="59" Count="3" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="63" Count="4" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="68" Count="0" />
       <LineId Id="39" Count="0" />
       <LineId Id="36" Count="0" />
       <LineId Id="12" Count="8" />
@@ -820,10 +872,12 @@ END_IF
       <LineId Id="53" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveAbsolute">
-      <LineId Id="196" Count="36" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="117" Count="0" />
-      <LineId Id="105" Count="0" />
+      <LineId Id="385" Count="6" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="429" Count="0" />
+      <LineId Id="392" Count="6" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="399" Count="29" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveRelative">
@@ -897,6 +951,7 @@ END_IF
       <LineId Id="5" Count="0" />
       <LineId Id="45" Count="1" />
       <LineId Id="44" Count="0" />
+      <LineId Id="54" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
       <LineId Id="85" Count="3" />

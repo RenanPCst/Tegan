@@ -3,6 +3,141 @@
 /// <reference path="./../../Git/Packages/Beckhoff.TwinCAT.HMI.Framework.12.762.44/runtimes/native1.12-tchmi/TcHmi.d.ts" />
 
 (function (/** @type {globalThis.TcHmi} */ TcHmi) {
+
+    // ============================================
+    // IO-Link helpers (sem watchers)
+    // ============================================
+
+    /**
+     * Interpreta o "IO-Link Device Status" (TxPDO State).
+     * @param {number} value USINT recebido do PLC
+     * @returns {string}
+     */
+    function interpretIOLinkState(value) {
+        switch (Number(value)) {
+            case 0: return 'Unknown / Disabled';
+            case 1: return 'SIO mode';
+            case 2: return 'IO-Link enabled, no device';
+            case 3: return 'IO-Link OK';
+            case 4: return 'Pre-operational';
+            case 8: return 'Comm error';
+            case 16: return 'Overcurrent';
+            case 164: return 'Port active, no device (0xA4)';
+            default: return 'Unknown (' + value + ')';
+        }
+    }
+
+    /**
+     * Interpreta o "IO-Link Port Qualifier" (TxPDO Qualifier).
+     * Bits comuns em masters IFM (pode variar por FW):
+     *  bit7 (0x80): IO-Link ON / SIO OFF
+     *  bit6 (0x40): Communication OK
+     *  bit5 (0x20): Error present
+     *  bit4 (0x10): Process value valid
+     *  bit3 (0x08): Port active / base
+     *  bits0..2    : modo/extra
+     * @param {number} value USINT recebido do PLC
+     * @returns {string}
+     */
+    function interpretPortQualifier(value) {
+        value = Number(value);
+        var flags = [];
+        if (value & 0x80) flags.push('IO-Link ON'); else flags.push('SIO/Port OFF');
+        if (value & 0x40) flags.push('Comm OK');
+        if (value & 0x20) flags.push('Error');
+        if (value & 0x10) flags.push('PV valid');
+        if (value & 0x08) flags.push('Port active');
+
+        if (value === 168) return 'Connected (IO-Link); ' + flags.join(', ') + ' [0xA8]';
+        if (value === 8) return 'No device / Not IO-Link; ' + flags.join(', ') + ' [0x08]';
+
+        return (flags.length ? flags.join(', ') : 'Unknown') +
+               ' [0x' + value.toString(16).toUpperCase().padStart(2, '0') + ']';
+    }
+
+    /** Regra prática: STATE OK (verde) quando comunicação estabelecida. */
+    function isStateOk(value) {
+        return Number(value) === 3;
+    }
+
+    /**
+     * Regra prática: QUALIFIER OK (verde) quando não for 0 ou 8.
+     * (no seu cenário: 8 = porta vazia; 168 = conectado)
+     */
+    function isQualifierOk(value) {
+        value = Number(value);
+        if (value === 0 || value === 8) return false;
+        return true;
+    }
+
+    /** Seta texto em uma TcHmiTextBox (com fallback DOM). */
+    function setTextboxText(controlId, text) {
+        try {
+            var ctrl = (TcHmi && TcHmi.Controls && TcHmi.Controls.get) ? TcHmi.Controls.get(controlId) : null;
+            if (ctrl && typeof ctrl.setText === 'function') {
+                ctrl.setText(String(text));
+            } else {
+                var el = document.getElementById(controlId);
+                if (el) el.textContent = String(text);
+            }
+        } catch (e) { /* silent */ }
+    }
+
+    /** Escreve um booleano em um símbolo do PLC. */
+    function setPlcBool(symbolExpr, boolVal) {
+        try {
+            TcHmi.Symbol.writeEx2(symbolExpr, Boolean(boolVal), function (data) {
+                if (data.error !== TcHmi.Errors.NONE) {
+                    console.error('Erro ao escrever em ' + symbolExpr, data);
+                }
+            });
+        } catch (e) {
+            console.error('Exceção ao escrever em ' + symbolExpr, e);
+        }
+    }
+
+    /**
+     * Atualiza TextBox de STATE e escreve bStateIOLink[channel] no PLC.
+     * Use esta função no evento Custom (Value changed) do símbolo nStateIOLink[channel].
+     */
+    function updateStateUI(channel, rawValue) {
+        var val = Number(rawValue);
+        setTextboxText('TcHmiTextBox_StateIOLinkCh' + channel, interpretIOLinkState(val));
+        var ok = isStateOk(val);
+        // escreve em bStateIOLink[channel]
+        var sym = '%s%PLC1.GVL_IO.stAL1333info.bStateIOLink[' + channel + ']%/s%';
+        setPlcBool(sym, ok);
+    }
+
+    /**
+     * Atualiza TextBox de QUALIFIER e escreve bQualifierIOLink[channel] no PLC.
+     * Use esta função no evento Custom (Value changed) do símbolo nQualifierIOLink[channel].
+     */
+    function updateQualifierUI(channel, rawValue) {
+        var val = Number(rawValue);
+        setTextboxText('TcHmiTextBox_QualifierIOLinkCh' + channel, interpretPortQualifier(val));
+        var ok = isQualifierOk(val);
+        // escreve em bQualifierIOLink[channel]
+        var sym = '%s%PLC1.GVL_IO.stAL1333info.bQualifierIOLink[' + channel + ']%/s%';
+        setPlcBool(sym, ok);
+    }
+
+    // Expõe helpers para uso direto nos Custom Events
+    if (typeof window !== 'undefined') {
+        window.interpretIOLinkState = interpretIOLinkState;
+        window.interpretPortQualifier = interpretPortQualifier;
+        window.isStateOk = isStateOk;
+        window.isQualifierOk = isQualifierOk;
+        window.setTextboxText = setTextboxText;
+        window.setPlcBool = setPlcBool;
+        window.updateStateUI = updateStateUI;
+        window.updateQualifierUI = updateQualifierUI;
+    }
+
+    // ============================================
+    // Código existente do seu app (User Management)
+    // ============================================
+
     var destroyOnInitialized = TcHmi.EventProvider.register('onInitialized', function (e, data) {
         e.destroy();
         init();
@@ -15,6 +150,7 @@
         refreshGroupList();
         bindButtons();
         populateGroupComboboxes();
+        // Sem watchers: IO-Link será atualizado via Custom Events por variável
     }
 
     // Load currently logged-in user info and update UI
@@ -40,8 +176,6 @@
         TcHmi.Controls.get('TcHmiTextblock_LastAppearance').setText('N/A'); // Placeholder
     }
 
-
-
     // Check if the password meet the parameters
     function isValidPassword(pw) {
         if (pw.length < 5 || pw.length > 8) return false;
@@ -63,7 +197,6 @@
             comboEdit.setItems(groupArray);
         });
     }
-
 
     // Load user list and display in DataGrid
     function refreshUserList() {
@@ -186,4 +319,5 @@
             TcHmi.Server.UserManagement.showLoginDialog();
         });
     }
+
 })(TcHmi);

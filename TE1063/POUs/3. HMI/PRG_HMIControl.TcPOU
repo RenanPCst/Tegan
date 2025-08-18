@@ -16,7 +16,9 @@ cM2MinPosition       : LREAL := 0.0; // Minimum expected Value
 cM2MaxPosition       : LREAL := -170.0; // Maximum expected Value (Default Value)
 
 //Pumps Animation and status
-aPumpStatus		: ARRAY[1..10] OF ST_ActuatorStatus;
+aPumpStatus			: ARRAY[1..10] OF ST_ActuatorStatus;
+fbBlinkPumpArrowFWD	: ARRAY[1..10] OF FB_Blink;
+fbBlinkPumpArrowBWD	: ARRAY[1..10] OF FB_Blink;
 
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
@@ -25,6 +27,11 @@ fbHMIScan	: FB_Blink;
 //Icons Animation
 bFirstIconSet : BOOL := FALSE;
 
+//EStops Buttons
+fbBlinkEStopSide	: FB_Blink;
+fbBlinkEStopFront	: FB_Blink;
+
+ton500ms : TON;
 i : INT;
 
 END_VAR
@@ -33,17 +40,35 @@ END_VAR
       <ST><![CDATA[//Buttons Indicators -------------------------------------------------------------------------------------------------
 GVL_HMI.HMIDigOutputs.bHMIResetButton 	:= GVL_IO.gDigOutputs.bResetIndicator;
 GVL_HMI.HMIDigOutputs.bHMIStartButton	:= GVL_IO.gDigOutputs.bStartIndicator;
-GVL_HMI.HMIDigOutputs.bHMIEStopSide		:= NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2);
-GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2);
+fbBlinkEStopSide(bEnable := NOT (GVL_Safety.SafetyInputs.bEStopSideCh1 OR GVL_Safety.SafetyInputs.bEStopSideCh2), tPeriod := T#1S); //EStop Button located on side Flashing FB
+fbBlinkEStopFront(bEnable := NOT (GVL_Safety.SafetyInputs.bEStopHMICh1 OR GVL_Safety.SafetyInputs.bEStopHMICh2), tPeriod := T#1S);  //EStop Button located on front Flashing FB
+GVL_HMI.HMIDigOutputs.bHMIEStopSide		:= fbBlinkEStopSide.bBlink;
+GVL_HMI.HMIDigOutputs.bHMIEStopFront	:= fbBlinkEStopFront.bBlink;
 
-//Alarm Lamp Indicator for HMI ---------------------------------------------------------------------------------------
+(* Alarm Lamp Indicator for HMI --------------------------------------------------------------------------------------- *)
 GVL_HMI.HMIDigOutputs.bAlarmLampRed 	:= GVL_IO.gDigOutputs.bTowerRedLight; 	//Red Light
 GVL_HMI.HMIDigOutputs.bAlarmLampAmbar 	:= GVL_IO.gDigOutputs.bTowerAmberLight; //Ambar Light
 GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; //Green Light
 
-(* <Controls Animation> ************************************************************************************************ *)
+(* <Controls Animation> ------------------------------------------------------------------------------------------------ *)
 ACT_M1Animation();
 ACT_M2Animation();
+
+(* <Linear Pumps Old Position> ----------------------------------------------------------------------------------------- *)
+// display linear pumps old position saved on persistent memory when in Calibration Mode
+IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
+	FOR i := 1 TO 10 DO
+		GVL_HMI.aCalibLinearPumps[i].rOldPosition := GVL_Retain.rLinearPumpOldPosition[i];
+		//pump factor
+		GVL_HMI.aCalibLinearPumps[i].rPumpFactor := GVL_Motion.aPumps[1].Rotary.rPumpFactor;
+	END_FOR
+END_IF
+
+(* <Safety Controls> ----------------------------------------------------------------------------------------------------*)
+
+ton500ms(IN := NOT ton500ms.Q, PT := T#500MS);
+
+IF ton500ms.Q THEN ACT_IOControls(); END_IF
 
 //Calibration Box presence
 GVL_HMI.bHMICalibrationBox := GVL_IO.gDigInputs.bCalibrationBoxPresent;
@@ -63,17 +88,27 @@ IF GVL_HMI.eMachineMode = E_MachineMode.MANUAL THEN
 	END_FOR
 END_IF
 
+//Pumps Animation | Calibration Screen
+IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
+	ACT_CalibrationArrows();
+END_IF
+
 //Scan period for hmi refresh
-fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
-GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
+IF GVL_HMI.eMachineMode <> E_MachineMode.CALIBRATION AND GVL_HMI.eMachineMode <> E_MachineMode.MANUAL THEN
+	fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
+	GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
+ELSE
+	GVL_HMI.bMachineModeScan := FALSE;
+END_IF
+
 
 //Doors hide/visible 
 GVL_HMI.HMIAnimation.bHMIDoorOpen[1] := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk;
 GVL_HMI.HMIAnimation.bHMIDoorOpen[2] := NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorFdbk;
 GVL_HMI.HMIAnimation.bHMIDoorOpen[3] := NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorFdbk;
-GVL_HMI.HMIAnimation.bHMIDoorOpen[4] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk1;
-GVL_HMI.HMIAnimation.bHMIDoorOpen[5] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk2;
-GVL_HMI.HMIAnimation.bHMIDoorOpen[6] := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[4] := GVL_IO.gDigInputs.bAccessDoor4InterlockFdbk;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[5] := GVL_IO.gDigInputs.bAccessDoor5InterlockFdbk;
+GVL_HMI.HMIAnimation.bHMIDoorOpen[6] := GVL_IO.gDigInputs.bAccessDoor6InterlockFdbk;
 
 //Doors open blinking red alert
 fbBlinkDoor[1](bEnable := NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk, tPeriod := T#1S);
@@ -85,13 +120,13 @@ GVL_HMI.HMIAnimation.bHMIDoorBlink[2] := fbBlinkDoor[2].bBlink;
 fbBlinkDoor[3](bEnable := NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorFdbk, tPeriod := T#1S);
 GVL_HMI.HMIAnimation.bHMIDoorBlink[3] := fbBlinkDoor[3].bBlink;
 
-fbBlinkDoor[4](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk1, tPeriod := T#1S);
+fbBlinkDoor[4](bEnable := GVL_IO.gDigInputs.bAccessDoor4InterlockFdbk, tPeriod := T#1S);
 GVL_HMI.HMIAnimation.bHMIDoorBlink[4] := fbBlinkDoor[4].bBlink;
 
-fbBlinkDoor[5](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk2, tPeriod := T#1S);
+fbBlinkDoor[5](bEnable := GVL_IO.gDigInputs.bAccessDoor5InterlockFdbk, tPeriod := T#1S);
 GVL_HMI.HMIAnimation.bHMIDoorBlink[5] := fbBlinkDoor[5].bBlink;
 
-fbBlinkDoor[6](bEnable := GVL_IO.gDigInputs.bAccessDoorInterlockFdbk3, tPeriod := T#1S);
+fbBlinkDoor[6](bEnable := GVL_IO.gDigInputs.bAccessDoor6InterlockFdbk, tPeriod := T#1S);
 GVL_HMI.HMIAnimation.bHMIDoorBlink[6] := fbBlinkDoor[6].bBlink;
 
 
@@ -149,6 +184,442 @@ IF GVL_HMI.bResetM1MotorBt THEN
 	GVL_HMI.bResetM1MotorBt := NOT GVL_Motion.aMotors[1].Reset();
 END_IF]]></ST>
     </Implementation>
+    <Action Name="ACT_CalibrationArrows" Id="{79e47b94-61cf-47c5-8acf-43afca6d34ed}">
+      <Implementation>
+        <ST><![CDATA[(* Pumps arrow animation *)
+//Get pump Status
+FOR i := 1 TO 10 DO
+	aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
+END_FOR
+
+//Blink aPumpMovingFwd[i] if moving forward
+FOR i := 1 TO 10 DO
+	fbBlinkPumpArrowFWD[i]( bEnable := aPumpStatus[i].bMovingFwd, tPeriod := T#500MS );
+	GVL_HMI.HMIAnimation.aPumpingArrowFwd[i] := fbBlinkPumpArrowFWD[i].bBlink;
+END_FOR
+
+//Blink aPumpMovingBwd[i] if moving backwards
+FOR i := 1 TO 10 DO
+	fbBlinkPumpArrowBWD[i]( bEnable := aPumpStatus[i].bMovingBck, tPeriod := T#500MS );
+	GVL_HMI.HMIAnimation.aPumpingArrowBwd[i] := fbBlinkPumpArrowBWD[i].bBlink;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_IOControls" Id="{9ed40c73-f032-4eec-b4aa-fa2f87be3486}">
+      <Implementation>
+        <ST><![CDATA[
+(* <EL6910 Terminal 3> -------------------------------------------------------------------------------------------------------------*)
+GVL_IO.stEL6910.qSafetyRun 			:= GVL_Safety.bSafetyRun;
+GVL_IO.stEL6910.qSafetyErrorAck 	:= GVL_Safety.bSafetyErrorAck;
+GVL_IO.stEL6910.qSafetyAirPresureOK := GVL_Safety.SafetyOutputs.bAirPressureOK;
+GVL_IO.stEL6910.iSafetyOK 			:= GVL_Safety.bSafetyEnable;
+GVL_IO.stEL6910.qLockDoorsCommand	:= GVL_Safety.bDoorLockCommand;
+GVL_IO.stEL6910.iBypassDoor3Command := GVL_Safety.bDoor3BypassAccepted;
+
+
+(* <EL1918 Terminal 4> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm04[1] := GVL_Safety.SafetyInputs.bEStopHMICh1;
+GVL_HMI.aIOTerm04[2] := GVL_Safety.SafetyInputs.bEStopHMICh2;
+GVL_HMI.aIOTerm04[3] := GVL_Safety.SafetyInputs.bEStopSideCh1;
+GVL_HMI.aIOTerm04[4] := GVL_Safety.SafetyInputs.bEStopSideCh2;
+GVL_HMI.aIOTerm04[5] := GVL_Safety.SafetyInputs.bMachineReset;
+GVL_HMI.aIOTerm04[6] := GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh1;
+GVL_HMI.aIOTerm04[7] := GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh2;
+GVL_HMI.aIOTerm04[8] := GVL_Safety.SafetyInputs.bStageCollectLeftDoorFdbk;
+
+(* <EL1918 Terminal 5> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm05[1] := GVL_Safety.SafetyInputs.bStageCollectRightDoorCh1;
+GVL_HMI.aIOTerm05[2] := GVL_Safety.SafetyInputs.bStageCollectRightDoorCh2;
+GVL_HMI.aIOTerm05[3] := GVL_Safety.SafetyInputs.bStageCollectRightDoorFdbk;
+GVL_HMI.aIOTerm05[4] := GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh1;
+GVL_HMI.aIOTerm05[5] := GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh2;
+GVL_HMI.aIOTerm05[6] := GVL_Safety.SafetyInputs.bSampleRecoveryDoorFdbk;
+GVL_HMI.aIOTerm05[7] := FALSE;
+GVL_HMI.aIOTerm05[8] := FALSE;
+
+(* <EL1918 Terminal 6> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm06[1] := NOT GVL_Safety.SafetyInputs.bFestoMS6ValveFdbk;
+GVL_HMI.aIOTerm06[2] := GVL_Safety.SafetyInputs.bFestoMS6DumpValveFdbk;
+GVL_HMI.aIOTerm06[3] := NOT GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD1;
+GVL_HMI.aIOTerm06[4] := NOT GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD2;
+GVL_HMI.aIOTerm06[5] := NOT GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD1;
+GVL_HMI.aIOTerm06[6] := NOT GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD2;
+GVL_HMI.aIOTerm06[7] := NOT GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD1;
+GVL_HMI.aIOTerm06[8] := NOT GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD2;
+
+(* <EL2904 Terminal 7> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm07[1] := GVL_Safety.aEL2904_T07[1];
+GVL_HMI.aIOTerm07[2] := GVL_Safety.aEL2904_T07[2];
+GVL_HMI.aIOTerm07[3] := GVL_Safety.aEL2904_T07[3];
+GVL_HMI.aIOTerm07[4] := GVL_Safety.aEL2904_T07[4];
+
+(* <EL2904 Terminal 8> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm08[1] := GVL_Safety.aEL2904_T08[1];
+GVL_HMI.aIOTerm08[2] := GVL_Safety.aEL2904_T08[2];
+GVL_HMI.aIOTerm08[3] := GVL_Safety.aEL2904_T08[3];
+GVL_HMI.aIOTerm08[4] := GVL_Safety.aEL2904_T08[4];
+
+(* <EL1809 Terminal 9> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm09[1] := GVL_IO.gDigInputs.bStartButton;
+GVL_HMI.aIOTerm09[2] := GVL_IO.gDigInputs.bStopButton;
+GVL_HMI.aIOTerm09[3] := GVL_IO.gDigInputs.b24VPowerSupplyOK;
+GVL_HMI.aIOTerm09[4] := GVL_IO.gDigInputs.b24VPowerSupplyOKBck;
+GVL_HMI.aIOTerm09[5] := GVL_IO.gDigInputs.b48VPowerSupplyOK;
+GVL_HMI.aIOTerm09[6] := GVL_IO.gDigInputs.bStageCollection_Home;
+GVL_HMI.aIOTerm09[7] := GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home;
+GVL_HMI.aIOTerm09[8] := GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home;
+GVL_HMI.aIOTerm09[9] := GVL_IO.gDigInputs.bWasteOverflowSensor;
+GVL_HMI.aIOTerm09[10] := GVL_IO.gDigInputs.bUPSReady;
+GVL_HMI.aIOTerm09[11] := GVL_IO.gDigInputs.bUPSReplaceBattery;
+GVL_HMI.aIOTerm09[12] := GVL_IO.gDigInputs.b48VPowerSupplyOKBck;
+GVL_HMI.aIOTerm09[13] := GVL_IO.gDigInputs.bCalibrationBoxPresent;
+GVL_HMI.aIOTerm09[14] := GVL_IO.gDigInputs.bThroatJigPresent;
+GVL_HMI.aIOTerm09[15] := FALSE;
+GVL_HMI.aIOTerm09[16] := FALSE;
+
+(* <EL2809 Terminal 10> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm10[1] := GVL_IO.gDigOutputs.bStartIndicator;
+GVL_HMI.aIOTerm10[2] := GVL_IO.gDigOutputs.bResetIndicator;
+GVL_HMI.aIOTerm10[3] := GVL_IO.gDigOutputs.bTowerRedLight;
+GVL_HMI.aIOTerm10[4] := GVL_IO.gDigOutputs.bTowerAmberLight;
+GVL_HMI.aIOTerm10[5] := GVL_IO.gDigOutputs.bTowerGreenLight;
+GVL_HMI.aIOTerm10[6] := GVL_IO.gDigOutputs.bTowerBuzzer;
+GVL_HMI.aIOTerm10[7] := GVL_IO.gDigOutputs.bSolenoidValveB;
+GVL_HMI.aIOTerm10[8] := GVL_IO.gDigOutputs.bSolenoidValveA;
+GVL_HMI.aIOTerm10[9] := GVL_IO.gDigOutputs.bSolenoidValveC;
+GVL_HMI.aIOTerm10[10] := FALSE;
+GVL_HMI.aIOTerm10[11] := FALSE;
+GVL_HMI.aIOTerm10[12] := FALSE;
+GVL_HMI.aIOTerm10[13] := FALSE;
+GVL_HMI.aIOTerm10[14] := FALSE;
+GVL_HMI.aIOTerm10[15] := FALSE;
+GVL_HMI.aIOTerm10[16] := FALSE;
+
+(* <EL2624 Terminal 11> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm11[1] := GVL_IO.gRelayOutputs.bStageCollectionLeftLight;
+GVL_HMI.aIOTerm11[2] := GVL_IO.gRelayOutputs.bSampleRecoveryLight;
+GVL_HMI.aIOTerm11[3] := GVL_IO.gRelayOutputs.bStageCollectionRightLight;
+GVL_HMI.aIOTerm11[4] := FALSE;
+
+(* <EL9410 Terminal 12> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm12[1] := GVL_IO.bEL9410UPStatus;
+GVL_HMI.aIOTerm12[2] := GVL_IO.bEL9410USStatus;
+
+(* <EL3058 Terminal 13> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm13[1] := GVL_IO.gAnalogInputs.rMainPressureSupplyInput;
+GVL_HMI.aIOTerm13[2] := 0.0;
+GVL_HMI.aIOTerm13[3] := GVL_IO.gAnalogInputs.rPressureRegulatorInput;
+GVL_HMI.aIOTerm13[3] := 0.0;
+
+(* <EL9576 Terminal 14> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm14[1] := GVL_IO.bEL9576T14Overtemp;
+GVL_HMI.aIOTerm14[2] := GVL_IO.bEL9576T14I2TError;
+GVL_HMI.aIOTerm14[3] := GVL_IO.bEL9576T14I2TWarning;
+GVL_HMI.aIOTerm14[4] := GVL_IO.bEL9576T14OverVoltage;
+GVL_HMI.aIOTerm14[5] := GVL_IO.bEL9576T14UnderVoltage;
+GVL_HMI.aIOTerm14[6] := GVL_IO.bEL9576T14ChopperOn;
+GVL_HMI.aIOTerm14[7] := GVL_IO.bEL9576T14OverCurrent;
+GVL_HMI.iIOTerm14DCIn := GVL_IO.bEL9576T14DCLinkVoltage;
+
+(* <EL7211 Terminal 15> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm15[1] := GVL_Motion.M2Motor.iOperational;
+GVL_HMI.aIOTerm15[2] := GVL_Motion.M2Motor.iHomed;
+GVL_HMI.aIOTerm15[3] := GVL_Motion.M2Motor.iError;
+GVL_HMI.aIOTerm15Values[1] := LINT_TO_LREAL(TRUNC(GVL_Motion.M2Motor.rActualPosition*1000)) / 1000.0;
+GVL_HMI.aIOTerm15Values[2] := LINT_TO_LREAL(TRUNC(GVL_Motion.M2Motor.rActualVel*1000)) / 1000.0;
+GVL_HMI.aIOTerm15Values[3] := LINT_TO_LREAL(TRUNC(GVL_Motion.M2Motor.rActualTorque*1000)) / 1000.0;
+GVL_HMI.iIOTerm15ErrorCode := GVL_Motion.M2Motor.nErrorCode;
+
+(* <EL7211 Terminal 16> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm16[1] := GVL_Motion.M3Motor.iOperational;
+GVL_HMI.aIOTerm16[2] := GVL_Motion.M3Motor.iHomed;
+GVL_HMI.aIOTerm16[3] := GVL_Motion.M3Motor.iError;
+GVL_HMI.aIOTerm16Values[1] := LINT_TO_LREAL(TRUNC(GVL_Motion.M3Motor.rActualPosition*1000)) / 1000.0;
+GVL_HMI.aIOTerm16Values[2] := LINT_TO_LREAL(TRUNC(GVL_Motion.M3Motor.rActualVel*1000)) / 1000.0;
+GVL_HMI.aIOTerm16Values[3] := LINT_TO_LREAL(TRUNC(GVL_Motion.M3Motor.rActualTorque*1000)) / 1000.0;
+GVL_HMI.iIOTerm16ErrorCode := GVL_Motion.M3Motor.nErrorCode;
+
+(* <EL3022 Terminal 17> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm17[1] := GVL_IO.bEL3022ChAUnderRange;
+GVL_HMI.aIOTerm17[2] := GVL_IO.bEL3022ChAOverRange;
+GVL_HMI.aIOTerm17[3] := GVL_IO.bEL3022ChAError;
+GVL_HMI.aIOTerm17[4] := GVL_IO.bEL3022ChBUnderRange;
+GVL_HMI.aIOTerm17[5] := GVL_IO.bEL3022ChBOverRange;
+GVL_HMI.aIOTerm17[6] := GVL_IO.bEL3022ChBError;
+GVL_HMI.aIOTerm17Values[1] := GVL_IO.gAnalogInputs.rLeakTestPressureSensor;
+GVL_HMI.aIOTerm17Values[2] := 0.0;
+
+(* <EL1809 Terminal 18> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm18[1] := NOT GVL_IO.gDigInputs.bAccessDoor4InterlockFdbk;
+GVL_HMI.aIOTerm18[2] := NOT GVL_IO.gDigInputs.bAccessDoor5InterlockFdbk;
+GVL_HMI.aIOTerm18[3] := NOT GVL_IO.gDigInputs.bAccessDoor6InterlockFdbk;
+GVL_HMI.aIOTerm18[4] := FALSE;
+GVL_HMI.aIOTerm18[5] := FALSE;
+GVL_HMI.aIOTerm18[6] := FALSE;
+GVL_HMI.aIOTerm18[7] := FALSE;
+GVL_HMI.aIOTerm18[8] := FALSE;
+GVL_HMI.aIOTerm18[9] := FALSE;
+GVL_HMI.aIOTerm18[10] := FALSE;
+GVL_HMI.aIOTerm18[11] := FALSE;
+GVL_HMI.aIOTerm18[12] := FALSE;
+GVL_HMI.aIOTerm18[13] := FALSE;
+GVL_HMI.aIOTerm18[14] := FALSE;
+GVL_HMI.aIOTerm18[15] := FALSE;
+GVL_HMI.aIOTerm18[16] := FALSE;
+
+(* <EL2904 Terminal 19> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOTerm19[1] := GVL_Safety.aEL2904_T19[1];
+GVL_HMI.aIOTerm19[2] := GVL_Safety.aEL2904_T19[2];
+GVL_HMI.aIOTerm19[3] := GVL_Safety.aEL2904_T19[3];
+GVL_HMI.aIOTerm19[4] := GVL_Safety.aEL2904_T19[4];
+
+(* <EL7062 Terminal 23> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm23.bAxisOperational[1] 	:= GVL_Motion.aPumps[1].Linear.iOperational;
+GVL_HMI.stIOTerm23.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Linear.rActualPos*1000)) / 1000.0;
+GVL_HMI.stIOTerm23.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Linear.rActualVel*1000)) / 1000.0;
+GVL_HMI.stIOTerm23.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm23.bAxisHomed[1] 		:= GVL_Motion.aPumps[1].Linear.iHomed;
+GVL_HMI.stIOTerm23.bAxisError[1] 		:= GVL_Motion.aPumps[1].Linear.iError;
+GVL_HMI.stIOTerm23.nErrorCode[1] 		:= GVL_Motion.aPumps[1].Linear.nErrorCode;
+GVL_HMI.stIOTerm23.bAxisOperational[2] 	:= GVL_Motion.aPumps[1].Rotary.iOperational;
+GVL_HMI.stIOTerm23.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm23.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm23.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[1].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm23.bAxisHomed[2] 		:= GVL_Motion.aPumps[1].Rotary.iHomed;
+GVL_HMI.stIOTerm23.bAxisError[2] 		:= GVL_Motion.aPumps[1].Rotary.iError;
+GVL_HMI.stIOTerm23.nErrorCode[2] 		:= GVL_Motion.aPumps[1].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 24> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm24.bAxisOperational[1] 	:= GVL_Motion.aPumps[2].Linear.iOperational;
+GVL_HMI.stIOTerm24.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm24.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm24.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm24.bAxisHomed[1] 		:= GVL_Motion.aPumps[2].Linear.iHomed;
+GVL_HMI.stIOTerm24.bAxisError[1] 		:= GVL_Motion.aPumps[2].Linear.iError;
+GVL_HMI.stIOTerm24.nErrorCode[1] 		:= GVL_Motion.aPumps[2].Linear.nErrorCode;
+GVL_HMI.stIOTerm24.bAxisOperational[2] 	:= GVL_Motion.aPumps[2].Rotary.iOperational;
+GVL_HMI.stIOTerm24.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm24.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm24.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[2].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm24.bAxisHomed[2] 		:= GVL_Motion.aPumps[2].Rotary.iHomed;
+GVL_HMI.stIOTerm24.bAxisError[2] 		:= GVL_Motion.aPumps[2].Rotary.iError;
+GVL_HMI.stIOTerm24.nErrorCode[2] 		:= GVL_Motion.aPumps[2].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 25> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm25.bAxisOperational[1] 	:= GVL_Motion.aPumps[3].Linear.iOperational;
+GVL_HMI.stIOTerm25.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm25.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm25.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm25.bAxisHomed[1] 		:= GVL_Motion.aPumps[3].Linear.iHomed;
+GVL_HMI.stIOTerm25.bAxisError[1] 		:= GVL_Motion.aPumps[3].Linear.iError;
+GVL_HMI.stIOTerm25.nErrorCode[1] 		:= GVL_Motion.aPumps[3].Linear.nErrorCode;
+GVL_HMI.stIOTerm25.bAxisOperational[2] 	:= GVL_Motion.aPumps[3].Rotary.iOperational;
+GVL_HMI.stIOTerm25.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm25.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm25.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[3].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm25.bAxisHomed[2] 		:= GVL_Motion.aPumps[3].Rotary.iHomed;
+GVL_HMI.stIOTerm25.bAxisError[2] 		:= GVL_Motion.aPumps[3].Rotary.iError;
+GVL_HMI.stIOTerm25.nErrorCode[2] 		:= GVL_Motion.aPumps[3].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 26> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm26.bAxisOperational[1] 	:= GVL_Motion.aPumps[4].Linear.iOperational;
+GVL_HMI.stIOTerm26.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm26.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm26.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm26.bAxisHomed[1] 		:= GVL_Motion.aPumps[4].Linear.iHomed;
+GVL_HMI.stIOTerm26.bAxisError[1] 		:= GVL_Motion.aPumps[4].Linear.iError;
+GVL_HMI.stIOTerm26.nErrorCode[1] 		:= GVL_Motion.aPumps[4].Linear.nErrorCode;
+GVL_HMI.stIOTerm26.bAxisOperational[2] 	:= GVL_Motion.aPumps[4].Rotary.iOperational;
+GVL_HMI.stIOTerm26.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm26.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm26.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[4].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm26.bAxisHomed[2] 		:= GVL_Motion.aPumps[4].Rotary.iHomed;
+GVL_HMI.stIOTerm26.bAxisError[2] 		:= GVL_Motion.aPumps[4].Rotary.iError;
+GVL_HMI.stIOTerm26.nErrorCode[2] 		:= GVL_Motion.aPumps[4].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 27> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm27.bAxisOperational[1] 	:= GVL_Motion.aPumps[5].Linear.iOperational;
+GVL_HMI.stIOTerm27.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm27.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm27.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm27.bAxisHomed[1] 		:= GVL_Motion.aPumps[5].Linear.iHomed;
+GVL_HMI.stIOTerm27.bAxisError[1] 		:= GVL_Motion.aPumps[5].Linear.iError;
+GVL_HMI.stIOTerm27.nErrorCode[1] 		:= GVL_Motion.aPumps[5].Linear.nErrorCode;
+GVL_HMI.stIOTerm27.bAxisOperational[2] 	:= GVL_Motion.aPumps[5].Rotary.iOperational;
+GVL_HMI.stIOTerm27.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm27.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm27.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[5].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm27.bAxisHomed[2] 		:= GVL_Motion.aPumps[5].Rotary.iHomed;
+GVL_HMI.stIOTerm27.bAxisError[2] 		:= GVL_Motion.aPumps[5].Rotary.iError;
+GVL_HMI.stIOTerm27.nErrorCode[2] 		:= GVL_Motion.aPumps[5].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 28> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm28.bAxisOperational[1] 	:= GVL_Motion.aPumps[6].Linear.iOperational;
+GVL_HMI.stIOTerm28.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm28.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm28.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm28.bAxisHomed[1] 		:= GVL_Motion.aPumps[6].Linear.iHomed;
+GVL_HMI.stIOTerm28.bAxisError[1] 		:= GVL_Motion.aPumps[6].Linear.iError;
+GVL_HMI.stIOTerm28.nErrorCode[1] 		:= GVL_Motion.aPumps[6].Linear.nErrorCode;
+GVL_HMI.stIOTerm28.bAxisOperational[2] 	:= GVL_Motion.aPumps[6].Rotary.iOperational;
+GVL_HMI.stIOTerm28.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm28.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm28.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[6].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm28.bAxisHomed[2] 		:= GVL_Motion.aPumps[6].Rotary.iHomed;
+GVL_HMI.stIOTerm28.bAxisError[2] 		:= GVL_Motion.aPumps[6].Rotary.iError;
+GVL_HMI.stIOTerm28.nErrorCode[2] 		:= GVL_Motion.aPumps[6].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 29> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm29.bAxisOperational[1] 	:= GVL_Motion.aPumps[7].Linear.iOperational;
+GVL_HMI.stIOTerm29.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm29.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm29.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm29.bAxisHomed[1] 		:= GVL_Motion.aPumps[7].Linear.iHomed;
+GVL_HMI.stIOTerm29.bAxisError[1] 		:= GVL_Motion.aPumps[7].Linear.iError;
+GVL_HMI.stIOTerm29.nErrorCode[1] 		:= GVL_Motion.aPumps[7].Linear.nErrorCode;
+GVL_HMI.stIOTerm29.bAxisOperational[2] 	:= GVL_Motion.aPumps[7].Rotary.iOperational;
+GVL_HMI.stIOTerm29.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm29.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm29.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[7].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm29.bAxisHomed[2] 		:= GVL_Motion.aPumps[7].Rotary.iHomed;
+GVL_HMI.stIOTerm29.bAxisError[2] 		:= GVL_Motion.aPumps[7].Rotary.iError;
+GVL_HMI.stIOTerm29.nErrorCode[2] 		:= GVL_Motion.aPumps[7].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 30> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm30.bAxisOperational[1] 	:= GVL_Motion.aPumps[8].Linear.iOperational;
+GVL_HMI.stIOTerm30.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm30.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm30.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm30.bAxisHomed[1] 		:= GVL_Motion.aPumps[8].Linear.iHomed;
+GVL_HMI.stIOTerm30.bAxisError[1] 		:= GVL_Motion.aPumps[8].Linear.iError;
+GVL_HMI.stIOTerm30.nErrorCode[1] 		:= GVL_Motion.aPumps[8].Linear.nErrorCode;
+GVL_HMI.stIOTerm30.bAxisOperational[2] 	:= GVL_Motion.aPumps[8].Rotary.iOperational;
+GVL_HMI.stIOTerm30.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm30.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm30.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[8].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm30.bAxisHomed[2] 		:= GVL_Motion.aPumps[8].Rotary.iHomed;
+GVL_HMI.stIOTerm30.bAxisError[2] 		:= GVL_Motion.aPumps[8].Rotary.iError;
+GVL_HMI.stIOTerm30.nErrorCode[2] 		:= GVL_Motion.aPumps[8].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 31> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm31.bAxisOperational[1] 	:= GVL_Motion.aPumps[9].Linear.iOperational;
+GVL_HMI.stIOTerm31.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm31.bAxisHomed[1] 		:= GVL_Motion.aPumps[9].Linear.iHomed;
+GVL_HMI.stIOTerm31.bAxisError[1] 		:= GVL_Motion.aPumps[9].Linear.iError;
+GVL_HMI.stIOTerm31.nErrorCode[1] 		:= GVL_Motion.aPumps[9].Linear.nErrorCode;
+GVL_HMI.stIOTerm31.bAxisOperational[2] 	:= GVL_Motion.aPumps[9].Rotary.iOperational;
+GVL_HMI.stIOTerm31.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm31.bAxisHomed[2] 		:= GVL_Motion.aPumps[9].Rotary.iHomed;
+GVL_HMI.stIOTerm31.bAxisError[2] 		:= GVL_Motion.aPumps[9].Rotary.iError;
+GVL_HMI.stIOTerm31.nErrorCode[2] 		:= GVL_Motion.aPumps[9].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 32> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm32.bAxisOperational[1] 	:= GVL_Motion.aPumps[10].Linear.iOperational;
+GVL_HMI.stIOTerm32.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm32.bAxisHomed[1] 		:= GVL_Motion.aPumps[10].Linear.iHomed;
+GVL_HMI.stIOTerm32.bAxisError[1] 		:= GVL_Motion.aPumps[10].Linear.iError;
+GVL_HMI.stIOTerm32.nErrorCode[1] 		:= GVL_Motion.aPumps[10].Linear.nErrorCode;
+GVL_HMI.stIOTerm32.bAxisOperational[2] 	:= GVL_Motion.aPumps[10].Rotary.iOperational;
+GVL_HMI.stIOTerm32.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualPos*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualVel*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm32.bAxisHomed[2] 		:= GVL_Motion.aPumps[10].Rotary.iHomed;
+GVL_HMI.stIOTerm32.bAxisError[2] 		:= GVL_Motion.aPumps[10].Rotary.iError;
+GVL_HMI.stIOTerm32.nErrorCode[2] 		:= GVL_Motion.aPumps[10].Rotary.nErrorCode;
+
+(* <EL7062 Terminal 34> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.stIOTerm34.bAxisOperational 	:= GVL_Motion.M1Motor.iOperational;
+GVL_HMI.stIOTerm34.bAxisHomed 			:= GVL_Motion.M1Motor.iHomed;
+GVL_HMI.stIOTerm34.bNotMoving			:= GVL_Motion.M1Motor.iNotMoving;
+GVL_HMI.stIOTerm34.bAxisError 			:= GVL_Motion.M1Motor.iError;
+GVL_HMI.stIOTerm34.bDriveError 			:= GVL_Motion.M1Motor.iError;
+GVL_HMI.stIOTerm34.nErrorCode 			:= GVL_Motion.M1Motor.nErrorCode;
+GVL_HMI.stIOTerm34.rActualPosition 		:= LINT_TO_LREAL(TRUNC(GVL_Motion.M1Motor.rActualPos * 1000)) /1000;
+GVL_HMI.stIOTerm34.rActualVelocity 		:= LINT_TO_LREAL(TRUNC(GVL_Motion.M1Motor.rActualVel * 1000)) /1000;
+
+(* <Box 1 ifm AL1333> --------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOBox1[1] := GVL_HMI.HMIAnimation.aSolventLevel[1];
+GVL_HMI.aIOBox1[2] := GVL_HMI.HMIAnimation.aSolventLevel[2];
+GVL_HMI.aIOBox1[3] := GVL_HMI.HMIAnimation.aSolventLevel[3];
+GVL_HMI.aIOBox1[4] := GVL_HMI.HMIAnimation.aSolventLevel[4];
+GVL_HMI.aIOBox1[5] := GVL_HMI.HMIAnimation.rWasteLevel;
+
+(* <Box 2 AMI8000 - Valve 1> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOAMI8000[1].bAxisOperational 	:= GVL_Motion.aValves[1].iOperational;
+GVL_HMI.aIOAMI8000[1].bAxisHomed 		:= GVL_Motion.aValves[1].iHomed;
+GVL_HMI.aIOAMI8000[1].bNotMoving 		:= GVL_Motion.aValves[1].iNotMoving;
+GVL_HMI.aIOAMI8000[1].bAxisError 		:= GVL_Motion.aValves[1].iError;
+GVL_HMI.aIOAMI8000[1].nErrorCode 		:= GVL_Motion.aValves[1].nErrorCode;
+GVL_HMI.aIOAMI8000[1].rActualPosition 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[1].rActualPos* 1000)) /1000;
+GVL_HMI.aIOAMI8000[1].rActualVelocity 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[1].rActualVel* 1000)) /1000;
+
+(* <Box 3 AMI8000 - Valve 2> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOAMI8000[2].bAxisOperational 	:= GVL_Motion.aValves[2].iOperational;
+GVL_HMI.aIOAMI8000[2].bAxisHomed 		:= GVL_Motion.aValves[2].iHomed;
+GVL_HMI.aIOAMI8000[2].bNotMoving 		:= GVL_Motion.aValves[2].iNotMoving;
+GVL_HMI.aIOAMI8000[2].bAxisError 		:= GVL_Motion.aValves[2].iError;
+GVL_HMI.aIOAMI8000[2].nErrorCode 		:= GVL_Motion.aValves[2].nErrorCode;
+GVL_HMI.aIOAMI8000[2].rActualPosition 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[2].rActualPos* 1000)) /1000;
+GVL_HMI.aIOAMI8000[2].rActualVelocity 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[2].rActualVel* 1000)) /1000;
+
+(* <Box 4 AMI8000 - Valve 3> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOAMI8000[3].bAxisOperational 	:= GVL_Motion.aValves[3].iOperational;
+GVL_HMI.aIOAMI8000[3].bAxisHomed 		:= GVL_Motion.aValves[3].iHomed;
+GVL_HMI.aIOAMI8000[3].bNotMoving 		:= GVL_Motion.aValves[3].iNotMoving;
+GVL_HMI.aIOAMI8000[3].bAxisError 		:= GVL_Motion.aValves[3].iError;
+GVL_HMI.aIOAMI8000[3].nErrorCode 		:= GVL_Motion.aValves[3].nErrorCode;
+GVL_HMI.aIOAMI8000[3].rActualPosition 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[3].rActualPos* 1000)) /1000;
+GVL_HMI.aIOAMI8000[3].rActualVelocity 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[3].rActualVel* 1000)) /1000;
+
+(* <Box 5 AMI8000 - Valve 4> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOAMI8000[4].bAxisOperational 	:= GVL_Motion.aValves[4].iOperational;
+GVL_HMI.aIOAMI8000[4].bAxisHomed 		:= GVL_Motion.aValves[4].iHomed;
+GVL_HMI.aIOAMI8000[4].bNotMoving 		:= GVL_Motion.aValves[4].iNotMoving;
+GVL_HMI.aIOAMI8000[4].bAxisError 		:= GVL_Motion.aValves[4].iError;
+GVL_HMI.aIOAMI8000[4].nErrorCode 		:= GVL_Motion.aValves[4].nErrorCode;
+GVL_HMI.aIOAMI8000[4].rActualPosition 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[4].rActualPos* 1000)) /1000;
+GVL_HMI.aIOAMI8000[4].rActualVelocity 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[4].rActualVel* 1000)) /1000;
+
+(* <Box 6 AMI8000 - Valve 5> -------------------------------------------------------------------------------------------------------------*)
+GVL_HMI.aIOAMI8000[5].bAxisOperational 	:= GVL_Motion.aValves[5].iOperational;
+GVL_HMI.aIOAMI8000[5].bAxisHomed 		:= GVL_Motion.aValves[5].iHomed;
+GVL_HMI.aIOAMI8000[5].bNotMoving 		:= GVL_Motion.aValves[5].iNotMoving;
+GVL_HMI.aIOAMI8000[5].bAxisError 		:= GVL_Motion.aValves[5].iError;
+GVL_HMI.aIOAMI8000[5].nErrorCode 		:= GVL_Motion.aValves[5].nErrorCode;
+GVL_HMI.aIOAMI8000[5].rActualPosition 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[5].rActualPos* 1000)) /1000;
+GVL_HMI.aIOAMI8000[5].rActualVelocity 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aValves[5].rActualVel* 1000)) /1000;
+
+(* <Motors nState> -----------------------------------------------------------------------------------------------------------------*)
+GVL_IO.nAX8108T34State := GVL_Motion.M1Motor.nState; //M1
+GVL_IO.nEL7211T15State := GVL_Motion.M2Motor.nState; //M2
+GVL_IO.nEL7211T16State := GVL_Motion.M3Motor.nState; //M3
+GVL_IO.nAMI8000Box8State := GVL_Motion.aValves[1].nState; //Valve 1
+GVL_IO.nAMI8000Box9State := GVL_Motion.aValves[2].nState; //Valve 2
+GVL_IO.nAMI8000Box10State := GVL_Motion.aValves[3].nState; //Valve 3
+GVL_IO.nAMI8000Box11State := GVL_Motion.aValves[4].nState; //Valve 4
+GVL_IO.nAMI8000Box12State := GVL_Motion.aValves[5].nState; //Valve 5
+GVL_IO.nEL7062T23State := GVL_Motion.aPumps[1].Linear.nState; //Pump1 Terminal
+GVL_IO.nEL7062T24State := GVL_Motion.aPumps[2].Linear.nState; //Pump2 Terminal
+GVL_IO.nEL7062T25State := GVL_Motion.aPumps[3].Linear.nState; //Pump3 Terminal
+GVL_IO.nEL7062T26State := GVL_Motion.aPumps[4].Linear.nState; //Pump4 Terminal
+GVL_IO.nEL7062T27State := GVL_Motion.aPumps[5].Linear.nState; //Pump5 Terminal
+GVL_IO.nEL7062T28State := GVL_Motion.aPumps[6].Linear.nState; //Pump6 Terminal
+GVL_IO.nEL7062T29State := GVL_Motion.aPumps[7].Linear.nState; //Pump7 Terminal
+GVL_IO.nEL7062T30State := GVL_Motion.aPumps[8].Linear.nState; //Pump8 Terminal
+GVL_IO.nEL7062T31State := GVL_Motion.aPumps[9].Linear.nState; //Pump9 Terminal
+GVL_IO.nEL7062T32State := GVL_Motion.aPumps[10].Linear.nState; //Pump10 Terminal
+
+
+]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="ACT_M1Animation" Id="{5ca7e550-b195-4047-b743-192dee895467}">
       <Implementation>
         <ST><![CDATA[//M1 Motor vertical Axis Animation
@@ -203,8 +674,23 @@ END_IF]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="PRG_HMIControl">
-      <LineId Id="252" Count="13" />
+      <LineId Id="252" Count="2" />
+      <LineId Id="669" Count="0" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="255" Count="10" />
+      <LineId Id="817" Count="1" />
+      <LineId Id="825" Count="0" />
+      <LineId Id="820" Count="1" />
+      <LineId Id="823" Count="0" />
+      <LineId Id="862" Count="1" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="822" Count="0" />
+      <LineId Id="745" Count="0" />
       <LineId Id="338" Count="0" />
+      <LineId Id="780" Count="0" />
+      <LineId Id="782" Count="1" />
+      <LineId Id="781" Count="0" />
+      <LineId Id="744" Count="0" />
       <LineId Id="337" Count="0" />
       <LineId Id="339" Count="0" />
       <LineId Id="411" Count="0" />
@@ -217,9 +703,17 @@ END_IF]]></ST>
       <LineId Id="459" Count="0" />
       <LineId Id="458" Count="0" />
       <LineId Id="453" Count="0" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="659" Count="0" />
+      <LineId Id="654" Count="0" />
       <LineId Id="610" Count="0" />
       <LineId Id="608" Count="0" />
-      <LineId Id="341" Count="0" />
+      <LineId Id="704" Count="0" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="708" Count="2" />
+      <LineId Id="707" Count="0" />
       <LineId Id="609" Count="0" />
       <LineId Id="449" Count="0" />
       <LineId Id="342" Count="0" />
@@ -279,6 +773,152 @@ END_IF]]></ST>
       <LineId Id="576" Count="1" />
       <LineId Id="575" Count="0" />
       <LineId Id="578" Count="2" />
+    </LineIds>
+    <LineIds Name="PRG_HMIControl.ACT_CalibrationArrows">
+      <LineId Id="3" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="14" Count="3" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_HMIControl.ACT_IOControls">
+      <LineId Id="3" Count="1" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="5" Count="3" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="18" Count="2" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="27" Count="4" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="35" Count="1" />
+      <LineId Id="38" Count="4" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="49" Count="2" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="63" Count="8" />
+      <LineId Id="73" Count="6" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="85" Count="6" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="94" Count="4" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="106" Count="3" />
+      <LineId Id="102" Count="2" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="116" Count="2" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="121" Count="5" />
+      <LineId Id="130" Count="1" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="137" Count="5" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="143" Count="2" />
+      <LineId Id="149" Count="1" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="156" Count="1" />
+      <LineId Id="159" Count="1" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="174" Count="6" />
+      <LineId Id="183" Count="5" />
+      <LineId Id="190" Count="1" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="192" Count="2" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="213" Count="13" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="227" Count="14" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="243" Count="14" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="259" Count="14" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="275" Count="14" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="291" Count="14" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="307" Count="14" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="324" Count="14" />
+      <LineId Id="323" Count="0" />
+      <LineId Id="340" Count="14" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="356" Count="14" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="394" Count="3" />
+      <LineId Id="399" Count="2" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="402" Count="0" />
+      <LineId Id="404" Count="4" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="420" Count="5" />
+      <LineId Id="428" Count="7" />
+      <LineId Id="426" Count="0" />
+      <LineId Id="437" Count="7" />
+      <LineId Id="436" Count="0" />
+      <LineId Id="446" Count="7" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="455" Count="7" />
+      <LineId Id="454" Count="0" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="57" Count="1" />
+      <LineId Id="410" Count="4" />
+      <LineId Id="371" Count="10" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="59" Count="0" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_M1Animation">
       <LineId Id="2" Count="20" />

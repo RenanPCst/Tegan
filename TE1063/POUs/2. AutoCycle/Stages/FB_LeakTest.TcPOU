@@ -44,6 +44,8 @@ END_VAR]]></Declaration>
 			GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Starting'; 
 			GVL_HMI.HMIAnimation.rLoadBarLeakTest  := 0;
 			GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.InProgress;
+			tonMonitoring(in := FALSE);
+			tonPressuring(IN := FALSE);
             eState := POSITION_VALVES;
         END_IF;
 
@@ -51,19 +53,19 @@ END_VAR]]></Declaration>
 		bMoveValves := bExecute;
         // Moves all 6-position valves to position 5
 		IF NOT fbValveMoveDone[1] THEN
-			fbValveMoveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[1].rTargetVel, rAcc := GVL_Motion.aValves[1].rAcceleration, rDec := GVL_Motion.aValves[1].rDeceleration);
+			fbValveMoveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[1].rTargetVel, rAcc := GVL_Motion.aValves[1].rAcceleration, rDec := GVL_Motion.aValves[1].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[2] THEN
-			fbValveMoveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[2].rTargetVel, rAcc := GVL_Motion.aValves[2].rAcceleration, rDec := GVL_Motion.aValves[2].rDeceleration);
+			fbValveMoveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[2].rTargetVel, rAcc := GVL_Motion.aValves[2].rAcceleration, rDec := GVL_Motion.aValves[2].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[3] THEN
-			fbValveMoveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[3].rTargetVel, rAcc := GVL_Motion.aValves[3].rAcceleration, rDec := GVL_Motion.aValves[3].rDeceleration);
+			fbValveMoveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[3].rTargetVel, rAcc := GVL_Motion.aValves[3].rAcceleration, rDec := GVL_Motion.aValves[3].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[4] THEN
-			fbValveMoveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[4].rTargetVel, rAcc := GVL_Motion.aValves[4].rAcceleration, rDec := GVL_Motion.aValves[4].rDeceleration);
+			fbValveMoveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[4].rTargetVel, rAcc := GVL_Motion.aValves[4].rAcceleration, rDec := GVL_Motion.aValves[4].rDeceleration);
 		END_IF
 		IF NOT fbValveMoveDone[5] THEN
-			fbValveMoveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 5, rVelocity := GVL_Motion.aValves[5].rTargetVel, rAcc := GVL_Motion.aValves[5].rAcceleration, rDec := GVL_Motion.aValves[5].rDeceleration);
+			fbValveMoveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[5].rTargetVel, rAcc := GVL_Motion.aValves[5].rAcceleration, rDec := GVL_Motion.aValves[5].rDeceleration);
 		END_IF	
         
 		stStatus[1] := GVL_Motion.aValvesObj[1].GetStatus();
@@ -105,7 +107,7 @@ END_VAR]]></Declaration>
 
     PRESSURIZE:
         // Waits for the pressurization time to complete
-        tonPressuring(IN := bPressureTime, PT := T#5S);
+        tonPressuring(IN := bPressureTime, PT := T#20S);
         IF tonPressuring.Q THEN
             // Switches solenoids to LEAKTESTMONITORING configuration before monitoring begins
             fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
@@ -134,7 +136,7 @@ END_VAR]]></Declaration>
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := rScaledPressure * 0.95; //TODO: Just for testing purposes... need to be adjusted to 0.95
+			rClosedSystemPressure := rScaledPressure * 0.85; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
 			tonMonitoring(in := bPressureInput, PT := tMonitorTime);
@@ -157,7 +159,7 @@ END_VAR]]></Declaration>
 			END_IF;
 		END_IF
 		//Pressure output for monitoring
-		GVL_HMI.rCalLealTestPressure := rScaledPressure;
+		GVL_HMI.rCalLeakTestPressure := rScaledPressure;
 		rSystemPressure := rScaledPressure;
 
     DONE:
@@ -229,9 +231,12 @@ END_IF;]]></ST>
       <LineId Id="596" Count="3" />
       <LineId Id="842" Count="2" />
       <LineId Id="841" Count="0" />
+      <LineId Id="920" Count="1" />
       <LineId Id="600" Count="11" />
       <LineId Id="613" Count="14" />
-      <LineId Id="629" Count="84" />
+      <LineId Id="629" Count="36" />
+      <LineId Id="885" Count="0" />
+      <LineId Id="667" Count="46" />
       <LineId Id="805" Count="1" />
       <LineId Id="804" Count="0" />
       <LineId Id="714" Count="1" />
