@@ -2,25 +2,7 @@
     
 <div id="TcHmiRectangle_MenuBackground_17" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="1200" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="1080" data-tchmi-width-unit="px" data-tchmi-zindex="0" data-tchmi-creator-locked="True">
 
-<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
-{
-  "angle": 0.0,
-  "stopPoints": [
-    {
-      "color": "rgba(255, 255, 255, 1)",
-      "stop": "0%"
-    },
-    {
-      "color": "rgba(255, 255, 255, 1)",
-      "stop": "30%"
-    },
-    {
-      "color": "rgba(170, 170, 170, 1)",
-      "stop": "100%"
-    }
-  ]
-}
-</script>
+
 
         <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
 {
@@ -128,28 +110,39 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "TcHmi.Controls.get('TcHmiButton_ChangePasswd').onPressed.addListener(function () {",
-          "    var oldPass = TcHmi.Controls.get('TcHmiPasswordInput_Passwd').getText();",
-          "    var newPass = TcHmi.Controls.get('TcHmiPasswordInput_PasswdUpdate').getText();",
+          "function changeUserPassword() {",
+          "    var oldPassword = TcHmi.Controls.get(\"TextboxOldPassword\").getText();",
+          "    var newPassword = TcHmi.Controls.get(\"TextboxNewPassword\").getText();",
+          "    var label = TcHmi.Controls.get(\"LabelStatus\");",
           "",
-          "    if (!isValidPassword(newPass)) {",
-          "        alert('New password must be 5–8 characters with upper/lowercase letters, number, and symbol.');",
+          "    if (newPassword !== confirmPassword) {",
+          "        label.setText(\"New passwords do not match.\");",
+          "        console.log(\"New passwords do not match.\");",
           "        return;",
           "    }",
           "",
-          "    TcHmi.Server.UserManagement.changePassword(oldPass, newPass, function (data) {",
-          "        if (data.error === TcHmi.Errors.NONE) {",
-          "            alert('Password changed successfully!');",
-          "        } else {",
-          "            alert('Failed to change password. Current password may be incorrect.');",
+          "    TcHmi.Server.UserManagement.changePassword(",
+          "        oldPassword,",
+          "        newPassword,",
+          "        function(data) {",
+          "            if (data.error === TcHmi.Errors.NONE) {",
+          "                label.setText(\"Password changed successfully.\");",
+          "                console.log(\"Password changed successfully.\");",
+          "            } else if (data.error === TcHmi.Errors.USERMANAGEMENT_INVALID_CREDENTIALS) {",
+          "                label.setText(\"Current password is incorrect.\");",
+          "                console.log(\"Current password is incorrect.\");",
+          "            } else {",
+          "                label.setText(\"Failed to change password: \" + data.errorMessage);",
+          "                console.log(\"Failed to change password: \" + data.errorMessage);",
+          "            }",
           "        }",
-          "    });",
-          "});",
-          ""
+          "    );",
+          "}",
+          "console.log('Hello word')"
         ],
-        "injectContextObject": false,
+        "injectContextObject": true,
         "asyncWait": true,
-        "waitMode": "Synchronous"
+        "waitMode": "Asynchronous"
       }
     ]
   }
@@ -187,7 +180,7 @@
 </div>
 <div id="TcHmiTextblock_176" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="47" data-tchmi-left-unit="px" data-tchmi-text="User Name:" data-tchmi-top="458" data-tchmi-top-unit="px" data-tchmi-width="110" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiTextbox_NewUserName" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextbox" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="167" data-tchmi-left-unit="px" data-tchmi-text="Name" data-tchmi-top="458" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4">
+<div id="TcHmiTextbox_NewUserName" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextbox" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="167" data-tchmi-left-unit="px" data-tchmi-top="458" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4" data-tchmi-text="Name">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -240,7 +233,7 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "TcHmi.Controls.get('TcHmiButton_NewUserAdd').onPressed.addListener(function () {",
+          "/*TcHmi.Controls.get('TcHmiButton_NewUserAdd').onPressed.addListener(function () {",
           "    var username = TcHmi.Controls.get('TcHmiTextbox_NewUserName').getText();",
           "    var password = TcHmi.Controls.get('TcHmiPasswordInput_NewUserPasswdUpdate').getText();",
           "    var group = parseInt(TcHmi.Controls.get('TcHmiCombobox_NewUserGroup').getSelectedIndex(), 10);",
@@ -257,8 +250,14 @@
           "    }).catch(function (err) {",
           "        alert('Error creating user: ' + err);",
           "    });",
-          "});",
-          ""
+          "});*/",
+          "",
+          "var addNewUser = TcHmi.Controls.get('TcHmiTextbox_NewUserName').getText();",
+          "var addNewPassword = TcHmi.Controls.get('TcHmiPasswordInput_NewUserPasswdUpdate').getText();",
+          "TcHmi.Server.UserManagement.addUser(addNewUser,addNewPassword);",
+          "",
+          "console.log(addNewUser);",
+          "console.log(addNewPassword);"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -378,6 +377,7 @@
         "sourceLines": [
           "TcHmi.Server.UserManagement.listUsernames(function(data) {",
           "    if (data.error === TcHmi.Errors.NONE) {",
+          "                                          \t\tconsole.log(data.userList);",
           "        // Transformar array de strings em array de objetos",
           "        const gridData = data.userList.map(function(username) {",
           "            return { Username: username };",
@@ -388,7 +388,8 @@
           "    } else {",
           "        console.error(\"Erro ao buscar usuários:\", data.error);",
           "    }",
-          "});"
+          "});",
+          ""
         ],
         "injectContextObject": true,
         "asyncWait": true,
@@ -401,85 +402,7 @@
 </div>
 <div id="TcHmiTextblock_181" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="21" data-tchmi-left-unit="px" data-tchmi-text="Users List" data-tchmi-top="733" data-tchmi-top-unit="px" data-tchmi-width="159" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiDatagrid_GroupLists" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="575" data-tchmi-left-unit="px" data-tchmi-top="773" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-grid-font-size="15" data-tchmi-header-font-size="16" data-tchmi-zindex="4" data-tchmi-is-enabled="true">
-<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
-[
-  {
-    "name": "GroupName",
-    "label": "Group Name",
-    "control": "TextBlock",
-    "width": 220,
-    "widthUnit": "px",
-    "resize": true,
-    "sortable": false,
-    "minWidth": 100,
-    "minWidthUnit": "px",
-    "editable": false,
-    "horizontalAlignment": "Center",
-    "verticalAlignment": "Center",
-    "headerHorizontalAlignment": "Center",
-    "headerVerticalAlignment": "Center",
-    "ignoreEscapeSequences": false,
-    "autoFocusOut": true,
-    "autoSelectText": false
-  }
-]
-</script>
-
-<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
-{
-  "left": 3,
-  "leftUnit": "px",
-  "right": 3,
-  "rightUnit": "px",
-  "top": 0,
-  "topUnit": "px",
-  "bottom": 0,
-  "bottomUnit": "px"
-}
-</script>
-
-
-
-</div>
 <div id="TcHmiTextblock_182" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="575" data-tchmi-left-unit="px" data-tchmi-text="Groups List" data-tchmi-top="733" data-tchmi-top-unit="px" data-tchmi-width="159" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
-</div>
-<div id="TcHmiButton_ListGroups" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="167" data-tchmi-left-unit="px" data-tchmi-text="List Groups" data-tchmi-top="1106" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
-
-
-
-
-<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-[
-  {
-    "event": "TcHmiButton_ListGroups.onPressed",
-    "actions": [
-      {
-        "objectType": "JavaScript",
-        "active": true,
-        "sourceLines": [
-          "TcHmi.Server.UserManagement.listGroups(function (data) {",
-          "    if (data.error === TcHmi.Errors.NONE) {",
-          "        // Transforma a lista de grupos (string[]) em array de objetos",
-          "        const gridData = data.groupList.map(function (groupName) {",
-          "            return { GroupName: groupName };",
-          "        });",
-          "",
-          "        // Define os dados no DataGrid com ID 'GroupGrid'",
-          "        TcHmi.Controls.get('TcHmiDatagrid_GroupLists').setSrcData(gridData);",
-          "    } else {",
-          "        console.error(\"Erro ao buscar grupos:\", data.error);",
-          "    }",
-          "});"
-        ],
-        "injectContextObject": true,
-        "asyncWait": true,
-        "waitMode": "Asynchronous"
-      }
-    ]
-  }
-]
-</script>
 </div>
 <div id="TcHmiButton_DeleteUser" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="878" data-tchmi-left-unit="px" data-tchmi-text="Delete User" data-tchmi-top="607" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
 
@@ -595,7 +518,7 @@
 </script>
 
 </div>
-<div id="TcHmiCombobox_EditCurrentUserGroup" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCombobox" data-tchmi-auto-focus-out="true" data-tchmi-combobox-text="Select" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="768" data-tchmi-left-unit="px" data-tchmi-top="506" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4" data-tchmi-enum-data-symbol="">
+<div id="TcHmiCombobox_EditCurrentUserGroup" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiCombobox" data-tchmi-auto-focus-out="true" data-tchmi-combobox-text="Select" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="768" data-tchmi-left-unit="px" data-tchmi-top="506" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -609,10 +532,15 @@
 <script data-tchmi-target-attribute="data-tchmi-src-data" type="application/json">
 [
   {
-    "text": "%f%TcHmi.Server.getGroupsOfCurrentUser()%/f%"
+    "text": "",
+    "value": "groupsA"
   }
 ]
 </script>
+
+
+
+
 </div>
 <div id="TcHmiNumericInput_EditCurrentTimeOut" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiNumericInput" data-tchmi-auto-focus-out="true" data-tchmi-decimal-digits="0" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="768" data-tchmi-left-unit="px" data-tchmi-max-value="100" data-tchmi-min-value="0" data-tchmi-reset-to-last-valid-value="true" data-tchmi-top="555" data-tchmi-top-unit="px" data-tchmi-value="0" data-tchmi-width="50" data-tchmi-width-unit="px" data-tchmi-value-font-size="15" data-tchmi-zindex="4">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
@@ -664,7 +592,7 @@
 </div>
 <div id="TcHmiTextblock_UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="196" data-tchmi-height-unit="px" data-tchmi-left="278" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="777" data-tchmi-top-unit="px" data-tchmi-width="212" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2">
 </div>
-<div id="TcHmiTextblock_GroupDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="199" data-tchmi-height-unit="px" data-tchmi-left="839" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="774" data-tchmi-top-unit="px" data-tchmi-width="212" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2">
+<div id="UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="199" data-tchmi-height-unit="px" data-tchmi-left="839" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="774" data-tchmi-top-unit="px" data-tchmi-width="212" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2">
 </div>
 <div id="TcHmiRectangle_31" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="250" data-tchmi-height-unit="px" data-tchmi-left="20" data-tchmi-left-unit="px" data-tchmi-top="79" data-tchmi-top-unit="px" data-tchmi-width="580" data-tchmi-width-unit="px" data-tchmi-zindex="1">
 <script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
@@ -679,7 +607,7 @@
 }
 </script>
 </div>
-<div id="TcHmiPasswordInput_Passwd" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="773" data-tchmi-left-unit="px" data-tchmi-top="103" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
+<div id="TextboxOldPassword" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="773" data-tchmi-left-unit="px" data-tchmi-top="103" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -690,7 +618,7 @@
 </script>
 
 </div>
-<div id="TcHmiPasswordInput_PasswdUpdate" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="773" data-tchmi-left-unit="px" data-tchmi-top="158" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
+<div id="TextboxNewPassword" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="773" data-tchmi-left-unit="px" data-tchmi-top="158" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -714,6 +642,98 @@
 </div>
 <div id="TcHmiPopup_UserManagement" data-tchmi-type="TcHmi.Controls.System.TcHmiPopup" data-tchmi-height="380" data-tchmi-height-unit="px" data-tchmi-left="240" data-tchmi-left-unit="px" data-tchmi-top="340" data-tchmi-top-unit="px" data-tchmi-width="600" data-tchmi-width-unit="px">
 </div>
-<div id="TcHmiTextblock_CurrentAutoLogout_1014" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="357" data-tchmi-left-unit="px" data-tchmi-top="24" data-tchmi-top-unit="px" data-tchmi-width="228" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="10" data-tchmi-text="%f%TcHmi.Server.UserManagement.listUsernames()%/f%">
+<div id="GroupGrid" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="575" data-tchmi-left-unit="px" data-tchmi-top="773" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-grid-font-size="15" data-tchmi-header-font-size="16" data-tchmi-zindex="4" data-tchmi-is-enabled="true">
+<script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
+[
+  {
+    "name": "Groupname",
+    "label": "Group Name",
+    "control": "TextBox",
+    "width": 220,
+    "widthUnit": "px",
+    "resize": false,
+    "sortable": false,
+    "minWidth": 100,
+    "minWidthUnit": "px",
+    "editable": false,
+    "horizontalAlignment": "Center",
+    "verticalAlignment": "Center",
+    "headerHorizontalAlignment": "Center",
+    "headerVerticalAlignment": "Center",
+    "ignoreEscapeSequences": false,
+    "autoFocusOut": true,
+    "autoSelectText": false
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
+{
+  "left": 3,
+  "leftUnit": "px",
+  "right": 3,
+  "rightUnit": "px",
+  "top": 0,
+  "topUnit": "px",
+  "bottom": 0,
+  "bottomUnit": "px"
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</div>
+<div id="TcHmiButton_ListGroups" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="167" data-tchmi-left-unit="px" data-tchmi-text="List Groups" data-tchmi-top="1106" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ListGroups.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "TcHmi.Server.UserManagement.listUserGroups(function(data){",
+          "        if (data.error === TcHmi.Errors.NONE) {",
+          "        // Are Guests able to fetch current user status?",
+          "\t\tconst datinha = data.groupDetailsList;",
+          "\t\tconsole.log(datinha);",
+          "\t\tconst groupExcluded = [\"__SystemAdministrators\", \"__SystemGuests\", \"__SystemMaintenanceUsers\", \"__SystemUsers\"];",
+          "\t\tconst groupFiltered = Object.keys(datinha).filter(key => !groupExcluded.includes(key));",
+          "\t\tconst groupNames = groupFiltered;",
+          "\t\tconsole.log(groupNames);",
+          "\t\t",
+          "\t\tconst gridData = groupNames.map(function(groupname) {",
+          "            return { Groupname: groupname };",
+          "        });",
+          "\t\t// Atribuir os dados ao DataGrid\t\t",
+          "\t\tTcHmi.Controls.get('GroupGrid').setSrcData(gridData);",
+          "        ",
+          "        } else{",
+          "            // Error",
+          "            return;",
+          "        }",
+          "});"
+        ],
+        "injectContextObject": true,
+        "asyncWait": true,
+        "waitMode": "Asynchronous"
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="LabelStatus" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="826" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="340" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true">
 </div>
 </div>
