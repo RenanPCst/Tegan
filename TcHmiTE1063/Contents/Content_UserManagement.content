@@ -377,9 +377,15 @@
         "sourceLines": [
           "TcHmi.Server.UserManagement.listUsernames(function(data) {",
           "    if (data.error === TcHmi.Errors.NONE) {",
-          "                                          \t\tconsole.log(data.userList);",
+          "   ",
+          "        const datinha = data.userList;",
+          "        console.log(datinha);",
+          "        const userExcluded = [\"__SystemAdministrator\"];",
+          "        const userFiltered = datinha.filter(key => !userExcluded.includes(key));",
+          "        const userNames = userFiltered;",
+          "        console.log(userNames);",
           "        // Transformar array de strings em array de objetos",
-          "        const gridData = data.userList.map(function(username) {",
+          "        const gridData = userNames.map(function(username) {",
           "            return { Username: username };",
           "        });",
           "",
@@ -388,8 +394,7 @@
           "    } else {",
           "        console.error(\"Erro ao buscar usuários:\", data.error);",
           "    }",
-          "});",
-          ""
+          "});"
         ],
         "injectContextObject": true,
         "asyncWait": true,
