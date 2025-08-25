@@ -16,29 +16,7 @@
 
 
 
-    <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-        [
-        {
-        "event": "TcHmiButton.onPressed",
-        "actions": [
-        {
-        "objectType": "Function",
-        "active": true,
-        "fn": "TcHmi.Functions.Beckhoff.Logout",
-        "fnParams": [
-        {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/Boolean",
-        "value": true
-        }
-        ],
-        "asyncWait": true
-        }
-        ]
-        }
-        ]
-        
-    </script>
+    
 
 <script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
 {
@@ -51,6 +29,29 @@
   "bottomLeftUnit": "px",
   "bottomRightUnit": "px"
 }
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_Logout.onPressed",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "TcHmi.Functions.Beckhoff.Logout",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/Boolean",
+            "value": true
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
 </script>
 </div>
 <div id="TcHmi_Controls_Beckhoff_TcHmiImage_85" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="120" data-tchmi-height-unit="px" data-tchmi-left="58" data-tchmi-left-unit="px" data-tchmi-src="Resources/Custom/Images/userIcon.svg" data-tchmi-top="173" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-zindex="4">
@@ -484,7 +485,7 @@
 </div>
 <div id="TcHmiTextblock_182" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="584" data-tchmi-left-unit="px" data-tchmi-text="Groups List" data-tchmi-top="778" data-tchmi-top-unit="px" data-tchmi-width="95" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiButton_DeleteUser" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="849" data-tchmi-left-unit="px" data-tchmi-text="Delete User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
+<div id="TcHmiButton_DeleteUser" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="847" data-tchmi-left-unit="px" data-tchmi-text="Delete User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
 
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
@@ -496,33 +497,34 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "TcHmi.Controls.get('TcHmiButton_DeleteUser').onPressed.addListener(function () {",
-          "    var username = TcHmi.Controls.get('TcHmiTextbox_EditCurrentUserName').getText();",
-          "    if (!username) return;  ",
-          "});"
+          "var userName = TcHmi.Controls.get('TcHmiTextbox_EditCurrentUserName').getText();",
+          "",
+          "TcHmi.Server.UserManagement.removeUser (",
+          "    userName, ",
+          "    function(data) {",
+          "        if (data.error === TcHmi.Errors.NONE) {",
+          "            // Success",
+          "        } else {",
+          "            // Error",
+          "        }",
+          "    }",
+          ");"
         ],
         "injectContextObject": false,
         "asyncWait": true,
         "waitMode": "Synchronous"
       },
       {
-        "objectType": "WriteToSymbol",
+        "objectType": "Function",
         "active": true,
-        "symbolExpression": "%ctrl%TcHmiPopup_UserManagement::TargetFile%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TcHmi.Controls.System.TcHmiPopup.TargetFile",
-          "value": {
-            "path": "Contents/Content_Popup_DeleteUser.content"
+        "fn": "TcHmi.Functions.Beckhoff.Logout",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/Boolean",
+            "value": true
           }
-        },
-        "asyncWait": true
-      },
-      {
-        "objectType": "ControlApiFunction",
-        "active": true,
-        "control": "TcHmiPopup_UserManagement",
-        "fn": "open",
+        ],
         "asyncWait": true
       }
     ]
@@ -543,7 +545,7 @@
 }
 </script>
 </div>
-<div id="TcHmiButton_UpdateUser" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="666" data-tchmi-left-unit="px" data-tchmi-text="Update User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
+<div id="TcHmiButton_UpdateUser" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="667" data-tchmi-left-unit="px" data-tchmi-text="Update User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
 
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
@@ -555,11 +557,13 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "var oldGroup = TcHmi.Server.getGroupsOfCurrentUser();",
-          "var oldName = TcHmi.Server.getCurrentUser();",
-          "var updateUser = TcHmi.Controls.get('TcHmiTextbox_EditCurrentUserName').getText();",
-          "var updateGroup = TcHmi.Controls.get('TcHmiCombobox_EditCurrentUserGroup').getSelectedValue();",
-          "var updateAutoL = TcHmi.Controls.get('TcHmiNumericInput_EditCurrentTimeOut').getValue();",
+          "const oldGroup = TcHmi.Server.getGroupsOfCurrentUser();",
+          "const oldName = TcHmi.Server.getCurrentUser();",
+          "const defautGroup = '__SystemUsers';",
+          "const updateUser = TcHmi.Controls.get('TcHmiTextbox_EditCurrentUserName').getText();",
+          "const updateGroup = TcHmi.Controls.get('TcHmiCombobox_EditCurrentUserGroup').getSelectedValue();",
+          "const updateAutoL = TcHmi.Controls.get('TcHmiNumericInput_EditCurrentTimeOut').getValue();",
+          "const groupsToRemove = oldGroup.filter(group => group !== defautGroup);",
           "",
           "TcHmi.Server.UserManagement.updateUser(",
           "    oldName, ",
@@ -570,28 +574,30 @@
           "        //password: 'myNewPassword',",
           "        autoLogout: 'PT'+updateAutoL+'M',",
           "        //locale: 'fr',",
-          "        addGroups: [updateGroup],",
-          "        removeGroups: [oldGroup]",
+          "        removeGroups: groupsToRemove,",
+          "        addGroups: [updateGroup]",
+          "        ",
           "    },",
           "    function(data) {",
           "        if (data.error === TcHmi.Errors.NONE) {",
           "            // Success",
-          "            console.log(oldName);",
-          "            console.log(updateUser);",
-          "            console.log(oldGroup);",
-          "\t\t\tconsole.log(updateGroup);",
-          "\t\t\tconsole.log(updateAutoL);",
-          "            console.log('Done');",
+          "\t\t\tconsole.log('Done');            ",
           "        } else {",
           "            // Error",
-          "            console.log(data.error);",
+          "            console.log('Error: '+data.error);",
           "        }",
           "    }",
-          ");"
+          ");",
+          "",
+          "console.log(oldName);",
+          "console.log(updateUser);",
+          "console.log(oldGroup);",
+          "console.log(updateGroup);",
+          "console.log(defautGroup);"
         ],
-        "injectContextObject": false,
+        "injectContextObject": true,
         "asyncWait": true,
-        "waitMode": "Synchronous"
+        "waitMode": "Asynchronous"
       }
     ]
   }
