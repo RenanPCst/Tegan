@@ -172,7 +172,7 @@
 </div>
 <div id="TcHmiTextblock_176" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="69" data-tchmi-left-unit="px" data-tchmi-text="User Name:" data-tchmi-top="472" data-tchmi-top-unit="px" data-tchmi-width="110" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiTextbox_NewUserName" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextbox" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="195" data-tchmi-left-unit="px" data-tchmi-top="472" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4" data-tchmi-text="Name">
+<div id="TcHmiTextbox_NewUserName" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextbox" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="195" data-tchmi-left-unit="px" data-tchmi-top="472" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-text-font-size="15" data-tchmi-zindex="4" data-tchmi-text="New Name">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -213,7 +213,7 @@
 </div>
 <div id="TcHmiTextblock_180" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="69" data-tchmi-left-unit="px" data-tchmi-text="Password:" data-tchmi-top="615" data-tchmi-top-unit="px" data-tchmi-width="110" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiButton_NewUserAdd" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="103" data-tchmi-left-unit="px" data-tchmi-text="Add User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
+<div id="TcHmiButton_NewUserAdd" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="104" data-tchmi-left-unit="px" data-tchmi-text="Add User" data-tchmi-top="668" data-tchmi-top-unit="px" data-tchmi-width="120" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="18" data-tchmi-zindex="4">
 
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
@@ -230,8 +230,8 @@
           "var addNewAutoL = TcHmi.Controls.get('TcHmiNumericInput_NewUserTimeOut').getValue();\t",
           "var addNewPassword = TcHmi.Controls.get('TcHmiPasswordInput_NewUserPasswdUpdate').getText();",
           "",
+          "if (addNewUser !== 'New User' | addNewPassword !== '' ){",
           "TcHmi.Server.UserManagement.addUser(addNewUser,addNewPassword);",
-          "",
           "TcHmi.Server.UserManagement.updateUser(",
           "    addNewUser, ",
           "    {",
@@ -247,18 +247,20 @@
           "    function(data) {",
           "        if (data.error === TcHmi.Errors.NONE) {",
           "            // Success",
+          "            console.log(addNewUser);",
+          "\t\t\tconsole.log(addNewGroup);",
+          "\t\t\tconsole.log(addNewAutoL);",
+          "\t\t\tconsole.log(addNewPassword);",
           "            console.log('Done');",
           "        } else {",
           "            // Error",
           "            console.log(data.error);",
+          "            console.log('No user or password!');",
           "        }",
           "    }",
           ");",
           "",
-          "console.log(addNewUser);",
-          "console.log(addNewGroup);",
-          "console.log(addNewAutoL);",
-          "console.log(addNewPassword);"
+          "};"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -319,7 +321,18 @@
         "value": {
           "objectType": "StaticValue",
           "valueType": "tchmi:general#/definitions/String",
-          "value": null
+          "value": "New Name"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiCombobox_NewUserGroup::SelectedIndex%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/UDINT",
+          "value": 0
         },
         "asyncWait": true
       }
