@@ -90,35 +90,60 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "function changeUserPassword() {",
-          "    var oldPassword = TcHmi.Controls.get(\"TextboxOldPassword\").getText();",
-          "    var newPassword = TcHmi.Controls.get(\"TextboxNewPassword\").getText();",
-          "    var label = TcHmi.Controls.get(\"LabelStatus\");",
+          "function validarSenhaNova(senha) {",
+          "    const requisitos = {",
+          "        comprimentoMinimo: 8,",
+          "        temMaiuscula: /[A-Z]/,",
+          "        temMinuscula: /[a-z]/,",
+          "        temNumero: /[0-9]/,",
+          "        temEspecial: /[!@#$%^&*(),.?\":{}|<>]/",
+          "    };",
           "",
-          "    if (newPassword !== confirmPassword) {",
-          "        label.setText(\"New passwords do not match.\");",
-          "        console.log(\"New passwords do not match.\");",
-          "        return;",
+          "    if (senha.length < requisitos.comprimentoMinimo) {",
+          "        return 'A senha deve ter no mínimo 8 caracteres.';",
+          "    }",
+          "    if (!requisitos.temMaiuscula.test(senha)) {",
+          "        return 'A senha deve conter ao menos uma letra maiúscula.';",
+          "    }",
+          "    if (!requisitos.temMinuscula.test(senha)) {",
+          "        return 'A senha deve conter ao menos uma letra minúscula.';",
+          "    }",
+          "    if (!requisitos.temNumero.test(senha)) {",
+          "        return 'A senha deve conter ao menos um número.';",
+          "    }",
+          "    if (!requisitos.temEspecial.test(senha)) {",
+          "        return 'A senha deve conter ao menos um caractere especial.';",
           "    }",
           "",
-          "    TcHmi.Server.UserManagement.changePassword(",
-          "        oldPassword,",
-          "        newPassword,",
-          "        function(data) {",
+          "    return null; // Senha válida",
+          "}",
+          "const novaSenha = TcHmi.Controls.get('TextboxNewPassword').getText();",
+          "const erroSenha = validarSenhaNova(novaSenha);",
+          "const nomeUsuario = TcHmi.Server.getCurrentUser();",
+          "",
+          "if (erroSenha) {",
+          "    // Senha inválida - mostra mensagem",
+          "    TcHmi.Controls.get('TcHmiTextblock_1014').setText(erroSenha);",
+          "} else {",
+          "    // Senha válida - prossegue com a atualização",
+          "    TcHmi.Controls.get('TcHmiTextblock_1014').setText('');",
+          "    ",
+          "",
+          "    // Aqui você pode chamar o updateUser com a nova senha",
+          "    TcHmi.Server.UserManagement.updateUser(",
+          "        nomeUsuario,",
+          "        {",
+          "            password: novaSenha",
+          "        },",
+          "        function (data) {",
           "            if (data.error === TcHmi.Errors.NONE) {",
-          "                label.setText(\"Password changed successfully.\");",
-          "                console.log(\"Password changed successfully.\");",
-          "            } else if (data.error === TcHmi.Errors.USERMANAGEMENT_INVALID_CREDENTIALS) {",
-          "                label.setText(\"Current password is incorrect.\");",
-          "                console.log(\"Current password is incorrect.\");",
+          "                console.log('Senha atualizada com sucesso.');",
           "            } else {",
-          "                label.setText(\"Failed to change password: \" + data.errorMessage);",
-          "                console.log(\"Failed to change password: \" + data.errorMessage);",
+          "                console.log('Erro ao atualizar senha: ' + data.error);",
           "            }",
           "        }",
           "    );",
-          "}",
-          "console.log('Hello word')"
+          "}"
         ],
         "injectContextObject": true,
         "asyncWait": true,
@@ -146,7 +171,7 @@
 </div>
 <div id="TcHmiTextblock_169" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="612" data-tchmi-left-unit="px" data-tchmi-text="Current:" data-tchmi-top="138" data-tchmi-top-unit="px" data-tchmi-width="84" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
-<div id="TcHmiTextblock_170" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="612" data-tchmi-left-unit="px" data-tchmi-text="New:" data-tchmi-top="193" data-tchmi-top-unit="px" data-tchmi-width="84" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
+<div id="TcHmiTextblock_170" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="612" data-tchmi-left-unit="px" data-tchmi-text="New:" data-tchmi-top="185" data-tchmi-top-unit="px" data-tchmi-width="84" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
 <div id="TcHmiTextblock_171" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="29" data-tchmi-left-unit="px" data-tchmi-text="User Info" data-tchmi-top="84" data-tchmi-top-unit="px" data-tchmi-width="87" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
@@ -709,7 +734,7 @@
 }
 </script>
 </div>
-<div id="TcHmiTextblock_193" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="612" data-tchmi-left-unit="px" data-tchmi-text="4. Symbols" data-tchmi-top="313" data-tchmi-top-unit="px" data-tchmi-width="200" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="14" data-tchmi-text-font-weight="Auto" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-zindex="4">
+<div id="TcHmiTextblock_193" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="612" data-tchmi-left-unit="px" data-tchmi-text="4. Symbols" data-tchmi-top="312" data-tchmi-top-unit="px" data-tchmi-width="200" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="14" data-tchmi-text-font-weight="Auto" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-zindex="4">
 <script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
 {
   "color": "rgba(42, 93, 139, 1)"
@@ -777,7 +802,7 @@
 }
 </script>
 </div>
-<div id="TextboxOldPassword" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="775" data-tchmi-left-unit="px" data-tchmi-top="138" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
+<div id="TextboxNewPassword" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="775" data-tchmi-left-unit="px" data-tchmi-top="185" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
 {
   "top": 3,
@@ -787,17 +812,78 @@
 }
 </script>
 
-</div>
-<div id="TextboxNewPassword" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="775" data-tchmi-left-unit="px" data-tchmi-top="193" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-zindex="5">
-<script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
-{
-  "top": 3,
-  "right": 3,
-  "bottom": 3,
-  "left": 3
-}
-</script>
 
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TextboxNewPassword.onTextChanged",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "function validarSenhaNova(senha) {",
+          "    const requisitos = {",
+          "        comprimentoMinimo: 8,",
+          "        temMaiuscula: /[A-Z]/,",
+          "        temMinuscula: /[a-z]/,",
+          "        temNumero: /[0-9]/,",
+          "        temEspecial: /[!@#$%^&*(),.?\":{}|<>]/",
+          "    };",
+          "",
+          "    if (senha.length < requisitos.comprimentoMinimo) {",
+          "        return 'A senha deve ter no mínimo 8 caracteres.';",
+          "    }",
+          "    if (!requisitos.temMaiuscula.test(senha)) {",
+          "        return 'A senha deve conter ao menos uma letra maiúscula.';",
+          "    }",
+          "    if (!requisitos.temMinuscula.test(senha)) {",
+          "        return 'A senha deve conter ao menos uma letra minúscula.';",
+          "    }",
+          "    if (!requisitos.temNumero.test(senha)) {",
+          "        return 'A senha deve conter ao menos um número.';",
+          "    }",
+          "    if (!requisitos.temEspecial.test(senha)) {",
+          "        return 'A senha deve conter ao menos um caractere especial.';",
+          "    }",
+          "",
+          "    return null; // Senha válida",
+          "}",
+          "const novaSenha = TcHmi.Controls.get('TextboxNewPassword').getText();",
+          "const erroSenha = validarSenhaNova(novaSenha);",
+          "",
+          "if (erroSenha) {",
+          "    // Senha inválida - mostra mensagem",
+          "    TcHmi.Controls.get('TcHmiTextblock_1014').setText(erroSenha);",
+          "} else {",
+          "    // Senha válida - prossegue com a atualização",
+          "    TcHmi.Controls.get('TcHmiTextblock_1014').setText('');",
+          "    ",
+          "",
+          "    /*/ Aqui você pode chamar o updateUser com a nova senha",
+          "    TcHmi.Server.UserManagement.updateUser(",
+          "        nomeUsuario,",
+          "        {",
+          "            password: novaSenha",
+          "        },",
+          "        function (data) {",
+          "            if (data.error === TcHmi.Errors.NONE) {",
+          "                console.log('Senha atualizada com sucesso.');",
+          "            } else {",
+          "                console.log('Erro ao atualizar senha: ' + data.error);",
+          "            }",
+          "        }",
+          "    );*/",
+          "}"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmiPasswordInput_NewUserPasswdUpdate" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiPasswordInput" data-tchmi-auto-focus-out="true" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="195" data-tchmi-left-unit="px" data-tchmi-top="615" data-tchmi-top-unit="px" data-tchmi-width="260" data-tchmi-width-unit="px" data-tchmi-zindex="5">
 <script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
@@ -949,5 +1035,14 @@
 
 
 
+</div>
+<div id="TcHmiTextblock_1014" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="18" data-tchmi-height-unit="px" data-tchmi-left="775" data-tchmi-left-unit="px" data-tchmi-text="." data-tchmi-top="215" data-tchmi-top-unit="px" data-tchmi-width="252" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="12" data-tchmi-text-font-weight="Auto" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Top" data-tchmi-zindex="4">
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 0, 18, 1)"
+}
+</script>
+</div>
+<div id="TcHmiTextblock_CurrentUserName_1015" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="775" data-tchmi-left-unit="px" data-tchmi-text="%f%TcHmi.Server.getCurrentUser()%/f%" data-tchmi-top="138" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="20" data-tchmi-text-font-weight="Auto" data-tchmi-zindex="4">
 </div>
 </div>
