@@ -128,8 +128,9 @@
           "    // Senha válida - prossegue com a atualização",
           "    TcHmi.Controls.get('TcHmiTextblock_1014').setText('');",
           "    ",
+          "    if (confirm(\"Do you confirm the password change?\")) {",
+          "    // Lógica que roda se o usuário clicar em OK",
           "",
-          "    // Aqui você pode chamar o updateUser com a nova senha",
           "    TcHmi.Server.UserManagement.updateUser(",
           "        nomeUsuario,",
           "        {",
@@ -138,11 +139,20 @@
           "        function (data) {",
           "            if (data.error === TcHmi.Errors.NONE) {",
           "                console.log('Senha atualizada com sucesso.');",
+          "                alert(\"Password changed successfully!\");",
+          "                TcHmi.Server.logout();",
           "            } else {",
           "                console.log('Erro ao atualizar senha: ' + data.error);",
           "            }",
           "        }",
           "    );",
+          "",
+          "} else {",
+          "    // Usuário clicou em Cancelar",
+          "    console.log(\"Ação de exclusão cancelada.\");",
+          "}",
+          "",
+          "    ",
           "}"
         ],
         "injectContextObject": true,
@@ -278,10 +288,12 @@
           "\t\t\tconsole.log(addNewAutoL);",
           "\t\t\tconsole.log(addNewPassword);",
           "            console.log('Done');",
+          "            alert(\"User \"+addNewUser+\" was created successfully!\");",
           "        } else {",
           "            // Error",
           "            console.log(data.error);",
           "            console.log('No user or password!');",
+          "            alert(\"No user or password has been changed!\");",
           "        }",
           "    }",
           ");",
@@ -291,6 +303,50 @@
         "injectContextObject": false,
         "asyncWait": true,
         "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiNumericInput_NewUserTimeOut::Value%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/Number",
+          "value": 0.0
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiPasswordInput_NewUserPasswdUpdate::Text%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": null
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiTextbox_NewUserName::Text%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/String",
+          "value": "New Name"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiCombobox_NewUserGroup::SelectedIndex%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/UDINT",
+          "value": 0
+        },
+        "asyncWait": true
       }
     ]
   }
@@ -596,33 +652,31 @@
         "sourceLines": [
           "var userName = TcHmi.Controls.get('TcHmiTextbox_EditCurrentUserName').getText();",
           "",
-          "TcHmi.Server.UserManagement.removeUser (",
+          "",
+          "if (confirm(\"Do you really want to delete this user?\")) {",
+          "    // Lógica que roda se o usuário clicar em OK",
+          "    console.log(\"Usuário deletado!\");",
+          "\tTcHmi.Server.UserManagement.removeUser (",
           "    userName, ",
           "    function(data) {",
           "        if (data.error === TcHmi.Errors.NONE) {",
           "            // Success",
+          "            TcHmi.Server.logout();",
           "        } else {",
           "            // Error",
           "        }",
           "    }",
-          ");"
+          ");",
+          "    ",
+          "    ",
+          "} else {",
+          "    // Usuário clicou em Cancelar",
+          "    console.log(\"Ação de exclusão cancelada.\");",
+          "}"
         ],
         "injectContextObject": false,
         "asyncWait": true,
         "waitMode": "Synchronous"
-      },
-      {
-        "objectType": "Function",
-        "active": true,
-        "fn": "TcHmi.Functions.Beckhoff.Logout",
-        "fnParams": [
-          {
-            "objectType": "StaticValue",
-            "valueType": "tchmi:general#/definitions/Boolean",
-            "value": true
-          }
-        ],
-        "asyncWait": true
       }
     ]
   }
@@ -662,7 +716,11 @@
           "const updateAutoL = TcHmi.Controls.get('TcHmiNumericInput_EditCurrentTimeOut').getValue();",
           "const groupsToRemove = oldGroup.filter(group => group !== defautGroup);",
           "",
-          "TcHmi.Server.UserManagement.updateUser(",
+          "",
+          "if (confirm(\"Do you want to perform the user update?\")) {",
+          "    // Lógica que roda se o usuário clicar em OK",
+          "    console.log(\"Usuário deletado!\");",
+          "\tTcHmi.Server.UserManagement.updateUser(",
           "    oldName, ",
           "    {",
           "        //domain: 'myDomain', // Only for adressing, not changeable",
@@ -678,13 +736,20 @@
           "    function(data) {",
           "        if (data.error === TcHmi.Errors.NONE) {",
           "            // Success",
-          "\t\t\tconsole.log('Done');            ",
+          "\t\t\tconsole.log('Done');",
+          "    \t\tTcHmi.Server.logout();\t\t\t",
           "        } else {",
           "            // Error",
           "            console.log('Error: '+data.error);",
           "        }",
           "    }",
           ");",
+          "",
+          "",
+          "} else {",
+          "    // Usuário clicou em Cancelar",
+          "    console.log(\"Ação de exclusão cancelada.\");",
+          "}",
           "",
           "console.log(oldName);",
           "console.log(updateUser);",
@@ -813,7 +878,7 @@
 }
 </script>
 </div>
-<div id="TcHmiTextblock_UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="282" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="808" data-tchmi-top-unit="px" data-tchmi-width="220" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Top" data-tchmi-text-font-size="15">
+<div id="TcHmiTextblock_UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="282" data-tchmi-left-unit="px" data-tchmi-text="Select an item to view the information" data-tchmi-top="808" data-tchmi-top-unit="px" data-tchmi-width="220" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Top" data-tchmi-text-font-size="15">
 
 <script data-tchmi-target-attribute="data-tchmi-border-style" type="application/json">
 {
@@ -837,7 +902,7 @@
 }
 </script>
 </div>
-<div id="UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="837" data-tchmi-left-unit="px" data-tchmi-text="Textblock" data-tchmi-top="808" data-tchmi-top-unit="px" data-tchmi-width="219" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2" data-tchmi-text-font-size="15">
+<div id="UserDetails" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="837" data-tchmi-left-unit="px" data-tchmi-text="Select an item to view the information" data-tchmi-top="808" data-tchmi-top-unit="px" data-tchmi-width="219" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-is-enabled="true" data-tchmi-zindex="2" data-tchmi-text-font-size="15">
 
 <script data-tchmi-target-attribute="data-tchmi-border-width" type="application/json">
 {
@@ -968,7 +1033,7 @@
 </script>
 
 </div>
-<div id="TcHmiPopup_UserManagement" data-tchmi-type="TcHmi.Controls.System.TcHmiPopup" data-tchmi-height="380" data-tchmi-height-unit="px" data-tchmi-left="242" data-tchmi-left-unit="px" data-tchmi-top="375" data-tchmi-top-unit="px" data-tchmi-width="600" data-tchmi-width-unit="px">
+<div id="TcHmiPopup_UserManagement" data-tchmi-type="TcHmi.Controls.System.TcHmiPopup" data-tchmi-height="380" data-tchmi-height-unit="px" data-tchmi-left="247" data-tchmi-left-unit="px" data-tchmi-top="374" data-tchmi-top-unit="px" data-tchmi-width="600" data-tchmi-width-unit="px">
 </div>
 <div id="GroupGrid" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid" data-tchmi-height="200" data-tchmi-height-unit="px" data-tchmi-left="577" data-tchmi-left-unit="px" data-tchmi-top="808" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-grid-font-size="15" data-tchmi-header-font-size="16" data-tchmi-zindex="4" data-tchmi-is-enabled="true">
 <script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
