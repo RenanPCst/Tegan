@@ -321,3 +321,5 @@
     }
 
 })(TcHmi);
+
+var groupsA = TcHmi.Server.UserManagement.listUserGroups();
