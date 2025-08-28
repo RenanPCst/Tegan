@@ -36,6 +36,21 @@
             "minItems": 21,
             "type": "array"
         },
+        "PLC1.ARRAY_0..30_OF-Tc2_System.T_MaxString": {
+            "items": {
+                "allOf": [
+                    {
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "maxItems": 31,
+            "minItems": 31,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..42_OF-STRING-80": {
             "items": {
                 "$ref": "tchmi:general#/definitions/STRING%2880%29"
@@ -5232,6 +5247,23 @@
             "OPTIONS": {},
             "SCHEMA": {
                 "function": true
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Alarms.arrActiveEvents": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Alarms::arrActiveEvents",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Array of string used to show the actived events"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..30_OF-Tc2_System.T_MaxString"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -10729,6 +10761,7 @@
                 "LocalizeText": 3,
                 "Login": 3,
                 "Logout": 3,
+                "PLC1.GVL_Alarms.arrActiveEvents": 3,
                 "PLC1.GVL_Alarms.arrEventLogs": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,

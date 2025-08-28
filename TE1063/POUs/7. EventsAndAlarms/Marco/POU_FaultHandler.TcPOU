@@ -51,38 +51,38 @@ IF NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh1 OR
 END_IF
 
 (*-ES-005: Door 4 Open-*)
-IF NOT GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD1 OR 
-	NOT GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD2 THEN
+IF GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD2 THEN
 		GVL_Alarms.arrEventFlag[5]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[5]:= FALSE;	
 END_IF
 
 (*-ES-006: Door 5 Open-*)
-IF NOT GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD1 OR 
-	NOT GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD2 THEN
+IF GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD2 THEN
 		GVL_Alarms.arrEventFlag[6]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[6]:= FALSE;	
 END_IF
 
 (*-ES-007: Door 6 Open-*)
-IF NOT GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD1 OR 
-	NOT GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD2 THEN
+IF GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD2 THEN
 		GVL_Alarms.arrEventFlag[7]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[7]:= FALSE;	
 END_IF
 
 (*-ES-008: Terminal EL6910 FB Error-*)
-IF NOT GVL_Safety.SafetyInputs.iSafetyFBError THEN
+IF GVL_Safety.SafetyInputs.iSafetyFBError THEN
 		GVL_Alarms.arrEventFlag[8]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[8]:= FALSE;	
 END_IF
 
 (*-ES-009: Terminal EL6910 Communication Error-*)
-IF NOT GVL_Safety.SafetyInputs.iSafetyComError THEN
+IF GVL_Safety.SafetyInputs.iSafetyComError THEN
 		GVL_Alarms.arrEventFlag[9]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[9]:= FALSE;	
@@ -93,196 +93,196 @@ END_IF
 //----- Related to Motion Errors -----------------------------------------------------------------------------------------------------
 
 (*-ME-050: Vertical Axis Stage Collection Error-*)
-IF NOT GVL_Motion.M1Motor.bError THEN
+IF GVL_Motion.M1Motor.bError THEN
 		GVL_Alarms.arrEventFlag[50]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[50]:= FALSE;	
 END_IF
 
 (*-ME-051: Vertical Axis Sample Recovery Error-*)
-IF NOT GVL_Motion.M2Motor.bError THEN
+IF GVL_Motion.M2Motor.bError THEN
 		GVL_Alarms.arrEventFlag[51]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[51]:= FALSE;	
 END_IF
 
 (*-ME-052: Horizontal Axis Sample Recovery Error-*)
-IF NOT GVL_Motion.M3Motor.bError THEN
+IF GVL_Motion.M3Motor.bError THEN
 		GVL_Alarms.arrEventFlag[52]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[52]:= FALSE;	
 END_IF
 
 (*-ME-053: Opening Control Pomp 1 Error-*)
-IF NOT GVL_Motion.aPumps[1].Linear.bError THEN
+IF GVL_Motion.aPumps[1].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[53]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[53]:= FALSE;	
 END_IF
 
 (*-ME-054: Opening Control Pomp 2 Error-*)
-IF NOT GVL_Motion.aPumps[2].Linear.bError THEN
+IF GVL_Motion.aPumps[2].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[54]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[54]:= FALSE;	
 END_IF
 
 (*-ME-055: Opening Control Pomp 3 Error-*)
-IF NOT GVL_Motion.aPumps[3].Linear.bError THEN
+IF GVL_Motion.aPumps[3].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[55]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[55]:= FALSE;	
 END_IF
 
 (*-ME-056: Opening Control Pomp 4 Error-*)
-IF NOT GVL_Motion.aPumps[4].Linear.bError THEN
+IF GVL_Motion.aPumps[4].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[56]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[56]:= FALSE;	
 END_IF
 
 (*-ME-057: Opening Control Pomp 5 Error-*)
-IF NOT GVL_Motion.aPumps[5].Linear.bError THEN
+IF GVL_Motion.aPumps[5].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[57]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[57]:= FALSE;	
 END_IF
 
 (*-ME-058: Opening Control Pomp 6 Error-*)
-IF NOT GVL_Motion.aPumps[6].Linear.bError THEN
+IF GVL_Motion.aPumps[6].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[58]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[58]:= FALSE;	
 END_IF
 
 (*-ME-059: Opening Control Pomp 7 Error-*)
-IF NOT GVL_Motion.aPumps[7].Linear.bError THEN
+IF GVL_Motion.aPumps[7].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[59]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[59]:= FALSE;	
 END_IF
 
 (*-ME-060: Opening Control Pomp 8 Error-*)
-IF NOT GVL_Motion.aPumps[8].Linear.bError THEN
+IF GVL_Motion.aPumps[8].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[60]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[60]:= FALSE;	
 END_IF
 
 (*-ME-061: Opening Control Pomp 9 Error-*)
-IF NOT GVL_Motion.aPumps[9].Linear.bError THEN
+IF GVL_Motion.aPumps[9].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[61]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[61]:= FALSE;	
 END_IF
 
 (*-ME-062: Opening Control Pomp 10 Error-*)
-IF NOT GVL_Motion.aPumps[10].Linear.bError THEN
+IF GVL_Motion.aPumps[10].Linear.bError THEN
 		GVL_Alarms.arrEventFlag[62]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[62]:= FALSE;	
 END_IF
 
 (*-ME-063: Pomp Motor 1 Error-*)
-IF NOT GVL_Motion.aPumps[1].Rotary.bError THEN
+IF GVL_Motion.aPumps[1].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[63]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[63]:= FALSE;	
 END_IF
 
 (*-ME-064: Pomp Motor 2 Error-*)
-IF NOT GVL_Motion.aPumps[2].Rotary.bError THEN
+IF GVL_Motion.aPumps[2].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[64]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[64]:= FALSE;	
 END_IF
 
 (*-ME-065: Pomp Motor 3 Error-*)
-IF NOT GVL_Motion.aPumps[3].Rotary.bError THEN
+IF GVL_Motion.aPumps[3].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[65]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[65]:= FALSE;	
 END_IF
 
 (*-ME-066: Pomp Motor 4 Error-*)
-IF NOT GVL_Motion.aPumps[4].Rotary.bError THEN
+IF GVL_Motion.aPumps[4].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[66]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[66]:= FALSE;	
 END_IF
 
 (*-ME-067: Pomp Motor 5 Error-*)
-IF NOT GVL_Motion.aPumps[5].Rotary.bError THEN
+IF GVL_Motion.aPumps[5].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[67]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[67]:= FALSE;	
 END_IF
 
 (*-ME-068: Pomp Motor 6 Error-*)
-IF NOT GVL_Motion.aPumps[6].Rotary.bError THEN
+IF GVL_Motion.aPumps[6].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[68]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[68]:= FALSE;	
 END_IF
 
 (*-ME-069: Pomp Motor 7 Error-*)
-IF NOT GVL_Motion.aPumps[7].Rotary.bError THEN
+IF GVL_Motion.aPumps[7].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[69]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[69]:= FALSE;	
 END_IF
 
 (*-ME-070: Pomp Motor 8 Error-*)
-IF NOT GVL_Motion.aPumps[8].Rotary.bError THEN
+IF GVL_Motion.aPumps[8].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[70]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[70]:= FALSE;	
 END_IF
 
 (*-ME-071: Pomp Motor 9 Error-*)
-IF NOT GVL_Motion.aPumps[9].Rotary.bError THEN
+IF GVL_Motion.aPumps[9].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[71]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[71]:= FALSE;	
 END_IF
 
 (*-ME-072: Pomp Motor 10 Error-*)
-IF NOT GVL_Motion.aPumps[10].Rotary.bError THEN
+IF GVL_Motion.aPumps[10].Rotary.bError THEN
 		GVL_Alarms.arrEventFlag[72]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[72]:= FALSE;	
 END_IF
 
 (*-ME-073: Valve Motor 1 Error-*)
-IF NOT GVL_Motion.aValves[1].bError THEN
+IF GVL_Motion.aValves[1].bError THEN
 		GVL_Alarms.arrEventFlag[73]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[73]:= FALSE;	
 END_IF
 
 (*-ME-074: Valve Motor 2 Error-*)
-IF NOT GVL_Motion.aValves[2].bError THEN
+IF GVL_Motion.aValves[2].bError THEN
 		GVL_Alarms.arrEventFlag[74]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[74]:= FALSE;	
 END_IF
 
 (*-ME-075: Valve Motor 3 Error-*)
-IF NOT GVL_Motion.aValves[3].bError THEN
+IF GVL_Motion.aValves[3].bError THEN
 		GVL_Alarms.arrEventFlag[75]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[75]:= FALSE;	
 END_IF
 
 (*-ME-076: Valve Motor 4 Error-*)
-IF NOT GVL_Motion.aValves[4].bError THEN
+IF GVL_Motion.aValves[4].bError THEN
 		GVL_Alarms.arrEventFlag[76]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[76]:= FALSE;	
 END_IF
 
 (*-ME-077: Valve Motor 5 Error-*)
-IF NOT GVL_Motion.aValves[5].bError THEN
+IF GVL_Motion.aValves[5].bError THEN
 		GVL_Alarms.arrEventFlag[77]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[77]:= FALSE;	

@@ -2600,8 +2600,8 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
+					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6620,7 +6620,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3DC78F38-3B0A-B13D-9C1E-D51FD2F875E6}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3EFCDCAC-A44D-454D-DFD0-9DDC6F04EF0E}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6950,6 +6950,11 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
@@ -7302,6 +7307,72 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aValves[5].nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bResetButtonBlink</Name>
+							<Comment><![CDATA[reset button blink signal]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOEnabled</Name>
+							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM2STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM3STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorClosedAlias</Name>
+							<Comment><![CDATA[Doors Logic Safety Alias Data exchange]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bTopDoorsClosedFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorLockedFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirEnabledFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T07</Name>
+							<Comment><![CDATA[EL2904 Monitoring Outputs]]></Comment>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T08</Name>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T19</Name>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
@@ -8233,77 +8304,6 @@ External Setpoint Generation:
 							<Name>GVL_Motion.aPumps[10].Rotary.nErrorCode</Name>
 							<Type>UDINT</Type>
 						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bResetButtonBlink</Name>
-							<Comment><![CDATA[reset button blink signal]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOEnabled</Name>
-							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM2STOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM3STOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorClosedAlias</Name>
-							<Comment><![CDATA[Doors Logic Safety Alias Data exchange]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bTopDoorsClosedFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorLockedFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirEnabledFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T07</Name>
-							<Comment><![CDATA[EL2904 Monitoring Outputs]]></Comment>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T08</Name>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T19</Name>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
-						</Var>
 					</Vars>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
@@ -8423,6 +8423,81 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aValves[5].nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STOErrorAck</Name>
+							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyOutputs</Name>
+							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorLockCommand</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyEnable</Name>
+							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyReset</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.PlcToNc</Name>
@@ -8603,81 +8678,6 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STOErrorAck</Name>
-							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyOutputs</Name>
-							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorLockCommand</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyEnable</Name>
-							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyReset</Name>
-							<Type>BOOL</Type>
 						</Var>
 					</Vars>
 					<UnrestoredVarLinks ImportTime="2025-01-28T12:03:06">
@@ -43341,7 +43341,7 @@ Bit 8 - 15 : reserved]]></Comment>
 			</Device>
 			<Device Id="5" DevType="119" AmsPort="28677" AmsNetId="192.168.0.162.6.1" RemoteName="Device 5 (EL6631)">
 				<Name>Device 5 (EL6631)</Name>
-				<DevData>000000002000000000000000000000005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff000105215140040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
+				<DevData>000000002000000000000000000000005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff0001059c7e3a040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
 				<Image Id="10" AddrType="4" ImageType="3" SizeIn="8" SizeOut="35">
 					<Name>Image</Name>
 				</Image>
