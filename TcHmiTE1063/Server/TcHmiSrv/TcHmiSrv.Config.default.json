@@ -52,6 +52,21 @@
             "minItems": 50,
             "type": "array"
         },
+        "PLC1.ARRAY_0..50_OF-Tc2_System.T_MaxString": {
+            "items": {
+                "allOf": [
+                    {
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "maxItems": 51,
+            "minItems": 51,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-BOOL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/BOOL"
@@ -5217,6 +5232,23 @@
             "OPTIONS": {},
             "SCHEMA": {
                 "function": true
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Alarms.arrEventLogs": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Alarms::arrEventLogs",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Array of string used to show all FB logs generated"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..50_OF-Tc2_System.T_MaxString"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -10697,6 +10729,7 @@
                 "LocalizeText": 3,
                 "Login": 3,
                 "Logout": 3,
+                "PLC1.GVL_Alarms.arrEventLogs": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_Constant.aSolventsAvailable": 3,
