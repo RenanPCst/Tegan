@@ -68,7 +68,7 @@ IF EventChangeDetected() THEN
 	nj := nActiveEventsStart;
 	WHILE ni <= nEventsEnd AND nj <= nActiveEventsEnd DO
 		IF aEventFlags[ni] THEN //If Alarm is active, move the corresponding Alarm Message into the IntermediateAlarmTable
-			aActiveEvents[nj] := aEventTexts[ni];
+			aActiveEvents[nj] := CONCAT(sDateTime, aEventTexts[ni]); //original changed 28/08/25 aEventTexts[ni];
 			nj := nj+1;
 		END_IF
 		ni := ni+1;
