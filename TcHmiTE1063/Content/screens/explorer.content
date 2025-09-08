@@ -1,0 +1,215 @@
+<div id="explorer_1" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="800" data-tchmi-height="640">
+
+<div id="TcHmiFileExplorer_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiFileExplorer" data-tchmi-height="358" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="650" data-tchmi-width-unit="px" data-tchmi-root="/Content/UI" data-tchmi-creator-visibility="Visible">
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%ctx%owner::Id|EventRegistrationMode=Resolve%/ctx%.onSelectionChanged",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%ADS.PLC1.GVL_Report.testPath%/s%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/STRING%2880%29",
+          "symbolExpression": "%ctrl%TcHmiFileExplorer_1::SelectedItems[0]%/ctrl%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%ADS.PLC1.GVL_Report.bGeneratePDF2%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": false
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/STRING%2880%29",
+                  "symbolExpression": "%s%ADS.PLC1.GVL_Report.localPDF%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/STRING%2880%29",
+                  "value": "Content/UI/PDFs/PDFs"
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%ADS.PLC1.GVL_Report.bPreview%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "Condition",
+                "active": true,
+                "parts": [
+                  {
+                    "if": [
+                      {
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/STRING%2880%29",
+                          "symbolExpression": "%s%ADS.PLC1.GVL_Report.localPDF%/s%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/STRING%2880%29",
+                          "value": "Content/UI/PDFs/reports"
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%s%ADS.PLC1.GVL_Report.bPreview%/s%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": false
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": []
+                  }
+                ],
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiButton_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="361" data-tchmi-left-unit="px" data-tchmi-text="Preview PDF" data-tchmi-top="368" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-is-enabled="%s%ADS.PLC1.GVL_Report.bPreview%/s%">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%ctx%owner::Id|EventRegistrationMode=Resolve%/ctx%.onPressed",
+    "actions": [
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_2",
+        "fn": "open",
+        "asyncWait": true
+      },
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "Popup_Explorer",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="btnDownloadPDF_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="251" data-tchmi-left-unit="px" data-tchmi-text="Generate PDF" data-tchmi-top="368" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-is-enabled="%s%ADS.PLC1.GVL_Report.bGeneratePDF2%/s%">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%ctx%owner::Id|EventRegistrationMode=Resolve%/ctx%.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Função que usa a string lida do PLC",
+          "function showMessageFromPLC(message) {",
+          "    alert(\"Mensagem do PLC: \" + message);",
+          "}",
+          " ",
+          "// Leitura da variável do PLC",
+          "TcHmi.Symbol.readEx2('%s%ADS.PLC1.GVL_Report.sJsonOutput%/s%', function (data) {",
+          "    if (data.error === TcHmi.Errors.NONE) {",
+          "        let plcString = data.value; // valor retornado do PLC (string)",
+          "        // Chamar a função passando a string",
+          "        gerarRelatorioPDF(plcString);",
+          "    } else {",
+          "        console.error(\"Erro ao ler variável do PLC:\", data.error);",
+          "    }",
+          "});"
+        ],
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiButton_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="141" data-tchmi-left-unit="px" data-tchmi-text="Load Report" data-tchmi-top="368" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%ctx%owner::Id|EventRegistrationMode=Resolve%/ctx%.onPressed",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%ADS.PLC1.GVL_Report.bStartRead%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%ADS.PLC1.GVL_Report.bGeneratePDF2%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+</div>

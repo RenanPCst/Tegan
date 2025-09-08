@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_CreateJsonFile" Id="{5c684d6b-984a-4684-9d06-e255f36a1f3e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_CreateJsonFile
+VAR
+	eState            : (STATE_IDLE, STATE_OPEN, STATE_WRITE, STATE_CLOSE, STATE_DONE, STATE_ERROR);
+	bStartWrite       : BOOL;
+	fbFileOpen        : FB_FileOpen;
+	sFilePath         : STRING := 'C:\Users\Prog_1\Documents\reports\reportASRS.json';
+	fbFormat   		  : FB_FormatString;
+	udiFileHandle     : UINT;
+	fbFileWrite       : FB_FileWrite;
+	nBytesWritten     : DINT;
+	fbFileClose       : FB_FileClose;
+	sJsonData         : STRING(4096);
+	sFileName		  : T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbFormat(sFormat := 'C:\Users\Tegan\Documents\ReportGen\TcHmiTE1063\Content\UI\reports\%s.json', arg1:= F_STRING(in:= sFileName), sOut => sFilePath);
+//fbFormat(sFormat := 'Content/PDFs/%s.pdf', arg1:= F_STRING(in:= sFileName), sOut => GVL_Report.localPDF);
+sJsonData:= GVL_Report.sJsonOutput;
+
+CASE eState OF
+    STATE_IDLE:
+	    IF GVL_Report.bStartWrite THEN
+            GVL_Report.bStartWrite := FALSE;
+            eState := STATE_OPEN;
+        END_IF
+
+    STATE_OPEN:
+        fbFileOpen(
+            bExecute    := TRUE,
+            sNetId      := '',
+            sPathName   := sFilePath,
+            nMode       := FOPEN_MODEWRITE, (* Abrir para escrita. O arquivo será criado se não existir *)
+            tTimeout    := T#5S);
+
+        IF NOT fbFileOpen.bBusy THEN
+            IF fbFileOpen.bError THEN
+                eState := STATE_ERROR;
+            ELSE
+                udiFileHandle := fbFileOpen.hFile;
+                eState := STATE_WRITE;
+            END_IF
+            fbFileOpen(bExecute := FALSE);
+        END_IF
+
+    STATE_WRITE:
+        fbFileWrite(
+            bExecute    := TRUE,
+            sNetId      := '',
+            hFile		:= udiFileHandle,
+            pWriteBuff  := ADR(sJsonData), (* Endereço da string JSON *)
+            cbWriteLen  := PRG_JsonWriter.fbJsonWriter.GetDocumentLength(), (* Tamanho da string JSON *)
+            tTimeout    := T#5S);
+
+        IF NOT fbFileWrite.bBusy THEN
+            IF fbFileWrite.bError THEN
+                eState := STATE_ERROR;
+            ELSE
+                nBytesWritten := fbFileWrite.cbWriteLen;
+                eState := STATE_CLOSE;
+            END_IF
+            fbFileWrite(bExecute := FALSE);
+        END_IF
+
+    STATE_CLOSE:
+        fbFileClose(
+            bExecute    := TRUE,
+            sNetId      := '',
+            hFile		:= udiFileHandle,
+            tTimeout    := T#5S);
+
+        IF NOT fbFileClose.bBusy THEN
+            IF fbFileClose.bError THEN
+                eState := STATE_ERROR;
+            ELSE
+                eState := STATE_DONE;
+            END_IF
+            fbFileClose(bExecute := FALSE);
+        END_IF
+
+    STATE_DONE:
+        (* Salvo com sucesso! *)
+        eState := STATE_IDLE;
+		
+    STATE_ERROR:
+        (* Tratar o erro aqui. A variável fbFileWrite.nErrId contém o código do erro. *)
+        eState := STATE_IDLE;
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_CreateJsonFile">
+      <LineId Id="17" Count="71" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

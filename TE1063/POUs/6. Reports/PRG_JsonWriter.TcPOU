@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_JsonWriter" Id="{5ee85ce4-4efe-4980-94d3-f2ee70884d7e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_JsonWriter
+VAR
+	fbJsonWriter    : FB_JsonSaxWriter;
+    eState          : (STATE_IDLE, STATE_START_REPORT_OBJECT, STATE_ADD_REPORT_INFO, STATE_ADD_CALIBRATION_INFO, STATE_START_DATA_ARRAY, STATE_ADD_DATA_LOOP, STATE_END_DATA_ARRAY, STATE_END_REPORT_OBJECT, STATE_COPY_DOCUMENT, STATE_DONE);
+
+    (* Variáveis do PLC *)
+    sNomeEquipamento : STRING := 'Equipamento-01';
+    nHorasOperacao   : LREAL := 1250.75;
+    bAlerta          : BOOL := TRUE;
+    aFalhas          : ARRAY[1..2] OF STRING := ['Falha_Sensor_1', 'Falha_Motor_2'];
+    nFalhaIndex      : INT := 1;
+    
+    bStartBuild     : BOOL;
+	
+	stReportInfo     : ST_ReportInfo;
+    stCalibrationInfo: ST_CalibrationInfo;
+    astCalibrationData : ARRAY[1..100] OF ST_CalibrationData; (* Array de estruturas para os dados da tabela *)
+    nDataIndex      : INT := 1;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[stReportInfo.fileName:= PRG_CreateJsonFile.sFileName;
+
+CASE eState OF
+    STATE_IDLE:
+        IF bStartBuild THEN
+            bStartBuild := FALSE;
+            fbJsonWriter.ResetDocument();
+            nDataIndex := 1;
+            eState := STATE_START_REPORT_OBJECT;
+        END_IF
+
+    STATE_START_REPORT_OBJECT:
+        fbJsonWriter.StartObject(); (* { *)
+        eState := STATE_ADD_REPORT_INFO;
+    
+    STATE_ADD_REPORT_INFO:
+        fbJsonWriter.AddKey('reportInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyString('reportName', stReportInfo.reportName);
+            fbJsonWriter.AddKeyString('reoportSubName', stReportInfo.reoportSubName);
+            fbJsonWriter.AddKeyString('reportDate', stReportInfo.reportDate);
+            fbJsonWriter.AddKeyString('systemID', stReportInfo.systemID);
+            fbJsonWriter.AddKeyString('databaseName', stReportInfo.databaseName);
+            fbJsonWriter.AddKeyString('page', stReportInfo.page);
+            fbJsonWriter.AddKeyString('printedBy', stReportInfo.printedBy);
+			fbJsonWriter.AddKeyString('fileName', stReportInfo.fileName);
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_ADD_CALIBRATION_INFO;
+
+    STATE_ADD_CALIBRATION_INFO:
+        fbJsonWriter.AddKey('calibrationInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyNumber('calibrationNumber', DINT_TO_UDINT(stCalibrationInfo.calibrationNumber));
+            fbJsonWriter.AddKeyString('userID', stCalibrationInfo.userID);
+            fbJsonWriter.AddKeyLreal('density', stCalibrationInfo.density);
+            fbJsonWriter.AddKeyString('solvent', stCalibrationInfo.solvent);
+            fbJsonWriter.AddKeyString('pump', stCalibrationInfo.pump);
+            fbJsonWriter.AddKeyNumber('sysMasterListRev', DINT_TO_UDINT(stCalibrationInfo.sysMasterListRev));
+            fbJsonWriter.AddKeyNumber('solventRevision', DINT_TO_UDINT(stCalibrationInfo.solventRevision));
+            fbJsonWriter.AddKeyNumber('allowableFailures', DINT_TO_UDINT(stCalibrationInfo.allowableFailures));
+            fbJsonWriter.AddKeyNumber('replicates', DINT_TO_UDINT(stCalibrationInfo.replicates));
+            fbJsonWriter.AddKeyNumber('calIntervalDays', DINT_TO_UDINT(stCalibrationInfo.calIntervalDays));
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_START_DATA_ARRAY;
+
+    STATE_START_DATA_ARRAY:
+        fbJsonWriter.AddKey('calibrationData');
+        fbJsonWriter.StartArray(); (* [ *)
+        eState := STATE_ADD_DATA_LOOP;
+
+    STATE_ADD_DATA_LOOP:
+        (* Loop para adicionar cada objeto do array *)
+		FOR nDataIndex := 1 TO SIZEOF(astCalibrationData) / SIZEOF(astCalibrationData[1]) - 1 DO
+    		IF astCalibrationData[nDataIndex].dateTime = '' THEN
+        	// If the dateTime string is empty, break the loop
+        	// The condition would "stop" here as you want
+			eState := STATE_END_DATA_ARRAY;
+       	 	EXIT;
+   			ELSE
+        	// Continue processing data
+				IF nDataIndex < SIZEOF(astCalibrationData) / SIZEOF(astCalibrationData[1]) THEN
+            		fbJsonWriter.StartObject(); (* { *)
+                	fbJsonWriter.AddKeyString('dateTime', astCalibrationData[nDataIndex].dateTime);
+                	fbJsonWriter.AddKeyNumber('pumpNumber', DINT_TO_UDINT(astCalibrationData[nDataIndex].pumpNumber));
+                	fbJsonWriter.AddKeyString('step', astCalibrationData[nDataIndex].step);
+                	fbJsonWriter.AddKeylReal('grossWt_g', astCalibrationData[nDataIndex].grossWt_g);
+                	fbJsonWriter.AddKeylReal('tareWt_g', astCalibrationData[nDataIndex].tareWt_g);
+                	fbJsonWriter.AddKeylReal('netWt_g', astCalibrationData[nDataIndex].netWt_g);
+                	fbJsonWriter.AddKeylReal('netVolume', astCalibrationData[nDataIndex].netVolume);
+                	fbJsonWriter.AddKeylReal('targetVolume_ul', astCalibrationData[nDataIndex].targetVolume_ul);
+                	fbJsonWriter.AddKeylReal('difference_ul', astCalibrationData[nDataIndex].difference_ul);
+                	fbJsonWriter.AddKeylReal('difference_percent', astCalibrationData[nDataIndex].difference_percent);
+                	fbJsonWriter.AddKeylReal('criteria', astCalibrationData[nDataIndex].criteria);
+                	fbJsonWriter.AddKeyNumber('pumpRev', DINT_TO_UDINT(astCalibrationData[nDataIndex].pumpRev));
+            		fbJsonWriter.EndObject(); (* } *)
+            		//nDataIndex := nDataIndex + 1;
+        		ELSE
+            		eState := STATE_END_DATA_ARRAY;
+        		END_IF
+    		END_IF
+		END_FOR
+        
+
+    STATE_END_DATA_ARRAY:
+        fbJsonWriter.EndArray(); (* ] *)
+        eState := STATE_END_REPORT_OBJECT;
+
+    STATE_END_REPORT_OBJECT:
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_COPY_DOCUMENT;
+
+    STATE_COPY_DOCUMENT:
+        fbJsonWriter.CopyDocument(GVL_Report.sJsonOutput, SIZEOF(GVL_Report.sJsonOutput));
+        eState := STATE_DONE;
+
+    STATE_DONE:
+        eState:= STATE_IDLE; (* O JSON está pronto na variável sJsonOutput *)
+		GVL_Report.bStartWrite := TRUE;
+		;
+    
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_JsonWriter">
+      <LineId Id="22" Count="99" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

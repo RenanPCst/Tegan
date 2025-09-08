@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_Main_Report" Id="{aca5d804-13c7-4e2a-bb47-47660a1d3584}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_Main_Report
+VAR
+	fbFormat   		  : FB_FormatString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[PRG_JsonWriter();
+PRG_CreateJsonFile();
+PRG_ReadJsonFile();
+
+fbFormat(sFormat := 'Content/UI/PDFs/%s', arg1:= F_STRING(in:= GVL_Report.testPath), sOut => GVL_Report.localPDF);]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_Main_Report">
+      <LineId Id="6" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_ReadJsonFile" Id="{348ebecd-44a3-43fc-a823-e5a13036456e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ReadJsonFile
+VAR
+	eStateRead        : (R_STATE_IDLE, R_STATE_GET_SIZE, R_STATE_OPEN, R_STATE_READ, R_STATE_CLOSE, R_STATE_DONE, R_STATE_ERROR);
+	nTotalBytesRead	  : UDINT;
+	fbFileOpen        : FB_FileOpen;
+	sFilePath         : T_MaxString;
+	fbFormat   		  : FB_FormatString;
+	udiFileHandle     : UINT;
+	fbFileRead        : FB_FileRead;
+	abReadBuffer      : ARRAY[0..1023] OF BYTE; (* Buffer para a leitura *)
+	nBytesRead        : UDINT;
+	fbFileClose       : FB_FileClose;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbFormat(sFormat := 'C:\Users\Tegan\Documents\ReportGen\TcHmiTE1063\Content\UI\reports\%s', arg1:= F_STRING(in:= GVL_Report.testPath), sOut => sFilePath);
+
+CASE eStateRead OF
+    R_STATE_IDLE:
+        IF GVL_Report.bStartRead THEN
+            GVL_Report.bStartRead := FALSE;
+            GVL_Report.sJsonOutput := ''; (* Limpa a string de conteúdo antes de iniciar *)
+			nTotalBytesRead	:= 0;
+            eStateRead := R_STATE_OPEN;
+        END_IF
+
+
+    R_STATE_OPEN:
+        fbFileOpen(
+            bExecute    := TRUE,
+            sNetId      := '',
+            sPathName   := sFilePath,
+            nMode       := FOPEN_MODEREAD, (* Modo de leitura de texto *)
+            tTimeout    := T#5S);
+            
+        IF NOT fbFileOpen.bBusy THEN
+            IF fbFileOpen.bError THEN
+                eStateRead := R_STATE_ERROR;
+            ELSE
+                udiFileHandle := fbFileOpen.hFile;
+                eStateRead := R_STATE_READ;
+            END_IF
+            fbFileOpen(bExecute := FALSE);
+        END_IF
+
+    R_STATE_READ:
+       
+		fbFileRead(
+            bExecute    := TRUE,
+            sNetId      := '',
+            hFile 		:= udiFileHandle,
+            pReadBuff   := ADR(abReadBuffer), (* Endereço do buffer temporário *)
+            cbReadLen   := SIZEOF(abReadBuffer), (* Tamanho do buffer *)
+            tTimeout    := T#5S);
+
+        IF NOT fbFileRead.bBusy THEN
+            IF fbFileRead.bError THEN
+                eStateRead := R_STATE_ERROR;
+            ELSE
+                nBytesRead := fbFileRead.cbRead;
+                IF nBytesRead > 0 THEN
+                    (* Concatena a parte lida à string principal *)
+                    MEMCPY(ADR(GVL_Report.sJsonOutput) + nTotalBytesRead, ADR(abReadBuffer), nBytesRead);
+                    nTotalBytesRead := nTotalBytesRead + nBytesRead;
+					
+                    IF nBytesRead < SIZEOF(abReadBuffer) THEN
+                        (* Fim do arquivo detectado (leu menos que o tamanho do buffer) *)
+                        eStateRead := R_STATE_CLOSE;
+                    ELSE
+                        (* Lê o próximo bloco no próximo ciclo *)
+                        fbFileRead(bExecute := FALSE);
+                    END_IF
+                ELSE
+                    (* nBytesRead é 0: Fim do arquivo *)
+                    eStateRead := R_STATE_CLOSE;
+                END_IF
+            END_IF
+        END_IF
+
+    R_STATE_CLOSE:
+        fbFileClose(
+            bExecute    := TRUE,
+            sNetId      := '',
+            hFile 		:= udiFileHandle,
+            tTimeout    := T#5S);
+            
+        IF NOT fbFileClose.bBusy THEN
+            IF fbFileClose.bError THEN
+                eStateRead := R_STATE_ERROR;
+            ELSE
+                eStateRead := R_STATE_DONE;
+            END_IF
+            fbFileClose(bExecute := FALSE);
+        END_IF
+
+    R_STATE_DONE:
+        (* Leitura concluída. O conteúdo JSON está na variável sJsonContent. *)
+        eStateRead := R_STATE_IDLE;
+		fbFileRead(bExecute := FALSE);
+
+    R_STATE_ERROR:
+        (* Tratar erro aqui. A variável fbFileGets.nErrId contém o código. *)
+        eStateRead := R_STATE_IDLE;
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_ReadJsonFile">
+      <LineId Id="16" Count="87" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
