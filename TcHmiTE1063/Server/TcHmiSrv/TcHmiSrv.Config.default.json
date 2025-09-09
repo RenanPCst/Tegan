@@ -52,6 +52,15 @@
             "minItems": 50,
             "type": "array"
         },
+        "PLC1.ARRAY_1..100_OF-ST_CalibrationData": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_CalibrationData"
+            },
+            "maxItems": 100,
+            "minItems": 100,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-BOOL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/BOOL"
@@ -762,6 +771,236 @@
                         },
                         {
                             "propertyOrder": 3
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_CalibrationData": {
+            "properties": {
+                "criteria": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 11
+                        }
+                    ]
+                },
+                "dateTime": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "difference_percent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 10
+                        }
+                    ]
+                },
+                "difference_ul": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "grossWt_g": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "netVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "netWt_g": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "pumpNumber": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "pumpRev": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 12
+                        }
+                    ]
+                },
+                "step": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "tareWt_g": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "targetVolume_ul": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_CalibrationInfo": {
+            "properties": {
+                "allowableFailures": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                },
+                "calIntervalDays": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 10
+                        }
+                    ]
+                },
+                "calibrationNumber": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "density": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "pump": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "replicates": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "solvent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "solventRevision": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "sysMasterListRev": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "userID": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 2
                         }
                     ]
                 }
@@ -9547,6 +9786,144 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Report.bGeneratePDF": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::bGeneratePDF",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.bGeneratePDF2": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::bGeneratePDF2",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.bPreview": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::bPreview",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.bStartRead": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::bStartRead",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.localPDF": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::localPDF",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.sJsonOutput": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::sJsonOutput",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 4096
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Report.testPath": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Report::testPath",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.PRG_CreateJsonFile.sFileName": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::PRG_CreateJsonFile::sFileName",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.PRG_JsonWriter.astCalibrationData": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::PRG_JsonWriter::astCalibrationData",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Array de estruturas para os dados da tabela"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..100_OF-ST_CalibrationData"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.PRG_JsonWriter.bStartBuild": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::PRG_JsonWriter::bStartBuild",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.PRG_JsonWriter.stCalibrationInfo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::PRG_JsonWriter::stCalibrationInfo",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_CalibrationInfo"
+            },
+            "USEMAPPING": true
+        },
         "RefreshDefinitions": {
             "ACCESS": 3,
             "DOMAIN": "TcHmiSrv",
@@ -10525,51 +10902,11 @@
     "UPLOADTIMEOUT": "PT20S",
     "USEINT64STRING": false,
     "USERGROUPS": {
-        "MAINTENANCE": {
-            "ENABLED": true,
-            "FILEACCESS": 3,
-            "FILES": {},
-            "SYMBOLACCESS": 3,
-            "SYMBOLS": {
-                "AddOrChangeUser": 0,
-                "ChangeUserSettings": 0,
-                "RemoveUser": 0,
-                "TcHmiUserManagement.AddUser": 3,
-                "TcHmiUserManagement.ChangePassword": 3,
-                "TcHmiUserManagement.Config": 3,
-                "TcHmiUserManagement.DisableUser": 3,
-                "TcHmiUserManagement.EnableUser": 3,
-                "TcHmiUserManagement.ListDisabledUsers": 3,
-                "TcHmiUserManagement.ListUsers": 3,
-                "TcHmiUserManagement.RemoveUser": 3,
-                "TcHmiUserManagement.RenameUser": 3
-            }
-        },
-        "MANAGEMENT": {
-            "ENABLED": true,
-            "FILEACCESS": 3,
-            "FILES": {},
-            "SYMBOLACCESS": 3,
-            "SYMBOLS": {
-                "AddOrChangeUser": 0,
-                "ChangeUserSettings": 0,
-                "RemoveUser": 0,
-                "TcHmiUserManagement.AddUser": 3,
-                "TcHmiUserManagement.ChangePassword": 3,
-                "TcHmiUserManagement.Config": 3,
-                "TcHmiUserManagement.DisableUser": 3,
-                "TcHmiUserManagement.EnableUser": 3,
-                "TcHmiUserManagement.ListDisabledUsers": 3,
-                "TcHmiUserManagement.ListUsers": 3,
-                "TcHmiUserManagement.RemoveUser": 3,
-                "TcHmiUserManagement.RenameUser": 3
-            }
-        },
         "OPERATOR": {
             "ENABLED": true,
             "FILEACCESS": 3,
             "FILES": {},
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 1,
             "SYMBOLS": {
                 "AddOrChangeUser": 0,
                 "ChangeUserSettings": 0,
@@ -10589,7 +10926,7 @@
             "ENABLED": true,
             "FILEACCESS": 3,
             "FILES": {},
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 2,
             "SYMBOLS": {
                 "AddOrChangeUser": 0,
                 "ChangeUserSettings": 0,
@@ -11022,6 +11359,17 @@
                 "PLC1.GVL_Recipe.sSelectedRecipeName": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume": 3,
+                "PLC1.GVL_Report.bGeneratePDF": 3,
+                "PLC1.GVL_Report.bGeneratePDF2": 3,
+                "PLC1.GVL_Report.bPreview": 3,
+                "PLC1.GVL_Report.bStartRead": 3,
+                "PLC1.GVL_Report.localPDF": 3,
+                "PLC1.GVL_Report.sJsonOutput": 3,
+                "PLC1.GVL_Report.testPath": 3,
+                "PLC1.PRG_CreateJsonFile.sFileName": 3,
+                "PLC1.PRG_JsonWriter.astCalibrationData": 3,
+                "PLC1.PRG_JsonWriter.bStartBuild": 3,
+                "PLC1.PRG_JsonWriter.stCalibrationInfo": 3,
                 "SetLocale": 3,
                 "SubscribeEvents": 3,
                 "TcHmiEventLogger.Diagnostics": 1,
@@ -11067,8 +11415,7 @@
             "Marco": {
                 "USERGROUPUSERS_AUTO_LOGOFF": "PT0S",
                 "USERGROUPUSERS_GROUPS": [
-                    "__SystemUsers",
-                    "MANAGEMENT"
+                    "__SystemUsers"
                 ],
                 "USERGROUPUSERS_LOCALE": "client",
                 "USERGROUPUSERS_TIMEFORMATLOCALE": "project",
