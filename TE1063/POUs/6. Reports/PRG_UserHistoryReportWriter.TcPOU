@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_UserHistoryReportWriter" Id="{9ef95db3-b00c-4454-981d-96c50dab2b0e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_UserHistoryReportWriter
+VAR
+	fbJsonWriter    : FB_JsonSaxWriter;
+    eState          : (STATE_IDLE, STATE_START_REPORT_OBJECT, STATE_ADD_REPORT_INFO, STATE_ADD_CALIBRATION_INFO, STATE_START_DATA_ARRAY, STATE_ADD_DATA_LOOP, STATE_END_DATA_ARRAY, STATE_END_REPORT_OBJECT, STATE_COPY_DOCUMENT, STATE_DONE);
+	nDataIndex      : INT := 1;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[gvl_report.stHead_UHR.fileName:= PRG_CreateJsonFile.sFileName;
+
+CASE eState OF
+    STATE_IDLE:
+        IF gvl_report.bBuildUHR THEN
+            gvl_report.bBuildUHR := FALSE;
+            fbJsonWriter.ResetDocument();
+            nDataIndex := 1;
+            eState := STATE_START_REPORT_OBJECT;
+        END_IF
+
+    STATE_START_REPORT_OBJECT:
+        fbJsonWriter.StartObject(); (* { *)
+        eState := STATE_ADD_REPORT_INFO;
+    
+    STATE_ADD_REPORT_INFO:
+        fbJsonWriter.AddKey('reportInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyString('reportName', gvl_report.stHead_UHR.reportName);
+            fbJsonWriter.AddKeyString('reoportSubName', gvl_report.stHead_UHR.reoportSubName);
+            fbJsonWriter.AddKeyString('reportDate', gvl_report.stHead_UHR.reportDate);
+            fbJsonWriter.AddKeyString('systemID', gvl_report.stHead_UHR.systemID);
+            fbJsonWriter.AddKeyString('databaseName', gvl_report.stHead_UHR.databaseName);
+            fbJsonWriter.AddKeyString('page', gvl_report.stHead_UHR.page);
+            fbJsonWriter.AddKeyString('printedBy', gvl_report.stHead_UHR.printedBy);
+			fbJsonWriter.AddKeyString('fileName', gvl_report.stHead_UHR.fileName);
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_START_DATA_ARRAY;
+
+
+    STATE_START_DATA_ARRAY:
+        fbJsonWriter.AddKey('listOfUsers');
+        fbJsonWriter.StartArray(); (* [ *)
+        eState := STATE_ADD_DATA_LOOP;
+
+    STATE_ADD_DATA_LOOP:
+        (* Loop para adicionar cada objeto do array *)
+		FOR nDataIndex := 1 TO SIZEOF(gvl_report.astData_UHR) / SIZEOF(gvl_report.astData_UHR[1]) - 1 DO
+    		IF gvl_report.astData_UHR[nDataIndex].userID = '' THEN
+        	// If the dateTime string is empty, break the loop
+        	// The condition would "stop" here as you want
+			eState := STATE_END_DATA_ARRAY;
+       	 	EXIT;
+   			ELSE
+        	// Continue processing data
+				IF nDataIndex < SIZEOF(gvl_report.astData_UHR) / SIZEOF(gvl_report.astData_UHR[1]) THEN
+            		fbJsonWriter.StartObject(); (* { *)
+					fbJsonWriter.AddKeyString('userID', gvl_report.astData_UHR[nDataIndex].userID);
+					fbJsonWriter.AddKeyString('accessLevel', gvl_report.astData_UHR[nDataIndex].accessLevel);
+					fbJsonWriter.AddKeyString('transactionType', gvl_report.astData_UHR[nDataIndex].transactionType);
+					fbJsonWriter.AddKeyString('transactionDate', gvl_report.astData_UHR[nDataIndex].transactionDate);
+					fbJsonWriter.AddKeyString('transactedBy', gvl_report.astData_UHR[nDataIndex].transactedBy);
+            		fbJsonWriter.EndObject(); (* } *)
+            		//nDataIndex := nDataIndex + 1;
+        		ELSE
+            		eState := STATE_END_DATA_ARRAY;
+        		END_IF
+    		END_IF
+		END_FOR
+        
+
+    STATE_END_DATA_ARRAY:
+        fbJsonWriter.EndArray(); (* ] *)
+        eState := STATE_END_REPORT_OBJECT;
+
+    STATE_END_REPORT_OBJECT:
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_COPY_DOCUMENT;
+
+    STATE_COPY_DOCUMENT:
+        fbJsonWriter.CopyDocument(GVL_Report.sJsonOutput, SIZEOF(GVL_Report.sJsonOutput));
+        eState := STATE_DONE;
+
+    STATE_DONE:
+        eState:= STATE_IDLE; (* O JSON está pronto na variável sJsonOutput *)
+		GVL_Report.bStartWrite := TRUE;
+		;
+    
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_UserHistoryReportWriter">
+      <LineId Id="22" Count="27" />
+      <LineId Id="65" Count="18" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="205" Count="2" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="96" Count="25" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

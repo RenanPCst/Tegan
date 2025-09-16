@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_PumpCalibrationReport" Id="{4b9cbece-20f3-401d-b7f9-c2407036c75d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_PumpCalibrationReport
+VAR
+	fbJsonWriter    : FB_JsonSaxWriter;
+    eState          : (STATE_IDLE, STATE_START_REPORT_OBJECT, STATE_ADD_REPORT_INFO, STATE_ADD_CALIBRATION_INFO, STATE_START_DATA_ARRAY, STATE_ADD_DATA_LOOP, STATE_END_DATA_ARRAY, STATE_END_REPORT_OBJECT, STATE_COPY_DOCUMENT, STATE_DONE);
+	nDataIndex      : INT := 1;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[gvl_report.stHead_PCR.fileName:= PRG_CreateJsonFile.sFileName;
+
+CASE eState OF
+    STATE_IDLE:
+        IF gvl_report.bBuildPCR THEN
+            gvl_report.bBuildPCR := FALSE;
+            fbJsonWriter.ResetDocument();
+            nDataIndex := 1;
+            eState := STATE_START_REPORT_OBJECT;
+        END_IF
+
+    STATE_START_REPORT_OBJECT:
+        fbJsonWriter.StartObject(); (* { *)
+        eState := STATE_ADD_REPORT_INFO;
+    
+    STATE_ADD_REPORT_INFO:
+        fbJsonWriter.AddKey('reportInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyString('reportName', gvl_report.stHead_PCR.reportName);
+            fbJsonWriter.AddKeyString('reoportSubName', gvl_report.stHead_PCR.reoportSubName);
+            fbJsonWriter.AddKeyString('reportDate', gvl_report.stHead_PCR.reportDate);
+            fbJsonWriter.AddKeyString('systemID', gvl_report.stHead_PCR.systemID);
+            fbJsonWriter.AddKeyString('databaseName', gvl_report.stHead_PCR.databaseName);
+            fbJsonWriter.AddKeyString('page', gvl_report.stHead_PCR.page);
+            fbJsonWriter.AddKeyString('printedBy', gvl_report.stHead_PCR.printedBy);
+			fbJsonWriter.AddKeyString('fileName', gvl_report.stHead_PCR.fileName);
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_ADD_CALIBRATION_INFO;
+
+    STATE_ADD_CALIBRATION_INFO:
+        fbJsonWriter.AddKey('parametersInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyNumber('calibrationNumber', DINT_TO_UDINT(GVL_Report.stParameter_PCR.calibrationNumber));
+			fbJsonWriter.AddKeyString('userID', GVL_Report.stParameter_PCR.userID);
+			fbJsonWriter.AddKeyLreal('density', GVL_Report.stParameter_PCR.density);
+			fbJsonWriter.AddKeyString('solvent', GVL_Report.stParameter_PCR.solvent);
+			fbJsonWriter.AddKeyNumber('sysMasterListRev', DINT_TO_UDINT(GVL_Report.stParameter_PCR.sysMasterListRev));
+			fbJsonWriter.AddKeyNumber('sysSetRev', DINT_TO_UDINT(GVL_Report.stParameter_PCR.sysSetRev));
+			fbJsonWriter.AddKeyNumber('solventRevision', DINT_TO_UDINT(GVL_Report.stParameter_PCR.solventRevision));
+			fbJsonWriter.AddKeyNumber('allowableFailures', DINT_TO_UDINT(GVL_Report.stParameter_PCR.allowableFailures));
+        	fbJsonWriter.AddKeyNumber('replicates', DINT_TO_UDINT(GVL_Report.stParameter_PCR.replicates));
+			fbJsonWriter.AddKeyNumber('calIntervalDays', DINT_TO_UDINT(GVL_Report.stParameter_PCR.calIntervalDays));    
+		fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_START_DATA_ARRAY;
+
+    STATE_START_DATA_ARRAY:
+        fbJsonWriter.AddKey('calibrationData');
+        fbJsonWriter.StartArray(); (* [ *)
+        eState := STATE_ADD_DATA_LOOP;
+
+    STATE_ADD_DATA_LOOP:
+        (* Loop para adicionar cada objeto do array *)
+		FOR nDataIndex := 1 TO SIZEOF(gvl_report.astData_PCR) / SIZEOF(gvl_report.astData_PCR[1]) - 1 DO
+    		IF gvl_report.astData_PCR[nDataIndex].stage = '' THEN
+        	// If the dateTime string is empty, break the loop
+        	// The condition would "stop" here as you want
+			eState := STATE_END_DATA_ARRAY;
+       	 	EXIT;
+   			ELSE
+        	// Continue processing data
+				IF nDataIndex < SIZEOF(gvl_report.astData_PCR) / SIZEOF(gvl_report.astData_PCR[1]) THEN
+            		fbJsonWriter.StartObject(); (* { *)
+					fbJsonWriter.AddKeyString('dateTime', gvl_report.astData_PCR[nDataIndex].dateTime);
+                	fbJsonWriter.AddKeyNumber('pumpNumber', DINT_TO_UDINT(gvl_report.astData_PCR[nDataIndex].pumpNumber));
+					fbJsonWriter.AddKeyString('step', gvl_report.astData_PCR[nDataIndex].step);
+                	fbJsonWriter.AddKeylReal('tareWt_g', gvl_report.astData_PCR[nDataIndex].tareWt_g);
+                	fbJsonWriter.AddKeylReal('grossWt_g', gvl_report.astData_PCR[nDataIndex].grossWt_g);
+                	fbJsonWriter.AddKeylReal('netWt_g', gvl_report.astData_PCR[nDataIndex].netWt_g);
+                	fbJsonWriter.AddKeylReal('netVolume', gvl_report.astData_PCR[nDataIndex].netVolume);
+					fbJsonWriter.AddKeylReal('targetVolume_ul', gvl_report.astData_PCR[nDataIndex].targetVolume_ul);
+                	fbJsonWriter.AddKeylReal('difference_percent', gvl_report.astData_PCR[nDataIndex].difference_percent);
+                	fbJsonWriter.AddKeylReal('criteria', gvl_report.astData_PCR[nDataIndex].criteria);
+					fbJsonWriter.AddKeyNumber('pumpRev', DINT_TO_UDINT(gvl_report.astData_PCR[nDataIndex].pumpRev));
+            		fbJsonWriter.EndObject(); (* } *)
+            		//nDataIndex := nDataIndex + 1;
+        		ELSE
+            		eState := STATE_END_DATA_ARRAY;
+        		END_IF
+    		END_IF
+		END_FOR
+        
+
+    STATE_END_DATA_ARRAY:
+        fbJsonWriter.EndArray(); (* ] *)
+        eState := STATE_END_REPORT_OBJECT;
+
+    STATE_END_REPORT_OBJECT:
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_COPY_DOCUMENT;
+
+    STATE_COPY_DOCUMENT:
+        fbJsonWriter.CopyDocument(GVL_Report.sJsonOutput, SIZEOF(GVL_Report.sJsonOutput));
+        eState := STATE_DONE;
+
+    STATE_DONE:
+        eState:= STATE_IDLE; (* O JSON está pronto na variável sJsonOutput *)
+		GVL_Report.bStartWrite := TRUE;
+		;
+    
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_PumpCalibrationReport">
+      <LineId Id="22" Count="32" />
+      <LineId Id="198" Count="6" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="65" Count="18" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="87" Count="2" />
+      <LineId Id="211" Count="1" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="96" Count="25" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

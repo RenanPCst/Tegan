@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_PostRunReportWriter" Id="{51fff21b-5f27-4eac-9472-95d85fea8b65}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_PostRunReportWriter
+VAR
+	fbJsonWriter    : FB_JsonSaxWriter;
+    eState          : (STATE_IDLE, STATE_START_REPORT_OBJECT, STATE_ADD_REPORT_INFO, STATE_ADD_CALIBRATION_INFO, STATE_START_DATA_ARRAY, STATE_ADD_DATA_LOOP, STATE_END_DATA_ARRAY, STATE_END_REPORT_OBJECT, STATE_COPY_DOCUMENT, STATE_DONE);
+	nDataIndex      : INT := 1;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[gvl_report.stHead_PRR.fileName:= PRG_CreateJsonFile.sFileName;
+
+CASE eState OF
+    STATE_IDLE:
+        IF gvl_report.bBuildPRRW THEN
+            gvl_report.bBuildPRRW := FALSE;
+            fbJsonWriter.ResetDocument();
+            nDataIndex := 1;
+            eState := STATE_START_REPORT_OBJECT;
+        END_IF
+
+    STATE_START_REPORT_OBJECT:
+        fbJsonWriter.StartObject(); (* { *)
+        eState := STATE_ADD_REPORT_INFO;
+    
+    STATE_ADD_REPORT_INFO:
+        fbJsonWriter.AddKey('reportInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyString('reportName', gvl_report.stHead_PRR.reportName);
+            fbJsonWriter.AddKeyString('reoportSubName', gvl_report.stHead_PRR.reoportSubName);
+            fbJsonWriter.AddKeyString('reportDate', gvl_report.stHead_PRR.reportDate);
+            fbJsonWriter.AddKeyString('systemID', gvl_report.stHead_PRR.systemID);
+            fbJsonWriter.AddKeyString('databaseName', gvl_report.stHead_PRR.databaseName);
+            fbJsonWriter.AddKeyString('page', gvl_report.stHead_PRR.page);
+            fbJsonWriter.AddKeyString('printedBy', gvl_report.stHead_PRR.printedBy);
+			fbJsonWriter.AddKeyString('fileName', gvl_report.stHead_PRR.fileName);
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_ADD_CALIBRATION_INFO;
+
+    STATE_ADD_CALIBRATION_INFO:
+        fbJsonWriter.AddKey('parametersInfo');
+        fbJsonWriter.StartObject(); (* { *)
+            fbJsonWriter.AddKeyString('methodName', GVL_Report.stParameter_PRR.methodName);
+			fbJsonWriter.AddKeyNumber('revision', DINT_TO_UDINT(GVL_Report.stParameter_PRR.revision));
+            fbJsonWriter.AddKeyString('createdBy', GVL_Report.stParameter_PRR.createdBy);
+			fbJsonWriter.AddKeyString('createdDate', GVL_Report.stParameter_PRR.createdDate);
+				fbJsonWriter.AddKey('stepParameters');
+				fbJsonWriter.StartObject();
+				fbJsonWriter.AddKeyNumber('solv_R1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.solv_R1));
+				fbJsonWriter.AddKeyNumber('solv_R2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.solv_R2));
+				fbJsonWriter.AddKeyNumber('solv_W1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.solv_W1));
+				fbJsonWriter.AddKeyNumber('solv_W2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.solv_W2));
+				fbJsonWriter.AddKeyNumber('stepTime_R1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepTime_R1));
+				fbJsonWriter.AddKeyNumber('stepTime_R2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepTime_R2));
+				fbJsonWriter.AddKeyNumber('stepTime_W1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepTime_W1));
+				fbJsonWriter.AddKeyNumber('stepTime_W2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepTime_W2));
+				fbJsonWriter.AddKeyNumber('stepRpm_R1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepRpm_R1));
+				fbJsonWriter.AddKeyNumber('stepRpm_R2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepRpm_R2));
+				fbJsonWriter.AddKeyNumber('stepRpm_W1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepRpm_W1));
+				fbJsonWriter.AddKeyNumber('stepRpm_W2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.stepRpm_W2));
+				fbJsonWriter.EndObject();
+			fbJsonWriter.AddKeyNumber('soakTime', DINT_TO_UDINT(GVL_Report.stParameter_PRR.soakTime));
+			fbJsonWriter.AddKeyNumber('agitateTime1', DINT_TO_UDINT(GVL_Report.stParameter_PRR.agitateTime1));
+			fbJsonWriter.AddKeyNumber('agitateTime2', DINT_TO_UDINT(GVL_Report.stParameter_PRR.agitateTime2));
+			fbJsonWriter.AddKeyNumber('vialToFill', DINT_TO_UDINT(GVL_Report.stParameter_PRR.vialToFill));
+            fbJsonWriter.AddKeyLreal('vialPrimeVol', GVL_Report.stParameter_PRR.vialPrimeVol);
+			fbJsonWriter.AddKeyLreal('vialFillVol1', GVL_Report.stParameter_PRR.vialFillVol1);
+			fbJsonWriter.AddKeyLreal('vialsFillVol24', GVL_Report.stParameter_PRR.vialsFillVol24);
+			fbJsonWriter.AddKeyNumber('airDryTime', DINT_TO_UDINT(GVL_Report.stParameter_PRR.airDryTime));
+            fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_START_DATA_ARRAY;
+
+    STATE_START_DATA_ARRAY:
+        fbJsonWriter.AddKey('volumeData');
+        fbJsonWriter.StartArray(); (* [ *)
+        eState := STATE_ADD_DATA_LOOP;
+
+    STATE_ADD_DATA_LOOP:
+        (* Loop para adicionar cada objeto do array *)
+		FOR nDataIndex := 1 TO SIZEOF(gvl_report.astData_PRR) / SIZEOF(gvl_report.astData_PRR[1]) - 1 DO
+    		IF gvl_report.astData_PRR[nDataIndex].stage = '' THEN
+        	// If the dateTime string is empty, break the loop
+        	// The condition would "stop" here as you want
+			eState := STATE_END_DATA_ARRAY;
+       	 	EXIT;
+   			ELSE
+        	// Continue processing data
+				IF nDataIndex < SIZEOF(gvl_report.astData_PRR) / SIZEOF(gvl_report.astData_PRR[1]) THEN
+            		fbJsonWriter.StartObject(); (* { *)
+                	fbJsonWriter.AddKeyNumber('pump', DINT_TO_UDINT(gvl_report.astData_PRR[nDataIndex].pump));
+					fbJsonWriter.AddKeyString('stage', gvl_report.astData_PRR[nDataIndex].stage);
+                	fbJsonWriter.AddKeylReal('rinse1', gvl_report.astData_PRR[nDataIndex].rinse1);
+                	fbJsonWriter.AddKeylReal('rinse2', gvl_report.astData_PRR[nDataIndex].rinse2);
+                	fbJsonWriter.AddKeylReal('wash1', gvl_report.astData_PRR[nDataIndex].wash1);
+                	fbJsonWriter.AddKeylReal('wash2', gvl_report.astData_PRR[nDataIndex].wash2);
+            		fbJsonWriter.EndObject(); (* } *)
+            		//nDataIndex := nDataIndex + 1;
+        		ELSE
+            		eState := STATE_END_DATA_ARRAY;
+        		END_IF
+    		END_IF
+		END_FOR
+        
+
+    STATE_END_DATA_ARRAY:
+        fbJsonWriter.EndArray(); (* ] *)
+        eState := STATE_END_REPORT_OBJECT;
+
+    STATE_END_REPORT_OBJECT:
+        fbJsonWriter.EndObject(); (* } *)
+        eState := STATE_COPY_DOCUMENT;
+
+    STATE_COPY_DOCUMENT:
+        fbJsonWriter.CopyDocument(GVL_Report.sJsonOutput, SIZEOF(GVL_Report.sJsonOutput));
+        eState := STATE_DONE;
+
+    STATE_DONE:
+        eState:= STATE_IDLE; (* O JSON está pronto na variável sJsonOutput *)
+		GVL_Report.bStartWrite := TRUE;
+		;
+    
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_PostRunReportWriter">
+      <LineId Id="22" Count="32" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="165" Count="10" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="181" Count="3" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="185" Count="2" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="65" Count="19" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="87" Count="2" />
+      <LineId Id="96" Count="25" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
