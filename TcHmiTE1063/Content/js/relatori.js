@@ -131,7 +131,7 @@ async function gerarRelatorioPDF(jsonString) {
         console.error("Falha ao gerar o PDF:", erro);
         alert("Ocorreu um erro ao gerar o relatório. Verifique o console do browser para mais detalhes.");
     }
-}
+};
 
 async function genPostRunReport(jsonString) {
     try {
@@ -247,7 +247,7 @@ async function genPostRunReport(jsonString) {
         console.error("Falha ao gerar o PDF:", erro);
         alert("An Error Occured! Verify the console for more details.");
     }
-}
+};
 
 async function genMethodReport(jsonString) {
     try {
@@ -363,7 +363,7 @@ async function genMethodReport(jsonString) {
         console.error("Falha ao gerar o PDF:", erro);
         alert("An Error Occured! Verify the console for more details.");
     }
-}
+};
 
 async function genPumpCalibrationReport(jsonString) {
     try {
@@ -463,7 +463,7 @@ async function genPumpCalibrationReport(jsonString) {
         console.error("Falha ao gerar o PDF:", erro);
         alert("Ocorreu um erro ao gerar o relatório. Verifique o console do browser para mais detalhes.");
     }
-}
+};
 
 async function genCurrentUserList(jsonString) {
     try {
@@ -579,4 +579,4 @@ async function genCurrentUserList(jsonString) {
         console.error("Falha ao gerar o PDF:", erro);
         alert("An Error Occured! Verify the console for more details.");
     }
-}
+};

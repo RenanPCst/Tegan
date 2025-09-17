@@ -16,13 +16,31 @@ PRG_UserHistoryReportWriter();
 PRG_CreateJsonFile();
 PRG_ReadJsonFile();
 
-fbFormat(sFormat := 'Content/UI/PDFs/%s', arg1:= F_STRING(in:= GVL_Report.testPath), sOut => GVL_Report.localPDF);]]></ST>
+fbFormat(sFormat := 'Content/UI/PDFs/%s', arg1:= F_STRING(in:= GVL_Report.testPath), sOut => GVL_Report.localPDF);
+WritingReportsHeads();]]></ST>
     </Implementation>
+    <Action Name="WritingReportsHeads" Id="{61f1259d-59bb-476a-8d99-722b62b89136}">
+      <Implementation>
+        <ST><![CDATA[
+GVL_Report.stReportHead.reportName:= 'TEGAN 1063 - Automated Sample Recovery System';
+GVL_Report.stReportHead.databaseName:= 'Add a variable';
+GVL_Report.stReportHead.printedBy:= 'printedby';
+GVL_Report.stReportHead.reportDate:= 'putSystemVariable';
+GVL_Report.stReportHead.systemID:= '???';
+GVL_Report.stReportHead.page:= 'Create a page var';]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="PRG_Main_Report">
       <LineId Id="6" Count="0" />
       <LineId Id="14" Count="4" />
       <LineId Id="7" Count="2" />
       <LineId Id="5" Count="0" />
+      <LineId Id="19" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Main_Report.WritingReportsHeads">
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="4" />
     </LineIds>
   </POU>
 </TcPlcObject>
