@@ -10,7 +10,7 @@ END_VAR
 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[gvl_report.stHead_CUL.fileName:= PRG_CreateJsonFile.sFileName;
+      <ST><![CDATA[gvl_report.stReportHead.fileName:= PRG_CreateJsonFile.sFileName;
 
 CASE eState OF
     STATE_IDLE:
@@ -28,14 +28,14 @@ CASE eState OF
     STATE_ADD_REPORT_INFO:
         fbJsonWriter.AddKey('reportInfo');
         fbJsonWriter.StartObject(); (* { *)
-            fbJsonWriter.AddKeyString('reportName', gvl_report.stHead_CUL.reportName);
-            fbJsonWriter.AddKeyString('reoportSubName', gvl_report.stHead_CUL.reoportSubName);
-            fbJsonWriter.AddKeyString('reportDate', gvl_report.stHead_CUL.reportDate);
-            fbJsonWriter.AddKeyString('systemID', gvl_report.stHead_CUL.systemID);
-            fbJsonWriter.AddKeyString('databaseName', gvl_report.stHead_CUL.databaseName);
-            fbJsonWriter.AddKeyString('page', gvl_report.stHead_CUL.page);
-            fbJsonWriter.AddKeyString('printedBy', gvl_report.stHead_CUL.printedBy);
-			fbJsonWriter.AddKeyString('fileName', gvl_report.stHead_CUL.fileName);
+            fbJsonWriter.AddKeyString('reportName', gvl_report.stReportHead.reportName);
+            fbJsonWriter.AddKeyString('reoportSubName', 'Current Users List');
+            fbJsonWriter.AddKeyString('reportDate', gvl_report.stReportHead.reportDate);
+            fbJsonWriter.AddKeyString('systemID', gvl_report.stReportHead.systemID);
+            fbJsonWriter.AddKeyString('databaseName', gvl_report.stReportHead.databaseName);
+            fbJsonWriter.AddKeyString('page', gvl_report.stReportHead.page);
+            fbJsonWriter.AddKeyString('printedBy', gvl_report.stReportHead.printedBy);
+			fbJsonWriter.AddKeyString('fileName', gvl_report.stReportHead.fileName);
         fbJsonWriter.EndObject(); (* } *)
         eState := STATE_START_DATA_ARRAY;
 
