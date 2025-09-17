@@ -129,7 +129,7 @@ async function gerarRelatorioPDF(jsonString) {
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
-        alert("Ocorreu um erro ao gerar o relatório. Verifique o console do browser para mais detalhes.");
+        alert("An Error Occured! Verify the console for more details.");
     }
 };
 
@@ -461,7 +461,7 @@ async function genPumpCalibrationReport(jsonString) {
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
-        alert("Ocorreu um erro ao gerar o relatório. Verifique o console do browser para mais detalhes.");
+        alert("An Error Occured! Verify the console for more details.");
     }
 };
 
