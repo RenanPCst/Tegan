@@ -260,50 +260,118 @@
             },
             "actions": [
               {
-                "objectType": "WriteToSymbol",
+                "objectType": "Condition",
                 "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "IMEDIATE FAULT"
-                },
-                "asyncWait": true
-              },
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:framework#/definitions/Color",
-                  "value": {
-                    "angle": 0.0,
-                    "stopPoints": [
+                "parts": [
+                  {
+                    "if": [
                       {
-                        "color": "rgba(159, 0, 0, 1)",
-                        "stop": "0%"
+                        "compare1": {
+                          "objectType": "Symbol",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "symbolExpression": "%s%PLC1.GVL_HMI.bMachineModeBlinking%/s%"
+                        },
+                        "compare2": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/BOOL",
+                          "value": false
+                        },
+                        "compareOperator": "==",
+                        "logic": null
+                      }
+                    ],
+                    "then": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "value": "IMEDIATE FAULT"
+                        },
+                        "asyncWait": true
                       },
                       {
-                        "color": "rgba(219, 0, 0, 1)",
-                        "stop": "70.9%"
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "angle": 0.0,
+                            "stopPoints": [
+                              {
+                                "color": "rgba(159, 0, 0, 1)",
+                                "stop": "0%"
+                              },
+                              {
+                                "color": "rgba(219, 0, 0, 1)",
+                                "stop": "70.9%"
+                              }
+                            ]
+                          }
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/SolidColor",
+                          "value": {
+                            "color": "rgba(255, 255, 255, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      }
+                    ]
+                  },
+                  {
+                    "else": [
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::Text%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:general#/definitions/String",
+                          "value": "IMEDIATE FAULT"
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiRectangle_MachineModeBG::BackgroundColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/Color",
+                          "value": {
+                            "color": "rgba(255, 255, 255, 1)"
+                          }
+                        },
+                        "asyncWait": true
+                      },
+                      {
+                        "objectType": "WriteToSymbol",
+                        "active": true,
+                        "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
+                        "value": {
+                          "objectType": "StaticValue",
+                          "valueType": "tchmi:framework#/definitions/SolidColor",
+                          "value": {
+                            "color": "rgba(166, 0, 0, 1)"
+                          }
+                        },
+                        "asyncWait": true
                       }
                     ]
                   }
-                },
-                "asyncWait": true
-              },
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_MachineMode::TextColor%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:framework#/definitions/SolidColor",
-                  "value": {
-                    "color": "rgba(255, 255, 255, 1)"
-                  }
-                },
+                ],
                 "asyncWait": true
               }
             ]
@@ -436,13 +504,13 @@
                       {
                         "compare1": {
                           "objectType": "Symbol",
-                          "valueType": "tchmi:general#/definitions/String",
+                          "valueType": "tchmi:general#/definitions/BOOL",
                           "symbolExpression": "%s%PLC1.GVL_HMI.bMachineModeBlinking%/s%"
                         },
                         "compare2": {
                           "objectType": "StaticValue",
                           "valueType": "tchmi:general#/definitions/BOOL",
-                          "value": true
+                          "value": false
                         },
                         "compareOperator": "==",
                         "logic": null

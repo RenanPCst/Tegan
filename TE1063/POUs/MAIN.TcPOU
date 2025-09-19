@@ -28,7 +28,6 @@ VAR
 	fbAlarm				: FB_AlarmHandler;
 		bAlarmEvent		: BOOL := FALSE;
 		bConfirm		: BOOL := FALSE;
-		bDoSomething	: BOOL;
 		
 	//Pressure Scaling Value testing
 	fbSensorScaling		: FB_SensorScaling;
@@ -51,6 +50,7 @@ VAR
 	bDebug9  : BOOL := FALSE;
 	bDebug10 : BOOL := FALSE;
 	bHomeDone : BOOL := FALSE;
+	bDoSomething : BOOL;
 	
 	rM1Position 	: ARRAY[1..3] OF LREAL;
 	rValvePosition 	: ARRAY[1..5] OF LREAL;
@@ -69,7 +69,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Call State Machine and peripheral programs
+      <ST><![CDATA[ //Call State Machine and peripheral programs
 PRG_MasterControl(); 
 PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();

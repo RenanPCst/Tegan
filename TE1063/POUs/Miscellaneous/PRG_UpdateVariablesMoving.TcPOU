@@ -37,16 +37,40 @@ END_IF
 
 //Pumps factor Assignment [ml/rev]
 IF NOT bPumpsFactorAssignment THEN
-	GVL_Motion.aPumps[1].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[2].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[3].Rotary.rPumpFactor  := 0.138;
-	GVL_Motion.aPumps[4].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[5].Rotary.rPumpFactor  := 0.100866211;
-	GVL_Motion.aPumps[6].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[7].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[8].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[9].Rotary.rPumpFactor  := 0.10;
-	GVL_Motion.aPumps[10].Rotary.rPumpFactor := 0.10;
+
+	GVL_Motion.aPumps[1].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[2].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactorFillJars  := 0.138;
+	GVL_Motion.aPumps[4].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillJars  := 0.054195111;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillJars  := 0.05;
+	GVL_Motion.aPumps[7].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[8].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[9].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[10].Rotary.rPumpFactorFillJars := 0.10;
+	
+	GVL_Motion.aPumps[1].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[2].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[4].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillCalBox  := 0.054195111; 
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillCalBox  := 0.05;
+	GVL_Motion.aPumps[7].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[8].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[9].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[10].Rotary.rPumpFactorFillCalBox  := 0.10;
+	
+	GVL_Motion.aPumps[1].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[2].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[4].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFromCalBox  := 0.054195111;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFromCalBox  := 0.05;
+	GVL_Motion.aPumps[7].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[8].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[9].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[10].Rotary.rPumpFactorFromCalBox  := 0.10;
+	
 	bPumpsFactorAssignment := TRUE;
 END_IF
 
@@ -68,8 +92,8 @@ END_IF
 IF NOT bPumpsSettingsAssignment THEN
 	FOR i := 1 TO 10 DO
 		GVL_Motion.aPumps[i].Rotary.rSpeed := 1800; //1800º/sec with is equal to 300 revs/min
-		GVL_Motion.aPumps[i].Rotary.rAcceleration := 900; //Standard Acceleration based on motor speed
-		GVL_Motion.aPumps[i].Rotary.rDeceleration := 900; //Standard Acceleration based on motor speed
+		GVL_Motion.aPumps[i].Rotary.rAcceleration := 2000; //Standard Acceleration based on motor speed
+		GVL_Motion.aPumps[i].Rotary.rDeceleration := 2000; //Standard Acceleration based on motor speed
 	END_FOR
 	bPumpsSettingsAssignment := TRUE;
 END_IF
@@ -106,23 +130,23 @@ IF NOT bFirstVariablesAssignment THEN
 	END_FOR
 	
 	FOR i :=1 TO 10 DO
-		GVL_Motion.aPumps[i].Linear.rHomeAcc := 2.0;
-		GVL_Motion.aPumps[i].Linear.rHomeDec := 2.0;
-		GVL_Motion.aPumps[i].Linear.rHomeVel := 1.0;
+		GVL_Motion.aPumps[i].Linear.rHomeAcc := 100.0;
+		GVL_Motion.aPumps[i].Linear.rHomeDec := 100.0;
+		GVL_Motion.aPumps[i].Linear.rHomeVel := 200.0;
 	END_FOR
 	
 	bFirstVariablesAssignment := TRUE;
 	
-	GVL_Retain.rLinearPumpOldPosition[1] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[2] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[3] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[4] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[5] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[6] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[7] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[8] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[9] := -2.0;
-	GVL_Retain.rLinearPumpOldPosition[10] := -2.0;
+	GVL_Retain.rLinearPumpOldPosition[1] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[2] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[3] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[4] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[5] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[6] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[7] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[8] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[9] := -700.0;
+	GVL_Retain.rLinearPumpOldPosition[10] := -700.0;
 	
 	
 END_IF
@@ -141,9 +165,16 @@ END_IF
       <LineId Id="340" Count="0" />
       <LineId Id="295" Count="1" />
       <LineId Id="201" Count="0" />
+      <LineId Id="426" Count="0" />
       <LineId Id="299" Count="0" />
       <LineId Id="302" Count="5" />
       <LineId Id="309" Count="2" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="421" Count="0" />
+      <LineId Id="427" Count="8" />
+      <LineId Id="422" Count="1" />
+      <LineId Id="436" Count="8" />
+      <LineId Id="420" Count="0" />
       <LineId Id="301" Count="0" />
       <LineId Id="300" Count="0" />
       <LineId Id="370" Count="0" />

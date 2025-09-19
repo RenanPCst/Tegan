@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SaveCalibrationReport" Id="{a5055892-3336-4cd7-b90e-e7e659f72c7e}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+    FB_SaveCalibrationReport
+    - One-shot wrapper: builds the calibration JSON and writes it to disk.
+*)
+FUNCTION_BLOCK FB_SaveCalibrationReport
+VAR_INPUT
+	bExecute            : BOOL;  // Rising edge starts the build+save sequence
+    sUser               : STRING(64);
+
+    stReportInfo        : ST_ReportInfo;
+    stCalibrationInfo   : ST_CalibrationInfo;
+    aCalibrationData    : ARRAY[1..100] OF ST_CalibrationData;
+    iDataCount          : INT;   // Valid range: 0..100 (0 allowed -> empty list)
+END_VAR
+VAR_OUTPUT
+	bDone       : BOOL;          // TRUE when file is saved and closed
+    bBusy       : BOOL;          // TRUE while internal state machine is running
+    bError      : BOOL;          // TRUE on any error
+    nErrId      : UDINT;         // Error code propagated from child FBs
+    sFileNameOut: STRING(256);   // Full path of the output JSON file
+END_VAR
+VAR
+	// State machine
+    iStep       : INT;           // 0=IDLE, 10=BUILD, 20=SAVE, 100=LATCH
+
+    // Edge detection for bExecute
+    rtExec      : R_TRIG;
+
+    // Child FBs
+    fbBuild     : FB_BuildCalReportJson;
+    fbSave      : FB_SaveCalReportToFile;
+
+    // Buffer for JSON document produced by builder
+    sBuf        : STRING(8192);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// --------------------------- IMPLEMENTATION ----------------------------------
+rtExec(CLK := bExecute);
+
+CASE iStep OF
+    // -------------------------------------------------------------------------
+    0: // IDLE: arm on rising edge of bExecute
+    // -------------------------------------------------------------------------
+    IF rtExec.Q THEN
+        // Clamp iDataCount to valid limits (defensive)
+        IF iDataCount < 0   THEN iDataCount := 0;   END_IF;
+        IF iDataCount > 100 THEN iDataCount := 100; END_IF;
+
+        // Clear latched outputs and mark busy
+        bDone := FALSE; bError := FALSE; nErrId := 0;
+        sFileNameOut := '';
+        bBusy := TRUE;
+
+        // Jump to build step
+        iStep := 10;
+    END_IF
+
+    // -------------------------------------------------------------------------
+    10: // BUILD JSON: FB_BuildCalReportJson (single-shot)
+    // -------------------------------------------------------------------------
+    fbBuild(
+        stReportInfo      := stReportInfo,
+        stCalibrationInfo := stCalibrationInfo,
+        aCalibrationData  := aCalibrationData,
+        iDataCount        := iDataCount
+    );
+
+    IF fbBuild.bDone THEN
+        // Copy the produced JSON document into our local buffer
+        sBuf := fbBuild.sJsonBuffer;
+
+        // Proceed to SAVE step
+        iStep := 20;
+
+    ELSIF fbBuild.bError THEN
+        // Propagate error and latch
+        bError := TRUE;
+        nErrId := fbBuild.nErrId;
+        bBusy := FALSE;
+        iStep := 100;
+    END_IF
+
+    // -------------------------------------------------------------------------
+    20: // SAVE FILE: FB_SaveCalReportToFile (stateful)
+    // -------------------------------------------------------------------------
+    fbSave(
+        bExecute    := TRUE,  // keep TRUE while we wait for bDone/bError
+        sUser       := sUser,
+        sJsonBuffer := sBuf,
+        iCalNumber  := stCalibrationInfo.iCalibrationNumber
+    );
+
+    IF fbSave.bDone THEN
+        sFileNameOut := fbSave.sFileNameOut;
+        bDone := TRUE;
+        bBusy := FALSE;
+        iStep := 100;
+
+    ELSIF fbSave.bError THEN
+        bError := TRUE;
+        nErrId := fbSave.nErrId;
+        bBusy := FALSE;
+        iStep := 100;
+    END_IF
+
+    // -------------------------------------------------------------------------
+    100: // LATCH: wait caller to drop bExecute to return to IDLE
+    // -------------------------------------------------------------------------
+    // Keep driving fbSave with bExecute := FALSE to let it reset internally.
+    fbSave(bExecute := FALSE);
+
+    IF NOT bExecute THEN
+        // Return to IDLE after caller drops the trigger
+        iStep := 0;
+    END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{c32e696b-e79a-4aaf-b674-1619dcf03194}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+    Reset()
+    ------
+    Asynchronously resets outputs and internal state to IDLE, clearing all
+    status flags and error codes. Call this when you need to abort/latch off
+    without waiting for the caller to drop bExecute.
+*)
+bDone := FALSE;
+bBusy := FALSE;
+bError := FALSE;
+nErrId := 0;
+sFileNameOut := '';
+iStep := 0;
+Reset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SaveCalibrationReport">
+      <LineId Id="91" Count="78" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SaveCalibrationReport.Reset">
+      <LineId Id="6" Count="12" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -4,15 +4,17 @@
     <Declaration><![CDATA[TYPE ST_EL7062A2 EXTENDS ST_Motor :
 STRUCT
 	//Axis 2 - Pump Rotary Actuator - 2A
-	nStepsPerRev	: UDINT := 200;		// Number of steps per revolution
-    nCurrentStep  	: DINT;   			// Current Step
-    rSpeed        	: REAL;   			// Current Velocity (RPM)
-	rDistance     	: LREAL; 			// Relative distance to be moved (Steps)
-    rRelVelocity  	: REAL := 1000;  	// Relative Velocity
-    rAcceleration 	: REAL := 1500; 	// Acceleration for relative motion
-	rDeceleration	: REAL := 1500;		// Deceleration for relative motion
-	rPumpFactor		: REAL; 			// the ratio between degrees/setps and volume
-	rDeadVolume		: REAL;				// Dead Volume in the pipes to be added to the volume pumping
+	nStepsPerRev			: UDINT := 200;		// Number of steps per revolution
+    nCurrentStep  			: DINT;   			// Current Step
+    rSpeed        			: REAL;   			// Current Velocity (RPM)
+	rDistance     			: LREAL; 			// Relative distance to be moved (Steps)
+    rRelVelocity  			: REAL := 1000;  	// Relative Velocity
+    rAcceleration 			: REAL := 1500; 	// Acceleration for relative motion
+	rDeceleration			: REAL := 1500;		// Deceleration for relative motion
+	rPumpFactorFillJars		: REAL; 			// the ratio between degrees/setps and volume by path - from solvent botles to jars
+	rPumpFactorFillCalBox	: REAL; 			// the ratio between degrees/setps and volume by path - from jars to calibration box
+	rPumpFactorFromCalBox	: REAL; 			// the ratio between degrees/setps and volume by path - from calibration box to the jars
+	rDeadVolume				: REAL;				// Dead Volume in the pipes to be added to the volume pumping
 END_STRUCT
 END_TYPE
 ]]></Declaration>

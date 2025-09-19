@@ -20,7 +20,9 @@ VAR
 	bStopRotaryPump 	: ARRAY[1..10] OF BOOL;
 	bStopLinearPump		: ARRAY[1..10] OF BOOL;
 	
-	rDistanceByVol		: ARRAY[1..10] OF REAL;
+	rDistanceByVol		: ARRAY[1..10] OF LREAL;
+	aValvePosition		: ARRAY[1..10] OF SINT;
+	aPumpPath			: ARRAY[1..10] OF E_PumpPath;
 	
 END_VAR
 ]]></Declaration>
@@ -191,6 +193,8 @@ VAR_INPUT
 	aPumpDirection 	: ARRAY[1..10] OF E_PumpDirection;
 	aVelocity	 	: ARRAY[1..10] OF REAL;
 END_VAR
+VAR 
+END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF NOT bRequestMoveByVol THEN
@@ -199,17 +203,43 @@ END_VAR
 	bRequestMoveByVol := TRUE;
 END_IF
 
+//getting the valves position
+aValvePosition[1] := F_GetValvePosition(iValveIndex := 1);
+aValvePosition[2] := F_GetValvePosition(iValveIndex := 1);
+aValvePosition[3] := F_GetValvePosition(iValveIndex := 2);
+aValvePosition[4] := F_GetValvePosition(iValveIndex := 2);
+aValvePosition[5] := F_GetValvePosition(iValveIndex := 3);
+aValvePosition[6] := F_GetValvePosition(iValveIndex := 3);
+aValvePosition[7] := F_GetValvePosition(iValveIndex := 4);
+aValvePosition[8] := F_GetValvePosition(iValveIndex := 4);
+aValvePosition[9] := F_GetValvePosition(iValveIndex := 5);
+aValvePosition[10] := F_GetValvePosition(iValveIndex := 5);
+
+//getting the pump factor based on pump path
+aPumpPath[1] := F_GetPumpPath( iValvePosition := aValvePosition[1], ePumpDirection := aPumpDirection[1]);
+aPumpPath[2] := F_GetPumpPath( iValvePosition := aValvePosition[2], ePumpDirection := aPumpDirection[2]);
+aPumpPath[3] := F_GetPumpPath( iValvePosition := aValvePosition[3], ePumpDirection := aPumpDirection[3]);
+aPumpPath[4] := F_GetPumpPath( iValvePosition := aValvePosition[4], ePumpDirection := aPumpDirection[4]);
+aPumpPath[5] := F_GetPumpPath( iValvePosition := aValvePosition[5], ePumpDirection := aPumpDirection[5]);
+aPumpPath[6] := F_GetPumpPath( iValvePosition := aValvePosition[6], ePumpDirection := aPumpDirection[6]);
+aPumpPath[7] := F_GetPumpPath( iValvePosition := aValvePosition[7], ePumpDirection := aPumpDirection[7]);
+aPumpPath[8] := F_GetPumpPath( iValvePosition := aValvePosition[8], ePumpDirection := aPumpDirection[8]);
+aPumpPath[9] := F_GetPumpPath( iValvePosition := aValvePosition[9], ePumpDirection := aPumpDirection[9]);
+aPumpPath[10] := F_GetPumpPath( iValvePosition := aValvePosition[10], ePumpDirection := aPumpDirection[10]);
+
 //getting pump factor in mL/rev and converting to uL/degrees.
-rDistanceByVol[1] := F_VolumeToSteps(rVolume := aVolume[1], iPumpIndex := 1);
-rDistanceByVol[2] := F_VolumeToSteps(rVolume := aVolume[2], iPumpIndex := 2);
-rDistanceByVol[3] := F_VolumeToSteps(rVolume := aVolume[3], iPumpIndex := 3);
-rDistanceByVol[4] := F_VolumeToSteps(rVolume := aVolume[4], iPumpIndex := 4);
-rDistanceByVol[5] := F_VolumeToSteps(rVolume := aVolume[5], iPumpIndex := 5);
-rDistanceByVol[6] := F_VolumeToSteps(rVolume := aVolume[6], iPumpIndex := 6);
-rDistanceByVol[7] := F_VolumeToSteps(rVolume := aVolume[7], iPumpIndex := 7);
-rDistanceByVol[8] := F_VolumeToSteps(rVolume := aVolume[8], iPumpIndex := 8);
-rDistanceByVol[9] := F_VolumeToSteps(rVolume := aVolume[9], iPumpIndex := 9);
-rDistanceByVol[10] := F_VolumeToSteps(rVolume := aVolume[10], iPumpIndex := 10);
+rDistanceByVol[1] := F_VolumeToSteps_Path(rVolume := aVolume[1], iPumpIndex := 1, ePath :=  aPumpPath[1]);
+rDistanceByVol[2] := F_VolumeToSteps_Path(rVolume := aVolume[2], iPumpIndex := 2, ePath :=  aPumpPath[2]);
+rDistanceByVol[3] := F_VolumeToSteps_Path(rVolume := aVolume[3], iPumpIndex := 3, ePath :=  aPumpPath[3]);
+rDistanceByVol[4] := F_VolumeToSteps_Path(rVolume := aVolume[4], iPumpIndex := 4, ePath :=  aPumpPath[4]);
+rDistanceByVol[5] := F_VolumeToSteps_Path(rVolume := aVolume[5], iPumpIndex := 5, ePath :=  aPumpPath[5]);
+rDistanceByVol[6] := F_VolumeToSteps_Path(rVolume := aVolume[6], iPumpIndex := 6, ePath :=  aPumpPath[6]);
+rDistanceByVol[7] := F_VolumeToSteps_Path(rVolume := aVolume[7], iPumpIndex := 7, ePath :=  aPumpPath[7]);
+rDistanceByVol[8] := F_VolumeToSteps_Path(rVolume := aVolume[8], iPumpIndex := 8, ePath :=  aPumpPath[8]);
+rDistanceByVol[9] := F_VolumeToSteps_Path(rVolume := aVolume[9], iPumpIndex := 9, ePath :=  aPumpPath[9]);
+rDistanceByVol[10] := F_VolumeToSteps_Path(rVolume := aVolume[10], iPumpIndex := 10, ePath :=  aPumpPath[10]);
+
+
 
 //Inverting the distance based on pumps flow direction
 IF aPumpDirection[1] = E_PumpDirection.Backward THEN
@@ -345,7 +375,7 @@ IF bStopRotaryPump[10] THEN
 	bStopRotaryPump[10] := NOT GVL_Motion.aPumpsRotary[10].Stop();
 END_IF
 
-IF NOT bStopRotaryPump[1] AND NOT bStopRotaryPump[2] AND NOT bStopRotaryPump[3] AND NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
+IF (*NOT bStopRotaryPump[1] AND*) NOT bStopRotaryPump[2] AND NOT bStopRotaryPump[3] AND NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
 	bRequestStopAllPumps := FALSE;
 	StopAllPumps := TRUE;
 	RETURN;
@@ -377,8 +407,18 @@ END_IF]]></ST>
     </LineIds>
     <LineIds Name="FB_AllPumpsController.MoveByVolume">
       <LineId Id="83" Count="1" />
-      <LineId Id="94" Count="14" />
-      <LineId Id="181" Count="0" />
+      <LineId Id="94" Count="2" />
+      <LineId Id="194" Count="1" />
+      <LineId Id="197" Count="9" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="211" Count="8" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="223" Count="8" />
+      <LineId Id="241" Count="1" />
+      <LineId Id="222" Count="0" />
       <LineId Id="151" Count="0" />
       <LineId Id="150" Count="0" />
       <LineId Id="152" Count="1" />

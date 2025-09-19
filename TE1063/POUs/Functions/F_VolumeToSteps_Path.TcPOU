@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_VolumeToSteps_Path" Id="{c202cb0f-adf8-4c38-b92d-fd44fa4ca689}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_VolumeToSteps_Path : LREAL
+VAR_INPUT
+	rVolume    : REAL;       // Requested volume [mL]
+    iPumpIndex : INT;        // Pump index 1..10
+    ePath      : E_PumpPath; // Path to apply the correct pump factor
+END_VAR
+VAR
+	rFactor            : REAL;
+    rDegreesPerRev     : REAL := 360.0;   // Output expects degrees (1 rev = 360°)
+    rEpsilon           : REAL := 1e-6;    // Guard to avoid division by zero
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// --- Basic input validation ---
+IF (iPumpIndex < 1) OR (iPumpIndex > 10) THEN
+    // Out of range -> return 0 safely
+    F_VolumeToSteps_Path := 0.0;
+    RETURN;
+END_IF
+
+// --- Select the proper pump factor by path ---
+CASE ePath OF
+    E_PumpPath.FillJars:
+        rFactor := GVL_Motion.aPumps[iPumpIndex].Rotary.rPumpFactorFillJars;
+    E_PumpPath.FillCalBox:
+        rFactor := GVL_Motion.aPumps[iPumpIndex].Rotary.rPumpFactorFillCalBox;
+    E_PumpPath.FromCalBox:
+        rFactor := GVL_Motion.aPumps[iPumpIndex].Rotary.rPumpFactorFromCalBox;
+ELSE
+    // Fallback (defensive): default to FillJars
+    rFactor := GVL_Motion.aPumps[iPumpIndex].Rotary.rPumpFactorFillJars;
+END_CASE
+
+// --- Guard against invalid/zero factor ---
+IF ABS(rFactor) <= rEpsilon THEN
+    // Factor not calibrated -> return 0 safely
+    F_VolumeToSteps_Path := 0.0;
+    RETURN;
+END_IF
+
+// --- Convert volume to angular distance (in degrees) ---
+// Steps/Degrees = (Volume [mL] / Factor [mL/rev]) * 360 [deg/rev]
+F_VolumeToSteps_Path := (rVolume / rFactor) * rDegreesPerRev;]]></ST>
+    </Implementation>
+    <LineIds Name="F_VolumeToSteps_Path">
+      <LineId Id="14" Count="27" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

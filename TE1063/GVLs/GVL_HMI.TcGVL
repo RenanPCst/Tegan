@@ -134,12 +134,16 @@ VAR_GLOBAL
 	bCalLinearPumpsHomeBt	: BOOL := FALSE;
 	bCalLinearPumpsMoveBt	: BOOL := FALSE;
 	bCalLinearPumpsStopBt	: BOOL := FALSE;
+	bStartCalibrationBt		: BOOL := FALSE; //Start Calibration Bt from HMI
+	bAbortCalibrationBT		: BOOL := FALSE; //Abort Calibration Bt from HMI
 	rCalLeakTestPressure	: LREAL;
 	aCalibPumps         	: ARRAY[1..10] OF ST_CalibrationPump;
 	aCalibLinearPumps		: ARRAY[1..10] OF ST_LinearPumpCalibration;
+	aCalPumpResults    		: ARRAY[1..10] OF ST_CalibrationPumpResult; // Pump result structure
 	iReplicatesSetpoint		: INT;
 	rAcceptanceCriteria		: LREAL;
-	iDelayStart         	: INT;
+	iDelayTimeMin         	: INT;   
+	bDelayStart				: BOOL := FALSE;
 	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
 	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date
 	

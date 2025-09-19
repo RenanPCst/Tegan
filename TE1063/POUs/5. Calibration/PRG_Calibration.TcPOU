@@ -10,11 +10,13 @@ VAR
 	bLeakTestReset : BOOL := FALSE;
 	
 	fbCalibrationManager : FB_CalibrationManager;
+	fbSaveCalReport		 : FB_SaveCalibrationReport;
 
     bStartCalibrationPrev : BOOL;
     bStartCalibrationEdge : BOOL;
 	
 	iLastRepSetpoint : INT := -1;
+	iDataCount : INT;
     i : INT;
 	
 	bLinearPumpsEnabled		: BOOL := FALSE;
@@ -63,43 +65,56 @@ END_IF
 
 (* Calibration Procedure *) //---------------------------------------------------------------------------------------------------------------------------------------------
 //Calibration procedure trigger
-IF GVL_HMI.HMIDigInputs.bHMIEStartCalibration THEN
+IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.bStartCalibration := TRUE;
 	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
-	GVL_HMI.HMIDigInputs.bHMIEStartCalibration := FALSE;
 	GVL_Calibration.iReplicatesSetpoint := GVL_HMI.iReplicatesSetpoint;
 	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.rAcceptanceCriteria;
-	GVL_Calibration.tDelayStart := TO_TIME(GVL_HMI.iDelayStart*1000*60); //int convertion from minutes to ms
+	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
+	GVL_HMI.bStartCalibrationBt := FALSE;
 END_IF
-
-IF GVL_IO.gDigInputs.bCalibrationBoxPresent THEN
-	bStartCalibrationEdge := GVL_Calibration.bStartCalibration AND NOT bStartCalibrationPrev;
-	bStartCalibrationPrev := GVL_Calibration.bStartCalibration;
-ELSE
-	GVL_Calibration.bStartCalibration := FALSE;
-END_IF
-
 
 //calibration procedure calling
-(*
 fbCalibrationManager(
-    bExecute := bStartCalibrationEdge,
+    bExecute := GVL_Calibration.bStartCalibration,
     bAbort := GVL_Calibration.bAbortCalibration,
-    eSolvent := GVL_Calibration.eCalibSolvent,
-    aPumpSettings := GVL_Calibration.aCalibPumps,
+    eSolvent := GVL_Calibration.eCalibSolvent, 
+    aPumpSettings := GVL_HMI.aCalibPumps, //Temp GVL_Calibration.aCalibPumps
     tDelayStart := GVL_Calibration.tDelayStart,
     bPrintReport := GVL_Calibration.bPrintWhenComplete,
     aPumpResults => GVL_Calibration.aCalibPumps,
     bDone => GVL_Calibration.bCalibrationDone,
     bBusy => GVL_Calibration.bCalibrationRunning,
-    sStatus => GVL_Calibration.sGlobalStatus
+    sStatus => GVL_Calibration.sGlobalStatus,
+	iDataCount => iDataCount
 );
+
 GVL_Calibration.sGlobalStatus := fbCalibrationManager.sStatus;
-*)
+
 
 IF fbCalibrationManager.bDone THEN
-	GVL_HMI.HMIDigInputs.bHMIEStartCalibration := FALSE;
+	GVL_Calibration.bStartCalibration := FALSE;
+	GVL_Calibration.bStartCreationCalJson := TRUE;
 	//fbCalibrationManager.Reset();
+END_IF
+
+fbSaveCalReport(
+    bExecute          := GVL_Calibration.bStartCreationCalJson,
+    sUser             := GVL_Calibration.stPumpCalibrationInfo.iUserID,
+    stReportInfo      := GVL_Calibration.stPumpCalReportInfo,
+    stCalibrationInfo := GVL_Calibration.stPumpCalibrationInfo,
+    aCalibrationData  := GVL_Calibration.stPumpCalibrationData,
+    iDataCount        := iDataCount
+);
+
+IF fbSaveCalReport.bDone THEN
+    GVL_Calibration.bCreationCalJsonDone  := TRUE;
+    GVL_Calibration.bCreationCalJsonError := FALSE;
+    GVL_Calibration.bStartCreationCalJson := FALSE;  // auto-reset trigger
+ELSIF fbSaveCalReport.bError THEN
+    GVL_Calibration.bCreationCalJsonDone  := FALSE;
+    GVL_Calibration.bCreationCalJsonError := TRUE;
+    // opcional: fbSaveCalReport.Reset();
 END_IF
 
 (* Linear Pumps Enable *) //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -108,7 +123,7 @@ IF GVL_HMI.bCalLinearPumpsEnableBt THEN
     GVL_Calibration.aCalibLinearPumps := GVL_HMI.aCalibLinearPumps;
 
     IF EnableLinearPumps() THEN
-        // English: Operation finished successfully
+        // Operation finished successfully
         GVL_HMI.bCalLinearPumpsEnableBt := FALSE;
     END_IF
 END_IF
@@ -259,7 +274,9 @@ IF NOT bAnySelected THEN
 END_IF
 
 // 2) After all selected are homed, move them to OldPosition
-bAllHomed := aLinearPumpsHoming[1] AND aLinearPumpsHoming[2] AND aLinearPumpsHoming[3] AND aLinearPumpsHoming[4] AND aLinearPumpsHoming[5] AND aLinearPumpsHoming[6] AND aLinearPumpsHoming[7] AND aLinearPumpsHoming[8] AND aLinearPumpsHoming[9] AND aLinearPumpsHoming[10];
+bAllHomed := aLinearPumpsHoming[1] AND aLinearPumpsHoming[2] AND aLinearPumpsHoming[3] AND aLinearPumpsHoming[4] AND 
+			 aLinearPumpsHoming[5] AND aLinearPumpsHoming[6] AND aLinearPumpsHoming[7] AND aLinearPumpsHoming[8] AND 
+			 aLinearPumpsHoming[9] AND aLinearPumpsHoming[10];
 
 IF bAllHomed THEN
     bLinearPumpsOldPosStart := TRUE;
@@ -471,26 +488,28 @@ RETURN;
       <LineId Id="189" Count="0" />
       <LineId Id="65" Count="1" />
       <LineId Id="156" Count="1" />
-      <LineId Id="159" Count="4" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="161" Count="2" />
+      <LineId Id="348" Count="0" />
       <LineId Id="158" Count="0" />
-      <LineId Id="164" Count="0" />
-      <LineId Id="148" Count="0" />
-      <LineId Id="165" Count="0" />
-      <LineId Id="167" Count="2" />
-      <LineId Id="166" Count="0" />
-      <LineId Id="15" Count="0" />
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
-      <LineId Id="69" Count="0" />
       <LineId Id="131" Count="0" />
-      <LineId Id="70" Count="10" />
+      <LineId Id="70" Count="9" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="344" Count="0" />
       <LineId Id="129" Count="0" />
       <LineId Id="128" Count="0" />
       <LineId Id="152" Count="0" />
       <LineId Id="68" Count="0" />
       <LineId Id="153" Count="0" />
+      <LineId Id="403" Count="0" />
       <LineId Id="155" Count="0" />
       <LineId Id="154" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="383" Count="16" />
+      <LineId Id="376" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />
       <LineId Id="295" Count="7" />
@@ -539,7 +558,9 @@ RETURN;
       <LineId Id="680" Count="0" />
       <LineId Id="908" Count="1" />
       <LineId Id="681" Count="8" />
-      <LineId Id="697" Count="18" />
+      <LineId Id="697" Count="1" />
+      <LineId Id="1048" Count="1" />
+      <LineId Id="699" Count="16" />
       <LineId Id="1035" Count="0" />
       <LineId Id="1037" Count="1" />
       <LineId Id="910" Count="1" />

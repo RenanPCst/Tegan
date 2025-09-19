@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_BuildCalReportJson" Id="{117d73d9-5384-4fbf-b145-0478048dbe34}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+    FB_BuildCalReportJson
+    - Gera o JSON do relatório de calibração em sJsonBuffer (sem gravar em disco).
+    - Alinhado ao schema do reportASRS.json.
+*)
+FUNCTION_BLOCK FB_BuildCalReportJson
+VAR_INPUT
+	stReportInfo        : ST_ReportInfo;               			// GVL_Calibration.stPumpCalReportInfo
+    stCalibrationInfo   : ST_CalibrationInfo;          			// GVL_Calibration.stPumpCalibrationInfo
+    aCalibrationData    : ARRAY[1..100] OF ST_CalibrationData; 	// GVL_Calibration.stPumpCalibrationData
+    iDataCount          : INT;                         			// Quantos itens válidos em aCalibrationData (1..100)
+END_VAR
+VAR_OUTPUT
+	bDone       : BOOL;
+    bBusy       : BOOL;
+    bError      : BOOL;
+    nErrId      : UDINT;
+    sJsonBuffer : STRING(8192);
+END_VAR
+VAR
+	fbJson          : FB_JsonDomParser;
+    rootObj         : SJsonValue;
+    objRepInfo      : SJsonValue;
+    objCalInfo      : SJsonValue;
+    arrCalData      : SJsonValue;
+    rowObj          : SJsonValue;
+
+    i               : INT;
+    sTmp            : STRING(256);
+    sY              : STRING(4);
+    sM              : STRING(2);
+    sD              : STRING(2);
+    sDateOnly       : STRING(16);
+    sDateTimeOnly   : STRING(32);
+    sTimeOnly       : STRING(16);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ---------- Execução única ----------
+bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
+
+// Garante limites
+IF iDataCount < 0 THEN iDataCount := 0; END_IF
+IF iDataCount > 100 THEN iDataCount := 100; END_IF
+
+// Documento raiz
+rootObj := fbJson.NewDocument();
+
+// ===== reportInfo =====
+objRepInfo := fbJson.AddObjectMember(rootObj, 'reportInfo');
+fbJson.AddStringMember(objRepInfo, 'reportName',      stReportInfo.sReportName);
+fbJson.AddStringMember(objRepInfo, 'reoportSubName',  stReportInfo.sReoportSubName);
+
+// Formata DATE como DD/MM/YYYY
+sTmp := DATE_TO_STRING(stReportInfo.dTeportDate);       // "DATE#YYYY-MM-DD"
+IF LEFT(sTmp,5) = 'DATE#' THEN
+    sTmp := RIGHT(sTmp, LEN(sTmp)-5);                   // "YYYY-MM-DD"
+END_IF
+sY := LEFT(sTmp, 4);
+sM := MID(sTmp, 6, 2);
+sD := RIGHT(sTmp, 2);
+sDateOnly := CONCAT(sD, CONCAT('/', CONCAT(sM, CONCAT('/', sY))));
+fbJson.AddStringMember(objRepInfo, 'reportDate', sDateOnly);
+
+fbJson.AddStringMember(objRepInfo, 'systemID',     stReportInfo.sDystemID);
+fbJson.AddStringMember(objRepInfo, 'databaseName', stReportInfo.sDatabaseName);
+
+// iPage -> "02"
+sTmp := USINT_TO_STRING(stReportInfo.iPage);
+IF LEN(sTmp) = 1 THEN sTmp := CONCAT('0', sTmp); END_IF
+fbJson.AddStringMember(objRepInfo, 'page', sTmp);
+
+fbJson.AddStringMember(objRepInfo, 'printedBy', stReportInfo.sPrintedBy);
+
+// ===== calibrationInfo =====
+objCalInfo := fbJson.AddObjectMember(rootObj, 'calibrationInfo');
+fbJson.AddIntMember(   objCalInfo, 'calibrationNumber', stCalibrationInfo.iCalibrationNumber);
+fbJson.AddStringMember(objCalInfo, 'userID',            stCalibrationInfo.iUserID);
+fbJson.AddDoubleMember(objCalInfo, 'density',           stCalibrationInfo.rSolventDensity);
+fbJson.AddStringMember(objCalInfo, 'solvent',           stCalibrationInfo.iSolventID);
+fbJson.AddIntMember(   objCalInfo, 'sysMasterListRev',  stCalibrationInfo.iSysMasterListRev);
+fbJson.AddIntMember(   objCalInfo, 'solventRevision',   stCalibrationInfo.iSolventRevision);
+fbJson.AddIntMember(   objCalInfo, 'allowableFailures', stCalibrationInfo.iAllowableFailures);
+fbJson.AddIntMember(   objCalInfo, 'replicates',        stCalibrationInfo.iReplicates);
+fbJson.AddIntMember(   objCalInfo, 'calIntervalDays',   stCalibrationInfo.iCalIntervalDays);
+
+// (Campo "pump" existe no exemplo, mas não está no teu ST_CalibrationInfo — adiciono vazio)
+fbJson.AddStringMember(objCalInfo, 'pump', '');
+
+// ===== calibrationData (array de objetos) =====
+arrCalData := fbJson.AddArrayMember(rootObj, 'calibrationData', 0);
+
+FOR i := 1 TO iDataCount DO
+    // Cria elemento no array e define como objeto
+    rowObj := fbJson.PushbackNullValue(arrCalData);
+    fbJson.SetObject(rowObj);
+
+    // Formata DT como "YYYY-MM-DD HH:MM:SS"
+    sTmp := DT_TO_STRING(aCalibrationData[i].dDateTime); // "DT#YYYY-MM-DD-HH:MM:SS"
+    IF LEFT(sTmp,3) = 'DT#' THEN
+        sTmp := RIGHT(sTmp, LEN(sTmp)-3);                // "YYYY-MM-DD-HH:MM:SS"
+    END_IF
+    sDateOnly     := LEFT(sTmp, 10);                     // "YYYY-MM-DD"
+    sTimeOnly     := RIGHT(sTmp, LEN(sTmp)-11);          // remove "YYYY-MM-DD-" (11 chars)
+    sDateTimeOnly := CONCAT(sDateOnly, CONCAT(' ', sTimeOnly));
+
+    fbJson.AddStringMember(rowObj, 'dateTime',             sDateTimeOnly);
+    fbJson.AddIntMember(   rowObj, 'pumpNumber',           aCalibrationData[i].iPumpNumber);
+    fbJson.AddStringMember(rowObj, 'step',                 aCalibrationData[i].sStep);
+    fbJson.AddDoubleMember(rowObj, 'grossWt_g',            aCalibrationData[i].rGrossWeigth);
+    fbJson.AddDoubleMember(rowObj, 'tareWt_g',             aCalibrationData[i].rTareWeigth);
+    fbJson.AddDoubleMember(rowObj, 'netWt_g',              aCalibrationData[i].rNetWeigth);
+    fbJson.AddDoubleMember(rowObj, 'netVolume',            aCalibrationData[i].rNetVolume);
+    fbJson.AddDoubleMember(rowObj, 'targetVolume_ul',      aCalibrationData[i].rTargetVolume);
+    fbJson.AddDoubleMember(rowObj, 'difference_ul',        aCalibrationData[i].rDifferenceUl);
+    fbJson.AddDoubleMember(rowObj, 'difference_percent',   aCalibrationData[i].rDifferencePercent);
+    fbJson.AddDoubleMember(rowObj, 'criteria',             aCalibrationData[i].rCriteria);
+    fbJson.AddIntMember(   rowObj, 'pumpRev',              aCalibrationData[i].iPumpRevs);
+END_FOR
+
+// Serializa
+IF fbJson.CopyDocument(sJsonBuffer, SIZEOF(sJsonBuffer)) = 0 THEN
+    bError := TRUE; nErrId := 16#CAFE0001;
+ELSE
+    bDone := TRUE;
+END_IF
+
+bBusy := FALSE;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_BuildCalReportJson">
+      <LineId Id="116" Count="89" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

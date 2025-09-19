@@ -5,18 +5,23 @@
 {attribute 'strict'}
 TYPE E_CalibStep :
 (
-	IDLE,
-    DELAY,
-	POSITION_MOTORS,
-	POSITION_VALVES,
-	WEIGH_BEFORE,
-	WITHDRAW_BACKWARD,
-	WEIGH_AFTER_BACKWARD,
-	RETURN_FORWARD,
-	WEIGH_AFTER_FORWARD,
-	NEXT_PUMP,
-	HOMING_MOTORS,
-	COMPLETE
+	IDLE 				:= 0, 	// Idle State
+    DELAY 				:= 5, 	// Delay state depending on delay time to start calibration on HMI
+	CHECKING_WEIGH 		:= 10,	// Checking if the calibration box is on the correct weight
+	POSITION_MOTORS 	:= 20,	// Position the motors M2 and M3 to calibration position
+	POSITION_VALVES 	:= 30,	// Position Valves into calibration position
+	FILLJAR_FORWARD 	:= 40,	// Fill the jars first with the volume in the HMI plus tubing dead volume
+	WEIGH_BEFORE 		:= 50,	// Request calibration box weight [Tare weight]
+	WITHDRAW_BACKWARDS 	:= 60,	// Pump back to calibration box the amount of liquid into the HMI
+	WEIGH_AFTER 		:= 70,	// Request the calibration box weight after pumping [Gross Weight]  
+	RETURN_FORWARD 		:= 80,	// Return to the jar the same amount of liquid that was dosed by the pump
+	LINEARPUMP_ADJUST	:= 85, 	// Adjust the linear pump if the net volume is more than 10% off the target
+	PUMPFACTOR_ADJUST	:= 86,	// Adjust the pump factor if the net volume is less than 10% off the target 
+	EMPTYJAR_BACKWARDS 	:= 90,	// Empty the Jar with 60% more revs to make sure everything was cleaned
+	NEXT_PUMP 			:= 100,	// Going to next pump calibration
+	HOMING_MOTORS 		:= 110,	// Moving the motors M2 and M3 back to home position
+	COMPLETE 			:= 200,	// Complete state
+	ERROR 				:= 300	// Error state
 );
 END_TYPE
 ]]></Declaration>

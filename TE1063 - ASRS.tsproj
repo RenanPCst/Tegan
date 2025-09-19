@@ -1620,6 +1620,46 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
+			<Name GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}" AutoDeleteType="true">ST_EL6631</Name>
+			<BitSize>96</BitSize>
+			<SubItem>
+				<Name>bCurrentValueInvalid</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bCurrentValueUnerRange</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bCurrentValueOverRange</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bWarningStatus</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>24</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bErrorStatus</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<BitSize>8</BitSize>
+				<BitOffs>32</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>iCurrentValue</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
+				<BitSize>32</BitSize>
+				<BitOffs>64</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}" AutoDeleteType="true">ST_SafetyInputs</Name>
 			<BitSize>1904</BitSize>
 			<SubItem>
@@ -2600,8 +2640,8 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
 					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
+					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -3351,8 +3391,8 @@ External Setpoint Generation:
 					<Name>M6 Motor - Valve 3</Name>
 					<AxisPara>
 						<General UnitName="°"/>
-						<Dynamic Acceleration="15000" Deceleration="15000" Jerk="88478.541"/>
-						<Velo RefSearch="196.61898" RefSync="196.61898" SlowManual="300" FastManual="1000" Fast="19661.898" Maximum="19661.898"/>
+						<Dynamic Acceleration="15000" Deceleration="15000" Jerk="88478.5"/>
+						<Velo RefSearch="196.61898" RefSync="196.61898" SlowManual="300" FastManual="1000" Fast="19661.898" Maximum="19661.9"/>
 						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
@@ -3779,14 +3819,14 @@ External Setpoint Generation:
 				<Axis Id="8" CreateSymbols="true" AxisType="1">
 					<Name>Pump 1 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
-							<SoftEndMinControl Range="-13"/>
-							<SoftEndMaxControl Range="1"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
 							<Inc RefSyncInverse="false" HomingSensorSource="9"/>
 						</EncPara>
 						<Vars VarGrpType="1">
@@ -3847,7 +3887,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4069,12 +4109,15 @@ External Setpoint Generation:
 				<Axis Id="10" CreateSymbols="true" AxisType="1" GroupId="7">
 					<Name>Pump 2 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -4133,7 +4176,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4352,12 +4395,15 @@ External Setpoint Generation:
 				<Axis Id="12" CreateSymbols="true" AxisType="1">
 					<Name>Pump 3 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -4416,7 +4462,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4638,12 +4684,15 @@ External Setpoint Generation:
 				<Axis Id="14" CreateSymbols="true" AxisType="1" GroupId="26">
 					<Name>Pump 4 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -4702,7 +4751,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4780,8 +4829,8 @@ External Setpoint Generation:
 					<Name>Pump 4 - Rotary</Name>
 					<AxisPara>
 						<General UnitName="°"/>
-						<Dynamic Acceleration="7264.5735" Deceleration="7264.5735" Jerk="21793.7205"/>
-						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.049"/>
+						<Dynamic AccelerationMaximum="100" DecelerationMaximum="100" Acceleration="100" Deceleration="100" Jerk="21793.7205"/>
+						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="242.15245" FastManual="1452.9147" Fast="4843.049" Maximum="4843.049"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
@@ -4844,7 +4893,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="5327.3539" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5327.3539" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -4921,12 +4970,15 @@ External Setpoint Generation:
 				<Axis Id="16" CreateSymbols="true" AxisType="1" GroupId="10">
 					<Name>Pump 5 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -4985,7 +5037,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -5063,8 +5115,8 @@ External Setpoint Generation:
 					<Name>Pump 5 - Rotary</Name>
 					<AxisPara>
 						<General UnitName="°"/>
-						<Dynamic Acceleration="7264.5735" Deceleration="7264.5735" Jerk="21793.7205"/>
-						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.049"/>
+						<Dynamic Acceleration="7264.57" Deceleration="7264.57" Jerk="21793.7"/>
+						<Velo RefSearch="48.43049" RefSync="48.43049" SlowManual="500" FastManual="3600" Fast="4843.049" Maximum="4843.05"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
@@ -5204,12 +5256,15 @@ External Setpoint Generation:
 				<Axis Id="18" CreateSymbols="true" AxisType="1" GroupId="14">
 					<Name>Pump 6 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -5268,7 +5323,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -5487,12 +5542,15 @@ External Setpoint Generation:
 				<Axis Id="20" CreateSymbols="true" AxisType="1" GroupId="16">
 					<Name>Pump 7 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -5551,7 +5609,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -5770,12 +5828,15 @@ External Setpoint Generation:
 				<Axis Id="22" CreateSymbols="true" AxisType="1" GroupId="18">
 					<Name>Pump 8 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -5834,7 +5895,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -6053,12 +6114,15 @@ External Setpoint Generation:
 				<Axis Id="24" CreateSymbols="true" AxisType="1" GroupId="20">
 					<Name>Pump 9 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -6117,7 +6181,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -6336,12 +6400,15 @@ External Setpoint Generation:
 				<Axis Id="26" CreateSymbols="true" AxisType="1" GroupId="22">
 					<Name>Pump 10 - Linear</Name>
 					<AxisPara>
-						<Dynamic Acceleration="22.86" Deceleration="22.86" Jerk="68.58"/>
-						<Velo RefSearch="0.1524" RefSync="0.1524" SlowManual="0.2" FastManual="1" Fast="15.24" Maximum="15.24"/>
-						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="0.5" PulseDistanceNeg="0.5"/>
+						<Dynamic Acceleration="7200" Deceleration="7200" Jerk="21600"/>
+						<Velo RefSearch="48" RefSync="48" SlowManual="50" FastManual="100" Fast="4800" Maximum="4800"/>
+						<OtherSettings AllowMotionCmdToSlave="true" PulseDistancePos="1" PulseDistanceNeg="1"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="19">
-						<EncPara ScaleFactorNumerator="0.635" ScaleFactorDenominator="1048576" MaxCount="#xffffffff"/>
+						<EncPara ScaleFactorNumerator="200" ScaleFactorDenominator="1048576" MaxCount="#xffffffff">
+							<SoftEndMinControl Range="-4500"/>
+							<SoftEndMaxControl Range="500"/>
+						</EncPara>
 						<Vars VarGrpType="1">
 							<Name>Inputs</Name>
 							<Var>
@@ -6400,7 +6467,7 @@ External Setpoint Generation:
 					</Encoder>
 					<Drive Name="Drive" DrvType="16">
 						<DrvPara MaxCount="#xffffffff" DriveControlDWord="#x00020100">
-							<Analog VeloReferenz="16.764" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
+							<Analog VeloReferenz="5280" VeloScale="32" TorqueSetpointScale="10" ScaleFactorActTorque="0.1"/>
 							<TimeComp TaskDelayCycles="1"/>
 						</DrvPara>
 						<Vars VarGrpType="1">
@@ -6620,7 +6687,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{FA16B4EA-FA59-F478-B069-A15762C55934}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{B567DB91-7CA4-AA68-F69B-D9B11D98ADCD}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6892,11 +6959,6 @@ External Setpoint Generation:
 							<Type GUID="{6AE51ED4-2F21-994D-0AF2-434ED0E81DC1}">ARRAY [1..8] OF USINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[Safety]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
 							<Comment><![CDATA[ Terminal 3 At least one FB is in error condition]]></Comment>
 							<Type>BOOL</Type>
@@ -6942,6 +7004,11 @@ External Setpoint Generation:
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[Safety]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 25 		[EL3058]]]></Comment>
 							<Type GUID="{D90D184B-66B3-4005-E9ED-8853F9B54225}">ST_EL3058</Type>
@@ -6950,6 +7017,16 @@ External Setpoint Generation:
 							<Name>GVL_IO.gAnalogInputs2Ch</Name>
 							<Comment><![CDATA[Analog inputs at Terminals 17 		[EL3022]]]></Comment>
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gProfinetInput</Name>
+							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
+							<Type GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}">ST_EL6631</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
@@ -8234,11 +8311,6 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -8258,13 +8330,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -8870,7 +8942,7 @@ M1 Motor Safety]]></Comment>
 		</Plc>
 		<Safety>
 			<Project GUID="{80E8059B-70AF-4BCB-BB68-A04F5BA304B2}" Name="PLC_Safe" PrjFilePath="PLC_Safe\PLC_Safe.splcproj" TmcFilePath="PLC_Safe\PLC_Safe.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010080" KeepUnrestoredLinks="2">
+				<Instance Id="#x01010010" KeepUnrestoredLinks="2">
 					<Name>PLC_Safe Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
@@ -8884,53 +8956,8 @@ M1 Motor Safety]]></Comment>
 					</TmcDesc>
 				</Instance>
 			</Project>
-			<Project GUID="{FD6179BA-EC30-42E2-A4EF-AC4E5A1C373F}" Name="AX8000_Drive" PrjFilePath="AX8000_Drive\AX8000_Drive.splcproj" TmcFilePath="AX8000_Drive\AX8000_Drive.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010020" KeepUnrestoredLinks="2">
-					<Name>AX8000_Drive Instance</Name>
-					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
-						<Name>Safety</Name>
-						<InitSequence>PO</InitSequence>
-						<Contexts>
-							<Context>
-								<Id>1</Id>
-								<Name>Default</Name>
-							</Context>
-						</Contexts>
-					</TmcDesc>
-				</Instance>
-			</Project>
-			<Project GUID="{B79C21A7-47FB-4525-90D2-60C77577483B}" Name="M4_Valve1" PrjFilePath="M4_Valve1\M4_Valve1.splcproj" TmcFilePath="M4_Valve1\M4_Valve1.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010010" KeepUnrestoredLinks="2">
-					<Name>M4_Valve1 Instance</Name>
-					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
-						<Name>Safety</Name>
-						<InitSequence>PO</InitSequence>
-						<Contexts>
-							<Context>
-								<Id>1</Id>
-								<Name>Default</Name>
-							</Context>
-						</Contexts>
-					</TmcDesc>
-				</Instance>
-			</Project>
-			<Project GUID="{45244C04-B571-4B5F-8ADE-DC932EFDE5D4}" Name="M5_Valve2" PrjFilePath="M5_Valve2\M5_Valve2.splcproj" TmcFilePath="M5_Valve2\M5_Valve2.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010030" KeepUnrestoredLinks="2">
-					<Name>M5_Valve2 Instance</Name>
-					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
-						<Name>Safety</Name>
-						<InitSequence>PO</InitSequence>
-						<Contexts>
-							<Context>
-								<Id>1</Id>
-								<Name>Default</Name>
-							</Context>
-						</Contexts>
-					</TmcDesc>
-				</Instance>
-			</Project>
 			<Project GUID="{EAD4EF5C-8E56-47CE-BC5E-6DBCB41B273E}" Name="M8_Valve5" PrjFilePath="M8_Valve5\M8_Valve5.splcproj" TmcFilePath="M8_Valve5\M8_Valve5.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010040" KeepUnrestoredLinks="2">
+				<Instance Id="#x01010020" KeepUnrestoredLinks="2">
 					<Name>M8_Valve5 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
@@ -8945,7 +8972,7 @@ M1 Motor Safety]]></Comment>
 				</Instance>
 			</Project>
 			<Project GUID="{94C1BA61-46C2-4CC2-A5D7-959CE7243A0D}" Name="M7_Valve4" PrjFilePath="M7_Valve4\M7_Valve4.splcproj" TmcFilePath="M7_Valve4\M7_Valve4.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010070" KeepUnrestoredLinks="2">
+				<Instance Id="#x01010030" KeepUnrestoredLinks="2">
 					<Name>M7_Valve4 Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
@@ -8960,8 +8987,53 @@ M1 Motor Safety]]></Comment>
 				</Instance>
 			</Project>
 			<Project GUID="{B784D50B-3074-40C5-B467-8E70DCA6D1E3}" Name="M6_Valve3" PrjFilePath="M6_Valve3\M6_Valve3.splcproj" TmcFilePath="M6_Valve3\M6_Valve3.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
-				<Instance Id="#x01010060" KeepUnrestoredLinks="2">
+				<Instance Id="#x01010040" KeepUnrestoredLinks="2">
 					<Name>M6_Valve3 Instance</Name>
+					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
+						<Name>Safety</Name>
+						<InitSequence>PO</InitSequence>
+						<Contexts>
+							<Context>
+								<Id>1</Id>
+								<Name>Default</Name>
+							</Context>
+						</Contexts>
+					</TmcDesc>
+				</Instance>
+			</Project>
+			<Project GUID="{45244C04-B571-4B5F-8ADE-DC932EFDE5D4}" Name="M5_Valve2" PrjFilePath="M5_Valve2\M5_Valve2.splcproj" TmcFilePath="M5_Valve2\M5_Valve2.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+				<Instance Id="#x01010050" KeepUnrestoredLinks="2">
+					<Name>M5_Valve2 Instance</Name>
+					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
+						<Name>Safety</Name>
+						<InitSequence>PO</InitSequence>
+						<Contexts>
+							<Context>
+								<Id>1</Id>
+								<Name>Default</Name>
+							</Context>
+						</Contexts>
+					</TmcDesc>
+				</Instance>
+			</Project>
+			<Project GUID="{B79C21A7-47FB-4525-90D2-60C77577483B}" Name="M4_Valve1" PrjFilePath="M4_Valve1\M4_Valve1.splcproj" TmcFilePath="M4_Valve1\M4_Valve1.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+				<Instance Id="#x01010060" KeepUnrestoredLinks="2">
+					<Name>M4_Valve1 Instance</Name>
+					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
+						<Name>Safety</Name>
+						<InitSequence>PO</InitSequence>
+						<Contexts>
+							<Context>
+								<Id>1</Id>
+								<Name>Default</Name>
+							</Context>
+						</Contexts>
+					</TmcDesc>
+				</Instance>
+			</Project>
+			<Project GUID="{FD6179BA-EC30-42E2-A4EF-AC4E5A1C373F}" Name="AX8000_Drive" PrjFilePath="AX8000_Drive\AX8000_Drive.splcproj" TmcFilePath="AX8000_Drive\AX8000_Drive.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+				<Instance Id="#x01010070" KeepUnrestoredLinks="2">
+					<Name>AX8000_Drive Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
 						<Name>Safety</Name>
 						<InitSequence>PO</InitSequence>
@@ -8983,7 +9055,7 @@ M1 Motor Safety]]></Comment>
 				</Image>
 				<Usb VirtualDeviceName="true"/>
 			</Device>
-			<Device Id="4" DevType="112" AmsPort="28676" AmsNetId="192.168.0.162.5.1" RemoteName="Device 4 (EtherCAT Automation Protocol)">
+			<Device Id="4" Disabled="true" DevType="112" AmsPort="28676" AmsNetId="192.168.0.162.5.1" RemoteName="Device 4 (EtherCAT Automation Protocol)">
 				<Name>Device 4 (EtherCAT Automation Protocol)</Name>
 				<AddressInfo>
 					<Pnp>
@@ -21995,7 +22067,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -22368,7 +22440,7 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010801202000000090044525620416d706c69666965722053657474696e67732043682e31202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108015040000000b00000044525620416d706c69666965722053657474696e67732043682e31202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108014040000009600000044525620416d706c69666965722053657474696e67732043682e31202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
-							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001044525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000002700000000000000000000000000000000000000000000002011811204000000d0070000445256204d6f746f722053657474696e67732043682e32202f2052617465642063757272656e7400</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c000000310000000000000000000000000000000000000000000000201181180400000033000000445256204d6f746f722053657474696e67732043682e32202f20526f746f72206d6f6d656e74206f6620696e657274696100</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000a0000002c00000000000000000000000000000000000000000000002011811902000000df00445256204d6f746f722053657474696e67732043682e32202f2057696e64696e6720696e64756374616e636500</MBoxUserCmdData>
@@ -22381,11 +22453,12 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
-							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001044525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000020046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000900000035000000000000000000000000000000000000000000000020108104010000000144525620416d706c69666965722053657474696e67732043682e32202f205265706561742066696e6420636f6d6d75746174696f6e00</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000c0000003800000000000000000000000000000000000000000000002008801304000000c800000046422053657474696e677320454e432043682e31202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088013040000000010000046422053657474696e677320454e432043682e31202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -23900,7 +23973,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -24185,7 +24258,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -24287,6 +24360,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -25801,7 +25879,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -26086,7 +26164,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -26188,11 +26266,13 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
-							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001044525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
-							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000020046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000900000035000000000000000000000000000000000000000000000020108104010000000044525620416d706c69666965722053657474696e67732043682e32202f205265706561742066696e6420636f6d6d75746174696f6e00</MBoxUserCmdData>
 							<MBoxUserCmdData>0200030009000000250000000000000000000000000000000000000000000000201071030100000008445256204f7574707574732043682e32202f204d6f646573206f66206f7065726174696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -27707,7 +27787,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -27992,7 +28072,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -28094,6 +28174,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -29608,7 +29693,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -29893,7 +29978,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -29995,6 +30080,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -31509,7 +31599,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -31794,7 +31884,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -31896,6 +31986,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -33410,7 +33505,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -33695,7 +33790,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -33797,6 +33892,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -35311,7 +35411,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -35596,7 +35696,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -35698,6 +35798,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -37212,7 +37317,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -37497,7 +37602,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -37599,6 +37704,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010811202000000140044525620416d706c69666965722053657474696e67732043682e32202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108115040000001800000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108114040000009600000044525620416d706c69666965722053657474696e67732043682e32202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -39113,7 +39223,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>FeedConstant</PropertyName>
-													<Value>0.635</Value>
+													<Value>200</Value>
 												</Parameter>
 												<Parameter>
 													<PropertyName>GearRatioMotorSide</PropertyName>
@@ -39398,7 +39508,7 @@ Bit 8 - 15 : reserved]]></Comment>
 												</Parameter>
 												<Parameter>
 													<PropertyName>MaxApplicationSpeed</PropertyName>
-													<Value>16.75516</Value>
+													<Value>94.24778</Value>
 												</Parameter>
 											</Load>
 											<Controller>
@@ -39500,6 +39610,11 @@ Bit 8 - 15 : reserved]]></Comment>
 							<MBoxUserCmdData>020003000a0000003800000000000000000000000000000000000000000000002010801202000000090044525620416d706c69666965722053657474696e67732043682e31202f2043757272656e74206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c0000003d000000000000000000000000000000000000000000000020108015040000000b00000044525620416d706c69666965722053657474696e67732043682e31202f2056656c6f63697479206c6f6f702070726f706f7274696f6e616c206761696e00</MBoxUserCmdData>
 							<MBoxUserCmdData>020003000c00000039000000000000000000000000000000000000000000000020108014040000009600000044525620416d706c69666965722053657474696e67732043682e31202f2056656c6f63697479206c6f6f7020696e74656772616c2074696d6500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108064010000001144525620416d706c69666965722053657474696e67732043682e31202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008801202000000010046422053657474696e677320454e432043682e31202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>02000300090000002e000000000000000000000000000000000000000000000020108164010000001144525620416d706c69666965722053657474696e67732043682e32202f20436f6d6d75746174696f6e207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000a0000002300000000000000000000000000000000000000000000002008811202000000010046422053657474696e677320454e432043682e32202f20456e636f646572207479706500</MBoxUserCmdData>
+							<MBoxUserCmdData>020003000c00000038000000000000000000000000000000000000000000000020088113040000000004000046422053657474696e677320454e432043682e32202f20456e636f64657220496e6372656d656e747320706572205265766f6c7574696f6e00</MBoxUserCmdData>
 							<Pdo Name="FB Position Channel 1" Index="#x1a00" Flags="#x0010" SyncMan="3">
 								<Entry Name="Position" BitLen="32" Index="#x6000" Sub="#x11">
 									<Type>UDINT</Type>
@@ -43341,7 +43456,7 @@ Bit 8 - 15 : reserved]]></Comment>
 			</Device>
 			<Device Id="5" DevType="119" AmsPort="28677" AmsNetId="192.168.0.162.6.1" RemoteName="Device 5 (EL6631)">
 				<Name>Device 5 (EL6631)</Name>
-				<DevData>000000002000000000000000000000005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff0001059c7e3a040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
+				<DevData>000000002000000000000000a08601005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff0001059c7e3a040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
 				<Image Id="10" AddrType="4" ImageType="3" SizeIn="8" SizeOut="35">
 					<Name>Image</Name>
 				</Image>
@@ -43405,7 +43520,7 @@ SW Release Version: 1.00]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 					</Vars>
-					<Profinet DeviceId="4500" VendorId="509" FrameOffset="49152" IPAdd="c0a80202" ProtocolType="3" BoxOnDeviceTyp="119" MaxPhysSlotNr="16" InstanceServerPort="50000" InstanceClientPort="50001" InstanceId="1" InstanceNumberOfARs="1" InstanceNumberOfAPIs="1" MinDeviceInterval="64" SavePnIoBoxValues="0100" Phase="1" WatchdogFaktor="3" ReductionRatio="4" SendClockFaktor="32" MaxInputLen="1440" MaxOutputLen="1440" SendClockFactorData="2000" RedRatio="020004000800100020004000800000010002" BoxTypeInfo="DL-PN1 PROFINET IO Device" PDOmapping="1" OutputErrorBehavior="2" GSDMLPath="$(TWINCAT3DIR)Config\Io\Profinet\GSDML-V2.3-Keyence-DL-PN1-20230224.xml" ImagePath="C:\TwinCAT\3.1\Config\Io\Profinet\GSDML-01FD-1194-DL-PN1.bmp" MainFamily="Sensors" ProductFamily="Keyence Profinet Compatible Network Unit" OrderNr="DL-PN1" DefaultDNSName="dl-pn1" VendorName="Keyence" FamDescription="Profinet Compatible Network Unit" GraphicFile="GSDML-01FD-1194-DL-PN1" SWVersion="1.00" HWVersion="1.00" AltLanguage="7">
+					<Profinet DeviceId="4500" VendorId="509" FrameOffset="49152" IPAdd="c0a80202" ProtocolType="3" BoxOnDeviceTyp="119" MaxPhysSlotNr="16" InstanceServerPort="50000" InstanceClientPort="50001" InstanceId="1" InstanceNumberOfARs="1" InstanceNumberOfAPIs="1" MinDeviceInterval="64" SavePnIoBoxValues="0100" Phase="1" WatchdogFaktor="3" ReductionRatio="16" SendClockFaktor="32" MaxInputLen="1440" MaxOutputLen="1440" SendClockFactorData="2000" RedRatio="020004000800100020004000800000010002" BoxTypeInfo="DL-PN1 PROFINET IO Device" PDOmapping="1" OutputErrorBehavior="2" GSDMLPath="$(TWINCAT3DIR)Config\Io\Profinet\GSDML-V2.3-Keyence-DL-PN1-20230224.xml" ImagePath="C:\TwinCAT\3.1\Config\Io\Profinet\GSDML-01FD-1194-DL-PN1.bmp" MainFamily="Sensors" ProductFamily="Keyence Profinet Compatible Network Unit" OrderNr="DL-PN1" DefaultDNSName="dl-pn1" VendorName="Keyence" FamDescription="Profinet Compatible Network Unit" GraphicFile="GSDML-01FD-1194-DL-PN1" SWVersion="1.00" HWVersion="1.00" AltLanguage="7">
 						<UsedGsdmlModule ModuleIdentNumber="1" ModuleName="DAP Module" InfoText="DL-PN1 PROFINET IO Device" OrderNumber="DL-PN1">
 							<Slot>0</Slot>
 						</UsedGsdmlModule>
@@ -43647,6 +43762,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 	</Project>
 	<Mappings>
 		<MappingInfo Identifier="{00000000-2001-0850-0020-500821000403}" Id="#x02030060"/>
+		<MappingInfo Identifier="{00000000-2001-0850-0020-5008A0000403}" Id="#x020300e0"/>
 		<MappingInfo Identifier="{00000000-0050-0304-9000-040350000403}" Id="#x02030070"/>
 		<MappingInfo Identifier="{00000000-0060-0304-9000-040361000403}" Id="#x02030090"/>
 		<MappingInfo Identifier="{00000000-0070-0304-9000-040370000403}" Id="#x02030010"/>
@@ -44464,6 +44580,14 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.nState" VarB="InfoData^State"/>
 				<Link VarA="PlcTask Outputs^GVL_Motion.M1Motor.bTS_ErrorAck" VarB="Device (Safety)^Standard Outputdata^ChA_Connection_Input.ERR_ACK FSoE Connection_3"/>
 				<Link VarA="PlcTask Outputs^GVL_Motion.M1Motor.bTS_Run" VarB="Device (Safety)^Standard Outputdata^ChA_Connection_Input.RUN FSoE Connection_2"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 5 (EL6631)^dl-pn1">
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bCurrentValueInvalid" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Current_Value_Invalid"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bCurrentValueOverRange" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Current_Value_Over_Range"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bCurrentValueUnerRange" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Current_Value_Under_Range"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bErrorStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Error_Status"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bWarningStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Warning_Status"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^iCurrentValue" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Current Value"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].nState" VarB="InfoData^State"/>

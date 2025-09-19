@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SavePumpCalJson" Id="{d98d4690-5185-44e3-9bd0-d32d8a5851ae}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SavePumpCalJson
+VAR_INPUT
+    bExecute : BOOL; // Flag para iniciar a criação do JSON
+END_VAR
+VAR_OUTPUT
+    bDone    : BOOL; // Indica que a criação do JSON foi concluída com sucesso
+    bBusy    : BOOL; // Indica que o FB está em execução
+    bError   : BOOL; // Indica que ocorreu um erro
+    nErrId   : UDINT; // Código do erro
+END_VAR
+VAR
+    iStep         : INT;
+    fbJson        : FB_JsonDomParser;
+    sJsonBuffer   : STRING(16384); // Tamanho aumentado para acomodar mais dados
+    sFileName     : STRING(256);
+    fbFileOpen    : FB_FileOpen;
+    fbFileWrite   : FB_FileWrite;
+    fbFileClose   : FB_FileClose;
+    nBytesToWrite : UDINT;
+    hFile         : UINT;
+    fbLocalSystemTime : FB_LocalSystemTime;
+    stLocalSystemTime : TIMESTRUCT;
+    sDate         : STRING(12);
+
+    jsonRoot          : SJsonValue;
+    objReportInfo     : SJsonValue;
+    objCalibrationInfo: SJsonValue;
+    arrCalibrationData: SJsonValue;
+    objData           : SJsonValue;
+    i                 : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iStep OF
+
+0: // Estado inicial
+    IF bExecute THEN
+        bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
+
+        // Gerar o nome do arquivo com a data atual e o usuário
+        fbLocalSystemTime(bEnable := TRUE, dwCycle := 5);
+        IF fbLocalSystemTime.bValid THEN
+            stLocalSystemTime := fbLocalSystemTime.systemTime;
+            sDate := CONCAT('D#', INT_TO_STRING(stLocalSystemTime.wYear));
+            sDate := CONCAT(sDate, '-');
+            sDate := CONCAT(sDate, INT_TO_STRING(stLocalSystemTime.wMonth));
+            sDate := CONCAT(sDate, '-');
+            sDate := CONCAT(sDate, INT_TO_STRING(stLocalSystemTime.wDay));
+        END_IF
+		
+        sFileName := CONCAT('C:/TwinCAT/ReportsPumpCalibration/Report_', sDate);
+        sFileName := CONCAT(sFileName, '_');
+        sFileName := CONCAT(sFileName, GVL_Calibration.stPumpCalReportInfo.sPrintedBy);
+        sFileName := CONCAT(sFileName, '.json');
+		
+        // --- Constrói o JSON ---
+        jsonRoot := fbJson.NewDocument();
+
+        // reportInfo
+        objReportInfo := fbJson.AddObjectMember(jsonRoot, 'reportInfo');
+        fbJson.AddStringMember(objReportInfo, 'reportName', GVL_Calibration.stPumpCalReportInfo.sReportName);
+        fbJson.AddStringMember(objReportInfo, 'reportSubName', GVL_Calibration.stPumpCalReportInfo.sReoportSubName);
+        fbJson.AddStringMember(objReportInfo, 'reportDate', DATE_TO_STRING(GVL_Calibration.stPumpCalReportInfo.dTeportDate));
+        fbJson.AddStringMember(objReportInfo, 'systemID', GVL_Calibration.stPumpCalReportInfo.sDystemID);
+        fbJson.AddStringMember(objReportInfo, 'databaseName', GVL_Calibration.stPumpCalReportInfo.sDatabaseName);
+        fbJson.AddIntMember(objReportInfo, 'page', TO_DINT(GVL_Calibration.stPumpCalReportInfo.iPage));
+        fbJson.AddStringMember(objReportInfo, 'printedBy', GVL_Calibration.stPumpCalReportInfo.sPrintedBy);
+		
+        // calibrationInfo
+        objCalibrationInfo := fbJson.AddObjectMember(jsonRoot, 'calibrationInfo');
+        fbJson.AddIntMember(objCalibrationInfo, 'calibrationNumber', GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber);
+        fbJson.AddStringMember(objCalibrationInfo, 'userID', GVL_Calibration.stPumpCalibrationInfo.iUserID);
+        fbJson.AddDoubleMember(objCalibrationInfo, 'density', TO_LREAL(GVL_Calibration.stPumpCalibrationInfo.rSolventDensity));
+        fbJson.AddStringMember(objCalibrationInfo, 'solvent', GVL_Calibration.stPumpCalibrationInfo.iSolventID);
+        fbJson.AddIntMember(objCalibrationInfo, 'sysMasterListRev', GVL_Calibration.stPumpCalibrationInfo.iSysMasterListRev);
+        fbJson.AddIntMember(objCalibrationInfo, 'solventRevision', GVL_Calibration.stPumpCalibrationInfo.iSolventRevision);
+        fbJson.AddIntMember(objCalibrationInfo, 'allowableFailures', GVL_Calibration.stPumpCalibrationInfo.iAllowableFailures);
+        fbJson.AddIntMember(objCalibrationInfo, 'replicates', GVL_Calibration.stPumpCalibrationInfo.iReplicates);
+        fbJson.AddIntMember(objCalibrationInfo, 'calIntervalDays', GVL_Calibration.stPumpCalibrationInfo.iCalIntervalDays);
+
+        // calibrationData (Array)
+        arrCalibrationData := fbJson.AddArrayMember(jsonRoot, 'calibrationData', 0);
+        FOR i := 1 TO 100 DO
+            objData := fbJson.push PushbackObjectValue(arrCalibrationData); 
+            fbJson.AddStringMember(objData, 'dateTime', DT_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].dDateTime));
+            fbJson.AddIntMember(objData, 'pumpNumber', TO_DINT(GVL_Calibration.stPumpCalibrationData[i].iPumpNumber));
+            fbJson.AddStringMember(objData, 'step', GVL_Calibration.stPumpCalibrationData[i].sStep);
+            fbJson.AddDoubleMember(objData, 'grossWt_g', GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth);
+            fbJson.AddDoubleMember(objData, 'tareWt_g', GVL_Calibration.stPumpCalibrationData[i].rTareWeigth);
+            fbJson.AddDoubleMember(objData, 'netWt_g', GVL_Calibration.stPumpCalibrationData[i].rNetWeigth);
+            fbJson.AddDoubleMember(objData, 'netVolume', GVL_Calibration.stPumpCalibrationData[i].rNetVolume);
+            fbJson.AddDoubleMember(objData, 'targetVolume_ul', GVL_Calibration.stPumpCalibrationData[i].rTargetVolume);
+            fbJson.AddDoubleMember(objData, 'difference_ul', GVL_Calibration.stPumpCalibrationData[i].rDifferenceUl);
+            fbJson.AddDoubleMember(objData, 'difference_percent', GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent);
+            fbJson.AddDoubleMember(objData, 'criteria', TO_LREAL(GVL_Calibration.stPumpCalibrationData[i].rCriteria));
+            fbJson.AddIntMember(objData, 'pumpRev', TO_DINT(GVL_Calibration.stPumpCalibrationData[i].iPumpRevs));
+        END_FOR
+
+        iStep := 10;
+    END_IF
+
+10: // Abrir ou criar o arquivo
+    fbFileOpen(
+        sNetId := '',
+        sPathName := sFileName,
+        nMode := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
+        bExecute := TRUE
+    );
+    IF NOT fbFileOpen.bBusy THEN
+        IF fbFileOpen.bError THEN
+            bError := TRUE;
+            nErrId := fbFileOpen.nErrId;
+            iStep := 100;
+        ELSE
+            hFile := fbFileOpen.hFile;
+            iStep := 20;
+        END_IF
+    END_IF
+	
+20: // Escrever dados no arquivo
+    nBytesToWrite := fbJson.CopyDocument(sJsonBuffer, SIZEOF(sJsonBuffer));
+    IF nBytesToWrite > 0 THEN
+        nBytesToWrite := nBytesToWrite - 1; // remove o caractere de terminação
+    END_IF
+
+    fbFileWrite(
+        sNetId := '',
+        hFile := hFile,
+        pWriteBuff := ADR(sJsonBuffer),
+        cbWriteLen := nBytesToWrite,
+        bExecute := TRUE
+    );
+    IF NOT fbFileWrite.bBusy THEN
+        IF fbFileWrite.bError THEN
+            bError := TRUE;
+            nErrId := fbFileWrite.nErrId;
+            iStep := 100;
+        ELSE
+            iStep := 30;
+        END_IF
+    END_IF
+
+30: // Fechar o arquivo e finalizar
+    fbFileClose(
+        sNetId := '',
+        hFile := hFile,
+        bExecute := TRUE
+    );
+    IF NOT fbFileClose.bBusy THEN
+        IF fbFileClose.bError THEN
+            bError := TRUE;
+            nErrId := fbFileClose.nErrId;
+        END_IF
+        bDone := TRUE;
+        bBusy := FALSE;
+        iStep := 100;
+    END_IF
+
+100: // Estado de espera
+    IF NOT bExecute THEN
+        iStep := 0;
+        bDone := FALSE;
+        bBusy := FALSE;
+    END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SavePumpCalJson">
+      <LineId Id="40" Count="131" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

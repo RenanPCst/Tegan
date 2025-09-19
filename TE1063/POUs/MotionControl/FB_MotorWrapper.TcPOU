@@ -231,6 +231,7 @@ END_VAR
 VAR
 	 rTrigHome : R_TRIG;
 	 rTrigMove : R_TRIG;
+	 rTrigStop : R_TRIG;
 END_VAR
 ]]></Declaration>
       <Implementation>
@@ -260,13 +261,18 @@ END_IF
 		END_IF
 	END_IF
 	
+	fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := rVelocity, Acceleration := rAcc, Deceleration := rDec, direction := 1); 
+	
+	fbStop(Axis := Axis, Execute := bStopExecute, Deceleration := 100);
+	
 	IF bHomeSensorValue THEN
-		fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := rVelocity, Acceleration := rAcc, Deceleration := rDec, direction := 1); //15, 20, 20
+		//fbMoveVel(Axis := Axis, Execute := bExecuteMove, Velocity := rVelocity, Acceleration := rAcc, Deceleration := rDec, direction := 1); //15, 20, 20
 		stStatus.sMessage := 'Seeking home sensor...';
-		bStopExecute := TRUE;
-	ELSE
+		bStopExecute := FALSE;
+	ELSIF NOT bStartDelay THEN
 		bExecuteMove := FALSE;
-		fbStop(Axis := Axis, Execute := bStopExecute, Deceleration := 10);
+		bStopExecute := TRUE;
+		//fbStop(Axis := Axis, Execute := bStopExecute, Deceleration := 10);
 	END_IF
 	
 	IF fbStop.Done THEN
@@ -839,7 +845,15 @@ END_IF
       <LineId Id="521" Count="0" />
       <LineId Id="518" Count="0" />
       <LineId Id="509" Count="0" />
-      <LineId Id="435" Count="35" />
+      <LineId Id="435" Count="0" />
+      <LineId Id="553" Count="0" />
+      <LineId Id="560" Count="0" />
+      <LineId Id="557" Count="0" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="436" Count="5" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="555" Count="0" />
+      <LineId Id="443" Count="27" />
       <LineId Id="537" Count="0" />
       <LineId Id="471" Count="0" />
       <LineId Id="536" Count="0" />

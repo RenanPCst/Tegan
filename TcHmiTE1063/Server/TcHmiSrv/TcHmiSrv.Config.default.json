@@ -1461,28 +1461,6 @@
         },
         "PLC1.ST_HMIDigInputs": {
             "properties": {
-                "bHMIEAbortCalibration": {
-                    "allOf": [
-                        {
-                            "$ref": "tchmi:general#/definitions/BOOL"
-                        },
-                        {
-                            "comment": "Abort Calibration Bt from HMI",
-                            "propertyOrder": 2
-                        }
-                    ]
-                },
-                "bHMIEStartCalibration": {
-                    "allOf": [
-                        {
-                            "$ref": "tchmi:general#/definitions/BOOL"
-                        },
-                        {
-                            "comment": "Start Calibration Bt from HMI",
-                            "propertyOrder": 1
-                        }
-                    ]
-                },
                 "bRebootPLC": {
                     "allOf": [
                         {
@@ -1490,7 +1468,7 @@
                         },
                         {
                             "comment": "Reboot PLC bt from HMI",
-                            "propertyOrder": 3
+                            "propertyOrder": 1
                         }
                     ]
                 },
@@ -1501,7 +1479,7 @@
                         },
                         {
                             "comment": "Shutdown PLC bt from HMI",
-                            "propertyOrder": 4
+                            "propertyOrder": 2
                         }
                     ]
                 }
@@ -5220,6 +5198,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Calibration.sGlobalStatus": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Calibration::sGlobalStatus",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 100
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Constant.aIOList": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6025,6 +6020,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bAbortCalibrationBT": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAbortCalibrationBT",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Abort Calibration Bt from HMI"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bBtStartCycle": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6141,6 +6153,16 @@
             "DOMAIN": "ADS",
             "DYNAMIC": true,
             "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsStopBt",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bDelayStart": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bDelayStart",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/BOOL"
             },
@@ -6671,6 +6693,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bStartCalibrationBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bStartCalibrationBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Start Calibration Bt from HMI"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bStopPumpsBt": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6698,11 +6737,11 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.iDelayStart": {
+        "PLC1.GVL_HMI.iDelayTimeMin": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::iDelayStart",
+            "MAPPING": "PLC1::GVL_HMI::iDelayTimeMin",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/INT"
             },
@@ -10599,6 +10638,7 @@
                 "LocalizeText": 3,
                 "Login": 3,
                 "Logout": 3,
+                "PLC1.GVL_Calibration.sGlobalStatus": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_Constant.aSolventsAvailable": 3,
@@ -10666,6 +10706,7 @@
                 "PLC1.GVL_HMI.aOtherParamsRows": 3,
                 "PLC1.GVL_HMI.aSolventAndTimesRows": 3,
                 "PLC1.GVL_HMI.aVolumeRows": 3,
+                "PLC1.GVL_HMI.bAbortCalibrationBT": 3,
                 "PLC1.GVL_HMI.bBtStartCycle": 3,
                 "PLC1.GVL_HMI.bBtStopCycle": 3,
                 "PLC1.GVL_HMI.bCalLeakTestButton": 3,
@@ -10676,6 +10717,7 @@
                 "PLC1.GVL_HMI.bCalLinearPumpsHomeBt": 3,
                 "PLC1.GVL_HMI.bCalLinearPumpsMoveBt": 3,
                 "PLC1.GVL_HMI.bCalLinearPumpsStopBt": 3,
+                "PLC1.GVL_HMI.bDelayStart": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeButton": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeConfirm": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeCorfim": 3,
@@ -10713,9 +10755,11 @@
                 "PLC1.GVL_HMI.bSaveParametersDone": 3,
                 "PLC1.GVL_HMI.bSaveParametersError": 3,
                 "PLC1.GVL_HMI.bSettingsCorrectLoaded": 3,
+                "PLC1.GVL_HMI.bStartCalibrationBt": 3,
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
                 "PLC1.GVL_HMI.eMachineMode": 3,
                 "PLC1.GVL_HMI.iDelayStart": 3,
+                "PLC1.GVL_HMI.iDelayTimeMin": 3,
                 "PLC1.GVL_HMI.iFileCount": 3,
                 "PLC1.GVL_HMI.iIOTerm14DCIn": 3,
                 "PLC1.GVL_HMI.iIOTerm15ErrorCode": 3,
