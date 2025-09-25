@@ -52,6 +52,14 @@
             "minItems": 50,
             "type": "array"
         },
+        "PLC1.ARRAY_0..99_OF-ST_RecipeFileInfo": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_RecipeFileInfo"
+            },
+            "maxItems": 100,
+            "minItems": 100,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-BOOL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/BOOL"
@@ -866,6 +874,71 @@
                         {
                             "comment": "Timestamp do início da calibração",
                             "propertyOrder": 8
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_CalibrationSettings": {
+            "properties": {
+                "bDelayStart": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "bPrintWhenComplete": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "iAllowableFailures": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/USINT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "iDelayTimeMin": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "iReplicatesSetpoint": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "rAcceptanceCriteria": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "propertyOrder": 3
                         }
                     ]
                 }
@@ -1949,6 +2022,55 @@
             },
             "type": "object"
         },
+        "PLC1.ST_LeakTestSettings": {
+            "properties": {
+                "iAllowableLeakTestFailures": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "comment": "Allowable leak test failures",
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "rLeakTestPressureLimit": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "comment": "Leak test pressure threshold",
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "tLeakTestBuildUpTime": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/TIME"
+                        },
+                        {
+                            "comment": "Time to be pressuring up the system",
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "tLeakTestMonitorTime": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/TIME"
+                        },
+                        {
+                            "comment": "Time to hold and monitoring the pressure into the system",
+                            "propertyOrder": 3
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "PLC1.ST_LinearPumpCalibration": {
             "properties": {
                 "bActivate": {
@@ -2237,6 +2359,51 @@
                         {
                             "comment": "mL or user unit",
                             "propertyOrder": 7
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_PumpSettings": {
+            "properties": {
+                "iEmptyFactor": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "iFillolventTubesFactor": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "iMeterVelocity": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "iRunVelocity": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "propertyOrder": 2
                         }
                     ]
                 }
@@ -5707,10 +5874,10 @@
             "SCHEMA": {
                 "allOf": [
                     {
-                        "comment": "<Recipe> Variables needed to handle recipe ##########################################################################################"
+                        "comment": "<Recipe> Variables needed to handle recipe --------------------------------------------------------------------------------------------------------------"
                     },
                     {
-                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..49_OF-ST_RecipeFileInfo"
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..99_OF-ST_RecipeFileInfo"
                     }
                 ]
             },
@@ -6037,35 +6204,35 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bBtStartCycle": {
+        "PLC1.GVL_HMI.bCalBoxFixed": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bBtStartCycle",
+            "MAPPING": "PLC1::GVL_HMI::bCalBoxFixed",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/BOOL"
                     },
                     {
-                        "comment": "Button Start Cycle from HMI"
+                        "comment": "Feedback from hmi to tell the system that the calibration box is ready to continue"
                     }
                 ]
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bBtStopCycle": {
+        "PLC1.GVL_HMI.bCalBoxNeedsAttention": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bBtStopCycle",
+            "MAPPING": "PLC1::GVL_HMI::bCalBoxNeedsAttention",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/BOOL"
                     },
                     {
-                        "comment": "Button Start Cycle from HMI"
+                        "comment": "Flag to trigger a popup on hmi telling operator to fill up the calibration box"
                     }
                 ]
             },
@@ -6158,16 +6325,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bDelayStart": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bDelayStart",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/BOOL"
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.bDeleteRecipeButton": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6222,43 +6379,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bHMIAlarmLampAmbar": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bHMIAlarmLampAmbar",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/BOOL"
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.bHMIAlarmLampGreen": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bHMIAlarmLampGreen",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/BOOL"
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.bHMIAlarmLampRed": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bHMIAlarmLampRed",
-            "SCHEMA": {
-                "allOf": [
-                    {
-                        "$ref": "tchmi:general#/definitions/BOOL"
-                    },
-                    {
-                        "comment": "Indicators"
-                    }
-                ]
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.bHMICalibrationBox": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6271,23 +6391,6 @@
                     },
                     {
                         "comment": "Calibration Box presence"
-                    }
-                ]
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.bHomeLampBlueState": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bHomeLampBlueState",
-            "SCHEMA": {
-                "allOf": [
-                    {
-                        "$ref": "tchmi:general#/definitions/BOOL"
-                    },
-                    {
-                        "comment": "Controls I/O"
                     }
                 ]
             },
@@ -6470,16 +6573,6 @@
                         "comment": "load recipe button from HMI"
                     }
                 ]
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.bRecipeLoaded": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bRecipeLoaded",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/BOOL"
             },
             "USEMAPPING": true
         },
@@ -6676,18 +6769,35 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.bSettingsCorrectLoaded": {
+        "PLC1.GVL_HMI.bScaleFixed": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::bSettingsCorrectLoaded",
+            "MAPPING": "PLC1::GVL_HMI::bScaleFixed",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/BOOL"
                     },
                     {
-                        "comment": "Flag to identify if the settings parameters were loaded correctly from json configuration file"
+                        "comment": "Feedback from hmi to tell the system that scale is ready to continue"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bScaleNeedsAtention": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bScaleNeedsAtention",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Flag to trigger a popup on hmi telling operator to handle the scale error"
                     }
                 ]
             },
@@ -6737,16 +6847,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.iDelayTimeMin": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::iDelayTimeMin",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/INT"
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.iFileCount": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6787,26 +6887,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.iReplicatesSetpoint": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::iReplicatesSetpoint",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/INT"
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.iTestDistance": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::iTestDistance",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/UINT"
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.nSelectedIO": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6821,16 +6901,6 @@
                         "comment": "Selection made by IO screen combobox"
                     }
                 ]
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.GVL_HMI.rAcceptanceCriteria": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::rAcceptanceCriteria",
-            "SCHEMA": {
-                "$ref": "tchmi:general#/definitions/LREAL"
             },
             "USEMAPPING": true
         },
@@ -6913,23 +6983,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_HMI.sCountdownText": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_HMI::sCountdownText",
-            "SCHEMA": {
-                "allOf": [
-                    {
-                        "maxLength": 64
-                    },
-                    {
-                        "$ref": "tchmi:general#/definitions/String"
-                    }
-                ]
-            },
-            "USEMAPPING": true
-        },
         "PLC1.GVL_HMI.sSelectedRecipeName": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6955,6 +7008,40 @@
             "MAPPING": "PLC1::GVL_HMI::stDeleteRecipeInfo",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ST_RecipeFileInfo"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.stHMICalibParameters": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::stHMICalibParameters",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Calibration Parameters from HMI inputs"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_CalibrationSettings"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.stHMIPumpParameters": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::stHMIPumpParameters",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Pump Parameters from HMI inputs"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_PumpSettings"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -7080,6 +7167,23 @@
                     },
                     {
                         "$ref": "tchmi:server#/definitions/PLC1.ST_InfoPage"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.stLeakTestParameters": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::stLeakTestParameters",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Leak Test Parameters from HMI Inputs"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_LeakTestSettings"
                     }
                 ]
             },
@@ -10709,6 +10813,8 @@
                 "PLC1.GVL_HMI.bAbortCalibrationBT": 3,
                 "PLC1.GVL_HMI.bBtStartCycle": 3,
                 "PLC1.GVL_HMI.bBtStopCycle": 3,
+                "PLC1.GVL_HMI.bCalBoxFixed": 3,
+                "PLC1.GVL_HMI.bCalBoxNeedsAttention": 3,
                 "PLC1.GVL_HMI.bCalLeakTestButton": 3,
                 "PLC1.GVL_HMI.bCalLeakTestError": 3,
                 "PLC1.GVL_HMI.bCalLeakTestFail": 3,
@@ -10754,6 +10860,8 @@
                 "PLC1.GVL_HMI.bSaveParametersBt": 3,
                 "PLC1.GVL_HMI.bSaveParametersDone": 3,
                 "PLC1.GVL_HMI.bSaveParametersError": 3,
+                "PLC1.GVL_HMI.bScaleFixed": 3,
+                "PLC1.GVL_HMI.bScaleNeedsAtention": 3,
                 "PLC1.GVL_HMI.bSettingsCorrectLoaded": 3,
                 "PLC1.GVL_HMI.bStartCalibrationBt": 3,
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
@@ -10778,6 +10886,8 @@
                 "PLC1.GVL_HMI.sCountdownText": 3,
                 "PLC1.GVL_HMI.sSelectedRecipeName": 3,
                 "PLC1.GVL_HMI.stDeleteRecipeInfo": 3,
+                "PLC1.GVL_HMI.stHMICalibParameters": 3,
+                "PLC1.GVL_HMI.stHMIPumpParameters": 3,
                 "PLC1.GVL_HMI.stIOTerm22": 3,
                 "PLC1.GVL_HMI.stIOTerm23": 3,
                 "PLC1.GVL_HMI.stIOTerm24": 3,
@@ -10791,6 +10901,7 @@
                 "PLC1.GVL_HMI.stIOTerm32": 3,
                 "PLC1.GVL_HMI.stIOTerm34": 3,
                 "PLC1.GVL_HMI.stInfo": 3,
+                "PLC1.GVL_HMI.stLeakTestParameters": 3,
                 "PLC1.GVL_HMI.stRecipeInfo": 3,
                 "PLC1.GVL_HMIVariables.HMIDigInputs": 3,
                 "PLC1.GVL_HMIVariables.HMIDigOuputs": 3,

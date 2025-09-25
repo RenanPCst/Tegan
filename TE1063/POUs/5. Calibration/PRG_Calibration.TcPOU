@@ -68,9 +68,9 @@ END_IF
 IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.bStartCalibration := TRUE;
 	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
-	GVL_Calibration.iReplicatesSetpoint := GVL_HMI.iReplicatesSetpoint;
-	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.rAcceptanceCriteria;
-	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
+	GVL_Calibration.iReplicatesSetpoint := GVL_HMI.stHMICalibParameters.iReplicatesSetpoint;
+	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.stHMICalibParameters.rAcceptanceCriteria;
+	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
 	GVL_HMI.bStartCalibrationBt := FALSE;
 	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
 END_IF
