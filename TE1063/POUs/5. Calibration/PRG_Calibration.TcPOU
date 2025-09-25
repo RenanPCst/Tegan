@@ -72,12 +72,14 @@ IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.rAcceptanceCriteria;
 	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
 	GVL_HMI.bStartCalibrationBt := FALSE;
+	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
 END_IF
 
 //calibration procedure calling
 fbCalibrationManager(
     bExecute := GVL_Calibration.bStartCalibration,
     bAbort := GVL_Calibration.bAbortCalibration,
+	rSolventDensity := GVL_Calibration.stPumpCalibrationInfo.rSolventDensity,
     eSolvent := GVL_Calibration.eCalibSolvent, 
     aPumpSettings := GVL_HMI.aCalibPumps, //Temp GVL_Calibration.aCalibPumps
     tDelayStart := GVL_Calibration.tDelayStart,
@@ -95,7 +97,6 @@ GVL_Calibration.sGlobalStatus := fbCalibrationManager.sStatus;
 IF fbCalibrationManager.bDone THEN
 	GVL_Calibration.bStartCalibration := FALSE;
 	GVL_Calibration.bStartCreationCalJson := TRUE;
-	//fbCalibrationManager.Reset();
 END_IF
 
 fbSaveCalReport(
@@ -111,10 +112,12 @@ IF fbSaveCalReport.bDone THEN
     GVL_Calibration.bCreationCalJsonDone  := TRUE;
     GVL_Calibration.bCreationCalJsonError := FALSE;
     GVL_Calibration.bStartCreationCalJson := FALSE;  // auto-reset trigger
+	fbCalibrationManager.Reset(bHard := TRUE);
+	fbSaveCalReport.Reset();
 ELSIF fbSaveCalReport.bError THEN
     GVL_Calibration.bCreationCalJsonDone  := FALSE;
     GVL_Calibration.bCreationCalJsonError := TRUE;
-    // opcional: fbSaveCalReport.Reset();
+    fbSaveCalReport.Reset();
 END_IF
 
 (* Linear Pumps Enable *) //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -491,11 +494,14 @@ RETURN;
       <LineId Id="159" Count="0" />
       <LineId Id="161" Count="2" />
       <LineId Id="348" Count="0" />
+      <LineId Id="435" Count="0" />
       <LineId Id="158" Count="0" />
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
       <LineId Id="131" Count="0" />
-      <LineId Id="70" Count="9" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="434" Count="0" />
+      <LineId Id="72" Count="7" />
       <LineId Id="401" Count="0" />
       <LineId Id="80" Count="0" />
       <LineId Id="344" Count="0" />
@@ -505,10 +511,11 @@ RETURN;
       <LineId Id="68" Count="0" />
       <LineId Id="153" Count="0" />
       <LineId Id="403" Count="0" />
-      <LineId Id="155" Count="0" />
       <LineId Id="154" Count="0" />
       <LineId Id="377" Count="0" />
-      <LineId Id="383" Count="16" />
+      <LineId Id="383" Count="12" />
+      <LineId Id="465" Count="1" />
+      <LineId Id="396" Count="3" />
       <LineId Id="376" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />

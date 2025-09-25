@@ -34,7 +34,8 @@ VAR
     fbSave      : FB_SaveCalReportToFile;
 
     // Buffer for JSON document produced by builder
-    sBuf        : STRING(8192);
+    sBuf        : STRING(16384);
+	nBufBytes 	: UDINT;          // <- NEW
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -66,12 +67,16 @@ CASE iStep OF
         stReportInfo      := stReportInfo,
         stCalibrationInfo := stCalibrationInfo,
         aCalibrationData  := aCalibrationData,
+		iCalNumber  	  := stCalibrationInfo.iCalibrationNumber,
+		sUser        	  := sUser,
         iDataCount        := iDataCount
     );
 
     IF fbBuild.bDone THEN
         // Copy the produced JSON document into our local buffer
-        sBuf := fbBuild.sJsonBuffer;
+        sBuf      := fbBuild.sJsonBuffer;
+		nBufBytes := fbBuild.nJsonBytes;
+		sFileNameOut := fbBuild.sFileNameOut;
 
         // Proceed to SAVE step
         iStep := 20;
@@ -87,15 +92,15 @@ CASE iStep OF
     // -------------------------------------------------------------------------
     20: // SAVE FILE: FB_SaveCalReportToFile (stateful)
     // -------------------------------------------------------------------------
-    fbSave(
+    
+	fbSave(
         bExecute    := TRUE,  // keep TRUE while we wait for bDone/bError
-        sUser       := sUser,
         sJsonBuffer := sBuf,
-        iCalNumber  := stCalibrationInfo.iCalibrationNumber
+		nJsonBytes  := nBufBytes,
+		sFileNameIn := sFileNameOut,
     );
 
     IF fbSave.bDone THEN
-        sFileNameOut := fbSave.sFileNameOut;
         bDone := TRUE;
         bBusy := FALSE;
         iStep := 100;
@@ -125,28 +130,48 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[(*
-    Reset()
-    ------
-    Asynchronously resets outputs and internal state to IDLE, clearing all
-    status flags and error codes. Call this when you need to abort/latch off
-    without waiting for the caller to drop bExecute.
-*)
-bDone := FALSE;
-bBusy := FALSE;
-bError := FALSE;
-nErrId := 0;
+        <ST><![CDATA[// Latch outputs & codes
+bDone        := FALSE;
+bBusy        := FALSE;
+bError       := FALSE;
+nErrId       := 0;
 sFileNameOut := '';
+
+// State machine
 iStep := 0;
+
+// Internal buffers
+sBuf      := '';
+nBufBytes := 0;
+
+// Politely reset child FBs (if their Reset() exists; otherwise just de-assert)
+fbBuild.Reset(); // returns TRUE/ignored; leaves builder idle
+fbSave.Reset();  // returns TRUE/ignored; leaves saver idle
+
+// Extra safety: ensure no lingering executes this cycle
+fbSave(bExecute := FALSE);
+
 Reset := TRUE;]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_SaveCalibrationReport">
-      <LineId Id="91" Count="78" />
+      <LineId Id="91" Count="27" />
+      <LineId Id="211" Count="1" />
+      <LineId Id="119" Count="5" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="125" Count="15" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="145" Count="2" />
+      <LineId Id="149" Count="20" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_SaveCalibrationReport.Reset">
-      <LineId Id="6" Count="12" />
+      <LineId Id="50" Count="20" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

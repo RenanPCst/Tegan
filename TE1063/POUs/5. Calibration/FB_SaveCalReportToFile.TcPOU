@@ -11,16 +11,15 @@
 FUNCTION_BLOCK FB_SaveCalReportToFile
 VAR_INPUT
 	bExecute    : BOOL;                 // Rising edge starts the save sequence
-    sUser       : STRING(64);           // Used in file name (avoid invalid path chars)
-    sJsonBuffer : STRING(8192);         // JSON payload to write (already built)
-    iCalNumber  : INT;                  // Used in file name
+    sJsonBuffer : STRING(16384);        // JSON payload to write (already built)
+	nJsonBytes  : UDINT;        		// sJsonBuffer Lenght to create the file 
+	sFileNameIn : STRING(256);			// File path used on file creation
 END_VAR
 VAR_OUTPUT
 	bDone       : BOOL;                 // TRUE when file is fully written and closed
     bBusy       : BOOL;                 // TRUE while state machine is running
     bError      : BOOL;                 // TRUE on any error
     nErrId      : UDINT;                // Propagates underlying FB error code
-    sFileNameOut: STRING(256);          // Full path of the created file
 END_VAR
 VAR
 	iStep           : INT;
@@ -41,6 +40,7 @@ VAR
     sSS               : STRING(2);
     sMMo              : STRING(2);
     sDD               : STRING(2);
+	bDTReady		  : BOOL := FALSE;
 
     // File name helpers
     sUserSafe       : STRING(64);
@@ -57,42 +57,7 @@ END_VAR
     IF bExecute THEN
         bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
 
-        // Produce a timestamp: YYYYMMDD_HHMMSS
-        fbLocalSystemTime(bEnable := TRUE, dwCycle := 5);
-        IF fbLocalSystemTime.bValid THEN
-            stLocal := fbLocalSystemTime.systemTime;
-
-            sMMo := F_TwoDigits(stLocal.wMonth);
-            sDD  := F_TwoDigits(stLocal.wDay);
-            sHH  := F_TwoDigits(stLocal.wHour);
-            sMM  := F_TwoDigits(stLocal.wMinute);
-            sSS  := F_TwoDigits(stLocal.wSecond);
-
-            sStamp := CONCAT(INT_TO_STRING(stLocal.wYear), sMMo);      // YYYYMM
-            sStamp := CONCAT(sStamp, sDD);                              // YYYYMMDD
-            sStamp := CONCAT(sStamp, '_');                              // YYYYMMDD_
-            sStamp := CONCAT(sStamp, sHH);                              // YYYYMMDD_HH
-            sStamp := CONCAT(sStamp, sMM);                              // YYYYMMDD_HHMM
-            sStamp := CONCAT(sStamp, sSS);                              // YYYYMMDD_HHMMSS
-        ELSE
-            sStamp := '00000000_000000'; // Fallback if system time is not valid
-        END_IF
-
-        // Minimal "sanitization" for sUser in file name (replace spaces with underscores)
-        // (If you need more robust sanitization, extend here.)
-        sUserSafe := sUser;
-        // Replace ' ' -> '_' (simple loop to avoid library dependencies)
-        // Note: MID/LEFT/RIGHT are cheap, but we keep this minimal due to runtime constraints
-
-        // Build output file name
-        sFileNameOut := CONCAT('C:/TwinCAT/Reports/PumpCalibration/',
-                           CONCAT('Calib_', CONCAT(INT_TO_STRING(iCalNumber),
-                           CONCAT('_', CONCAT(sUserSafe, CONCAT('_', CONCAT(sStamp, '.json')))))));
-
 		iStep := 10;
-		
-        
-        
     END_IF
 
     // -------------------------------------------------------------------------
@@ -101,7 +66,7 @@ END_VAR
 	// Open (create/overwrite) file in TEXT mode
         fbFileOpen(
             sNetId   := '',
-            sPathName:= sFileNameOut,
+            sPathName:= sFileNameIn,
             nMode    := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
             bExecute := TRUE
         );
@@ -121,8 +86,9 @@ END_VAR
     // -------------------------------------------------------------------------
     20: // Write JSON buffer
     // -------------------------------------------------------------------------
-    // JSON already comes ready in sJsonBuffer; LEN gives number of characters
-    nBytesToWrite := LEN(sJsonBuffer);
+
+    // JSON already comes ready in sJsonBuffer; nJsonBytes gives number of characters
+    nBytesToWrite := nJsonBytes;
 
     fbFileWrite(
         sNetId     := '',
@@ -168,19 +134,50 @@ END_VAR
 END_CASE
 ]]></ST>
     </Implementation>
+    <Method Name="Reset" Id="{0b7af051-4045-4657-9c10-c1f14be54055}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Best-effort close if a handle is present
+IF hFile <> 0 THEN
+    fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
+END_IF;
+
+// Ensure child file FBs are not executing
+fbFileOpen(bExecute := FALSE);
+fbFileWrite(bExecute := FALSE);
+fbFileClose(bExecute := FALSE);
+
+// Clear locals
+hFile          := 0;
+nBytesToWrite  := 0;
+bCloseFileStart:= FALSE;
+
+// Clear status & state
+bDone := FALSE;
+bBusy := FALSE;
+bError:= FALSE;
+nErrId:= 0;
+iStep := 0;
+
+Reset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="FB_SaveCalReportToFile">
-      <LineId Id="161" Count="36" />
-      <LineId Id="320" Count="0" />
-      <LineId Id="332" Count="0" />
-      <LineId Id="198" Count="0" />
-      <LineId Id="333" Count="0" />
-      <LineId Id="208" Count="3" />
+      <LineId Id="161" Count="5" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="402" Count="0" />
+      <LineId Id="210" Count="1" />
       <LineId Id="330" Count="1" />
       <LineId Id="214" Count="0" />
       <LineId Id="335" Count="7" />
       <LineId Id="334" Count="0" />
       <LineId Id="343" Count="0" />
-      <LineId Id="215" Count="31" />
+      <LineId Id="215" Count="12" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="228" Count="18" />
       <LineId Id="344" Count="0" />
       <LineId Id="247" Count="0" />
       <LineId Id="249" Count="1" />
@@ -190,6 +187,10 @@ END_CASE
       <LineId Id="349" Count="0" />
       <LineId Id="272" Count="2" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SaveCalReportToFile.Reset">
+      <LineId Id="6" Count="21" />
+      <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
