@@ -175,19 +175,25 @@ END_IF
 (* <\Icons Animation> *************************************************************************************************** *)
 
 (* <Machine Settings> ************************************************************************************************** *)
-IF GVL_HMI.bSaveParametersBt THEN
-	GVL_Settings.stMachineParam := GVL_HMI.HMIParameters;
-	GVL_HMI.bSaveParametersBt := FALSE;
+IF GVL_HMI.bSaveParametersBt THEN // Save Settings button from HMI
+	GVL_Settings.stMachineParam	 		:= GVL_HMI.HMIParameters; 		 // Motion Settings
+	GVL_Settings.stCalibParameters 		:= GVL_HMI.stHMICalibParameters; // Calibration Settings
+	GVL_Settings.stPumpParameters 		:= GVL_HMI.stHMIPumpParameters;	 // Pump Settings
+	GVL_Settings.stLeakTestParameters 	:= GVL_HMI.stLeakTestParameters; // Leak Test Settings
+	GVL_HMI.bSaveParametersBt 	:= FALSE;
 	GVL_HMI.bSaveParametersDone := TRUE;
 END_IF
 
 IF GVL_HMI.bReloadHMIParameters THEN
-	 GVL_HMI.HMIParameters := GVL_Settings.stMachineParam;
-	 GVL_HMI.bReloadHMIParameters := FALSE;
+	GVL_HMI.HMIParameters := GVL_Settings.stMachineParam;				 // Motion Settings
+	GVL_HMI.stHMICalibParameters := GVL_Settings.stCalibParameters; 	 // Calibration Settings
+	GVL_HMI.stHMIPumpParameters  := GVL_Settings.stPumpParameters; 		 // Pump Settings
+	GVL_HMI.stLeakTestParameters := GVL_Settings.stLeakTestParameters; 	 // Leak Test Settings
+	GVL_HMI.bReloadHMIParameters := FALSE;
 END_IF
 (* <\Machine Settings> ************************************************************************************************** *)
 
-(* <HMI Alerts> ******************************************************************************************************** *)
+(* <HMI Alerts> ********************************************************************************************************* *)
 
 //Auto Cycle Incoherence [when there is something missing to start the auto cycle] 
 GVL_HMI.bIncoherenceDetected := NOT GVL_Recipe.bIsThereRecipeActivated;
@@ -783,11 +789,15 @@ END_IF]]></ST>
       <LineId Id="494" Count="0" />
       <LineId Id="493" Count="0" />
       <LineId Id="496" Count="1" />
+      <LineId Id="995" Count="2" />
       <LineId Id="499" Count="1" />
       <LineId Id="498" Count="0" />
       <LineId Id="502" Count="0" />
       <LineId Id="501" Count="0" />
-      <LineId Id="505" Count="1" />
+      <LineId Id="505" Count="0" />
+      <LineId Id="999" Count="1" />
+      <LineId Id="998" Count="0" />
+      <LineId Id="506" Count="0" />
       <LineId Id="504" Count="0" />
       <LineId Id="495" Count="0" />
       <LineId Id="487" Count="0" />

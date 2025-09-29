@@ -190,7 +190,7 @@ CASE eStep OF
 				//Proceed
 				bWeightReady := FALSE;
 				eStep := E_CalibStep.POSITION_MOTORS;
-				rAcceptanceCrit := GVL_HMI.stHMICalibParameters.rAcceptanceCriteria;
+				rAcceptanceCrit := GVL_Settings.stCalibParameters.rAcceptanceCriteria;
 			END_IF
 		END_IF
 	
@@ -241,9 +241,9 @@ CASE eStep OF
 			// Filling up the jar to start the calibration
 			IF NOT bMovePump THEN
 				bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(	Distance := rDistanceByVol, 
-																				Velocity := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																				Acc := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																				Dec := GVL_Settings.stPumpParameters.iMeterVelocity
+																				Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
+																				Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6,   		//RPM to Degree/sec
+																				Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																			 );
 			END_IF
 	
@@ -326,9 +326,9 @@ CASE eStep OF
 		
 		IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
-																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity	
+																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 		//RPM to Degree/sec
+																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																		 	);
 		END_IF
 		
@@ -452,7 +452,7 @@ CASE eStep OF
 			
 			iResultIndex := iResultIndex + 1;
 			
-			IF iReplicate >= GVL_Calibration.iReplicatesSetpoint THEN
+			IF iReplicate >= GVL_Settings.stCalibParameters.iReplicatesSetpoint THEN
 				eStep := E_CalibStep.EMPTYJAR_BACKWARDS;
 			ELSE
 				eStep := E_CalibStep.RETURN_FORWARD;
@@ -467,9 +467,9 @@ CASE eStep OF
 			
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := rDistanceByVol, 
-																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity
+																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 		//RPM to Degree/sec
+																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																		  	);
 		END_IF
 		
@@ -494,9 +494,9 @@ CASE eStep OF
 		
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
-																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity, 
-																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity
+																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 		//RPM to Degree/sec
+																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																		  	);
 		END_IF
 		

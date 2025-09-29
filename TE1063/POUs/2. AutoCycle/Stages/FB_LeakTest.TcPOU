@@ -5,7 +5,7 @@
 VAR_INPUT
     bExecute       		: BOOL;  		// Starts the leak test
     eSolenoidPosition 	: E_SolenoidSet;// Defines the solenoid valve positions
-    tMonitorTime   		: TIME;  		// Monitoring time duration
+    tMonitorTime   		: UINT;  		// Monitoring time duration
     //rPressureLimit 		: REAL;  		// Minimum required pressure limit
 END_VAR
 VAR_OUTPUT
@@ -139,7 +139,8 @@ END_VAR]]></Declaration>
 			rClosedSystemPressure := rScaledPressure * 0.85; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
-			tonMonitoring(in := bPressureInput, PT := tMonitorTime);
+
+			tonMonitoring(in := bPressureInput, PT := UDINT_TO_TIME(tMonitorTime*1000));
 			// Verifies if the measured pressure meets the required limit
 			IF rScaledPressure >= rClosedSystemPressure AND tonMonitoring.Q THEN
 				//Event looger message
@@ -236,7 +237,11 @@ END_IF;]]></ST>
       <LineId Id="613" Count="14" />
       <LineId Id="629" Count="36" />
       <LineId Id="885" Count="0" />
-      <LineId Id="667" Count="46" />
+      <LineId Id="667" Count="27" />
+      <LineId Id="957" Count="0" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="956" Count="0" />
+      <LineId Id="697" Count="16" />
       <LineId Id="805" Count="1" />
       <LineId Id="804" Count="0" />
       <LineId Id="714" Count="1" />

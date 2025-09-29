@@ -4,7 +4,26 @@
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
 	
+	(* IO used in the software *) //----------------------------------------------------------------------------------------
+	gDigInputs	 		AT%I*	:	ST_EL1809;	//Digital inputs at Terminals 21 and 30 [EL1809]
+	gDigOutputs			AT%Q*	:	ST_EL2809;	//Digital Outputs at Terminal 22 		[EL2809]
+	gRelayOutputs		AT%Q*	:	ST_EL2624;	//Digital Relay Outputs at Terminal 23 	[EL2624]
+	gAnalogInputs		AT%I*	:	ST_EL3058; 	//Analog inputs at Terminals 25 		[EL3058]
+	gAnalogInputs2Ch	AT%I*	:	ST_EL3022;	//Analog inputs at Terminals 17 		[EL3022]
+	gProfinetInput		AT%I*	:	ST_EL6631;  //Profinet inputs by Device 5 			[EL6631]
+	
+	gParameters		:	ST_HMIParameters; //Machine Parameters
+	
+	//Safety Alias
+	bInAckSignal		AT %I* : BOOL; // Aknowledge input
+	bInResetSignal		AT %Q* : BOOL; // Reset input
+	
+	stEL6910	: ST_EL6910; // Safety PLC - Terminal 3
+
 	//----------------------------------------------------------------------------------------------------------------------
+	// IO Terminals to feed HMI IO Screens
+	//----------------------------------------------------------------------------------------------------------------------
+	
 	// TERMINAL - EK1100 EtherCAT Coupler (Term 1)
 	nEK1100T01State		AT %I*	: UINT;	//Terminal State from IO Terminal Info Data	
 	bEK1100T01State				: BOOL; //Control flag from terminal state	
@@ -213,24 +232,6 @@ VAR_GLOBAL
 	sAMI8000Box12Status			: STRING(200);
 	
 	//----------------------------------------------------------------------------------------------------------------------
-	
-	stEL6910	: ST_EL6910; //Terminal 3
-	
-	gDigInputs	 		AT%I*	:	ST_EL1809;	//Digital inputs at Terminals 21 and 30 [EL1809]
-	gDigOutputs			AT%Q*	:	ST_EL2809;	//Digital Outputs at Terminal 22 		[EL2809]
-	gRelayOutputs		AT%Q*	:	ST_EL2624;	//Digital Relay Outputs at Terminal 23 	[EL2624]
-	gAnalogInputs		AT%I*	:	ST_EL3058; 	//Analog inputs at Terminals 25 		[EL3058]
-	gAnalogInputs2Ch	AT%I*	:	ST_EL3022;	//Analog inputs at Terminals 17 		[EL3022]
-	gProfinetInput		AT%I*	:	ST_EL6631;  //Profinet inputs by Device 5 			[EL6631]
-	
-	gParameters		:	ST_HMIParameters; //Machine Parameters
-	
-	//Safety
-	bInAckSignal		AT %I* : BOOL;
-	bInResetSignal		AT %Q* : BOOL;
-	
-	
-	
 	
 END_VAR]]></Declaration>
   </GVL>

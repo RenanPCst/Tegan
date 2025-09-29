@@ -42,7 +42,7 @@ GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePor
 
 (* Leak Test *) //--------------------------------------------------------------------------------------------------------------------------------------------------------
 // Leak Test request from HMI
-fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := T#10S);
+fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime);
 
 // Leak Test post treatment
 IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
