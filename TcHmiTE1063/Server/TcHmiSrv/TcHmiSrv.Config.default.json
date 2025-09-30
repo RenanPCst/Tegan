@@ -36,6 +36,29 @@
             "minItems": 21,
             "type": "array"
         },
+        "PLC1.ARRAY_0..300_OF-BOOL": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "maxItems": 301,
+            "minItems": 301,
+            "type": "array"
+        },
+        "PLC1.ARRAY_0..300_OF-Tc2_System.T_MaxString": {
+            "items": {
+                "allOf": [
+                    {
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "maxItems": 301,
+            "minItems": 301,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..30_OF-Tc2_System.T_MaxString": {
             "items": {
                 "allOf": [
@@ -5397,6 +5420,40 @@
             "OPTIONS": {},
             "SCHEMA": {
                 "function": true
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Alarms.arrActiveEvents": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Alarms::arrActiveEvents",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Active events messages - displayed in active alarms"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..300_OF-Tc2_System.T_MaxString"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Alarms.arrEventLogs": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Alarms::arrEventLogs",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Logged events messages - displayed in alarm history"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..300_OF-Tc2_System.T_MaxString"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -10875,6 +10932,9 @@
                 "LocalizeText": 3,
                 "Login": 3,
                 "Logout": 3,
+                "PLC1.GVL_Alarms.arrActiveEvents": 3,
+                "PLC1.GVL_Alarms.arrEventFlag": 3,
+                "PLC1.GVL_Alarms.arrEventLogs": 3,
                 "PLC1.GVL_Calibration.sGlobalStatus": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
