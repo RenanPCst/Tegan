@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_GetPumpPath" Id="{da8f6142-46aa-4ab1-9d35-c600d380a07e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_GetPumpPath : E_PumpPath
+VAR_INPUT
+	iValvePosition	: SINT;
+	ePumpDirection	: E_PumpDirection;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iValvePosition OF
+	
+	1:
+		F_GetPumpPath := E_PumpPath.FillJars;
+		RETURN;
+	
+	2:
+		F_GetPumpPath := E_PumpPath.FillJars;
+		RETURN;
+	
+	3:
+		F_GetPumpPath := E_PumpPath.FillJars;
+		RETURN;
+		
+	4:
+		F_GetPumpPath := E_PumpPath.FillJars;
+		RETURN;
+		
+	5:
+		F_GetPumpPath := E_PumpPath.FillCalBox;
+		RETURN;
+	6:
+		IF ePumpDirection = E_PumpDirection.Forward THEN
+			F_GetPumpPath := E_PumpPath.FromCalBox;
+			RETURN;
+			ELSIF ePumpDirection = E_PumpDirection.Backward THEN
+				F_GetPumpPath := E_PumpPath.FillCalBox;
+				RETURN;
+		ELSE
+			F_GetPumpPath := E_PumpPath.FromCalBox;
+			RETURN;
+		END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="F_GetPumpPath">
+      <LineId Id="7" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="17" Count="1" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="19" Count="2" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

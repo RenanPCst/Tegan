@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_SafetyOutputs" Id="{7b115a9c-37c5-46cf-9e23-5c0e6c7b072c}">
+    <Declaration><![CDATA[TYPE ST_SafetyOutputs :
+STRUCT
+	//Term 19 EL2904
+	bStageCollectLeftDoorCtrlSignal		:	BOOL; //Q1 - D1 Door mechanic Stage Collection Control Signal
+	bStageCollectRightDoorCtrlSignal	:	BOOL; //Q2 - D2 Door mechanic Stage Collection Control Signal
+	bSampleRecoveryDoorCtrlSignal		:	BOOL; //Q3 - D3 Door mechanic Stage Collection Control Signal
+	
+	//Term 20 EL2904
+	bM2MotorSTO							:	BOOL; //Q1 - STO Signal Motor M2
+	bM3MotorSTO							:	BOOL; //Q2 - STO Signal Motor M3
+	bAirSupplyUnitEnable				: 	BOOL; //Q3 - Air Supply Unity - Enable
+	bAirSupplyUnitReset					: 	BOOL; //Q3 - Air Supply Unity - Reset
+	
+	//Term 15 EL6910 Safety PLC, Virtual Channels 
+	qSafetyErrorAck						: 	BOOL;	// Terminal EL6910 - Safety Acknowl
+	qSafetyRun                  		:   BOOL;  	// Terminal EL6910 - Start Safety
+	bAirPressureOK						:	BOOL;	// Terminal EL6910 - Reading from the Festo pressure sensor above 4.5 bar
+	bResetAir							:	BOOL;	// Terminal EL6910 - Reset available only when air pressure is off	
+	bLockDoorSafety        				: 	BOOL;	// lock doors cmd to safety logic
+	bBelowDoorsFeedback					:	BOOL;	// Feedback signal from doos D4, D5 and D6, going to alias input BelowDoorsFeedback
+	
+	bTrueVariable						:	BOOL := TRUE;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

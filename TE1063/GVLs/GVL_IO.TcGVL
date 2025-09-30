@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_IO" Id="{f412b0ef-deea-47d4-94a5-3f7ef679855d}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	(* IO used in the software *) //----------------------------------------------------------------------------------------
+	gDigInputs	 		AT%I*	:	ST_EL1809;	//Digital inputs at Terminals 21 and 30 [EL1809]
+	gDigOutputs			AT%Q*	:	ST_EL2809;	//Digital Outputs at Terminal 22 		[EL2809]
+	gRelayOutputs		AT%Q*	:	ST_EL2624;	//Digital Relay Outputs at Terminal 23 	[EL2624]
+	gAnalogInputs		AT%I*	:	ST_EL3058; 	//Analog inputs at Terminals 25 		[EL3058]
+	gAnalogInputs2Ch	AT%I*	:	ST_EL3022;	//Analog inputs at Terminals 17 		[EL3022]
+	gProfinetInput		AT%I*	:	ST_EL6631;  //Profinet inputs by Device 5 			[EL6631]
+	
+	gParameters		:	ST_HMIParameters; //Machine Parameters
+	
+	//Safety Alias
+	bInAckSignal		AT %I* : BOOL; // Aknowledge input
+	bInResetSignal		AT %Q* : BOOL; // Reset input
+	
+	stEL6910	: ST_EL6910; // Safety PLC - Terminal 3
+
+	//----------------------------------------------------------------------------------------------------------------------
+	// IO Terminals to feed HMI IO Screens
+	//----------------------------------------------------------------------------------------------------------------------
+	
+	// TERMINAL - EK1100 EtherCAT Coupler (Term 1)
+	nEK1100T01State		AT %I*	: UINT;	//Terminal State from IO Terminal Info Data	
+	bEK1100T01State				: BOOL; //Control flag from terminal state	
+	sEK1100T01Status			: STRING(200);
+	
+	// TERMINAL - EK1100 EtherCAT Coupler (Term 22)
+	nEK1100T22State		AT %I*	: UINT;	//Terminal State from IO Terminal Info Data
+	bEK1100T22State				: BOOL; //Control flag from terminal state	
+	sEK1100T22Status			: STRING(200);	
+	
+	// TERMINAL - EL6070-0033	License Key Terminal for TwinCAT 3.1 (Term 2)
+	nEL6070State		AT %I*	: UINT;	// EL6070-0033 State from IO Terminal Info Data	
+	bEL6070State				: BOOL; //Control flag from terminal state	
+	sEL6070Status				: STRING(200);	
+	
+	// TERMINAL - EL1918 Safety Inputs (Term 4)
+	nEL1918T04State		AT %I*	: UINT;	// EL1918 State from IO Terminal Info Data
+	bEL1918T04State				: BOOL; //Control flag from terminal state		
+	sEL1918T04Status			: STRING(200);	
+	
+	// TERMINAL - EL1918 Safety Inputs (Term 5)
+	nEL1918T05State		AT %I*	: UINT;	// EL1918 State from IO Terminal Info Data
+	bEL1918T05State				: BOOL; //Control flag from terminal state		
+	sEL1918T05Status			: STRING(200);
+
+	// TERMINAL - EL1918 Safety Inputs (Term 6)
+	nEL1918T06State		AT %I*	: UINT;	// EL1918 State from IO Terminal Info Data	
+	bEL1918T06State				: BOOL; //Control flag from terminal state	
+	sEL1918T06Status			: STRING(200);	
+	
+	// TERMINAL - EL2904 Safety Outputs (Term 7)
+	nEL2904T07State		AT %I*	: UINT;	// EL2904 State from IO Terminal Info Data
+	bEL2904T07State				: BOOL; //Control flag from terminal state		
+	sEL2904T07Status			: STRING(200);
+	
+	// TERMINAL - EL2904 Safety Outputs (Term 8)
+	nEL2904T08State		AT %I*	: UINT;	// EL2904 State from IO Terminal Info Data	
+	bEL2904T08State				: BOOL; //Control flag from terminal state	
+	sEL2904T08Status			: STRING(200);
+	
+	// TERMINAL - EL1809 Digital Inputs (Term 9)
+	nEL1809T09State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL1809T09State				: BOOL; // Control flag from terminal state	
+	sEL1809T09Status			: STRING(200);
+	
+	// TERMINAL - EL2809 Digital Outputs (Term 10)
+	nEL2809T10State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL2809T10State				: BOOL; // Control flag from terminal state	
+	sEL2809T10Status			: STRING(200);
+	
+	// TERMINAL - EL2624 Relay Outputs (Term 11)
+	nEL2624T11State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL2624T11State				: BOOL; // Control flag from terminal state	
+	sEL2624T11Status			: STRING(200);
+	
+	// TERMINAL - EL9410 Power Supply (Term 12)
+	nEL9410T12State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL9410T12State				: BOOL; // Control flag from terminal state	
+	sEL9410T12Status			: STRING(200);
+	bEL9410UPStatus		AT %I*	: BOOL; // Terminal UP Status
+	bEL9410USStatus		AT %I*	: BOOL; // Terminal US Status
+	
+	// TERMINAL - EL3058 Relay Outputs (Term 13)
+	nEL3058T13State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL3058T13State				: BOOL; // Control flag from terminal state	
+	sEL3058T13Status			: STRING(200);
+	
+	// TERMINAL - EL9576 Relay Outputs (Term 14)
+	nEL9576T14State			AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL9576T14State					: BOOL; // Control flag from terminal state	
+	sEL9576T14Status				: STRING(200);
+	bEL9576T14Overtemp		AT %I*	: BOOL;
+	bEL9576T14I2TError		AT %I*	: BOOL;
+	bEL9576T14I2TWarning	AT %I*	: BOOL;
+	bEL9576T14OverVoltage	AT %I*	: BOOL;
+	bEL9576T14UnderVoltage	AT %I*	: BOOL;
+	bEL9576T14ChopperOn		AT %I*	: BOOL;
+	bEL9576T14OverCurrent	AT %I*	: BOOL;
+	bEL9576T14DCLinkVoltage	AT %I*	: UDINT;
+	
+	// TERMINAL - EL7211 Relay Outputs (Term 15)
+	nEL7211T15State				: UINT;	// State from IO Terminal Info Data	
+	bEL7211T15State				: BOOL; // Control flag from terminal state	
+	sEL7211T15Status			: STRING(200);
+	
+	// TERMINAL - EL7211 Relay Outputs (Term 16)
+	nEL7211T16State				: UINT;	// State from IO Terminal Info Data	
+	bEL7211T16State				: BOOL; // Control flag from terminal state	
+	sEL7211T16Status			: STRING(200);
+	
+	// TERMINAL - EL3022 Relay Outputs (Term 17)
+	nEL3022T17State			AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL3022T17State					: BOOL; // Control flag from terminal state	
+	sEL3022T17Status				: STRING(200);
+	bEL3022ChAUnderRange	AT %I*	: BOOL; // Control UnderRange flag from terminal ch A
+	bEL3022ChAOverRange		AT %I*	: BOOL; // Control OverRange flag from terminal ch A
+	bEL3022ChAError			AT %I*	: BOOL; // Control Error flag from terminal ch A
+	bEL3022ChBUnderRange	AT %I*	: BOOL; // Control UnderRange flag from terminal ch B
+	bEL3022ChBOverRange		AT %I*	: BOOL; // Control OverRange flag from terminal ch B
+	bEL3022ChBError			AT %I*	: BOOL; // Control Error flag from terminal ch B
+	
+	// TERMINAL - EL1809 Relay Outputs (Term 18)
+	nEL1809T18State		AT %I*	: UINT;	// State from IO Terminal Info Data	
+	bEL1809T18State				: BOOL; // Control flag from terminal state	
+	sEL1809T18Status			: STRING(200);
+	
+	// TERMINAL - EL2904 Safety Outputs (Term 19)
+	nEL2904T19State		AT %I*	: UINT;	// EL2904 State from IO Terminal Info Data	
+	bEL2904T19State				: BOOL; //Control flag from terminal state	
+	sEL2904T19Status			: STRING(200);
+	
+	// TERMINAL - EL2904 Safety Outputs (Term 20)
+	nEL6631T20State		AT %I*	: UINT;	// EL2904 State from IO Terminal Info Data	
+	bEL6631T20State				: BOOL; //Control flag from terminal state	
+	sEL6631T20Status			: STRING(200);
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 23)
+	nEL7062T23State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T23State				: BOOL; //Control flag from terminal state	
+	sEL7062T23Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 24)
+	nEL7062T24State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T24State				: BOOL; //Control flag from terminal state	
+	sEL7062T24Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 25)
+	nEL7062T25State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T25State				: BOOL; //Control flag from terminal state	
+	sEL7062T25Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 26)
+	nEL7062T26State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T26State				: BOOL; //Control flag from terminal state	
+	sEL7062T26Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 27)
+	nEL7062T27State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T27State				: BOOL; //Control flag from terminal state	
+	sEL7062T27Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 28)
+	nEL7062T28State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T28State				: BOOL; //Control flag from terminal state	
+	sEL7062T28Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 29)
+	nEL7062T29State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T29State				: BOOL; //Control flag from terminal state	
+	sEL7062T29Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 30)
+	nEL7062T30State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T30State				: BOOL; //Control flag from terminal state	
+	sEL7062T30Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 31)
+	nEL7062T31State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T31State				: BOOL; //Control flag from terminal state	
+	sEL7062T31Status			: STRING(200);	
+	
+	// TERMINAL - EL7062 EtherCAT 2-channel stepper motor interface  (Term 32)
+	nEL7062T32State				: UINT;	//Terminal State from IO Terminal Info Data
+	bEL7062T32State				: BOOL; //Control flag from terminal state	
+	sEL7062T32Status			: STRING(200);	
+	
+	// TERMINAL - AX8620  (Term 33)
+	nAX8620T33State		AT %I*	: UINT;	//Terminal State from IO Terminal Info Data
+	bAX8620T33State				: BOOL; //Control flag from terminal state	
+	sAX8620T33Status			: STRING(200);	
+	
+	// TERMINAL - AX8108  (Term 34)
+	nAX8108T34State				: UINT;	//Terminal State from IO Terminal Info Data
+	bAX8108T34State				: BOOL; //Control flag from terminal state	
+	sAX8108T34Status			: STRING(200);	
+	
+	// Box 1 - Ifm AL1333  (Box 1)
+	nAL1333Box1State	AT %I*	: UINT;	//Terminal State from IO Terminal Info Data
+	bAL1333Box1State			: BOOL; //Control flag from terminal state	
+	sAL1333Box1Status			: STRING(200);
+	stAL1333info				: ST_AL1333;	
+	
+	// Box 8 - AMI8000-0100  (Box 8)
+	nAMI8000Box8State			: UINT;	//Terminal State from IO Terminal Info Data
+	bAMI8000Box8State			: BOOL; //Control flag from terminal state	
+	sAMI8000Box8Status			: STRING(200);
+	
+	// Box 9 - AMI8000-0100  (Box 9)
+	nAMI8000Box9State			: UINT;	//Terminal State from IO Terminal Info Data
+	bAMI8000Box9State			: BOOL; //Control flag from terminal state	
+	sAMI8000Box9Status			: STRING(200);
+	
+	// Box 10 - AMI8000-0100  (Box 10)
+	nAMI8000Box10State			: UINT;	//Terminal State from IO Terminal Info Data
+	bAMI8000Box10State			: BOOL; //Control flag from terminal state	
+	sAMI8000Box10Status			: STRING(200);
+	
+	// Box 11 - AMI8000-0100  (Box 11)
+	nAMI8000Box11State			: UINT;	//Terminal State from IO Terminal Info Data
+	bAMI8000Box11State			: BOOL; //Control flag from terminal state	
+	sAMI8000Box11Status			: STRING(200);
+	
+	// Box 12 - AMI8000-0100  (Box 12)
+	nAMI8000Box12State			: UINT;	//Terminal State from IO Terminal Info Data
+	bAMI8000Box12State			: BOOL; //Control flag from terminal state	
+	sAMI8000Box12Status			: STRING(200);
+	
+	//----------------------------------------------------------------------------------------------------------------------
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_KQ1000_Parser" Id="{fc89c111-45ad-4b6f-9283-f084951d29b6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_KQ1000_Parser
+VAR_INPUT
+	byInput0 : BYTE;
+    byInput1 : BYTE;
+    byInput2 : BYTE;
+    byInput3 : BYTE;
+END_VAR
+VAR_OUTPUT
+	stData : ST_KQ1000_Data;
+END_VAR
+VAR
+	wLevel	: WORD;
+    wStatus : WORD;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Combine the bytes to form the full raw level word
+wLevel := SHL(TO_WORD(byInput1), 8) OR TO_WORD(byInput0);
+
+// Check for NoData condition (specific code from sensor)
+IF wLevel = 32764 THEN
+    stData.iRawLevel := wLevel;
+    stData.rLevelPercent := -1.0;
+ELSE
+    // Store the visible base level (based on byte 1 only)
+    stData.iRawLevel := TO_WORD(byInput1);
+
+    // Linear scaling: 10 = 0%, 95 = 100%
+    IF byInput1 < 10 THEN
+        stData.rLevelPercent := 0.0;
+    ELSIF byInput1 > 95 THEN
+        stData.rLevelPercent := 100.0;
+    ELSE
+        stData.rLevelPercent := (TO_REAL(byInput1 - 5) * (100.0 / 85.0)); 
+    END_IF
+END_IF
+
+// Combine bytes to get the full status word
+wStatus := SHL(TO_WORD(byInput3), 8) OR TO_WORD(byInput2);
+stData.wStatusRaw := wStatus;
+
+// Decode output status bits
+stData.bOut1 := (wStatus AND 16#0001) <> 0;
+stData.bOut2 := (wStatus AND 16#0002) <> 0;
+stData.bOut3 := (wStatus AND 16#0004) <> 0;
+
+// Extract device status code from bits 4–7
+stData.iDeviceStatusCode := TO_USINT(SHR(wStatus AND 16#00F0, 4));
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_KQ1000_Parser">
+      <LineId Id="105" Count="31" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

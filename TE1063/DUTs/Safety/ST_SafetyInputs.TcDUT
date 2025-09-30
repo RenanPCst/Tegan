@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_SafetyInputs" Id="{50ba3a89-3e56-4269-96dd-814ec856dafc}">
+    <Declaration><![CDATA[TYPE ST_SafetyInputs :
+STRUCT
+	//Term 16 EL1918
+	bEStopHMICh1				:	BOOL; //I1 - Front eStop button channel 1
+	bEStopHMICh2				:	BOOL; //I2 - Front eStop button channel 1
+	bEStopSideCh1				:	BOOL; //I3 - Side eStop button channel 1
+	bEStopSideCh2				:	BOOL; //I4 - Side eStop button channel 2
+	bMachineReset				:	BOOL; //I5 - Reset Button
+	bStageCollectLeftDoorCh1	:	BOOL; //I6 - D1 Door mechanic sensor channel 1
+	bStageCollectLeftDoorCh2	:	BOOL; //I7 - D1 Door mechanic sensor channel 2
+	bStageCollectLeftDoorFdbk	:	BOOL; //I8 - D1 Door mechanic sensor Feedback Signal
+
+	//Term 17 EL1918
+	bStageCollectRightDoorCh1	:	BOOL; //D2 Door mechanic sensor channel 1
+	bStageCollectRightDoorCh2	:	BOOL; //D2 Door mechanic sensor channel 2
+	bStageCollectRightDoorFdbk	:	BOOL; //D2 Door mechanic sensor Feedback Signal
+	bSampleRecoveryDoorCh1		:	BOOL; //D3 Door mechanic sensor channel 1
+	bSampleRecoveryDoorCh2		:	BOOL; //D3 Door mechanic sensor channel 2
+	bSampleRecoveryDoorFdbk		:	BOOL; //D3 Door mechanic sensor Feedback Signal
+
+	//Term 18 EL1918
+	bFestoMS6ValveFdbk			:	BOOL; //I1 - Feedback from Festo MS6 Valve
+	bFestoMS6DumpValveFdbk		:	BOOL; //I2 - Feedback from Festo MS^ Dump Valve
+	bD4AccessDoorIntlckOSSD1	: 	BOOL; //I3 - D4 Access Door Interlock - OSSD1
+	bD4AccessDoorIntlckOSSD2  	:	BOOL; //I4 - D4 Access Door Interlock - OSSD2
+	bD5AccessDoorIntlckOSSD1  	:	BOOL; //I5 - D5 Access Door Interlock - OSSD1
+	bD5AccessDoorIntlckOSSD2  	:	BOOL; //I6 - D5 Access Door Interlock - OSSD2
+	bD6AccessDoorIntlckOSSD1  	:	BOOL; //I7 - D5 Access Door Interlock - OSSD1
+	bD6AccessDoorIntlckOSSD2  	:	BOOL; //I7 - D5 Access Door Interlock - OSSD2
+	
+	//Safety Messages and variables
+	iSafetyFBError	 			: 	BOOL;	// Terminal EL6910 - At least one FB is in error condition
+	iSafetyComError 			: 	BOOL;	// Terminal EL6910 - Communication error
+	bSafetyError				:	BOOL	; //6910 system erro  	
+	bSafetyAirError       		:	BOOL;	// fault message 
+	bSafetyAirOK          		:	BOOL;	// 	
+	bSafetyAirPressurising   	: 	BOOL;
+	bSafety_AirNotON       		: 	BOOL;
+	iSafetyRunning          	:	BOOL;   // Terminal EL6910 TwinSAFE running
+    iSafetyEStop    	   		:	BOOL;   // Terminal EL6910 Safety Estop OK
+	bSafetyEstopDoorOK			:	BOOL;	//(from 1091) doors locked so enable air reset  
+	
+	//Motors STO 
+	bM1STOEnabled				:	BOOL;
+	bM1_STOActive				:	BOOL;
+	
+	//3 safty card status	
+	nEL6910_State				:	UINT;	// EL6910 State from IO Terminal Info Data	
+	sEL6910_Status				:	STRING(200);
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

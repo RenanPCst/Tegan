@@ -1,0 +1,222 @@
+<div id="Content1" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="480" data-tchmi-height="350">
+
+<div id="TcHmiRectangle_popUpBackground_18" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="350" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="480" data-tchmi-width-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "angle": 0.0,
+  "stopPoints": [
+    {
+      "color": "rgba(17, 57, 91, 1)",
+      "stop": "25%"
+    },
+    {
+      "color": "rgba(42, 93, 139, 1)",
+      "stop": "75%"
+    }
+  ]
+}
+</script>
+</div>
+<div id="TcHmiTextblock_34" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-text="Are you sure about changing the parameters?" data-tchmi-top="65" data-tchmi-top-unit="px" data-tchmi-width="350" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="26" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center">
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+</div>
+<div id="TcHmiButton_ManualModeYes_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-text="Yes" data-tchmi-top="219" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ManualModeYes_5.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "(function () {",
+          "    console.log(\"Starting HMI parameter save process...\");",
+          "",
+          "    // Helper: promise wrappers",
+          "    const writeEx = (sym, val) => new Promise((res, rej) =>",
+          "        TcHmi.Symbol.writeEx(sym, val, d => d.error === TcHmi.Errors.NONE ? res(true) : rej(d.error))",
+          "    );",
+          "    const readEx2 = (sym) => new Promise((res, rej) =>",
+          "        TcHmi.Symbol.readEx2(sym, d => d.error === TcHmi.Errors.NONE ? res(d.value) : rej(d.error))",
+          "    );",
+          "",
+          "    // Helper: TIME (s -> ms) clamp ≥ 0",
+          "    const secondsToMs = v => Math.max(0, Math.round(Number(v || 0) * 1000));",
+          "",
+          "    var fields = [",
+          "        // =========================",
+          "        // Existing — Inverted inputs (write as negative)",
+          "        // =========================",
+          "        { input: 'TcHmiNumericInput_aM1_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM1Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM1_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM1Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM2_4', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM2Position[3]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_2', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[1]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_3', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[2]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_4', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[3]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_5', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[4]%/s%', invert: true },",
+          "        { input: 'TcHmiNumericInput_aM3_6', symbol: '%s%PLC1.GVL_HMI.HMIParameters::aM3Position[5]%/s%', invert: true },",
+          "",
+          "        // =========================",
+          "        // Existing — Direct inputs",
+          "        // =========================",
+          "        { input: 'TcHmiNumericInput_aM1_Velocity',        symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Velocity',        symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Velocity',        symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Velocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_Acceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Acceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Acceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Accleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_Deceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM2_Deceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM2Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM3_Deceleration',    symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM3Deceleration%/s%' },",
+          "        { input: 'TcHmiNumericInput_aM1_PrecisionVelocity', symbol: '%s%PLC1.GVL_HMI.HMIParameters::rM1PrecisionVelocity%/s%' },",
+          "",
+          "        // =========================",
+          "        // NEW — Calibration parameters (direct)",
+          "        // =========================",
+          "        { input: 'TcHmiNumericInput_CalAcceptanceCriteria', symbol: '%s%PLC1.GVL_HMI.stHMICalibParameters::rAcceptanceCriteria%/s%' },",
+          "        { input: 'TcHmiNumericInput_CalAllowableFailures',  symbol: '%s%PLC1.GVL_HMI.stHMICalibParameters::iAllowableFailures%/s%' },",
+          "        { input: 'TcHmiNumericInput_CalReplicates',         symbol: '%s%PLC1.GVL_HMI.stHMICalibParameters::iReplicatesSetpoint%/s%' },",
+          "        { input: 'TcHmiNumericInput_CalInterval',           symbol: '%s%PLC1.GVL_HMI.stHMICalibParameters::iCalIntervalDays%/s%' },",
+          "        { input: 'TcHmiNumericInput_CalAirTime',            symbol: '%s%PLC1.GVL_HMI.stHMICalibParameters::iAirDryTimeSec%/s%' },",
+          "",
+          "        // =========================",
+          "        // NEW — Pump parameters (direct)",
+          "        // =========================",
+          "        { input: 'TcHmiNumericInput_PumpMeterVelocity',  symbol: '%s%PLC1.GVL_HMI.stHMIPumpParameters::iMeterVelocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_PumpRunVelocity',    symbol: '%s%PLC1.GVL_HMI.stHMIPumpParameters::iRunVelocity%/s%' },",
+          "        { input: 'TcHmiNumericInput_PumpEmptyFactor',    symbol: '%s%PLC1.GVL_HMI.stHMIPumpParameters::iEmptyFactor%/s%' },",
+          "        { input: 'TcHmiNumericInput_PumpFillTuberFactor',symbol: '%s%PLC1.GVL_HMI.stHMIPumpParameters::iFillolventTubesFactor%/s%' },",
+          "",
+          "        // =========================",
+          "        // NEW — Leak test parameters",
+          "        // tLeakTestBuildUpTime & tLeakTestMonitorTime are TIME on PLC:",
+          "        // assume HMI input in seconds -> convert to milliseconds.",
+          "        // =========================",
+          "        { input: 'TcHmiNumericInput_LKAllowableFailures',  symbol: '%s%PLC1.GVL_HMI.stLeakTestParameters::iAllowableLeakTestFailures%/s%' },",
+          "        { input: 'TcHmiNumericInput_LKPressurizationTime', symbol: '%s%PLC1.GVL_HMI.stLeakTestParameters::tLeakTestBuildUpTime%/s%' },",
+          "        { input: 'TcHmiNumericInput_LKMonitorTime',        symbol: '%s%PLC1.GVL_HMI.stLeakTestParameters::tLeakTestMonitorTime%/s%' },",
+          "        { input: 'TcHmiNumericInput_LKPressureThreshold',  symbol: '%s%PLC1.GVL_HMI.stLeakTestParameters::rLeakTestPressureLimit%/s%' }",
+          "    ];",
+          "",
+          "    let i = 0;",
+          "",
+          "    function writeNext() {",
+          "        if (i >= fields.length) {",
+          "            // All parameters written — trigger PLC save",
+          "            console.log(\"All values written. Sending trigger...\");",
+          "",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bSaveParametersBt%/s%', true, function (triggerResult) {",
+          "                if (triggerResult.error !== TcHmi.Errors.NONE) {",
+          "                    alert(\"Error writing trigger bSaveParametersBt!\");",
+          "                    return;",
+          "                }",
+          "",
+          "                // Poll PLC flags bSaveParametersDone / bSaveParametersError",
+          "                let pollCount = 0;",
+          "                const pollInterval = setInterval(async function () {",
+          "                    try {",
+          "                        const done  = await readEx2('%s%PLC1.GVL_HMI.bSaveParametersDone%/s%');",
+          "                        const error = await readEx2('%s%PLC1.GVL_HMI.bSaveParametersError%/s%');",
+          "",
+          "                        if (done === true) {",
+          "                            clearInterval(pollInterval);",
+          "                            alert(\"Parameters saved successfully!\");",
+          "                            // reset flags for next run (best-effort)",
+          "                            writeEx('%s%PLC1.GVL_HMI.bSaveParametersDone%/s%', false).catch(()=>{});",
+          "                        } else if (error === true) {",
+          "                            clearInterval(pollInterval);",
+          "                            alert(\"Error saving parameters!\");",
+          "                            writeEx('%s%PLC1.GVL_HMI.bSaveParametersError%/s%', false).catch(()=>{});",
+          "                        } else if (++pollCount > 40) {",
+          "                            clearInterval(pollInterval);",
+          "                            alert(\"Timeout: No response from PLC.\");",
+          "                        }",
+          "                    } catch (e) {",
+          "                        clearInterval(pollInterval);",
+          "                        alert(\"Communication error while polling PLC.\");",
+          "                        console.error(e);",
+          "                    }",
+          "                }, 100); // every 100ms, max ~4s",
+          "            });",
+          "",
+          "            return;",
+          "        }",
+          "",
+          "        let field = fields[i++];",
+          "        let ctrl = TcHmi.Controls.get(field.input);",
+          "",
+          "        if (!ctrl) {",
+          "            console.warn(\"Control not found:\", field.input);",
+          "            writeNext(); // skip and continue",
+          "            return;",
+          "        }",
+          "",
+          "        let val = ctrl.getValue();",
+          "",
+          "        // Optional per-field transform (e.g., seconds -> ms for TIME)",
+          "        if (typeof field.transform === 'function') {",
+          "            val = field.transform(val);",
+          "        }",
+          "",
+          "        // Invert handling for position fields",
+          "        if (field.invert) {",
+          "            val = -Math.abs(Number(val || 0));",
+          "        }",
+          "",
+          "        TcHmi.Symbol.writeEx(field.symbol, val, function (res) {",
+          "            if (res.error !== TcHmi.Errors.NONE) {",
+          "                alert(\"Error writing: \" + field.symbol);",
+          "                console.error(\"Write error:\", res.error, \"Symbol:\", field.symbol, \"Input:\", field.input, \"Value:\", val);",
+          "                return;",
+          "            }",
+          "            writeNext(); // proceed",
+          "        });",
+          "    }",
+          "",
+          "    // Start writing loop",
+          "    writeNext();",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_DialogPopup",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiButton_ManualModeNo_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="265" data-tchmi-left-unit="px" data-tchmi-text="No" data-tchmi-top="219" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ManualModeNo_5.onPressed",
+    "actions": [
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_DialogPopup",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+</div>

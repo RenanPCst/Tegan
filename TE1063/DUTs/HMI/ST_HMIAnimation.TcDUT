@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMIAnimation" Id="{22382bf8-2756-4c62-96a4-f4533ab4e637}">
+    <Declaration><![CDATA[TYPE ST_HMIAnimation :
+STRUCT
+(*Here are all the variables needed to animate de HMI Controls.*)
+
+//Level Sensors Animation
+aSolventLevel	:	ARRAY[1..4] OF INT;
+rWasteLevel		:	INT;
+
+//Motors Position Animation
+rM1VerticalAnimation	: REAL;
+rM2VerticalAnimation	: REAL;
+
+//Valvel Angles and Position Animation
+aValveAngle		:	ARRAY[1..5] OF LREAL;
+aValvePosition	:	ARRAY[1..5] OF INT;
+
+//Pumps Linear and Rotary Animation
+
+//Progress Circle Bar | Text | State Animation
+rLoadBarSafety 	 : REAL;
+rLoadBarAirFlow  : REAL;
+rLoadBarHardware : REAL;
+rLoadBarLeakTest : REAL;
+rLoadBarRecovery : REAL;
+rLoadBarWashing  : REAL;
+rLoadBarDry 	 : REAL;
+
+eIconStateSafety 	: E_IconState; 
+eIconStateAirFlow 	: E_IconState;
+eIconStateHardware 	: E_IconState;
+eIconStateLeakTest 	: E_IconState;
+eIconStateRecovery	: E_IconState;
+eIconStateWashing 	: E_IconState;
+eIconStateDry	 	: E_IconState;
+
+sLoadTextSafety	 	: STRING(64);
+sLoadTextAirFlow	: STRING(64);
+sLoadTextHardware	: STRING(64);
+sLoadTextLeakTest	: STRING(64);
+sLoadTextRecovery	: STRING(64);
+sLoadTextWashing	: STRING(64);
+sLoadTextDry	 	: STRING(64);
+
+//Doors hide/visible
+bHMIDoorOpen	: ARRAY[1..6] OF BOOL;
+bHMIDoorBlink	: ARRAY[1..6] OF BOOL;
+
+//Pumping Flashing Arrows
+aPumpingArrowFwd	: ARRAY[1..10] OF BOOL;
+aPumpingArrowBwd	: ARRAY[1..10] OF BOOL;
+ 
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Settings" Id="{7fcbda61-1efa-47f4-8a74-d81c27375a8d}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL PERSISTENT
+	
+	(* System Settings *) //---------------------------------------------------------------------------------------------- 
+	stMachineParam			: ST_HMIParameters;			// Motion Parameters to be used on the software
+	stCalibParameters 		: ST_CalibrationSettings;	// Calibration Parameters to be used on the software
+	stPumpParameters		: ST_PumpSettings;			// Pump Parameters to be used on the software
+	stLeakTestParameters	: ST_LeakTestSettings;		// Leak Test Parameters to be used on the software
+	
+	(* Scale/Balance comunication *) //-----------------------------------------------------------------------------------
+	aBalanceIP		: T_IPv4Addr 	:= '192.168.1.100';	// Scale TCP IP Adress
+	nBalancePort	: UINT 			:= 8001;			// TCP port used to communicate with the scale
+	
+	(* Air Supply Parameters *) //----------------------------------------------------------------------------------------
+	rAirSupplyThreshold		: REAL	:= 4.0;
+	rAirSupplyTestingTime	: TIME 	:= T#5S;
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

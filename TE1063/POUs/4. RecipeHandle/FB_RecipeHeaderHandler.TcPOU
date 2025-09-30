@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_RecipeHeaderHandler" Id="{3a282dd4-91de-4b2b-b71c-941e4b67bb20}" SpecialFunc="None">
+    <Declaration><![CDATA[// FB_RecipeHeaderHandler: Extracts metadata from a recipe JSON file and fills one entry in GVL_Recipe.aAvailableFiles
+FUNCTION_BLOCK FB_RecipeHeaderHandler
+VAR_INPUT
+	sFileName       : STRING(255);
+    iTargetIndex    : INT; // Index to write into array GVL_Recipe.aAvailableFiles
+    bExecute        : BOOL;
+END_VAR
+VAR_OUTPUT
+	bBusy  : BOOL;
+    bError : BOOL;
+    bDone  : BOOL;
+    nErrId : UDINT;
+END_VAR
+VAR
+	iStep         : INT;
+    hFile         : UINT;
+    sBuffer       : STRING(8192);
+    fbFileOpen    : FB_FileOpen;
+    fbFileRead    : FB_FileRead;
+    fbFileClose   : FB_FileClose;
+    fbJson        : FB_JsonDomParser;
+    jsonDoc       : SJsonValue;
+    jsonProp      : SJsonValue;
+	nBytesRead    : UDINT;
+	bExecutePrev  : BOOL; 
+    bStart        : BOOL;
+	bWait1Cycle	  : BOOL := FALSE;
+	iCount		  : UINT := 0;
+	iDummyTimer	  : INT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[bStart := bExecute AND NOT bExecutePrev;
+bExecutePrev := bExecute;
+
+IF NOT bExecute THEN
+	bBusy := FALSE;
+    bDone := FALSE;
+    bError := FALSE;
+
+	sBuffer := '';
+	jsonDoc := 0;
+	jsonProp := 0;
+	hFile := 0;
+	bExecutePrev := FALSE;	
+END_IF
+
+CASE iStep OF
+
+0:
+     IF bExecute AND NOT bBusy THEN
+        bBusy := TRUE;
+        bDone := FALSE;
+        bError := FALSE;
+        nErrId := 0;
+        iCount := 0;
+        // Reset interno total
+        sBuffer := '';
+        jsonDoc := 0;
+        jsonProp := 0;
+        hFile := 0;
+        iStep := 5;
+    END_IF
+	
+5:
+	fbFileOpen(
+            sNetId := '',
+            sPathName := sFileName,
+            nMode := FOPEN_MODEREAD OR FOPEN_MODETEXT,
+            bExecute := TRUE,
+			hFile => hFile
+	);
+	IF NOT fbFileOpen.bBusy AND NOT fbFileOpen.bError THEN
+		iStep := 10;
+	END_IF
+
+10:
+    fbFileOpen(
+        sNetId := '',
+        sPathName := sFileName,
+        nMode := FOPEN_MODEREAD OR FOPEN_MODETEXT,
+        bExecute := FALSE
+    );
+    IF NOT fbFileOpen.bBusy THEN
+        IF fbFileOpen.bError THEN
+            bError := TRUE;
+            nErrId := fbFileOpen.nErrId;
+            iStep := 100;
+        ELSE
+            hFile := fbFileOpen.hFile;
+            fbFileRead(
+                sNetId := '',
+                hFile := hFile,
+                pReadBuff := ADR(sBuffer),
+                cbReadLen := SIZEOF(sBuffer),
+                bExecute := TRUE
+            );
+            iStep := 20;
+        END_IF
+    END_IF
+
+20:
+    fbFileRead(
+        sNetId := '',
+        hFile := hFile,
+        pReadBuff := ADR(sBuffer),
+        cbReadLen := SIZEOF(sBuffer),
+        bExecute := FALSE,
+        cbRead => nBytesRead 
+    );
+    IF NOT fbFileRead.bBusy THEN
+        IF fbFileRead.bError THEN
+            bError := TRUE;
+            nErrId := fbFileRead.nErrId;
+            iStep := 100;
+        ELSE
+            // Clear the buffer
+            IF nBytesRead < SIZEOF(sBuffer) THEN
+    			sBuffer[nBytesRead] := 0; 
+			END_IF
+
+            fbFileClose(
+                sNetId := '',
+                hFile := hFile,
+                bExecute := TRUE
+            );
+            iStep := 30;
+        END_IF
+    END_IF
+
+
+30:
+    fbFileClose(
+        sNetId := '',
+        hFile := hFile,
+        bExecute := FALSE
+    );
+    IF NOT fbFileClose.bBusy THEN
+        IF fbFileClose.bError THEN
+            bError := TRUE;
+            nErrId := fbFileClose.nErrId;
+            iStep := 100;
+        ELSE
+            iStep := 31;
+        END_IF
+    END_IF
+
+31: // Dummy step: espera um ciclo para garantir flush/GC do Windows
+	fbFileClose( sNetId := '', hFile := hFile, bExecute := FALSE );
+	hFile := 0; // <- ZERA handle explicitamente!
+    iDummyTimer := iDummyTimer + 1;
+    IF iDummyTimer > 1 THEN
+        iDummyTimer := 0;
+        iStep := 32; // Continua
+    END_IF
+
+32: 
+	jsonDoc := fbJson.ParseDocument(sBuffer);
+	IF jsonDoc = 0 THEN
+		iStep := 35;
+	ELSE
+		iStep := 40;
+	END_IF
+
+35:
+	IF iCount > 10 THEN 
+		bError := TRUE;
+		nErrId := 16#F1000001; // Custom error code for invalid JSON
+		iStep := 100;
+	ELSE
+		jsonDoc := 0;
+		jsonProp := 0;
+		sBuffer := '';
+		iCount := iCount + 1;
+		iStep := 0;
+	END_IF
+	
+39:
+	IF bWait1Cycle THEN
+		iStep := 40;
+	END_IF 
+	IF NOT bWait1Cycle THEN
+		bWait1Cycle := TRUE;
+	END_IF
+
+40:
+	bWait1Cycle := FALSE;
+	
+	// Extract sMethodName
+	jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/sMethodName');
+	GVL_HMI.aAvailableFiles[iTargetIndex].sMethodName := fbJson.GetString(jsonProp);
+	
+    // Extract sCreatedBy
+	jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/sCreatedBy');
+	GVL_HMI.aAvailableFiles[iTargetIndex].sCreatedBy := fbJson.GetString(jsonProp);
+
+    // Extract dCreationDate
+    jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/dCreationDate');
+    GVL_HMI.aAvailableFiles[iTargetIndex].dCreationDate := STRING_TO_DATE(fbJson.GetString(jsonProp));
+
+    // Extract iRevision
+    jsonProp := fbJson.FindMemberPath(jsonDoc, 'stInfo/iRevision');
+    GVL_HMI.aAvailableFiles[iTargetIndex].iRevision := TO_INT(fbJson.GetInt(jsonProp));
+
+    iStep := 100;
+
+100:
+    bBusy := FALSE;
+    bDone := TRUE;
+	bExecutePrev := FALSE;
+	icount := 0;
+    IF NOT bExecute THEN
+        iStep := 0;
+    END_IF
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_RecipeHeaderHandler">
+      <LineId Id="1732" Count="3" />
+      <LineId Id="2060" Count="2" />
+      <LineId Id="2059" Count="0" />
+      <LineId Id="1736" Count="9" />
+      <LineId Id="2022" Count="11" />
+      <LineId Id="1752" Count="38" />
+      <LineId Id="1951" Count="15" />
+      <LineId Id="1980" Count="1" />
+      <LineId Id="1969" Count="9" />
+      <LineId Id="1921" Count="0" />
+      <LineId Id="1813" Count="12" />
+      <LineId Id="2056" Count="0" />
+      <LineId Id="1832" Count="1" />
+      <LineId Id="2057" Count="0" />
+      <LineId Id="1834" Count="0" />
+      <LineId Id="2071" Count="0" />
+      <LineId Id="2076" Count="0" />
+      <LineId Id="2065" Count="3" />
+      <LineId Id="2058" Count="0" />
+      <LineId Id="2047" Count="1" />
+      <LineId Id="2051" Count="4" />
+      <LineId Id="2050" Count="0" />
+      <LineId Id="2049" Count="0" />
+      <LineId Id="1835" Count="12" />
+      <LineId Id="2010" Count="0" />
+      <LineId Id="2019" Count="2" />
+      <LineId Id="2012" Count="0" />
+      <LineId Id="2016" Count="0" />
+      <LineId Id="2014" Count="0" />
+      <LineId Id="2011" Count="0" />
+      <LineId Id="1848" Count="0" />
+      <LineId Id="2017" Count="1" />
+      <LineId Id="2110" Count="0" />
+      <LineId Id="2109" Count="0" />
+      <LineId Id="2107" Count="1" />
+      <LineId Id="1849" Count="22" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

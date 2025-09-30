@@ -1,0 +1,290 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{cebf6aa5-5e58-48d5-8759-1298446923a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+
+VAR
+	// Axis Motion Status and Errors
+    bBusy         	: BOOL;              		// Indicates whether the axis is moving
+    bError        	: BOOL;              		// Indicates error
+    nErrorID      	: UDINT;             		// Error code
+		
+	//Balance FB call and Testing
+	fbTcpClient						: FB_TCPClient;
+		bConnectionDone				: BOOL 			:= FALSE;
+		fMeasuredWeight				: REAL;
+    	sResponseMessage			: STRING(255);
+    	bStartCommunication			: BOOL 			:= FALSE;  
+    	tAdjustableDelay			: TIME 			:= T#100MS;  //Configured time between the states.
+		bRequestWeight				: BOOL 			:= FALSE;
+		rScaleWeight				: LREAL := 0;  
+		
+	//Event Logger call and testing
+	fbEventHandler		: FB_EventHandler;
+		bExecuteEvent	: BOOL := FALSE;
+		bEventDone		: BOOL := FALSE;
+	
+	//Alarm Raise and Confirm Example
+	fbAlarm				: FB_AlarmHandler;
+		bAlarmEvent		: BOOL := FALSE;
+		bConfirm		: BOOL := FALSE;
+		
+	//Pressure Scaling Value testing
+	fbSensorScaling		: FB_SensorScaling;
+		bPressureInput	: BOOL := FALSE;
+		rPressureSensor	: REAL;
+		bPressureExecute: BOOL := FALSE;
+
+	//testting
+	bPumpForwards 	: BOOL := FALSE;
+	bPumpBackwards	: BOOL := FALSE;
+	bAllPumpsStop	: BOOL := FALSE;
+	bDebug1  : BOOL := FALSE;
+	bDebug2  : BOOL := FALSE;
+	bDebug3  : BOOL := FALSE;
+	bDebug4  : BOOL := FALSE;
+	bDebug5  : BOOL := FALSE;
+	bDebug6  : BOOL := FALSE;
+	bDebug7  : BOOL := FALSE;
+	bDebug8  : BOOL := FALSE;
+	bDebug9  : BOOL := FALSE;
+	bDebug10 : BOOL := FALSE;
+	bHomeDone : BOOL := FALSE;
+	bDoSomething : BOOL;
+	
+	rM1Position 	: ARRAY[1..3] OF LREAL;
+	rValvePosition 	: ARRAY[1..5] OF LREAL;
+	rLinearPumpPosition 	: ARRAY[1..10] OF LREAL;
+	rRotaryPumpPosition 	: ARRAY[1..10] OF LREAL;
+	
+	stPumpStatus : ARRAY[1..10] OF ST_ActuatorStatus;
+			
+	// ########## Retain valves position ####################
+ 	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
+    bValveStatus      : ARRAY[1..5] OF BOOL;
+    i                 : INT;
+	
+	fbPumpsController : FB_AllPumpsController; 
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ //Call State Machine and peripheral programs
+PRG_MasterControl(); 
+PRG_UpdateVariablesMoving();
+PRG_SafetyHandle();
+
+
+//Can be put into Low task event
+PRG_HMIControl();
+PRG_ShutdownPLC();
+PRG_TowerAlarmLamps();
+PRG_AxisAssignment();
+PRG_RecipeManager();
+PRG_SystemInfo();
+PRG_LevelHandler();
+//PRG_RetainValveAngles();
+
+//Related to Events control
+POU_EventTest();
+POU_FaultHandler();
+PRG_MasterSystemTime();
+
+FOR i := 1 TO 5 DO
+	
+	bValveStatus[i] := GVL_Motion.aValvesObj[i].ReadValveStatus();
+	
+	IF bValveStatus[i] THEN
+		IF bSetValvePosition[i] AND GVL_Retain.bPositionIsValid[i] THEN
+			GVL_Motion.bValvesPositionRecovered := TRUE; // Permissive flag for valve repositioning after shutdown
+			// Single attempt to restore the position
+			bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(rPosition := GVL_Retain.rValveLastPosition[i]);
+		ELSE
+			// Stores position continuously while motor is energized
+			GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
+			GVL_Retain.bPositionIsValid[i] := TRUE;
+		END_IF
+	ELSE
+		// Motor not energized: reset flag to set position when restarting
+		bSetValvePosition[i] := TRUE;
+	END_IF
+END_FOR
+
+//################ TESTING AREA ################################################################################################################################
+
+IF bDebug1 THEN // open linear pumps
+	bDebug1 :=  NOT GVL_Motion.aPumpsLinear[1].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[2].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[3].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[4].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[5].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[6].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[7].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[8].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[9].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2) AND
+				NOT GVL_Motion.aPumpsLinear[10].MoveAbsolute(rPosition := -9, rVelocity := 1, rAcc := 2, rDec := 2);
+END_IF
+
+IF bDebug3 THEN
+	stPumpStatus[1] := GVL_Motion.aPumpsRotary[1].GetStatus();
+	stPumpStatus[2] := GVL_Motion.aPumpsRotary[2].GetStatus();
+	stPumpStatus[3] := GVL_Motion.aPumpsRotary[3].GetStatus();
+	stPumpStatus[4] := GVL_Motion.aPumpsRotary[4].GetStatus();
+	stPumpStatus[5] := GVL_Motion.aPumpsRotary[5].GetStatus();
+	stPumpStatus[6] := GVL_Motion.aPumpsRotary[6].GetStatus();
+	stPumpStatus[7] := GVL_Motion.aPumpsRotary[7].GetStatus();
+	stPumpStatus[8] := GVL_Motion.aPumpsRotary[8].GetStatus();
+	stPumpStatus[9] := GVL_Motion.aPumpsRotary[9].GetStatus();
+	stPumpStatus[10] := GVL_Motion.aPumpsRotary[10].GetStatus();
+END_IF
+
+IF bDebug2 THEN // See axis actual position 
+	rM1Position[1] 	:= GVL_Motion.aMotors[1].GetPosition();
+	rM1Position[2] 	:= GVL_Motion.aMotors[2].GetPosition();
+	rM1Position[3] 	:= GVL_Motion.aMotors[3].GetPosition();	
+
+	rLinearPumpPosition[1] := GVL_Motion.aPumpsLinear[1].GetPosition();
+	rLinearPumpPosition[2] := GVL_Motion.aPumpsLinear[2].GetPosition();
+	rLinearPumpPosition[3] := GVL_Motion.aPumpsLinear[3].GetPosition();
+	rLinearPumpPosition[4] := GVL_Motion.aPumpsLinear[4].GetPosition();
+	rLinearPumpPosition[5] := GVL_Motion.aPumpsLinear[5].GetPosition();
+	rLinearPumpPosition[6] := GVL_Motion.aPumpsLinear[6].GetPosition();
+	rLinearPumpPosition[7] := GVL_Motion.aPumpsLinear[7].GetPosition();
+	rLinearPumpPosition[8] := GVL_Motion.aPumpsLinear[8].GetPosition();
+	rLinearPumpPosition[9] := GVL_Motion.aPumpsLinear[9].GetPosition();
+	rLinearPumpPosition[10] := GVL_Motion.aPumpsLinear[10].GetPosition();
+
+	rValvePosition[1]	:= GVL_Motion.aValvesObj[1].GetPosition();
+	rValvePosition[2]	:= GVL_Motion.aValvesObj[2].GetPosition();
+	rValvePosition[3]	:= GVL_Motion.aValvesObj[3].GetPosition();
+	rValvePosition[4]	:= GVL_Motion.aValvesObj[4].GetPosition();
+	rValvePosition[5]	:= GVL_Motion.aValvesObj[5].GetPosition();
+	
+	rRotaryPumpPosition[1] := GVL_Motion.aPumpsRotary[1].GetPosition();
+	rRotaryPumpPosition[2] := GVL_Motion.aPumpsRotary[2].GetPosition();
+	rRotaryPumpPosition[3] := GVL_Motion.aPumpsRotary[3].GetPosition();
+	rRotaryPumpPosition[4] := GVL_Motion.aPumpsRotary[4].GetPosition();
+	rRotaryPumpPosition[5] := GVL_Motion.aPumpsRotary[5].GetPosition();
+	rRotaryPumpPosition[6] := GVL_Motion.aPumpsRotary[6].GetPosition();
+	rRotaryPumpPosition[7] := GVL_Motion.aPumpsRotary[7].GetPosition();
+	rRotaryPumpPosition[8] := GVL_Motion.aPumpsRotary[8].GetPosition();
+	rRotaryPumpPosition[9] := GVL_Motion.aPumpsRotary[9].GetPosition();
+	rRotaryPumpPosition[10] := GVL_Motion.aPumpsRotary[10].GetPosition();
+END_IF
+
+IF bAllPumpsStop THEN
+	bAllPumpsStop := NOT fbPumpsController.StopAllPumps();
+END_IF
+
+IF bDebug4 THEN
+	bDebug4 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 15, rDec := 15);
+END_IF
+
+IF bDebug5 THEN
+	bDebug5 := NOT GVL_Motion.aMotors[1].MoveAbsolute(rPosition := -100, rVelocity := 15, rAcc := 15, rDec := 15);
+END_IF
+
+IF bDebug6 THEN
+	bDebug6 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 3, rVelocity := 10, rAcc := 10, rDec := 10);
+END_IF
+
+IF bDebug7 THEN
+	bDebug7 := NOT GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := 10, rAcc := 10, rDec := 10);
+END_IF
+
+IF bDebug9 THEN
+	bDebug9 := NOT GVL_Motion.aMotors[1].Stop();
+END_IF
+
+IF bDebug10 THEN
+	bDebug10 := NOT GVL_Motion.aValvesObj[1].Stop();
+END_IF
+
+IF bHomeDone THEN
+	//bHomeDone := NOT GVL_Motion.aMotors[1].Home(pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home), bHomeRequest := bHomeDone);
+	bHomeDone := NOT GVL_Motion.aPumpsLinear[1].Home( pHomeSensor := ADR(GVL_Motion.aPumps[1].Linear.iHomeSensor.0), 
+													  rVelocity := GVL_Motion.aPumps[1].Linear.rHomeVel, 
+													  rAcc := GVL_Motion.aPumps[1].Linear.rHomeAcc, 
+													  rDec := GVL_Motion.aPumps[1].Linear.rHomeDec
+													  );
+END_IF
+
+//<pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
+
+//9mm Linear pump opening – 0.079 µL/step
+//5mL Testing 
+//GVL_Motion.aPumps[1].Rotary.fDistance := 63291; //[5000 / 0.079] 
+
+//<\pumps volume dispenser test>------------------------------------------------------------------------------------------------------------------
+
+//<Event Logger Test>----------------------------------------------------------------------------------------------------------------------------
+// Events call
+fbEventHandler(
+	bExecute 	:= bExecuteEvent,		// Triggers the event
+	eEventName 	:= E_Events.INFO,		// Selects the type of event to be triggered.
+	sSystem		:= 'Safety',			// System message
+	sMessage	:= 'Doors not closed!',	// Alarm Message
+	bDone		=> bEventDone			// Event Listed
+);
+
+IF bEventDone THEN
+	bExecuteEvent 	:= FALSE;
+	bEventDone		:= FALSE;	
+END_IF
+
+//Alarms Call
+fbAlarm(
+	evtEntry 	:= TC_Events.ASRS.Error,	// Selects the type of event to be triggered.
+	bEvt 		:= bAlarmEvent, 			// Triggers the alarm. If TRUE the alarm is raised and when turn into FALSE the alarm is cleared.
+	bConfirm 	:= bConfirm,				// Confirms the Alarm State
+	sSystem		:= 'Motor M1',				// System message
+	sMessage	:= 'Over Voltage!'			// Alarm Message
+);
+//Do something while the alarm is raised
+IF fbAlarm.eConfirmationState = TcEventConfirmationState.WaitForConfirmation THEN
+	bDoSomething 	:= TRUE;
+ELSE
+	bDoSomething 	:= FALSE;
+END_IF
+
+//<\Event Logger Test>---------------------------------------------------------------------------------------------------------------------------
+
+//<Balance Test>---------------------------------------------------------------------------------------------------------------------------------
+
+GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePort := GVL_Settings.nBalancePort);
+// Em qualquer PRG
+IF bRequestWeight THEN
+    rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
+	IF GVL_Calibration.fbScaleDevice.bWeightReady THEN
+		bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
+	END_IF
+END_IF
+
+//<\Balance Test>---------------------------------------------------------------------------------------------------------------------------------
+
+//<Pressure Testing>------------------------------------------------------------------------------------------------------------------------------
+IF bPressureInput THEN
+	fbSensorScaling(iRawValue := GVL_IO.gAnalogInputs.rMainPressureSupplyInput, iSensorID := 1, rPressure => rPressureSensor);
+END_IF
+
+//<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="6870" Count="3" />
+      <LineId Id="7289" Count="0" />
+      <LineId Id="6874" Count="9" />
+      <LineId Id="7294" Count="0" />
+      <LineId Id="7291" Count="2" />
+      <LineId Id="7290" Count="0" />
+      <LineId Id="6885" Count="160" />
+      <LineId Id="7153" Count="0" />
+      <LineId Id="7133" Count="0" />
+      <LineId Id="7137" Count="2" />
+      <LineId Id="7147" Count="2" />
+      <LineId Id="7140" Count="0" />
+      <LineId Id="7062" Count="6" />
+      <LineId Id="7220" Count="0" />
+      <LineId Id="3172" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

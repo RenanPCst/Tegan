@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SaveCalReportToFile" Id="{6dd31f2b-99c5-4004-bba8-e461fd525e5f}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+    FB_SaveCalReportToFile
+    - Writes a JSON buffer to disk as a uniquely named file under:
+        C:\TwinCAT\ReportsPumpCalibration\
+    - File name pattern:
+        Calib_<calibrationNumber>_<user>_<YYYYMMDD_HHMMSS>.json
+*)
+FUNCTION_BLOCK FB_SaveCalReportToFile
+VAR_INPUT
+	bExecute    : BOOL;                 // Rising edge starts the save sequence
+    sJsonBuffer : STRING(16384);        // JSON payload to write (already built)
+	nJsonBytes  : UDINT;        		// sJsonBuffer Lenght to create the file 
+	sFileNameIn : STRING(256);			// File path used on file creation
+END_VAR
+VAR_OUTPUT
+	bDone       : BOOL;                 // TRUE when file is fully written and closed
+    bBusy       : BOOL;                 // TRUE while state machine is running
+    bError      : BOOL;                 // TRUE on any error
+    nErrId      : UDINT;                // Propagates underlying FB error code
+END_VAR
+VAR
+	iStep           : INT;
+
+    // File primitives (Tc2_Utilities)
+    fbFileOpen      : FB_FileOpen;
+    fbFileWrite     : FB_FileWrite;
+    fbFileClose     : FB_FileClose;
+    hFile           : UINT;
+    nBytesToWrite   : UDINT;
+
+    // Timestamp generation (local system time)
+    fbLocalSystemTime : FB_LocalSystemTime;
+    stLocal           : TIMESTRUCT;
+    sStamp            : STRING(32);
+    sHH               : STRING(2);
+    sMM               : STRING(2);
+    sSS               : STRING(2);
+    sMMo              : STRING(2);
+    sDD               : STRING(2);
+	bDTReady		  : BOOL := FALSE;
+
+    // File name helpers
+    sUserSafe       : STRING(64);
+	
+	bCloseFileStart : BOOL := FALSE;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iStep OF
+    // -------------------------------------------------------------------------
+    0: // Idle -> Arm
+    // -------------------------------------------------------------------------
+    IF bExecute THEN
+        bBusy := TRUE; bDone := FALSE; bError := FALSE; nErrId := 0;
+
+		iStep := 10;
+    END_IF
+
+    // -------------------------------------------------------------------------
+    10: // Wait file open
+    // -------------------------------------------------------------------------
+	// Open (create/overwrite) file in TEXT mode
+        fbFileOpen(
+            sNetId   := '',
+            sPathName:= sFileNameIn,
+            nMode    := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
+            bExecute := TRUE
+        );
+        fbFileWrite(bExecute := FALSE);
+        fbFileClose(bExecute := FALSE);
+		
+    IF NOT fbFileOpen.bBusy THEN
+        IF fbFileOpen.bError THEN
+            bError := TRUE; nErrId := fbFileOpen.nErrId;
+            bBusy := FALSE; iStep := 100;
+        ELSE
+            hFile := fbFileOpen.hFile;
+            iStep := 20;
+        END_IF
+    END_IF
+
+    // -------------------------------------------------------------------------
+    20: // Write JSON buffer
+    // -------------------------------------------------------------------------
+
+    // JSON already comes ready in sJsonBuffer; nJsonBytes gives number of characters
+    nBytesToWrite := nJsonBytes;
+
+    fbFileWrite(
+        sNetId     := '',
+        hFile      := hFile,
+        pWriteBuff := ADR(sJsonBuffer),
+        cbWriteLen := nBytesToWrite,
+        bExecute   := TRUE
+    );
+    //iStep := 30;
+
+    // -------------------------------------------------------------------------
+    //30: // Wait write completion, then close
+    // -------------------------------------------------------------------------
+    IF NOT fbFileWrite.bBusy THEN
+        IF fbFileWrite.bError THEN
+            bError := TRUE; nErrId := fbFileWrite.nErrId;
+            // Try closing handle even on error
+			bCloseFileStart := TRUE;
+            fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
+        ELSE
+            fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
+			bCloseFileStart := TRUE;
+        END_IF
+    END_IF
+
+    IF NOT fbFileClose.bBusy AND bCloseFileStart THEN
+        IF fbFileClose.bError THEN
+            bError := TRUE; nErrId := fbFileClose.nErrId;
+        END_IF
+        bDone := NOT bError;
+        bBusy := FALSE;
+        iStep := 100;
+    END_IF
+
+    // -------------------------------------------------------------------------
+    100: // Latch until caller drops bExecute
+    // -------------------------------------------------------------------------
+    IF NOT bExecute THEN
+        iStep := 0;
+		bCloseFileStart := FALSE;
+        bDone := FALSE; bBusy := FALSE; bError := FALSE; nErrId := 0;
+    END_IF
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{0b7af051-4045-4657-9c10-c1f14be54055}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Best-effort close if a handle is present
+IF hFile <> 0 THEN
+    fbFileClose(sNetId := '', hFile := hFile, bExecute := TRUE);
+END_IF;
+
+// Ensure child file FBs are not executing
+fbFileOpen(bExecute := FALSE);
+fbFileWrite(bExecute := FALSE);
+fbFileClose(bExecute := FALSE);
+
+// Clear locals
+hFile          := 0;
+nBytesToWrite  := 0;
+bCloseFileStart:= FALSE;
+
+// Clear status & state
+bDone := FALSE;
+bBusy := FALSE;
+bError:= FALSE;
+nErrId:= 0;
+iStep := 0;
+
+Reset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SaveCalReportToFile">
+      <LineId Id="161" Count="5" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="402" Count="0" />
+      <LineId Id="210" Count="1" />
+      <LineId Id="330" Count="1" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="335" Count="7" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="215" Count="12" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="228" Count="18" />
+      <LineId Id="344" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="249" Count="1" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="252" Count="2" />
+      <LineId Id="258" Count="13" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="272" Count="2" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SaveCalReportToFile.Reset">
+      <LineId Id="6" Count="21" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

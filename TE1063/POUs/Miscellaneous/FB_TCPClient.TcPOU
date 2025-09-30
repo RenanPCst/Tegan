@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TCPClient" Id="{7dc52223-2265-4344-b3c9-7b0fe367e7e3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TCPClient
+// This function block handles TCP communication with a scale using MT-SICS commands (e.g., SI) to retrieve weight data.
+
+VAR_INPUT
+    sRemoteHost  : T_IPv4Addr;   // IP address of the scale
+    nRemotePort  : UINT;         // TCP port of the scale
+    bExecute     : BOOL;         // Manual trigger to start communication
+    tStateDelay  : TIME := T#100MS; // Delay between state transitions
+	sCommand 	 : STRING(16);
+END_VAR
+
+VAR_OUTPUT
+    bConnected       : BOOL;         // True if connection to scale was established
+    sReceivedData_At : STRING(255);  // Raw response received from the scale
+	sReceivedData_SI : STRING(255);  // Raw response received from the scale
+    sResponse  		 : STRING(255);  // Human-readable description of the response
+    fWeight          : REAL;         // Parsed weight value from the scale
+    bConnectionDone  : BOOL;         // True when communication finishes successfully or with error
+    nErrorID         : UDINT;        // Error ID from socket function blocks
+    bError           : BOOL;         // General error flag
+    bBusy            : BOOL;         // Indicates communication in progress
+    bOperatorCheck   : BOOL;         // True if manual intervention is needed (e.g., scale not ready)
+END_VAR
+
+VAR
+    iState                  : INT;             // State machine control variable
+    fbSocketConnect         : FB_SocketConnect; // Function block to establish TCP connection
+    fbSocketSend            : FB_SocketSend;    // Function block to send data over TCP
+    fbSocketClose           : FB_SocketClose;   // Function block to close TCP connection
+    fbSocketCloseAll        : FB_SocketCloseAll;// Function block to close all TCP connections
+    fbSocketReceive_AtCmd   : FB_SocketReceive; // Function block to receive data over TCP
+    fbSocketReceive_SI      : FB_SocketReceive;
+	fbSocketReceive_SI2		: FB_SocketReceive;
+    hSocket                 : T_HSOCKET;        // Socket handle for TCP session
+
+    sSendData               : STRING(10);       // Message to be sent to the scale
+    nRecBytes_At            : UDINT;            // Number of bytes received
+	nRecBytes_SI			: UDINT; 
+    sCRLF                   : STRING(2);        // Carriage return + line feed sequence
+    bTriggerPrev            : BOOL;             // Previous state of trigger input
+	sReceivedData2			: STRING(255);
+
+    tonStateTimer            : TON;              // Timer for controlling state delays
+    tonCloseConnectionTimer: TON;              // Timer for socket close delay
+    tonOpenConnectionTimer : TON;              // Timer for socket open delay
+    tonSendCommandTimer    : TON;              // Timer for command send delay
+    tonReceivingTimer      : TON;              // Timer for response receiving delay
+    tonSocketCloseTimer    : TON;              // Timer for socket close finalization
+
+    bCloseConnectionTimer  : BOOL := FALSE;     // Pulse control for close timer
+    bOpenConnectionTimer   : BOOL := FALSE;     // Pulse control for open timer
+    bSendCommandTimer      : BOOL := FALSE;     // Pulse control for send timer
+    bReceivingTimer        : BOOL := FALSE;     // Pulse control for receive timer
+    bCloseSocketTimer      : BOOL := FALSE;     // Pulse control for socket close timer
+	bResetDone			   : BOOL := FALSE;		// Internal FB Reset Flag
+	bTimerOutput		   : BOOL := FALSE;
+	bStart				   : BOOL := FALSE;
+	bReceiveActive		   : BOOL := FALSE;
+	bReceiveExecute		   : BOOL := FALSE;
+
+    tStepTimer              : TIME := T#500ms;  // Default step delay for timers
+
+    receiveTimeout          : INT := 0;         // Timeout counter for receiving response
+    MAX_TIMEOUT             : INT := 50;        // Max retries for receive timeout
+    retryCount              : INT := 0;         // Number of retry attempts
+    MAX_RETRIES             : INT := 2;         // Maximum retry attempts for S I error
+
+    iStart                  : INT := 4;         // Index of first numeric character in response
+    iEnd                    : INT := 5;         // Index of end of numeric string
+    sWeightStr              : STRING(10);       // Substring extracted for weight conversion
+	iSubStep				: UINT;
+
+    fbConnectTrigger        : R_TRIG;           // Rising edge trigger for connect
+    fbSendTrigger           : R_TRIG;           // Rising edge trigger for send
+    fbReceiveTrigger        : R_TRIG;           // Rising edge trigger for receive
+    fbCloseTrigger          : R_TRIG;           // Rising edge trigger for close
+    fbCloseAllTrigger       : R_TRIG;           // Rising edge trigger for close all
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// --- TCP Client States for Weighing Scale Communication ---
+
+IF NOT bStart AND bExecute THEN
+    iState := 0;
+    bStart := bExecute;
+END_IF
+
+CASE iState OF
+
+    // --- STATE 0: Initial Reset ---
+    0:
+        IF bStart AND NOT bResetDone THEN
+            bResetDone := Reset();
+        END_IF
+
+        IF bResetDone THEN
+            tonStateTimer(IN := TRUE, PT := tStateDelay);
+            IF tonStateTimer.Q THEN
+                tonStateTimer(IN := FALSE);
+                iState := 5;
+                bBusy := TRUE;
+            END_IF
+        END_IF
+
+    // --- STATE 5: Close All Sockets ---
+    5:
+        bResetDone := FALSE;
+        fbSocketCloseAll(
+            sSrvNetId := '',
+            bExecute := TRUE,
+            tTimeout := T#10S,
+            bBusy => bBusy,
+            bError => bError,
+            nErrId => nErrorID
+        );
+
+        tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT bBusy AND tonStateTimer.Q THEN
+            tonStateTimer(IN := FALSE);
+            iState := 10;
+        END_IF
+
+    // --- STATE 10: TCP Connect ---
+    10:
+        fbSocketConnect(
+            sRemoteHost := sRemoteHost,
+            nRemotePort := nRemotePort,
+            bExecute := TRUE,
+            tTimeout := T#10S,
+            bBusy => bBusy,
+            bError => bError,
+            nErrId => nErrorID,
+            hSocket => hSocket
+        );
+
+        tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT fbSocketConnect.bBusy AND tonStateTimer.Q THEN
+            IF bError THEN
+                sResponse := CONCAT('Connection error! Code: ', UDINT_TO_STRING(nErrorID));
+                iState := 60;
+            ELSIF hSocket.handle <> 0 THEN
+                bConnected := TRUE;
+                iState := 20;
+            ELSE
+                sResponse := 'No socket handle.';
+                iState := 60;
+            END_IF
+			tonStateTimer(IN := FALSE);
+        END_IF
+
+    // --- STATE 20: Send "@" Command ---
+    20:
+        sSendData := CONCAT('@', CONCAT(CHR(13), CHR(10)));
+        fbSocketSend(
+            hSocket := hSocket,
+            cbLen := SIZEOF(sSendData),
+            pSrc := ADR(sSendData),
+            bExecute := TRUE,
+            tTimeout := T#1S,
+            bError => bError,
+            nErrId => nErrorID
+        );
+
+        tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT bBusy AND tonStateTimer.Q THEN
+            tonStateTimer(IN := FALSE);
+			fbSocketSend(bExecute := FALSE);
+            iState := 30;
+        END_IF
+
+    // --- STATE 30: Receive "@" Response ---
+    30:
+        fbSocketReceive_AtCmd(
+            hSocket := hSocket,
+            cbLen := SIZEOF(sReceivedData_At),
+            pDest := ADR(sReceivedData_At),
+            bExecute := TRUE,
+            tTimeout := T#3S,
+            bError => bError,
+            nErrId => nErrorID,
+            nRecBytes => nRecBytes_At
+        );
+		tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT fbSocketReceive_AtCmd.bBusy AND tonStateTimer.Q THEN
+			IF nRecBytes_At > 0 THEN
+				fbSocketReceive_AtCmd(bExecute := FALSE);
+				iState := 40;
+			ELSE
+                sResponse := '@_Error';
+                iState := 60;
+			END_IF
+			tonStateTimer(IN := FALSE);
+        END_IF
+
+    // --- STATE 40: Send "SI" Command ---
+    40:
+        sSendData := CONCAT('SI', CONCAT(CHR(13), CHR(10)));
+        fbSocketSend(
+            hSocket := hSocket,
+            cbLen := SIZEOF(sSendData),
+            pSrc := ADR(sSendData),
+            bExecute := TRUE,
+            tTimeout := T#1S,
+            bError => bError,
+            nErrId => nErrorID
+        );
+
+        tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT bBusy AND tonStateTimer.Q THEN
+            tonStateTimer(IN := FALSE);
+            iState := 50;
+        END_IF
+
+    // --- STATE 50: Receive SI Response ---
+    50:
+        fbSocketReceive_SI(
+            hSocket := hSocket,
+            cbLen := SIZEOF(sReceivedData_SI),
+            pDest := ADR(sReceivedData_SI),
+            bExecute := TRUE,
+            tTimeout := T#5S,
+            bError => bError,
+            nErrId => nErrorID,
+            nRecBytes => nRecBytes_SI
+        );
+		tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT fbSocketReceive_SI.bBusy AND tonStateTimer.Q THEN
+            IF nRecBytes_SI > 0 THEN
+                sResponse := sReceivedData_SI;
+                iState := 60;
+            ELSE
+                sResponse := 'SI_Error';
+                iState := 60;
+            END_IF
+			tonStateTimer(in := FALSE);
+        END_IF
+
+    // --- STATE 60: Close socket and finish ---
+    60:
+        fbSocketClose(
+            hSocket := hSocket,
+            bExecute := TRUE,
+            tTimeout := T#2S,
+            bError => bError,
+            nErrId => nErrorID
+        );
+
+        tonStateTimer(IN := TRUE, PT := T#1S);
+        IF NOT bBusy AND tonStateTimer.Q THEN
+            tonStateTimer(IN := FALSE);
+            bConnectionDone := TRUE;
+            bStart := FALSE;
+            iState := 0;
+        END_IF
+
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{5d0ae784-1fb0-4995-bb83-cbf6cf29425b}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset method to initialize all function blocks, outputs and timers to default state.
+fbSocketConnect(bExecute := FALSE);
+fbSocketSend(bExecute := FALSE);
+fbSocketReceive_AtCmd(bExecute := FALSE);
+fbSocketReceive_SI(bExecute := FALSE);
+fbSocketClose(bExecute := FALSE);
+fbSocketCloseAll(bExecute := FALSE);
+
+tonStateTimer(IN := FALSE);
+TonCloseConnectionTimer(IN := FALSE);
+TonOpenConnectionTimer(IN := FALSE);
+TonSendCommandTimer(IN := FALSE);
+TonReceivingTimer(IN := FALSE);
+TonSocketCloseTimer(IN := FALSE);
+
+fbConnectTrigger(CLK := FALSE);
+fbSendTrigger(CLK := FALSE);
+fbReceiveTrigger(CLK := FALSE);
+fbCloseTrigger(CLK := FALSE);
+fbCloseAllTrigger(CLK := FALSE);
+
+bCloseConnectionTimer := FALSE;
+bOpenConnectionTimer := FALSE;
+bSendCommandTimer := FALSE;
+bReceivingTimer := FALSE;
+bCloseSocketTimer := FALSE;
+bTriggerPrev := FALSE;
+
+bTimerOutput := FALSE;
+bConnected := FALSE;
+bConnectionDone := FALSE;
+bBusy := FALSE;
+bError := FALSE;
+bOperatorCheck := FALSE;
+nErrorID := 0;
+retryCount := 0;
+fWeight := 0;
+sResponse := '';
+sWeightStr := '';
+iStart := 4;
+iEnd := 5;
+
+IF NOT fbSocketConnect.bBusy AND NOT fbSocketSend.bBusy AND NOT fbSocketReceive_AtCmd.bBusy AND NOT fbSocketReceive_SI.bBusy AND NOT fbSocketClose.bBusy AND NOT fbSocketCloseAll.bBusy THEN
+	Reset := TRUE;
+	RETURN;
+ELSE
+	Reset := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TCPClient">
+      <LineId Id="3010" Count="56" />
+      <LineId Id="3068" Count="9" />
+      <LineId Id="3262" Count="0" />
+      <LineId Id="3078" Count="37" />
+      <LineId Id="3117" Count="0" />
+      <LineId Id="3264" Count="2" />
+      <LineId Id="3118" Count="0" />
+      <LineId Id="3267" Count="0" />
+      <LineId Id="3119" Count="41" />
+      <LineId Id="3261" Count="0" />
+      <LineId Id="3161" Count="20" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TCPClient.Reset">
+      <LineId Id="6" Count="3" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="10" Count="20" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="31" Count="5" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="37" Count="2" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="47" Count="2" />
+      <LineId Id="46" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

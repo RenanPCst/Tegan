@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Blink" Id="{2252363c-dbe1-4a37-984a-e77f414499c2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Blink
+VAR_INPUT
+	bEnable : BOOL := FALSE;         // Enables the blink
+    tPeriod : TIME := T#1S;       	// cycle total time (on + off)
+END_VAR
+VAR_OUTPUT
+	bBlink : BOOL;                   // blinking output
+END_VAR
+VAR
+	ton : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Blink logic: toggles bBlink every tPeriod/2 while enabled
+IF bEnable THEN
+    // Start or keep running the timer for half the period
+    ton(IN := TRUE, PT := tPeriod / 2);
+    IF ton.Q THEN
+        bBlink := NOT bBlink;    // Toggle the blink output
+        ton(IN := FALSE);        // Reset the timer for the next half period
+    END_IF
+ELSE
+    ton(IN := FALSE);            // Make sure the timer is stopped
+    bBlink := FALSE;             // Output stays OFF when not enabled
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Blink">
+      <LineId Id="37" Count="10" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

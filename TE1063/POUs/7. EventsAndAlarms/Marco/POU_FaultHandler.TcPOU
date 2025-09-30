@@ -1,0 +1,488 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="POU_FaultHandler" Id="{b1ce7aec-da98-4fd1-9638-edc1a122ac6a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM POU_FaultHandler
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+//------__________________________----------------------------------------------------------------------------------------------------
+//----- Related to Emergency Stop ----------------------------------------------------------------------------------------------------
+
+
+(*-ES-000: HMI E-Stop Button Active-*)
+IF NOT GVL_Safety.SafetyInputs.bEStopHMICh1 OR 
+	NOT GVL_Safety.SafetyInputs.bEStopHMICh2 THEN
+		GVL_Alarms.arrEventFlag[0]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[0]:= FALSE;	
+END_IF
+
+(*-ES-001: Side E-Stop Button Active-*)
+IF NOT GVL_Safety.SafetyInputs.bEStopSideCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bEStopSideCh2 THEN
+		GVL_Alarms.arrEventFlag[1]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[1]:= FALSE;	
+END_IF
+
+(*-ES-002: Door 1 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[2]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[2]:= FALSE;	
+END_IF
+
+(*-ES-003: Door 2 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[3]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[3]:= FALSE;	
+END_IF
+
+(*-ES-004: Door 3 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[4]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[4]:= FALSE;	
+END_IF
+
+(*-ES-005: Door 4 Open-*)
+IF GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[5]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[5]:= FALSE;	
+END_IF
+
+(*-ES-006: Door 5 Open-*)
+IF GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[6]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[6]:= FALSE;	
+END_IF
+
+(*-ES-007: Door 6 Open-*)
+IF GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[7]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[7]:= FALSE;	
+END_IF
+
+(*-ES-008: Terminal EL6910 FB Error-*)
+IF GVL_Safety.SafetyInputs.iSafetyFBError THEN
+		GVL_Alarms.arrEventFlag[8]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[8]:= FALSE;	
+END_IF
+
+(*-ES-009: Terminal EL6910 Communication Error-*)
+IF GVL_Safety.SafetyInputs.iSafetyComError THEN
+		GVL_Alarms.arrEventFlag[9]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[9]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------_________________________-----------------------------------------------------------------------------------------------------
+//----- Related to Motion Errors -----------------------------------------------------------------------------------------------------
+
+
+(*-ME-050: Vertical Axis Stage Collection Error-*)
+IF GVL_Motion.M1Motor.bError THEN
+		GVL_Alarms.arrEventFlag[50]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[50]:= FALSE;	
+END_IF
+
+(*-ME-051: Vertical Axis Sample Recovery Error-*)
+IF GVL_Motion.M2Motor.bError THEN
+		GVL_Alarms.arrEventFlag[51]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[51]:= FALSE;	
+END_IF
+
+(*-ME-052: Horizontal Axis Sample Recovery Error-*)
+IF GVL_Motion.M3Motor.bError THEN
+		GVL_Alarms.arrEventFlag[52]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[52]:= FALSE;	
+END_IF
+
+(*-ME-053: Opening Control Pomp 1 Error-*)
+IF GVL_Motion.aPumps[1].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[53]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[53]:= FALSE;	
+END_IF
+
+(*-ME-054: Opening Control Pomp 2 Error-*)
+IF GVL_Motion.aPumps[2].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[54]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[54]:= FALSE;	
+END_IF
+
+(*-ME-055: Opening Control Pomp 3 Error-*)
+IF GVL_Motion.aPumps[3].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[55]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[55]:= FALSE;	
+END_IF
+
+(*-ME-056: Opening Control Pomp 4 Error-*)
+IF GVL_Motion.aPumps[4].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[56]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[56]:= FALSE;	
+END_IF
+
+(*-ME-057: Opening Control Pomp 5 Error-*)
+IF GVL_Motion.aPumps[5].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[57]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[57]:= FALSE;	
+END_IF
+
+(*-ME-058: Opening Control Pomp 6 Error-*)
+IF GVL_Motion.aPumps[6].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[58]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[58]:= FALSE;	
+END_IF
+
+(*-ME-059: Opening Control Pomp 7 Error-*)
+IF GVL_Motion.aPumps[7].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[59]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[59]:= FALSE;	
+END_IF
+
+(*-ME-060: Opening Control Pomp 8 Error-*)
+IF GVL_Motion.aPumps[8].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[60]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[60]:= FALSE;	
+END_IF
+
+(*-ME-061: Opening Control Pomp 9 Error-*)
+IF GVL_Motion.aPumps[9].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[61]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[61]:= FALSE;	
+END_IF
+
+(*-ME-062: Opening Control Pomp 10 Error-*)
+IF GVL_Motion.aPumps[10].Linear.bError THEN
+		GVL_Alarms.arrEventFlag[62]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[62]:= FALSE;	
+END_IF
+
+(*-ME-063: Pomp Motor 1 Error-*)
+IF GVL_Motion.aPumps[1].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[63]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[63]:= FALSE;	
+END_IF
+
+(*-ME-064: Pomp Motor 2 Error-*)
+IF GVL_Motion.aPumps[2].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[64]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[64]:= FALSE;	
+END_IF
+
+(*-ME-065: Pomp Motor 3 Error-*)
+IF GVL_Motion.aPumps[3].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[65]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[65]:= FALSE;	
+END_IF
+
+(*-ME-066: Pomp Motor 4 Error-*)
+IF GVL_Motion.aPumps[4].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[66]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[66]:= FALSE;	
+END_IF
+
+(*-ME-067: Pomp Motor 5 Error-*)
+IF GVL_Motion.aPumps[5].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[67]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[67]:= FALSE;	
+END_IF
+
+(*-ME-068: Pomp Motor 6 Error-*)
+IF GVL_Motion.aPumps[6].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[68]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[68]:= FALSE;	
+END_IF
+
+(*-ME-069: Pomp Motor 7 Error-*)
+IF GVL_Motion.aPumps[7].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[69]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[69]:= FALSE;	
+END_IF
+
+(*-ME-070: Pomp Motor 8 Error-*)
+IF GVL_Motion.aPumps[8].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[70]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[70]:= FALSE;	
+END_IF
+
+(*-ME-071: Pomp Motor 9 Error-*)
+IF GVL_Motion.aPumps[9].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[71]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[71]:= FALSE;	
+END_IF
+
+(*-ME-072: Pomp Motor 10 Error-*)
+IF GVL_Motion.aPumps[10].Rotary.bError THEN
+		GVL_Alarms.arrEventFlag[72]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[72]:= FALSE;	
+END_IF
+
+(*-ME-073: Valve Motor 1 Error-*)
+IF GVL_Motion.aValves[1].bError THEN
+		GVL_Alarms.arrEventFlag[73]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[73]:= FALSE;	
+END_IF
+
+(*-ME-074: Valve Motor 2 Error-*)
+IF GVL_Motion.aValves[2].bError THEN
+		GVL_Alarms.arrEventFlag[74]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[74]:= FALSE;	
+END_IF
+
+(*-ME-075: Valve Motor 3 Error-*)
+IF GVL_Motion.aValves[3].bError THEN
+		GVL_Alarms.arrEventFlag[75]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[75]:= FALSE;	
+END_IF
+
+(*-ME-076: Valve Motor 4 Error-*)
+IF GVL_Motion.aValves[4].bError THEN
+		GVL_Alarms.arrEventFlag[76]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[76]:= FALSE;	
+END_IF
+
+(*-ME-077: Valve Motor 5 Error-*)
+IF GVL_Motion.aValves[5].bError THEN
+		GVL_Alarms.arrEventFlag[77]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[77]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------____________________________--------------------------------------------------------------------------------------------------
+//----- Related to Interlock Errors --------------------------------------------------------------------------------------------------
+
+
+
+
+//*********************************************************END SECTION****************************************************************
+
+//------____________________________--------------------------------------------------------------------------------------------------
+//----- Related to Process Warnings --------------------------------------------------------------------------------------------------
+
+
+
+//*********************************************************END SECTION****************************************************************
+
+//------_________________________-----------------------------------------------------------------------------------------------------
+//----- Related to System Faults -----------------------------------------------------------------------------------------------------
+
+
+
+
+//*********************************************************END SECTION****************************************************************
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="POU_FaultHandler">
+      <LineId Id="338" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="9" Count="2" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="27" Count="2" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="33" Count="2" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="39" Count="2" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="45" Count="2" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="49" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="51" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="314" Count="2" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="319" Count="5" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="332" Count="1" />
+      <LineId Id="56" Count="1" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="72" Count="1" />
+      <LineId Id="75" Count="2" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="87" Count="4" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="94" Count="4" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="100" Count="4" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="106" Count="4" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="112" Count="4" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="118" Count="4" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="124" Count="4" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="130" Count="4" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="137" Count="3" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="142" Count="4" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="148" Count="4" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="154" Count="4" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="160" Count="4" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="166" Count="4" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="172" Count="4" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="178" Count="4" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="184" Count="4" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="190" Count="4" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="196" Count="4" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="202" Count="4" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="208" Count="4" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="214" Count="4" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="220" Count="4" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="226" Count="4" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="232" Count="4" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="237" Count="4" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="243" Count="4" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="282" Count="1" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="287" Count="2" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="293" Count="3" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="54" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

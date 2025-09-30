@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Retain" Id="{c805bd74-3a47-4da9-afa3-7ff0ce073b1a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL PERSISTENT RETAIN
+	
+	rValveLastPosition 	: ARRAY[1..5] OF LREAL; //Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  
+	bPositionIsValid   	: ARRAY[1..5] OF BOOL;  //Position valid flag
+
+	//Counting and stored info for reports and accountability
+	iRunNumber : UDINT;
+	iCalibrationNumber : UDINT := 0;
+	
+	(* Calibration *)
+	rLinearPumpOldPosition		: ARRAY[1..10] OF LREAL; // Linear pumps old position.
+	rLinearPumpsLastAdjustUser	: STRING(128);		 	 // Linear pumps last adjusted username
+	rLinearPumpsLastAdjustDate	: DATE;				 	 // Linear pumps last adjusted Date
+	iPumpCalibrationCount		: UDINT; 				 // Pump Calibration counting number to register on report
+	
+	(**)
+		
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

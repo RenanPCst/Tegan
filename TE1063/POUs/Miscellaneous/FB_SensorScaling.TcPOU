@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SensorScaling" Id="{4c42e66e-2850-49c6-949b-9e520b1e950a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SensorScaling
+VAR_INPUT
+	iRawValue 	: INT;  //EL3058 raw meassure 16bits
+	iSensorID	: INT;	//Sensor ID [1 for Festo | 2 for SMC Pressure Regulator | 3 for SMC PSE550-28 Leak Test sensor]
+END_VAR
+VAR_OUTPUT
+	rPressure 	: REAL; //Pressure output in Bar
+END_VAR
+VAR
+	rScalingFactor : REAL;
+    rOffset        : REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Scaling definition for each sensor
+CASE iSensorID OF
+    1:  // Festo MS6: 4-20mA | 0-6 bar
+        rScalingFactor := 0.0003156;
+        rOffset := -0.115;
+		
+    2:  // SMC ISE/ZSE20: 4-20mA | -0.100 to 1.000 MPa [1.0 to 10.0 bar]
+        rScalingFactor := 11.0 / (16384 - 3277); // 11 Bar Range
+        rOffset := -1.0;  // Starts at -1.0 Bar
+		
+	3: // SMC PSE550-28: 4-20mA | -50 to 50kPa [-0.5 to 0.5 bar]
+        rScalingFactor := 0.0002442;  // 1 bar range over 4095 steps
+        rOffset := -0.5; // Starts at -0.5 bar
+		
+    ELSE
+        rScalingFactor := 1.0;
+        rOffset := 0.0;
+END_CASE
+
+// Applying the scaling
+rPressure := rScalingFactor * TO_REAL(iRawValue) + rOffset;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SensorScaling">
+      <LineId Id="60" Count="8" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="70" Count="5" />
+      <LineId Id="37" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

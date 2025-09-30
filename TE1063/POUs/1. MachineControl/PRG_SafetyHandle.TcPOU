@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_SafetyHandle" Id="{8e15bf43-686d-46b2-be47-568f063f8b7c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SafetyHandle
+VAR
+	//Air Supply testing
+	bAirSupplyEnable: BOOL	:= TRUE;
+	bAirSupplyReset	: BOOL	:= FALSE;
+	
+	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+//Safety Restart & Error Ack
+IF GVL_Safety.SafetyInputs.bMachineReset OR GVL_Safety.bM1STOErrorAck THEN
+	GVL_Safety.bSafetyErrorAck			:= TRUE;
+	GVL_Motion.M1Motor.bTS_ErrorAck		:= TRUE;
+ELSE
+	GVL_Safety.bSafetyErrorAck			:= FALSE;
+	GVL_Motion.M1Motor.bTS_ErrorAck		:= FALSE;
+END_IF
+
+GVL_Safety.iM4STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM5STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM6STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM7STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+GVL_Safety.iM8STOErrorAck			:= GVL_Safety.SafetyInputs.bMachineReset;
+
+GVL_Safety.bSafetyRun				:= TRUE;
+GVL_Motion.M1Motor.bTS_Run			:= TRUE;
+GVL_Safety.iM4STORun				:= TRUE;
+GVL_Safety.iM5STORun				:= TRUE;
+GVL_Safety.iM6STORun				:= TRUE;
+GVL_Safety.iM7STORun				:= TRUE;
+GVL_Safety.iM8STORun				:= TRUE;
+
+IF bAirSupplyEnable THEN
+	GVL_Safety.bAirSupplyEnable := TRUE;
+ELSE
+	GVL_Safety.bAirSupplyEnable	:= FALSE;
+END_IF
+
+IF bAirSupplyReset THEN
+	GVL_Safety.bAirSupplyReset 	:= TRUE;
+ELSE
+	GVL_Safety.bAirSupplyReset	:= FALSE;
+END_IF
+
+//Alias signal for the reset button blinking
+IF GVL_Safety.bResetButtonBlink THEN
+	GVL_IO.gDigOutputs.bResetIndicator	:= TRUE;
+ELSE
+	GVL_IO.gDigOutputs.bResetIndicator	:= FALSE;
+END_IF
+
+IF bLockDoors THEN
+	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
+	ELSE
+	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SafetyHandle">
+      <LineId Id="9" Count="46" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

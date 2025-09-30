@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_SetModulestatus" Id="{8b3a00fc-469e-4f9b-9cff-5bc6f1dee6f5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SetModulestatus
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Sets the Module status string based on the nTerminalState variable
+
+// Terminal EK1100 EtherCAT Coupler
+IF GVL_IO.nEK1100State = 8 THEN
+	GVL_IO.sEK1100Status := 'Operational';
+	ELSIF GVL_IO.nEK1100State = 4 THEN
+ 	GVL_IO.sEK1100Status := 'SAFEOP';
+	ELSIF GVL_IO.nEK1100State = 3 THEN
+ 	GVL_IO.sEK1100Status := 'BOOT';
+	ELSIF GVL_IO.nEK1100State = 2 THEN
+ 	GVL_IO.sEK1100Status := 'PREOP';
+	ELSIF GVL_IO.nEK1100State = 1 THEN
+ 	GVL_IO.sEK1100Status := 'INIT';
+END_IF
+
+// TERMINAL - EL6070-0033	License Key Terminal for TwinCAT 3.1
+IF GVL_IO.nEL6070State = 8 THEN
+	GVL_IO.sEL6070Status := 'Operational';
+	ELSIF GVL_IO.nEL6070State = 4 THEN
+ 	GVL_IO.sEL6070Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL6070State = 3 THEN
+ 	GVL_IO.sEL6070Status := 'BOOT';
+	ELSIF GVL_IO.nEL6070State = 2 THEN
+ 	GVL_IO.sEL6070Status := 'PREOP';
+	ELSIF GVL_IO.nEL6070State = 1 THEN
+ 	GVL_IO.sEL6070Status := 'INIT';
+END_IF
+
+// TERMINAL - EL6910 Safety PLC, 	Virtual Channels
+IF GVL_IO.nEL6910State = 8 THEN
+	GVL_IO.sEL6910Status := 'Operational';
+	ELSIF GVL_IO.nEL6910State = 4 THEN
+ 	GVL_IO.sEL6910Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL6910State = 3 THEN
+ 	GVL_IO.sEL6910Status := 'BOOT';
+	ELSIF GVL_IO.nEL6910State = 2 THEN
+ 	GVL_IO.sEL6910Status := 'PREOP';
+	ELSIF GVL_IO.nEL6910State = 1 THEN
+ 	GVL_IO.sEL6910Status := 'INIT';
+END_IF
+
+// TERMINAL - EL1918_1 8-Channel Digital Safety Inputs
+IF GVL_IO.nEL1918_1State = 8 THEN
+	GVL_IO.sEL1918Status := 'Operational';
+	ELSIF GVL_IO.nEL1918_1State = 4 THEN
+ 	GVL_IO.sEL1918Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL1918_1State = 3 THEN
+ 	GVL_IO.sEL1918Status := 'BOOT';
+	ELSIF GVL_IO.nEL1918_1State = 2 THEN
+ 	GVL_IO.sEL1918Status := 'PREOP';
+	ELSIF GVL_IO.nEL1918_1State = 1 THEN
+ 	GVL_IO.sEL1918Status := 'INIT';
+END_IF
+
+// TERMINAL - EL1918_2 8-Channel Digital Safety Inputs
+IF GVL_IO.nEL1918_2State = 8 THEN
+	GVL_IO.sEL1918_2Status := 'Operational';
+	ELSIF GVL_IO.nEL1918_2State = 4 THEN
+ 	GVL_IO.sEL1918_2Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL1918_2State = 3 THEN
+ 	GVL_IO.sEL1918_2Status := 'BOOT';
+	ELSIF GVL_IO.nEL1918_2State = 2 THEN
+ 	GVL_IO.sEL1918_2Status := 'PREOP';
+	ELSIF GVL_IO.nEL1918_2State = 1 THEN
+ 	GVL_IO.sEL1918_2Status := 'INIT';
+END_IF
+
+// TERMINAL - EL2904 4-Channel Digital Output Terminal, TwinSAFE
+IF GVL_IO.nEL2904State = 8 THEN
+	GVL_IO.sEL2904Status := 'Operational';
+	ELSIF GVL_IO.nEL2904State = 4 THEN
+ 	GVL_IO.sEL2904Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL2904State = 3 THEN
+ 	GVL_IO.sEL2904Status := 'BOOT';
+	ELSIF GVL_IO.nEL2904State = 2 THEN
+ 	GVL_IO.sEL2904Status := 'PREOP';
+	ELSIF GVL_IO.nEL2904State = 1 THEN
+ 	GVL_IO.sEL2904Status := 'INIT';
+END_IF
+
+// TERMINAL - EL2904_2 4-Channel Digital Output Terminal, TwinSAFE
+IF GVL_IO.nEL2904_2State = 8 THEN
+	GVL_IO.sEL2904_2Status := 'Operational';
+	ELSIF GVL_IO.nEL2904_2State = 4 THEN
+ 	GVL_IO.sEL2904_2Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL2904_2State = 3 THEN
+ 	GVL_IO.sEL2904_2Status := 'BOOT';
+	ELSIF GVL_IO.nEL2904_2State = 2 THEN
+ 	GVL_IO.sEL2904_2Status := 'PREOP';
+	ELSIF GVL_IO.nEL2904_2State = 1 THEN
+ 	GVL_IO.sEL2904_2Status := 'INIT';
+END_IF
+
+// TERMINAL - EL1809_1 16-Channel Digital Input Terminal
+IF GVL_IO.nEL1809State = 8 THEN
+	GVL_IO.sEL1809Status := 'Operational';
+	ELSIF GVL_IO.nEL1809State = 4 THEN
+ 	GVL_IO.sEL1809Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL1809State = 3 THEN
+ 	GVL_IO.sEL1809Status := 'BOOT';
+	ELSIF GVL_IO.nEL1809State = 2 THEN
+ 	GVL_IO.sEL1809Status := 'PREOP';
+	ELSIF GVL_IO.nEL1809State = 1 THEN
+ 	GVL_IO.sEL1809Status := 'INIT';
+END_IF
+
+// TERMINAL - EL2809_1	16-Channel Digital Output Terminal
+IF GVL_IO.nEL2809State = 8 THEN
+	GVL_IO.sEL2809Status := 'Operational';
+	ELSIF GVL_IO.nEL2809State = 4 THEN
+ 	GVL_IO.sEL2809Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL2809State = 3 THEN
+ 	GVL_IO.sEL2809Status := 'BOOT';
+	ELSIF GVL_IO.nEL2809State = 2 THEN
+ 	GVL_IO.sEL2809Status := 'PREOP';
+	ELSIF GVL_IO.nEL2809State = 1 THEN
+ 	GVL_IO.sEL2809Status := 'INIT';
+END_IF
+
+// TERMINAL - EL3058	8-Channel Analog Input Terminal 4…20mA 12 Bit
+IF GVL_IO.nEL3058State = 8 THEN
+	GVL_IO.sEL3058Status := 'Operational';
+	ELSIF GVL_IO.nEL3058State = 4 THEN
+ 	GVL_IO.sEL3058Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL3058State = 3 THEN
+ 	GVL_IO.sEL3058Status := 'BOOT';
+	ELSIF GVL_IO.nEL3058State = 2 THEN
+ 	GVL_IO.sEL3058Status := 'PREOP';
+	ELSIF GVL_IO.nEL3058State = 1 THEN
+ 	GVL_IO.sEL3058Status := 'INIT';
+END_IF
+
+// Terminal EL3058 8-Channel Analog Input Terminal 4…20mA 12 Bit (Term 10)
+IF GVL_IO.nEL3058State = 8 THEN
+	GVL_IO.sEL3058Status := 'Operational';
+	ELSIF GVL_IO.nEL3058State = 4 THEN
+ 	GVL_IO.sEL3058Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL3058State = 3 THEN
+ 	GVL_IO.sEL3058Status := 'BOOT';
+	ELSIF GVL_IO.nEL3058State = 2 THEN
+ 	GVL_IO.sEL3058Status := 'PREOP';
+	ELSIF GVL_IO.nEL3058State = 1 THEN
+ 	GVL_IO.sEL3058Status := 'INIT';
+END_IF
+
+// Terminal EL6002	2-channel Serial Interface RS232, D-sub Connection (Term 11)
+IF GVL_IO.nEL6002State = 8 THEN
+	GVL_IO.sEL6002Status := 'Operational';
+	ELSIF GVL_IO.nEL6002State = 4 THEN
+ 	GVL_IO.sEL6002Status := 'SAFEOP';
+	ELSIF GVL_IO.nEL6002State = 3 THEN
+ 	GVL_IO.sEL6002Status := 'BOOT';
+	ELSIF GVL_IO.nEL6002State = 2 THEN
+ 	GVL_IO.sEL6002Status := 'PREOP';
+	ELSIF GVL_IO.nEL6002State = 1 THEN
+ 	GVL_IO.sEL6002Status := 'INIT';
+END_IF
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SetModulestatus">
+      <LineId Id="1042" Count="157" />
+      <LineId Id="1211" Count="1" />
+      <LineId Id="487" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

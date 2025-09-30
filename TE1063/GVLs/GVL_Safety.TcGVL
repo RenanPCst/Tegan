@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Safety" Id="{9ede18c0-9e8b-49e2-8d96-a4cc1a1d6e41}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	//Safety All set and enabled to run the machine	
+	bSafetyEnable			AT %I* : BOOL;
+	
+	//EL6910 Safety project Variables
+	bSafetyErrorAck			AT %Q* : BOOL;
+	bSafetyRun				AT %Q* : BOOL;
+	bSafetyRestart			AT %Q* : BOOL;
+	
+	//Motors variables 
+	//AX8000 M1 Drive Safety Error Ack and Run
+	bM1STOErrorAck			AT %I* : BOOL;
+	bSTOErrorAckPulse		AT %I* : BOOL;
+	iMotorsSTOEnabled		AT %I* : BOOL;
+	
+	//AX8000 M4 - M8 Drive Safety Error Ack and Run
+	iM4STOErrorAck			AT %Q* : BOOL;
+	iM4STORun				AT %Q* : BOOL;
+	iM5STOErrorAck			AT %Q* : BOOL;
+	iM5STORun				AT %Q* : BOOL;
+	iM6STOErrorAck			AT %Q* : BOOL;
+	iM6STORun				AT %Q* : BOOL;
+	iM7STOErrorAck			AT %Q* : BOOL;
+	iM7STORun				AT %Q* : BOOL;
+	iM8STOErrorAck			AT %Q* : BOOL;
+	iM8STORun				AT %Q* : BOOL;
+
+	//reset button blink signal
+	bResetButtonBlink		AT %I*	: BOOL; 
+	
+	SafetyInputs			AT %I*	: ST_SafetyInputs;
+	SafetyOutputs			AT %Q*	: ST_SafetyOutputs;
+	
+	//STO Monitoring M1 > M8
+	bM1STOEnabled			AT %I*	: BOOL;
+	bM2STOEnabled			AT %I*	: BOOL;
+	bM3STOEnabled			AT %I*	: BOOL;
+
+	//Doors Logic Safety Alias Data exchange
+	bDoorClosedAlias		AT %I*	: BOOL;
+	bTopDoorsClosedFeedback AT %I*	: BOOL;
+	bDoorLockedFeedback		AT %I*	: BOOL;
+	bDoorLockCommand		AT %Q*	: BOOL;
+	bDoor3BypassAccepted	AT %Q*	: BOOL;
+	
+	//Air Supply Safety Alias Data exchange
+	bAirSupplyEnable		AT %Q*	: BOOL;
+	bAirSupplyReset			AT %Q*	: BOOL;
+	bAirEnabledFeedback		AT %I* 	: BOOL;
+	
+	//EL2904 Monitoring Outputs
+	aEL2904_T07				AT %I*	: ARRAY[1..4] OF BOOL;
+	aEL2904_T08				AT %I*	: ARRAY[1..4] OF BOOL;
+	aEL2904_T19				AT %I*	: ARRAY[1..4] OF BOOL;
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

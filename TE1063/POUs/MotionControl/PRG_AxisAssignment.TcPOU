@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PRG_AxisAssignment" Id="{1070e90b-2366-4a97-ac4a-19d931af7490}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_AxisAssignment
+VAR
+	bInitDone : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Objets Motors Axis Assignment - to use the FB_MotoWrrapper at any part of the software 
+IF NOT bInitDone THEN
+	
+    GVL_Motion.aMotors[1](Axis := GVL_Motion.M1Motor.Axis);				//Motor M1 - Y Axis Stage Collection
+    GVL_Motion.aMotors[2](Axis := GVL_Motion.M2Motor.Axis);				//Motor M2 - N Axis Sample Recovery 
+	GVL_Motion.aMotors[3](Axis := GVL_Motion.M3Motor.Axis);				//Motor M2 - N Axis Sample Recovery 
+	
+	GVL_Motion.aPumpsLinear[1](Axis := GVL_Motion.aPumps[1].Linear.Axis);	//Pump 1 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[2](Axis := GVL_Motion.aPumps[2].Linear.Axis);	//Pump 2 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[3](Axis := GVL_Motion.aPumps[3].Linear.Axis);	//Pump 3 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[4](Axis := GVL_Motion.aPumps[4].Linear.Axis);	//Pump 4 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[5](Axis := GVL_Motion.aPumps[5].Linear.Axis);	//Pump 5 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[6](Axis := GVL_Motion.aPumps[6].Linear.Axis);	//Pump 6 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[7](Axis := GVL_Motion.aPumps[7].Linear.Axis);	//Pump 7 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[8](Axis := GVL_Motion.aPumps[8].Linear.Axis);	//Pump 8 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[9](Axis := GVL_Motion.aPumps[9].Linear.Axis);	//Pump 9 - Linear Actuador 
+	GVL_Motion.aPumpsLinear[10](Axis := GVL_Motion.aPumps[10].Linear.Axis);	//Pump 10 - Linear Actuador 
+	
+	GVL_Motion.aPumpsRotary[1](Axis := GVL_Motion.aPumps[1].Rotary.Axis);	//Pump 1 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[2](Axis := GVL_Motion.aPumps[2].Rotary.Axis);	//Pump 2 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[3](Axis := GVL_Motion.aPumps[3].Rotary.Axis);	//Pump 3 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[4](Axis := GVL_Motion.aPumps[4].Rotary.Axis);	//Pump 4 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[5](Axis := GVL_Motion.aPumps[5].Rotary.Axis);	//Pump 5 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[6](Axis := GVL_Motion.aPumps[6].Rotary.Axis);	//Pump 6 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[7](Axis := GVL_Motion.aPumps[7].Rotary.Axis);	//Pump 7 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[8](Axis := GVL_Motion.aPumps[8].Rotary.Axis);	//Pump 8 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[9](Axis := GVL_Motion.aPumps[9].Rotary.Axis);	//Pump 9 - Rotary Actuador 
+	GVL_Motion.aPumpsRotary[10](Axis := GVL_Motion.aPumps[10].Rotary.Axis);	//Pump 10 - Rotary Actuador 
+	
+	GVL_Motion.aValvesObj[1](Axis := GVL_Motion.aValves[1].Axis);			//Valve 1 - Stepper Motor 
+	GVL_Motion.aValvesObj[2](Axis := GVL_Motion.aValves[2].Axis);			//Valve 2 - Stepper Motor 
+	GVL_Motion.aValvesObj[3](Axis := GVL_Motion.aValves[3].Axis);			//Valve 3 - Stepper Motor 
+	GVL_Motion.aValvesObj[4](Axis := GVL_Motion.aValves[4].Axis);			//Valve 4 - Stepper Motor 
+	GVL_Motion.aValvesObj[5](Axis := GVL_Motion.aValves[5].Axis);			//Valve 5 - Stepper Motor 
+	
+    bInitDone := TRUE;
+	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_AxisAssignment">
+      <LineId Id="48" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="14" Count="9" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="25" Count="3" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="36" Count="2" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="39" Count="4" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

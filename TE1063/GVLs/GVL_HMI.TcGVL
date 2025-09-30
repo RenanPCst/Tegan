@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_HMI" Id="{0409f918-eea3-4325-9608-40b83ff788af}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'TcHmiSymbol' := 'true'}
+VAR_GLOBAL
+	
+	//Info Screen
+	stInfo				: ST_InfoPage; // Project Info screen details to be shown on HMI
+	
+	HMIDigInputs		 : ST_HMIDigInputs;  //Digital Inputs data from HMI
+	HMIDigOutputs		 : ST_HMIDigOutputs; //Digital Outputs data for HMI
+
+	HMIAnimation		 : ST_HMIAnimation; //Variables needed to animate the HMI
+	bHMICalibrationBox	 : BOOL; 			//Calibration Box presence
+	
+	eMachineMode		 : E_MachineMode; //Machine mode selection from HMI
+	
+	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
+	bIncoherenceAlert	 : BOOL := FALSE; //Incoherence alert to show an alert on HMI. Event trigger DesktopView 
+	
+	sActivatedRecipeHomeNaming : STRING(256); // Recipe name shown on home screen when a recipe is active
+	
+	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
+	
+	//Machine Mode Blinking
+	bMachineModeBlinking : BOOL := FALSE;	// Flashing variable to blink the state on HMI headbar
+	bMachineModeScan	 : BOOL := FALSE;	// Flashing variable to scan some controls on HMI home screen
+	
+	//User Management
+	stUsers          : ARRAY[1..50] OF ST_User;  // users list | max 50 users
+    iLoggedUserID    : INT := -1;                // -1 = no one logged in
+    dtCurrentLogin   : DT;
+    tSessionStart    : TIME;
+
+	// <Recipe> Variables needed to handle recipe --------------------------------------------------------------------------------------------------------------
+	aAvailableFiles         : ARRAY[0..99] OF ST_RecipeFileInfo;
+    iFileCount              : INT;
+	
+    bRefreshRecipeList      : BOOL; 			//List the recipe files from HMI
+    bRecipeLoadFromFile	 	: BOOL := FALSE; 	//load recipe button from HMI
+	bReloadRecipeDatagrids	: BOOL := FALSE;	//Reload the recipe in stCurrentRecipe to the datagrids if the cancel button is pressed when creating new recipe
+    sSelectedRecipeName     : STRING(255); 		// Selected name from hmi list popup
+	bRecipeCorrectLoaded	: BOOL; 			// Flag to identify if there is a recipe loaded to proceed with the recovery
+	bRecipeLoadFailed		: BOOL; 			// Flag to identify if there was any error loading the recipe file
+	
+	bRecipeActivateButton	: BOOL := FALSE; // Activate Recipe command from recipe activate button 
+	bRecipeActivateDone		: BOOL := FALSE; // Activate done flag after command from recipe activate button
+	bRecipeActivateError	: BOOL := FALSE; // Activate Error flag after command from recipe activate button
+	
+	bRecipeSaveButton		: BOOL := FALSE; // save command from recipe save button
+	bRecipeSaveDone			: BOOL := FALSE; // Save done flag after save command from recipe save button
+	bRecipeSaveError		: BOOL := FALSE; // Save Error flag after save command from recipe save button
+	
+	stDeleteRecipeInfo		: ST_RecipeFileInfo;
+	bDeleteRecipeButton		: BOOL := FALSE; // Delete recipe button Action - Open delete popup
+	bDeleteRecipeConfirm	: BOOL := FALSE; // Delete recipe confirmation action
+	bDeleteRecipeError		: BOOL := FALSE; // Delete recipe Error flag
+	bDeleteRecipeDone		: BOOL := FALSE; // Delete recipe done flag
+	
+	bNewRecipeButton		: BOOL := FALSE; // New Recipe button on recipe screen.
+	
+	//Recipe HMI View - data needs to be transposed for better view and handled by HMI
+	stRecipeInfo		 : ST_RecipeInfo;	// Recipe info datagrid showed on HMI
+	aSolventAndTimesRows : ARRAY[1..3] OF ST_HMI_SolventAndTimeRow;	// Recipe Solvent And Times transposed datagrid showed on HMI
+	aVolumeRows 		 : ARRAY[1..10] OF ST_HMI_VolumesRow; 		// Recipe Volumes transposed datagrid showed on HMI
+	aOtherParamsRows 	 : ARRAY[1..8] OF ST_HMI_OtherParamsRow;	// Recipe Other Parameters transposed datagrid showed on HMI
+	// <\Recipe> -----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	// <Calibration> Variables needed to handle calibration tasks from HMI -------------------------------------------------------------------------------------
+	
+	bCalLeakTestButton		: BOOL := FALSE; // Leak test action button from HMI
+	bCalLeakTestPass		: BOOL := FALSE; // Leak test passed flag
+	bCalLeakTestFail		: BOOL := FALSE; // Leak test failed flag
+	bCalLeakTestError		: BOOL := FALSE; // Leak test error flag
+	rCalLeakTestPressure	: LREAL;		 // Leak test pressure reading from sensor
+	
+	bCalLinearPumpsEnableBt	: BOOL := FALSE; // Linear pumps Enable motors button
+	bCalLinearPumpsHomeBt	: BOOL := FALSE; // Linear pumps Homing motors button
+	bCalLinearPumpsMoveBt	: BOOL := FALSE; // Linear pumps Move motors button
+	bCalLinearPumpsStopBt	: BOOL := FALSE; // Linear pumps Stop motors button
+	bStartCalibrationBt		: BOOL := FALSE; //Start Calibration Bt from HMI
+	bAbortCalibrationBT		: BOOL := FALSE; //Abort Calibration Bt from HMI
+	
+	aCalibPumps         	: ARRAY[1..10] OF ST_CalibrationPump;		// Calibration rotary Pumps settings
+	aCalibLinearPumps		: ARRAY[1..10] OF ST_LinearPumpCalibration; // Calibration linear Pumps settings
+	aCalPumpResults    		: ARRAY[1..10] OF ST_CalibrationPumpResult; // Rotary Pumps result structure
+	
+	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
+	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date
+	
+	bScaleNeedsAtention		: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to handle the scale error
+	bScaleFixed				: BOOL := FALSE; // Feedback from hmi to tell the system that scale is ready to continue
+	
+	bCalBoxNeedsAttention	: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to fill up the calibration box
+	bCalBoxFixed			: BOOL := FALSE; // Feedback from hmi to tell the system that the calibration box is ready to continue
+	
+	// <\Calibration> ------------------------------------------------------------------------------------------------------------------------------------------
+	
+	// Machine Settings 
+	HMIParameters		 : ST_HMIParameters; 		// Motion Parameters from HMI inputs
+	stHMICalibParameters : ST_CalibrationSettings;	// Calibration Parameters from HMI inputs
+	stHMIPumpParameters	 : ST_PumpSettings;			// Pump Parameters from HMI inputs
+	stLeakTestParameters : ST_LeakTestSettings;		// Leak Test Parameters from HMI Inputs
+	bReloadHMIParameters : BOOL := FALSE;			// Reload parameters from GVL_Settings when first loading the screen
+	bSaveParametersBt	 : BOOL := FALSE; 			// Save Parameters from HMI
+	bSaveParametersDone	 : BOOL := FALSE;			// Save Parameters Done flag from PLC
+ 	bSaveParametersError : BOOL := FALSE;			// Save Parameters Error flag from PLC
+	
+	(* Manual Motors Moviment *) //--------------------------------------------------------------------------------------------------------------
+	ManualMov			: ST_MotorsJog; // Manual Joging motors from old manual screen
+	
+	aManualMotorsCmd 	: ARRAY[1..3] OF ST_MotorCommand;	// Manual Motors commands from manual screen
+    aManualValvesCmd 	: ARRAY[1..5] OF ST_ValveCommand;	// Manual Valves commands from manual screen
+    aManualPumpsCmd  	: ARRAY[1..10] OF ST_PumpCommand;	// Manual Pumps commands from manual screen
+	
+	bRunPumpsBySpeedBt 		: BOOL;	// Button Run pumps by Speed from manual screen
+	bRunPumpsByVolumeBt 	: BOOL;	// Button Run pumps by Volume from manual screen
+	bRunPumpsByDistanceBt 	: BOOL;	// Button Run pumps by Distance from manual screen
+	bStopPumpsBt 			: BOOL;	// Button Stop pumps movememnt from manual screen
+	
+	// <IO Screen> Variables for IO Screen use (*-----------------------------------------------------------------------------------------------)
+	
+	nSelectedIO		: UDINT; // Selection made by IO screen combobox
+	
+	aIOTerm04		: ARRAY[1..8] OF BOOL;
+	aIOTerm05		: ARRAY[1..8] OF BOOL; 
+	aIOTerm06		: ARRAY[1..8] OF BOOL; 
+	aIOTerm07		: ARRAY[1..4] OF BOOL; 
+	aIOTerm08		: ARRAY[1..4] OF BOOL;
+	aIOTerm09		: ARRAY[1..16] OF BOOL;
+	aIOTerm10		: ARRAY[1..16] OF BOOL;
+	aIOTerm11		: ARRAY[1..4] OF BOOL;   
+	aIOTerm12		: ARRAY[1..2] OF BOOL;
+	aIOTerm13		: ARRAY[1..8] OF REAL;
+	aIOTerm14		: ARRAY[1..8] OF BOOL;
+   	iIOTerm14DCIn	: UDINT;
+	aIOTerm15		: ARRAY[1..3] OF BOOL;
+	aIOTerm15Values : ARRAY[1..3] OF LREAL;
+	iIOTerm15ErrorCode	: UDINT;
+	aIOTerm16		: ARRAY[1..3] OF BOOL;
+	aIOTerm16Values : ARRAY[1..3] OF LREAL;
+	iIOTerm16ErrorCode	: UDINT;
+	aIOTerm17		: ARRAY[1..6] OF BOOL;
+	aIOTerm17Values : ARRAY[1..2] OF LREAL;
+	aIOTerm18		: ARRAY[1..16] OF BOOL;
+	aIOTerm19		: ARRAY[1..4] OF BOOL; 
+	stIOTerm23		: ST_EL7062IOInfo;
+	stIOTerm24		: ST_EL7062IOInfo;
+	stIOTerm25		: ST_EL7062IOInfo;
+	stIOTerm26		: ST_EL7062IOInfo;
+	stIOTerm27		: ST_EL7062IOInfo;
+	stIOTerm28		: ST_EL7062IOInfo;
+	stIOTerm29		: ST_EL7062IOInfo;
+	stIOTerm30		: ST_EL7062IOInfo;
+	stIOTerm31		: ST_EL7062IOInfo;
+	stIOTerm32		: ST_EL7062IOInfo;
+	stIOTerm34		: ST_AX8101IOInfo;
+	aIOBox1			: ARRAY[1..8] OF REAL;
+	aIOAMI8000		: ARRAY[1..5] OF ST_AMI8000IOInfo;
+	
+	// <\IO Screen>  (*-------------------------------------------------------------------------------------------------------------------------)
+	
+	//TEMP
+	bResetM1MotorBt : BOOL := FALSE; // Temporary Motor M1 Reset button on old joging manual screen while new motor is not installed
+	
+	// UserManagement -------------------------------------------------------------------------------------------------------------------
+	
+	passwordOk: BOOL;
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
