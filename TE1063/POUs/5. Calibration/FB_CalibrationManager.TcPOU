@@ -29,6 +29,7 @@ VAR
 
     tonCalDelay      : TON; // General delay timer
     tonStepTimeout   : TON; // Timeout per step
+	tonMotorsDelay	 : ton; // Delay time after positioning the motors
 	tonWeigthStabilization : TON; //Time after the pump finish to wait for stable weigth
 	
 	bExecutePulse   : R_TRIG; // Edge detection for bExecute
@@ -82,8 +83,7 @@ VAR
     sDD               : STRING(2);
 	bDTReady		  : BOOL := FALSE;
 	
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// bExecute Rising edge
 bExecutePulse(CLK := bExecute);
@@ -123,6 +123,8 @@ CASE eStep OF
             tonStepTimeout(IN := FALSE);
             eStep := E_CalibStep.CHECKING_WEIGH;
 			bRequestWeight := TRUE;
+			bBoxWeightOK := FALSE;
+			bWeightReady := FALSE;
         END_IF
 
 	
@@ -168,12 +170,14 @@ CASE eStep OF
 			ELSIF NOT bBoxPresent THEN
 				//GVL_HMI.bCalibrationBoxMissing := TRUE;
 				sStatus := 'Calibration box not present!';
+				bBoxWeightOK := FALSE;
 				eStep := E_CalibStep.IDLE;
 			ELSIF NOT bBoxWeightOK THEN
 				//GVL_HMI.bCalibrationBoxEmpty := TRUE;
 				tonCalDelay(IN := FALSE);
 				tonStepTimeout(IN := FALSE);
 				tonWeigthStabilization(IN := FALSE);
+				bBoxWeightOK := FALSE;
 	
 				// Show HMI popup asking operator to fill box to 1100–1300 g
 				GVL_HMI.bCalBoxNeedsAttention := TRUE;
@@ -189,6 +193,7 @@ CASE eStep OF
 			ELSE
 				//Proceed
 				bWeightReady := FALSE;
+				bBoxWeightOK := FALSE;
 				eStep := E_CalibStep.POSITION_MOTORS;
 				rAcceptanceCrit := GVL_Settings.stCalibParameters.rAcceptanceCriteria;
 			END_IF
@@ -197,6 +202,7 @@ CASE eStep OF
 	E_CalibStep.POSITION_MOTORS:
 	
 		sStatus := 'Positioning motors M2 and M3';
+				
 		// Positioning motors M2 and M3 to calibration position 
 		IF NOT bMoveMotorM3 THEN
 			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(GVL_Settings.stMachineParam.aM3Position[6], GVL_Settings.stMachineParam.rM3Velocity, GVL_Settings.stMachineParam.rM3Accleration, GVL_Settings.stMachineParam.rM3Deceleration);
@@ -204,16 +210,22 @@ CASE eStep OF
 		IF NOT bMoveMotorM2 AND bMoveMotorM3 THEN
 			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[4], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
 		END_IF
+	
 		IF bMoveMotorM2 AND bMoveMotorM3 THEN
-			bMoveMotorM2 := FALSE;
-			bMoveMotorM3 := FALSE;
+			tonMotorsDelay(in := TRUE, pt := T#200MS);
+		END_IF
+		
+		IF tonMotorsDelay.Q THEN
 			tonStepTimeout(IN := FALSE);
 			eStep := E_CalibStep.POSITION_VALVES;
 		END_IF
 
-	
     E_CalibStep.POSITION_VALVES:
-		
+		//Reset Motors Flags
+		bMoveMotorM2 := FALSE;
+		bMoveMotorM3 := FALSE;	
+		tonMotorsDelay(in := FALSE);
+	
 		tonStepTimeout(IN := TRUE, PT := tStepTimeout);
         sStatus := 'Positioning valves to Position 6';
 		// Positioning the valves to the needles, position 6 
@@ -237,11 +249,11 @@ CASE eStep OF
 		sStatus := CONCAT('Filling up the jar number: ', TO_STRING(iPumpIndex));
 		
 		IF aPumpSettings[iPumpIndex].bSelected THEN
-			rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + 50), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+			rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + GVL_Settings.stPumpParameters.iFillolventTubesFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 			// Filling up the jar to start the calibration
 			IF NOT bMovePump THEN
 				bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(	Distance := rDistanceByVol, 
-																				Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
+																				Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 	//RPM to Degree/sec
 																				Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6,   		//RPM to Degree/sec
 																				Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																			 );
@@ -339,6 +351,8 @@ CASE eStep OF
 				bRequestWeight := TRUE;
 				bMovePump := FALSE;
 				tonWeigthStabilization(IN := FALSE);
+				fbLocalSystemTime(bEnable := FALSE);
+				bDTReady := FALSE;
 				eStep := E_CalibStep.WEIGH_AFTER;
 			END_IF
 		END_IF
@@ -463,7 +477,7 @@ CASE eStep OF
     E_CalibStep.RETURN_FORWARD:
 
 		sStatus := CONCAT('Returning solvent back to the Jar number : ',TO_STRING(iPumpIndex));
-		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + 7), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + 5), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 			
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := rDistanceByVol, 
@@ -490,13 +504,13 @@ CASE eStep OF
 
 		sStatus := CONCAT('Empty the jar number: ',TO_STRING(iPumpIndex));
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
-		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aVolumeSetpoint[iPumpIndex] + 50), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
+		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aVolumeSetpoint[iPumpIndex] + GVL_Settings.stPumpParameters.iEmptyFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
 		
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
-																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
-																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 		//RPM to Degree/sec
-																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
+																			Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 	//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 		//RPM to Degree/sec
+																			Dec := GVL_Settings.stPumpParameters.iRunVelocity * 6			//RPM to Degree/sec
 																		  	);
 		END_IF
 		
@@ -517,6 +531,7 @@ CASE eStep OF
 	
     E_CalibStep.HOMING_MOTORS:
         sStatus := 'Returning M2 and M3 to home';
+				
 		IF NOT bMoveMotorM2 THEN
 			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(	GVL_Settings.stMachineParam.aM2Position[1], 
 																GVL_Settings.stMachineParam.rM2Velocity, 
@@ -531,15 +546,21 @@ CASE eStep OF
 																GVL_Settings.stMachineParam.rM3Deceleration
 																);
 		END_IF
-		
+				
 		IF bMoveMotorM2 AND bMoveMotorM3 THEN
-			bMoveMotorM2 := FALSE;
-			bMoveMotorM3 := FALSE;
+			tonMotorsDelay(in := TRUE, pt := T#200MS);
+		END_IF
+		
+		IF tonMotorsDelay.Q THEN
 			tonStepTimeout(IN := FALSE);
 			eStep := E_CalibStep.REPORT_INFO_UPDATE;
 		END_IF
    
 	E_CalibStep.REPORT_INFO_UPDATE: //TODO: Update the variables without hardcode
+		//Reset Motors Flags
+		bMoveMotorM2 := FALSE;
+		bMoveMotorM3 := FALSE;	
+		tonMotorsDelay(in := FALSE);
 		
 		//Report Info
 		GVL_Calibration.stPumpCalReportInfo.sReportName := GVL_Constant.sPumpCalibrationReportName;
@@ -657,6 +678,7 @@ GVL_Calibration.fbScaleDevice.Reset();
 tonCalDelay(IN := FALSE);
 tonStepTimeout(IN := FALSE);
 tonWeigthStabilization(IN := FALSE);
+tonMotorsDelay(in := FALSE);
 
 // Drop R_TRIG by passing CLK := FALSE this cycle
 bExecutePulse(CLK := FALSE);
@@ -721,232 +743,30 @@ Reset := TRUE;]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_CalibrationManager">
-      <LineId Id="1795" Count="10" />
-      <LineId Id="1204" Count="0" />
-      <LineId Id="2444" Count="0" />
-      <LineId Id="1203" Count="0" />
-      <LineId Id="867" Count="2" />
-      <LineId Id="2445" Count="9" />
-      <LineId Id="878" Count="2" />
-      <LineId Id="1434" Count="0" />
-      <LineId Id="881" Count="4" />
-      <LineId Id="887" Count="0" />
-      <LineId Id="1129" Count="0" />
-      <LineId Id="888" Count="1" />
-      <LineId Id="1450" Count="0" />
-      <LineId Id="890" Count="0" />
-      <LineId Id="1437" Count="0" />
-      <LineId Id="1044" Count="1" />
-      <LineId Id="891" Count="0" />
-      <LineId Id="1067" Count="0" />
-      <LineId Id="2455" Count="22" />
-      <LineId Id="1069" Count="0" />
-      <LineId Id="1079" Count="0" />
-      <LineId Id="1082" Count="0" />
-      <LineId Id="1348" Count="0" />
-      <LineId Id="1346" Count="1" />
-      <LineId Id="1085" Count="9" />
-      <LineId Id="2505" Count="13" />
-      <LineId Id="1095" Count="0" />
-      <LineId Id="1115" Count="0" />
-      <LineId Id="2519" Count="0" />
-      <LineId Id="1128" Count="0" />
-      <LineId Id="1110" Count="0" />
-      <LineId Id="2147" Count="0" />
-      <LineId Id="1083" Count="1" />
-      <LineId Id="1824" Count="0" />
-      <LineId Id="921" Count="0" />
-      <LineId Id="1438" Count="0" />
-      <LineId Id="1116" Count="0" />
-      <LineId Id="2520" Count="0" />
-      <LineId Id="1117" Count="10" />
-      <LineId Id="1941" Count="0" />
-      <LineId Id="1114" Count="0" />
-      <LineId Id="1452" Count="0" />
-      <LineId Id="922" Count="0" />
-      <LineId Id="1439" Count="0" />
-      <LineId Id="1046" Count="0" />
-      <LineId Id="923" Count="0" />
-      <LineId Id="2521" Count="0" />
-      <LineId Id="924" Count="4" />
-      <LineId Id="1825" Count="6" />
-      <LineId Id="937" Count="0" />
-      <LineId Id="1350" Count="0" />
-      <LineId Id="1454" Count="0" />
-      <LineId Id="1351" Count="0" />
-      <LineId Id="1832" Count="1" />
-      <LineId Id="2522" Count="0" />
-      <LineId Id="1834" Count="4" />
-      <LineId Id="2523" Count="3" />
-      <LineId Id="1839" Count="16" />
-      <LineId Id="1354" Count="0" />
-      <LineId Id="1453" Count="0" />
-      <LineId Id="939" Count="0" />
-      <LineId Id="1441" Count="0" />
-      <LineId Id="940" Count="0" />
-      <LineId Id="942" Count="2" />
-      <LineId Id="2547" Count="14" />
-      <LineId Id="2571" Count="0" />
-      <LineId Id="2563" Count="7" />
-      <LineId Id="946" Count="0" />
-      <LineId Id="948" Count="0" />
-      <LineId Id="1061" Count="0" />
-      <LineId Id="1132" Count="0" />
-      <LineId Id="1135" Count="0" />
-      <LineId Id="1857" Count="0" />
-      <LineId Id="1856" Count="0" />
-      <LineId Id="2011" Count="0" />
-      <LineId Id="2257" Count="1" />
-      <LineId Id="1391" Count="0" />
-      <LineId Id="1263" Count="0" />
-      <LineId Id="1136" Count="2" />
-      <LineId Id="1133" Count="1" />
-      <LineId Id="950" Count="0" />
-      <LineId Id="1456" Count="0" />
-      <LineId Id="951" Count="0" />
-      <LineId Id="1442" Count="0" />
-      <LineId Id="1139" Count="0" />
-      <LineId Id="957" Count="0" />
-      <LineId Id="960" Count="0" />
-      <LineId Id="1873" Count="0" />
-      <LineId Id="2013" Count="0" />
-      <LineId Id="1233" Count="0" />
-      <LineId Id="1875" Count="0" />
-      <LineId Id="2014" Count="0" />
-      <LineId Id="1230" Count="0" />
-      <LineId Id="1240" Count="0" />
-      <LineId Id="1238" Count="0" />
-      <LineId Id="2527" Count="3" />
-      <LineId Id="1239" Count="0" />
-      <LineId Id="1231" Count="0" />
-      <LineId Id="1241" Count="0" />
-      <LineId Id="1384" Count="1" />
-      <LineId Id="1383" Count="0" />
-      <LineId Id="1388" Count="1" />
-      <LineId Id="2339" Count="0" />
-      <LineId Id="1386" Count="1" />
-      <LineId Id="1244" Count="0" />
-      <LineId Id="965" Count="1" />
-      <LineId Id="1457" Count="0" />
-      <LineId Id="967" Count="0" />
-      <LineId Id="1443" Count="0" />
-      <LineId Id="1271" Count="1" />
-      <LineId Id="969" Count="2" />
-      <LineId Id="2572" Count="32" />
-      <LineId Id="1270" Count="0" />
-      <LineId Id="1265" Count="2" />
-      <LineId Id="2098" Count="1" />
-      <LineId Id="2140" Count="0" />
-      <LineId Id="2100" Count="7" />
-      <LineId Id="2127" Count="0" />
-      <LineId Id="2108" Count="0" />
-      <LineId Id="2129" Count="8" />
-      <LineId Id="2144" Count="1" />
-      <LineId Id="2115" Count="1" />
-      <LineId Id="2096" Count="1" />
-      <LineId Id="1268" Count="0" />
-      <LineId Id="1940" Count="0" />
-      <LineId Id="2022" Count="0" />
-      <LineId Id="2260" Count="0" />
-      <LineId Id="2146" Count="0" />
-      <LineId Id="2023" Count="0" />
-      <LineId Id="2025" Count="0" />
-      <LineId Id="2024" Count="0" />
-      <LineId Id="1390" Count="0" />
-      <LineId Id="975" Count="1" />
-      <LineId Id="1276" Count="0" />
-      <LineId Id="1861" Count="0" />
-      <LineId Id="978" Count="0" />
-      <LineId Id="1862" Count="1" />
-      <LineId Id="1392" Count="0" />
-      <LineId Id="979" Count="1" />
-      <LineId Id="1278" Count="1" />
-      <LineId Id="981" Count="3" />
-      <LineId Id="1393" Count="1" />
-      <LineId Id="1404" Count="0" />
-      <LineId Id="2007" Count="0" />
-      <LineId Id="2005" Count="0" />
-      <LineId Id="2028" Count="0" />
-      <LineId Id="2026" Count="0" />
-      <LineId Id="2006" Count="0" />
-      <LineId Id="2027" Count="0" />
-      <LineId Id="2020" Count="0" />
-      <LineId Id="1405" Count="0" />
-      <LineId Id="1407" Count="1" />
-      <LineId Id="1410" Count="0" />
-      <LineId Id="985" Count="0" />
-      <LineId Id="1411" Count="0" />
-      <LineId Id="1269" Count="0" />
-      <LineId Id="1458" Count="0" />
-      <LineId Id="994" Count="0" />
-      <LineId Id="1444" Count="0" />
-      <LineId Id="1273" Count="0" />
-      <LineId Id="1864" Count="0" />
-      <LineId Id="1274" Count="0" />
-      <LineId Id="1248" Count="1" />
-      <LineId Id="2531" Count="3" />
-      <LineId Id="1002" Count="0" />
-      <LineId Id="1247" Count="0" />
-      <LineId Id="1251" Count="0" />
-      <LineId Id="1865" Count="7" />
-      <LineId Id="1396" Count="0" />
-      <LineId Id="1253" Count="0" />
-      <LineId Id="1004" Count="0" />
-      <LineId Id="1459" Count="0" />
-      <LineId Id="1005" Count="0" />
-      <LineId Id="1445" Count="0" />
-      <LineId Id="1415" Count="0" />
-      <LineId Id="1433" Count="0" />
-      <LineId Id="1416" Count="0" />
-      <LineId Id="1432" Count="0" />
-      <LineId Id="1425" Count="1" />
-      <LineId Id="2535" Count="3" />
-      <LineId Id="1427" Count="4" />
-      <LineId Id="1414" Count="0" />
-      <LineId Id="1460" Count="0" />
-      <LineId Id="1006" Count="8" />
-      <LineId Id="1461" Count="0" />
-      <LineId Id="1015" Count="1" />
-      <LineId Id="1217" Count="1" />
-      <LineId Id="2539" Count="3" />
-      <LineId Id="1219" Count="2" />
-      <LineId Id="2543" Count="3" />
-      <LineId Id="1222" Count="6" />
-      <LineId Id="1215" Count="0" />
-      <LineId Id="1462" Count="0" />
-      <LineId Id="2148" Count="0" />
-      <LineId Id="2158" Count="0" />
-      <LineId Id="2161" Count="0" />
-      <LineId Id="2150" Count="0" />
-      <LineId Id="2152" Count="5" />
-      <LineId Id="2149" Count="0" />
-      <LineId Id="2162" Count="0" />
-      <LineId Id="2164" Count="0" />
-      <LineId Id="2163" Count="0" />
-      <LineId Id="2166" Count="7" />
-      <LineId Id="2175" Count="0" />
-      <LineId Id="2160" Count="0" />
-      <LineId Id="2480" Count="24" />
-      <LineId Id="2418" Count="0" />
-      <LineId Id="2479" Count="0" />
-      <LineId Id="2419" Count="0" />
-      <LineId Id="2423" Count="17" />
-      <LineId Id="2422" Count="0" />
-      <LineId Id="2421" Count="0" />
-      <LineId Id="2420" Count="0" />
-      <LineId Id="1021" Count="1" />
-      <LineId Id="2010" Count="0" />
-      <LineId Id="1819" Count="1" />
-      <LineId Id="1817" Count="0" />
-      <LineId Id="1463" Count="0" />
-      <LineId Id="1027" Count="0" />
-      <LineId Id="1821" Count="2" />
-      <LineId Id="1031" Count="0" />
-      <LineId Id="1464" Count="0" />
+      <LineId Id="2779" Count="126" />
+      <LineId Id="3414" Count="0" />
+      <LineId Id="2910" Count="1" />
+      <LineId Id="3415" Count="1" />
+      <LineId Id="3418" Count="0" />
+      <LineId Id="3417" Count="0" />
+      <LineId Id="2912" Count="2" />
+      <LineId Id="3413" Count="0" />
+      <LineId Id="3412" Count="0" />
+      <LineId Id="3419" Count="0" />
+      <LineId Id="3411" Count="0" />
+      <LineId Id="2915" Count="320" />
+      <LineId Id="3422" Count="6" />
+      <LineId Id="3421" Count="0" />
+      <LineId Id="3242" Count="1" />
+      <LineId Id="3431" Count="2" />
+      <LineId Id="3430" Count="0" />
+      <LineId Id="3244" Count="84" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
-      <LineId Id="189" Count="79" />
+      <LineId Id="189" Count="19" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="209" Count="59" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

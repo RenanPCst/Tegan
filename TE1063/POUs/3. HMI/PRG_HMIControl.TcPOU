@@ -184,7 +184,7 @@ IF GVL_HMI.bSaveParametersBt THEN // Save Settings button from HMI
 	GVL_HMI.bSaveParametersDone := TRUE;
 END_IF
 
-IF GVL_HMI.bReloadHMIParameters THEN
+IF GVL_HMI.bReloadHMIParameters OR (GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION) THEN
 	GVL_HMI.HMIParameters := GVL_Settings.stMachineParam;				 // Motion Settings
 	GVL_HMI.stHMICalibParameters := GVL_Settings.stCalibParameters; 	 // Calibration Settings
 	GVL_HMI.stHMIPumpParameters  := GVL_Settings.stPumpParameters; 		 // Pump Settings
