@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Calibration" Id="{9a8016f3-cd35-40ee-8da9-49ce7f03d787}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	aCalibPumps         : ARRAY[1..10] OF ST_CalibrationPump;
+    bStartCalibration   : BOOL;
+    bAbortCalibration   : BOOL;
+    bCalibrationRunning : BOOL;
+    bCalibrationDone    : BOOL;
+    eCalibSolvent       : E_SolventType;
+    tDelayStart         : TIME;
+    bPrintWhenComplete  : BOOL;
+    sGlobalStatus       : STRING[100];
+	iReplicatesSetpoint : INT := 1; // valor padrão
+	rAcceptanceCriteria	: LREAL;
+	fbScaleDevice		: FB_ScaleDevice; //Scale Instance Object
+	
+	aCalibLinearPumps	: ARRAY[1..10] OF ST_LinearPumpCalibration;
+	
+	aCalibCheckResult	: ARRAY[1..100] OF ST_CalibrationPumpResult;
+	
+	(* Calibration Report*)// -----------------------------------------------------------------------------------------------
+	//																													 	|
+	stPumpCalReportInfo 	: ST_ReportInfo;	  	//																	  	|
+	stPumpCalibrationInfo 	: ST_CalibrationInfo;	//																		|
+	stPumpCalibrationData 	: ARRAY[1..100] OF ST_CalibrationData;	//														|
+	//																														|		
+	bStartCreationCalJson	: BOOL; // Flag to start the Json creation														|
+	bCreationCalJsonDone	: BOOL; // Flag to indicate Json was created Correctly											|
+	bCreationCalJsonError	: BOOL; // Flag to indicate Error on Json creation												|
+	//																														|
+	(**)//-------------------------------------------------------------------------------------------------------------------
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
