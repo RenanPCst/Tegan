@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="POU_Motion" Id="{7425b719-e858-4628-a1cc-a958773f2128}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM POU_Motion
+VAR
+	
+axiPower: MC_Power;
+axiReset: MC_Reset;
+moveAbs: MC_MoveAbsolute;
+moveRel: MC_MoveRelative;
+axiPowerL: MC_Power;
+axiResetL: MC_Reset;
+moveAbsL: MC_MoveAbsolute;
+moveRelL: MC_MoveRelative;
+
+
+	enableAxi: BOOL;
+	resetAxi: BOOL;
+	runAbs: BOOL;
+	selctPosAbs: LREAL;
+	velocity: LREAL;
+	acceleration: LREAL;
+	runRel: BOOL;
+	selectPosRel: LREAL;
+	actualAbsPos: LREAL;
+	actualRelPos: LREAL;
+	actualAbsPosL: LREAL;
+	enableAxiL: BOOL;
+	resetAxiL: BOOL;
+	runAbsL: BOOL;
+	selctPosAbsL: LREAL;
+	runRelL: BOOL;
+	selectPosRelL: LREAL;
+	home: BOOL;
+	revs: INT;
+	correctRev: INT;
+	result: REAL:= 49.343;
+	pumpNo: INT:=5;
+	distance: LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+GVL_Motion.aPumps[pumpNo].Rotary.Axis();
+GVL_Motion.aPumps[pumpNo].Linear.Axis();
+actualAbsPos:= GVL_Motion.aPumps[pumpNo].Rotary.Axis.NcToPlc.ActPos;
+
+selectPosRel:= revs*360;
+correctRev:= REAL_TO_INT((50*revs)/result);
+
+axiPower(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Enable:= enableAxi,
+	Enable_Negative:= enableAxi,
+	Enable_Positive:= enableAxi,
+	Override:= 100);
+
+axiReset(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Execute:= resetAxi);
+
+moveAbs(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Execute:= runAbs,
+	Position:= selctPosAbs,
+	Velocity:= velocity,
+	Acceleration:= acceleration,
+	Deceleration:= acceleration);
+	
+moveRel(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Execute:= runRel,
+	Distance:= selectPosRel,
+	Velocity:= velocity,
+	Acceleration:= acceleration,
+	Deceleration:= acceleration);
+
+actualAbsPosL:= GVL_Motion.aPumps[pumpNo].Linear.Axis.NcToPlc.ActPos;
+	
+distance:= (selctPosAbsL*3)/900; 
+
+axiPowerL(
+	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Enable:= enableAxiL,
+	Enable_Negative:= enableAxiL,
+	Enable_Positive:= enableAxiL,
+	Override:= 100);
+
+	IF  home THEN
+resetAxiL:= NOT GVL_Motion.aPumps[pumpNo].Linear.bHomeSensorState;
+END_IF
+
+axiResetL(
+	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Execute:= resetAxiL);
+
+moveAbsL(
+	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Execute:= runAbsL,
+	Position:= selctPosAbsL,
+	Velocity:= velocity,
+	Acceleration:= acceleration,
+	Deceleration:= acceleration);
+	
+moveRelL(
+	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Execute:= runRelL,
+	Distance:= selectPosRelL,
+	Velocity:= velocity,
+	Acceleration:= acceleration,
+	Deceleration:= acceleration);]]></ST>
+    </Implementation>
+    <LineIds Name="POU_Motion">
+      <LineId Id="6" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="146" Count="1" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="25" Count="2" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="32" Count="2" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="42" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="57" Count="4" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="185" Count="1" />
+      <LineId Id="69" Count="5" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="76" Count="17" />
+      <LineId Id="53" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

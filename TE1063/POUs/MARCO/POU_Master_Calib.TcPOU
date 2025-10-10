@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="POU_Master_Calib" Id="{c99ca5ad-edf2-4aef-817b-e9abc6bd5bc5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM POU_Master_Calib
+VAR
+	criteria: REAL := 0.5; // Acceptance Criteria (0.1 ~ 5.0)
+	failures: INT := 0; // Allowable Failures (0 ~ 5)
+	targetVolume: REAL := 0.50; // Volume Target (mL)
+	replicates: INT := 5; // Number of checks (0 ~ 10)
+	tareWt: REAL; //Weight before
+	grossWt: REAL; //Weight after
+	netWt: REAL; // rsult of (grossWt - tareWt)
+	netVolume: REAL; //result of (netWt * density)
+	state: (IDLE, FILL_JAR, GET_WEIGHT, FILL_BOX, ERROR, DONE);
+	valveNo: INT;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+CASE state OF
+	
+IDLE:
+GVL_Motion.aValvesObj[valveNo].MoveValve(iPosition := 6, rVelocity := GVL_Motion.aValves[valveNo].rTargetVel, rAcc := GVL_Motion.aValves[valveNo].rAcceleration, rDec := GVL_Motion.aValves[valveNo].rDeceleration);
+
+FILL_JAR:
+
+
+GET_WEIGHT:
+
+
+FILL_BOX:
+
+
+ERROR:
+
+
+DONE:
+
+
+
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="POU_Master_Calib">
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
