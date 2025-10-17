@@ -11,57 +11,664 @@ VAR
 	grossWt: REAL; //Weight after
 	netWt: REAL; // rsult of (grossWt - tareWt)
 	netVolume: REAL; //result of (netWt * density)
-	state: (IDLE, FILL_JAR, GET_WEIGHT, FILL_BOX, ERROR, DONE);
+	state: INT;
 	valveNo: INT;
+	pumpNo: INT:=1;
+	timeWt: ton;
+	timer2: ton;
+	timer3: ton;
+	selectPump: ARRAY[1..10] OF STRING;
+	result: ARRAY[1..10] OF ST_Results;
+	start: BOOL;
+	stop: BOOL;
+	movimentDONE: BOOL;
+	revs: REAL;
+	valvePos: USINT;
+	repli: INT:= 1;
+	axiPower: MC_Power;
+	i: INT;
+	scale: FB_ScaleDevice;
+	adjust: ARRAY[1..10] OF BOOL;
+	correctRev: REAL;
+	enableAdj: BOOL;
+	opening: REAL;
+	runLinear: BOOL;
+	adjustSum: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timeWt();
+timer2();
+timer3();
+
+IF stop THEN
+	powerOFF();
+	stop:=FALSE;
+END_IF
+
+IF pumpNo = 1 OR pumpNo = 2 THEN
+	valveNo:= 1;
+ELSIF pumpNo = 3 OR pumpNo = 4 THEN
+	valveNo:= 2;
+ELSIF pumpNo = 5 OR pumpNo = 6 THEN
+	valveNo:= 3;
+ELSIF pumpNo = 7 OR pumpNo = 8 THEN
+	valveNo:= 4;
+ELSIF pumpNo = 9 OR pumpNo = 10 THEN
+	valveNo:= 5;
+END_IF
+
+CASE state OF
+	
+0: //Idle
+	IF start THEN
+		GVL_Marco.revs:= GVL_Marco.mL_target;
+		GVL_Marco.resetAxi:= FALSE;
+		GVL_Marco.valvPos:= 1;
+		GVL_Marco.enableValv:= TRUE;
+		timeWt(in:=TRUE, pt:=T#5S);
+		GVL_Marco.enableAxi:= TRUE;
+		opening:= 0;//opening control
+		FOR i:=1 TO replicates BY 1 DO
+			result[i].gross:= 0;
+			result[i].rest:= 0;
+			result[i].tare:= 0;
+		END_FOR
+		repli:= 1;
+		state:= 10;
+	ELSE
+		state:= 0;
+	END_IF
+	
+10:	//Enable the pump motor
+	
+	IF GVL_Motion.aValves[valveNo].Axis.Status.InTargetPosition AND timeWt.Q THEN
+		GVL_Marco.enableValv:= FALSE;
+		timeWt(in:=FALSE);
+		state:= 20;
+	ELSE
+		state:= 10;
+	END_IF		
+
+20:	//Fill the Jars from Bottle
+	
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Disabled THEN
+		revs:= GVL_Marco.revs*2.4;
+		GVL_Marco.runFWD:= TRUE;
+		start:= FALSE;
+		timer2(in:=TRUE, pt:=T#5S);
+		state:= 30;
+	ELSE
+		state:= 20;
+	END_IF
+
+30: //Move valve to position 6
+	
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
+		GVL_Marco.runFWD:= FALSE;
+		GVL_Marco.valvPos:= 6;
+		GVL_Marco.enableValv:= TRUE;
+		timer2(in:=FALSE);
+		timeWt(in:=TRUE, pt:=T#5S);
+		state:=  40;
+	ELSE
+		state:= 30;
+	END_IF
+
+
+40: //Fill the calibration box(setup)
+
+	IF GVL_Motion.aValves[valveNo].Axis.Status.InTargetPosition AND timeWt.Q THEN
+		GVL_Marco.enableValv:= FALSE;
+		revs:= GVL_Marco.revs/2;
+		GVL_Marco.runBWD:= TRUE;
+		timeWt(in:=FALSE);
+		timer2(in:=TRUE, pt:=T#5S);
+		state:= 50;
+		
+	ELSE
+		state:= 40;	
+	END_IF
+
+50: //Waiting
+
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
+		GVL_Marco.runBWD:= FALSE;
+		timer2(in:=FALSE);
+		timeWt(in:=TRUE, pt:=T#10S);
+		GVL_Calibration.fbScaleDevice.RequestWeight();
+		state:= 55;
+	ELSE
+		state:= 50;
+	END_IF
+	
+55: //Make Tara
+	
+	IF timeWt.Q THEN
+		tareWt:= GVL_Calibration.fbScaleDevice.RequestWeight();
+		timeWt(in:=FALSE);
+		state:= 60;
+	ELSE
+		state:= 55;
+	END_IF
+	
+60: //Fill calibration box
+
+	IF tareWt <> 9999.0 THEN
+		result[repli].tare:= tareWt;
+		revs:= GVL_Marco.revs;
+		//opening:=opening-550;//Opening control
+		//runLinear:=TRUE;//Opening control
+		GVL_Marco.runBWD:= TRUE;
+		timer2(in:=TRUE, pt:=T#5S);
+		state:= 70;
+	ELSE
+		state:= 60;
+	END_IF
+	
+70: //Waiting
+
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
+		GVL_Marco.runBWD:= FALSE;
+		//runLinear:=FALSE;//Opening control
+		timer2(in:=FALSE);
+		timeWt(in:=TRUE, pt:=T#10S);
+		GVL_Calibration.fbScaleDevice.RequestWeight();
+		state:= 75;
+	ELSE
+		state:= 70;
+	END_IF
+
+75: //Get gross weight
+	
+	IF timeWt.Q THEN
+		grossWt:= GVL_Calibration.fbScaleDevice.RequestWeight();
+		timeWt(in:=FALSE);
+		state:= 80;
+	ELSE
+		state:= 75;
+	END_IF
+	
+80: //Return solvent to jar
+
+	IF grossWt <> 9999.0 THEN
+		result[repli].gross:= grossWt;
+		result[repli].rest:= result[repli].gross - result[repli].tare;
+		netWt:= result[repli].rest;
+			IF (netWt > GVL_Marco.mL_target+((GVL_Marco.mL_target*0.5)/100) OR netWt < GVL_Marco.mL_target-((GVL_Marco.mL_target*0.5)/100)) THEN
+				adjust[repli]:= TRUE;
+			ELSE
+				adjust[repli]:= FALSE;
+			END_IF
+			IF repli >= replicates THEN
+				(*FOR i:=1 TO replicates BY 1 DO
+					adjustSum:= adjustSum + result[i].rest;
+					IF adjust[i] THEN
+						repli:= 1;
+						correctRev:= adjustSum/replicates;
+					END_IF
+				END_FOR
+				IF repli = 1 THEN
+					revs:= GVL_Marco.revs+5;
+					GVL_Marco.runFWD:= TRUE;
+					state:= 90;	
+				END_IF*)
+				revs:= GVL_Marco.revs*2;
+				GVL_Marco.runFWD:= TRUE;
+			ELSE
+				revs:= GVL_Marco.revs+5;
+				GVL_Marco.runFWD:= TRUE;
+			END_IF
+		timer3(in:=TRUE, pt:=T#5S);
+		repli := repli +1;
+		state:= 90;
+	ELSE
+		state:= 80;
+	END_IF
+
+90: //Check replicates
+
+	IF repli < replicates+1 AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN
+		timer3(in:=FALSE);
+		GVL_Marco.runFWD:= FALSE;
+		timer2(in:=TRUE, pt:=T#5S);
+		state:= 50;
+	ELSIF repli >= replicates AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN
+		timer3(in:=FALSE);
+		GVL_Marco.runFWD:= FALSE;
+		GVL_Marco.valvPos:= 1;
+		GVL_Marco.enableValv:= TRUE;
+		timer2(in:=TRUE, pt:=T#5S);
+		state:= 100;
+	ELSE
+		state:= 90;
+	END_IF
+
+100: //Empty the jar
+
+	IF  GVL_Motion.aValves[valveNo].Axis.Status.InTargetPosition AND timer2.Q THEN
+		GVL_Marco.enableValv:= FALSE;
+		revs:= GVL_Marco.revs*2.4;
+		GVL_Marco.runBWD:= TRUE;
+		timer2(in:=FALSE);
+		timer3(in:=TRUE, pt:=T#5S);
+		state:= 110;
+	ELSE
+		state:= 100;
+	END_IF
+	
+110: //Done
+
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer3.Q THEN
+		GVL_Marco.runBWD:= FALSE;
+		timer3(in:=FALSE);
+		timeWt(in:=TRUE, pt:=T#5S);
+		state:= 120;
+	ELSE
+		state:= 110;
+	END_IF
+	
+120:
+
+	IF GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving AND timeWt.Q THEN
+		GVL_Marco.resetAxi:= TRUE;
+		GVL_Marco.enableAxi:= FALSE;
+		(*IF GVL_Marco.revs > GVL_Marco.mL_target THEN
+			correctRev:= GVL_Marco.revs - GVL_Marco.mL_target;
+		ELSIF GVL_Marco.revs < GVL_Marco.mL_target THEN
+			correctRev:= GVL_Marco.mL_target - GVL_Marco.revs; 	
+		END_IF*)
+		state:= 0;
+	ELSE
+		state:= 120;
+	END_IF
+	
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="moveValve" Id="{88c3bc66-2468-46ab-bd07-234aef9aacd6}">
+      <Declaration><![CDATA[METHOD moveValve : BOOL
+VAR
+	state: INT;
+	valveNo: INT;
+END_VAR
+VAR_INPUT
+	pumNo: INT;
+	valvePos: USINT;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF pumpNo = 1 OR pumpNo = 2 THEN
+	valveNo:= 1;
+ELSIF pumpNo = 3 OR pumpNo = 4 THEN
+	valveNo:= 2;
+ELSIF pumpNo = 5 OR pumpNo = 6 THEN
+	valveNo:= 3;
+ELSIF pumpNo = 7 OR pumpNo = 8 THEN
+	valveNo:= 4;
+ELSIF pumpNo = 9 OR pumpNo = 10 THEN
+	valveNo:= 5;
+END_IF
+
+GVL_Motion.aValvesObj[valveNo].MoveValve(iPosition := valvePos, rVelocity := GVL_Motion.aValves[1].rTargetVel, rAcc := GVL_Motion.aValves[1].rAcceleration, rDec := GVL_Motion.aValves[1].rDeceleration);
+
+CASE state OF
+	
+0:
+
+	IF NOT GVL_Motion.aValves[valveNo].Axis.Status.Moving THEN
+		GVL_Motion.aValvesObj[valveNo].MoveValve(iPosition := valvePos, rVelocity := GVL_Motion.aValves[1].rTargetVel, rAcc := GVL_Motion.aValves[1].rAcceleration, rDec := GVL_Motion.aValves[1].rDeceleration);
+		movimentDONE:=FALSE;
+		state:= 1;
+	ELSE
+		state:= 0;	
+	END_IF
+
+1:
+	IF NOT GVL_Motion.aValves[valveNo].Axis.Status.Moving THEN
+			movimentDONE:= TRUE;
+			State:= 0;
+		ELSE
+			state:= 1;
+		END_IF
+	
+	
+END_CASE	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="powerOFF" Id="{669f2d6c-8140-4033-8764-af2e2cad1a67}">
+      <Declaration><![CDATA[METHOD powerOFF : BOOL
+VAR
+	axiPower: MC_Power;
+	pumpNo: INT;
+	
+END_VAR
+VAR_INPUT
 	
 	
 END_VAR
 ]]></Declaration>
-    <Implementation>
-      <ST><![CDATA[
-CASE state OF
+      <Implementation>
+        <ST><![CDATA[FOR pumpNo:=1 TO 10 BY 1 DO
+	axiPower(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Enable:= FALSE,
+	Enable_Negative:= FALSE,
+	Enable_Positive:= FALSE,
+	Override:= 100);
 	
-IDLE:
-GVL_Motion.aValvesObj[valveNo].MoveValve(iPosition := 6, rVelocity := GVL_Motion.aValves[valveNo].rTargetVel, rAcc := GVL_Motion.aValves[valveNo].rAcceleration, rDec := GVL_Motion.aValves[valveNo].rDeceleration);
+	axiPower(
+	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Enable:= FALSE,
+	Enable_Negative:= FALSE,
+	Enable_Positive:= FALSE,
+	Override:= 100);
+END_FOR
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="runBwd" Id="{d07a1e49-9008-4536-982f-b964c6fea7a0}">
+      <Declaration><![CDATA[METHOD runBwd : BOOL
+VAR
+	moveRel: MC_MoveRelative;
+	selectPosRel: LREAL;
+	
+END_VAR
+VAR_INPUT
+	pumpNo: INT;
+	revs: INT;
+	 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+selectPosRel:= revs*360;
 
-FILL_JAR:
+moveRel(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Execute:= TRUE,
+	Distance:= selectPosRel*-1,
+	Velocity:= 3000,
+	Acceleration:= 3000,
+	Deceleration:= 3000);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="runFwd" Id="{77fa4f85-bb1a-43bf-91a1-3c223717d22d}">
+      <Declaration><![CDATA[METHOD runFwd : BOOL
+VAR
+	moveRel: MC_MoveRelative;
+	selectPosRel: LREAL;
+	
+END_VAR
+VAR_INPUT
+	pumpNo: INT;
+	revs: INT;
+	 
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+selectPosRel:= revs*360;
 
-
-GET_WEIGHT:
-
-
-FILL_BOX:
-
-
-ERROR:
-
-
-DONE:
-
-
-
-
-END_CASE]]></ST>
-    </Implementation>
+moveRel(
+	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Execute:= TRUE,
+	Distance:= selectPosRel,
+	Velocity:= 3000,
+	Acceleration:= 3000,
+	Deceleration:= 3000);]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="POU_Master_Calib">
-      <LineId Id="16" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="259" Count="10" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="113" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="20" Count="0" />
-      <LineId Id="23" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="566" Count="0" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="414" Count="1" />
+      <LineId Id="412" Count="1" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="99" Count="1" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="165" Count="2" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="72" Count="1" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="74" Count="1" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="69" Count="0" />
       <LineId Id="22" Count="0" />
-      <LineId Id="25" Count="1" />
-      <LineId Id="21" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="79" Count="0" />
       <LineId Id="28" Count="1" />
       <LineId Id="27" Count="0" />
-      <LineId Id="31" Count="1" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="175" Count="2" />
+      <LineId Id="170" Count="0" />
       <LineId Id="30" Count="0" />
-      <LineId Id="34" Count="1" />
-      <LineId Id="33" Count="0" />
-      <LineId Id="37" Count="1" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="186" Count="1" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="289" Count="1" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="293" Count="1" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="298" Count="0" />
       <LineId Id="36" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="563" Count="1" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="194" Count="1" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="307" Count="0" />
       <LineId Id="19" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="320" Count="0" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="310" Count="2" />
+      <LineId Id="437" Count="0" />
+      <LineId Id="314" Count="0" />
+      <LineId Id="438" Count="0" />
+      <LineId Id="316" Count="2" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="319" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="485" Count="0" />
+      <LineId Id="602" Count="1" />
+      <LineId Id="613" Count="1" />
+      <LineId Id="601" Count="0" />
+      <LineId Id="444" Count="0" />
+      <LineId Id="604" Count="0" />
+      <LineId Id="616" Count="0" />
+      <LineId Id="605" Count="0" />
+      <LineId Id="617" Count="0" />
+      <LineId Id="615" Count="0" />
+      <LineId Id="608" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="619" Count="1" />
+      <LineId Id="622" Count="1" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="449" Count="0" />
+      <LineId Id="446" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="217" Count="1" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="423" Count="2" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="240" Count="2" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="243" Count="1" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="344" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="249" Count="1" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="393" Count="1" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="395" Count="0" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="489" Count="1" />
+      <LineId Id="492" Count="0" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="491" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="399" Count="1" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="219" Count="0" />
       <LineId Id="18" Count="0" />
+    </LineIds>
+    <LineIds Name="POU_Master_Calib.moveValve">
+      <LineId Id="87" Count="9" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="56" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="103" Count="1" />
+      <LineId Id="101" Count="1" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="46" Count="0" />
+    </LineIds>
+    <LineIds Name="POU_Master_Calib.powerOFF">
+      <LineId Id="11" Count="0" />
+      <LineId Id="34" Count="4" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="41" Count="4" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="POU_Master_Calib.runBwd">
+      <LineId Id="19" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="7" Count="5" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="POU_Master_Calib.runFwd">
+      <LineId Id="19" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="7" Count="5" />
+      <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

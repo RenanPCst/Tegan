@@ -28,6 +28,14 @@
     "DEFAULTTIMEZONE": "client",
     "DEFAULTUSERGROUP": "__SystemUsers",
     "DEFINITIONS": {
+        "PLC1.ARRAY_0..10_OF-ST_Results": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Results"
+            },
+            "maxItems": 11,
+            "minItems": 11,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..20_OF-UDINT": {
             "items": {
                 "$ref": "tchmi:general#/definitions/UDINT"
@@ -110,6 +118,15 @@
         "PLC1.ARRAY_1..10_OF-LREAL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/LREAL"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..10_OF-STRING-80": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
             },
             "maxItems": 10,
             "minItems": 10,
@@ -2874,6 +2891,31 @@
                         },
                         {
                             "comment": "T/IC Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2",
+                            "propertyOrder": 1
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_Results": {
+            "properties": {
+                "gross": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "tare": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
                             "propertyOrder": 1
                         }
                     ]
@@ -9420,6 +9462,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Marco.mL_target": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Marco::mL_target",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Marco.revs": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Marco::revs",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.M1Motor.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -9779,6 +9841,73 @@
                         "$ref": "tchmi:general#/definitions/String"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.pumpNo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::pumpNo",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/INT"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.replicates": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::replicates",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/INT"
+                    },
+                    {
+                        "comment": "Number of checks (0 ~ 10)"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.result": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::result",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..10_OF-ST_Results"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.selectPump": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::selectPump",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.start": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::start",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.stop": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::stop",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
             },
             "USEMAPPING": true
         },
@@ -11249,6 +11378,8 @@
                 "PLC1.GVL_IO.sEL9576T14Status": 3,
                 "PLC1.GVL_IO.stAL1333info": 3,
                 "PLC1.GVL_IO.stEL6910": 3,
+                "PLC1.GVL_Marco.mL_target": 3,
+                "PLC1.GVL_Marco.revs": 3,
                 "PLC1.GVL_Motion.M1Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M2Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M3Motor.rActualPosition": 3,
@@ -11272,6 +11403,12 @@
                 "PLC1.GVL_Recipe.sSelectedRecipeName": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume": 3,
+                "PLC1.POU_Master_Calib.pumpNo": 3,
+                "PLC1.POU_Master_Calib.replicates": 3,
+                "PLC1.POU_Master_Calib.result": 3,
+                "PLC1.POU_Master_Calib.selectPump": 3,
+                "PLC1.POU_Master_Calib.start": 3,
+                "PLC1.POU_Master_Calib.stop": 3,
                 "SetLocale": 3,
                 "SubscribeEvents": 3,
                 "TcHmiEventLogger.Diagnostics": 1,

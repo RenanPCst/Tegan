@@ -7,19 +7,23 @@ VAR
 axiPower: MC_Power;
 axiReset: MC_Reset;
 moveAbs: MC_MoveAbsolute;
-moveRel: MC_MoveRelative;
+moveRelFWD: MC_MoveRelative;
+moveRelBWD: MC_MoveRelative;
 axiPowerL: MC_Power;
 axiResetL: MC_Reset;
 moveAbsL: MC_MoveAbsolute;
+moveAbsL_homing: MC_MoveAbsolute;
 moveRelL: MC_MoveRelative;
-
+moveValv: MC_MoveAbsolute;
+axiResetLhoming: MC_Reset;
+setPosL: MC_SetPosition;
 
 	enableAxi: BOOL;
 	resetAxi: BOOL;
 	runAbs: BOOL;
 	selctPosAbs: LREAL;
-	velocity: LREAL;
-	acceleration: LREAL;
+	velocity: LREAL:= 1500;
+	acceleration: LREAL:= 1500;
 	runRel: BOOL;
 	selectPosRel: LREAL;
 	actualAbsPos: LREAL;
@@ -32,90 +36,238 @@ moveRelL: MC_MoveRelative;
 	runRelL: BOOL;
 	selectPosRelL: LREAL;
 	home: BOOL;
-	revs: INT;
+	//revs: INT;
 	correctRev: INT;
 	result: REAL:= 49.343;
-	pumpNo: INT:=5;
+	//pumpNo: INT:=5;
 	distance: LREAL;
+	valveABSpos: REAL;
+	homing: INT;
+	i: INT;
+	runAbsLhoming: BOOL;
+	timer10: ton;
+	resetAxiLhoming: BOOL;
+	selctPosAbsLhoming: INT;
+	zeroPos: BOOL;
+	RPM: REAL;
+	rpmPos: REAL;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-GVL_Motion.aPumps[pumpNo].Rotary.Axis();
-GVL_Motion.aPumps[pumpNo].Linear.Axis();
-actualAbsPos:= GVL_Motion.aPumps[pumpNo].Rotary.Axis.NcToPlc.ActPos;
+      <ST><![CDATA[timer10();
+GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis();
+GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Linear.Axis();
+actualAbsPos:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis.NcToPlc.ActPos;
+IF GVL_Marco.valvPos = 1 THEN
+	valveABSpos:= 0;
+ELSIF GVL_Marco.valvPos = 2 THEN
+	valveABSpos:= 1200;
+ELSIF GVL_Marco.valvPos = 3 THEN
+	valveABSpos:= 2400;
+ELSIF GVL_Marco.valvPos = 4 THEN
+	valveABSpos:= 3600;
+ELSIF GVL_Marco.valvPos = 5 THEN
+	valveABSpos:= 4800;
+ELSIF GVL_Marco.valvPos = 6 THEN
+	valveABSpos:= 6000;
+END_IF
 
-selectPosRel:= revs*360;
-correctRev:= REAL_TO_INT((50*revs)/result);
+//RPM:= (GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.rActualVel/360)*60;
+velocity:= (RPM*360)/60;
+//rpmPos:= (RPM*360)/60;
+
+selectPosRel:= (POU_Master_Calib.revs*10)*360;
+//correctRev:= REAL_TO_INT((50*revs)/result);
 
 axiPower(
-	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
-	Enable:= enableAxi,
-	Enable_Negative:= enableAxi,
-	Enable_Positive:= enableAxi,
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis,
+	Enable:= GVL_Marco.enableAxi,
+	Enable_Negative:= GVL_Marco.enableAxi,
+	Enable_Positive:= GVL_Marco.enableAxi,
 	Override:= 100);
 
 axiReset(
-	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
-	Execute:= resetAxi);
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis,
+	Execute:= GVL_Marco.resetAxi);
 
 moveAbs(
-	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis,
 	Execute:= runAbs,
 	Position:= selctPosAbs,
 	Velocity:= velocity,
 	Acceleration:= acceleration,
 	Deceleration:= acceleration);
 	
-moveRel(
-	Axis:= GVL_Motion.aPumps[pumpNo].Rotary.Axis,
-	Execute:= runRel,
+moveRelFWD(
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis,
+	Execute:= GVL_Marco.runFWD,
 	Distance:= selectPosRel,
 	Velocity:= velocity,
 	Acceleration:= acceleration,
 	Deceleration:= acceleration);
-
-actualAbsPosL:= GVL_Motion.aPumps[pumpNo].Linear.Axis.NcToPlc.ActPos;
 	
+moveRelBWD(
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Rotary.Axis,
+	Execute:= GVL_Marco.runBWD,
+	Distance:= selectPosRel*-1,
+	Velocity:= velocity,
+	Acceleration:= acceleration,
+	Deceleration:= acceleration);
+
+actualAbsPosL:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Linear.Axis.NcToPlc.ActPos;
+
+selctPosAbsL:= POU_Master_Calib.opening;
+runAbsL:= POU_Master_Calib.runLinear;
 distance:= (selctPosAbsL*3)/900; 
 
 axiPowerL(
-	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Axis:= GVL_Motion.aPumps[i].Linear.Axis,
 	Enable:= enableAxiL,
 	Enable_Negative:= enableAxiL,
 	Enable_Positive:= enableAxiL,
 	Override:= 100);
 
-	IF  home THEN
-resetAxiL:= NOT GVL_Motion.aPumps[pumpNo].Linear.bHomeSensorState;
-END_IF
+	
 
 axiResetL(
-	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Linear.Axis,
 	Execute:= resetAxiL);
+	
+axiResetLhoming(
+	Axis:= GVL_Motion.aPumps[i].Linear.Axis,
+	Execute:= resetAxiLhoming);
 
 moveAbsL(
-	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Linear.Axis,
 	Execute:= runAbsL,
 	Position:= selctPosAbsL,
 	Velocity:= velocity,
 	Acceleration:= acceleration,
 	Deceleration:= acceleration);
-	
+
+moveAbsL_homing(
+		Axis:= GVL_Motion.aPumps[i].Linear.Axis,
+		Execute:= runAbsLhoming,
+		Position:= selctPosAbsLhoming,
+		Velocity:= 500,
+		Acceleration:= 500,
+		Deceleration:= 500);
+			
 moveRelL(
-	Axis:= GVL_Motion.aPumps[pumpNo].Linear.Axis,
+	Axis:= GVL_Motion.aPumps[POU_Master_Calib.pumpNo].Linear.Axis,
 	Execute:= runRelL,
 	Distance:= selectPosRelL,
 	Velocity:= velocity,
 	Acceleration:= acceleration,
-	Deceleration:= acceleration);]]></ST>
+	Deceleration:= acceleration);
+
+setPosL(
+	axis:= GVL_Motion.aPumps[i].Linear.Axis,
+	Execute:= zeroPos,
+	Position:= 0,
+	mode:= FALSE);
+	
+CASE homing OF
+	
+0:
+	IF home THEN
+		selctPosAbsLhoming:= -3000;
+		homing:=10;
+	ELSE
+		homing:=0;
+	END_IF
+	
+10: 
+	IF GVL_Motion.aPumps[i].Linear.rActualPos <> selctPosAbsLhoming THEN
+		runAbsLhoming:=TRUE;
+		timer10(in:=TRUE, pt:=T#10S);
+		homing:=20;
+	ELSE
+		homing:=10;
+	END_IF
+	
+20:
+	IF GVL_Motion.aPumps[i].Linear.bHomeSensorState AND timer10.Q THEN
+		runAbsLhoming:=FALSE;
+		resetAxiLhoming:=TRUE;
+		timer10(in:=FALSE);
+		selctPosAbsLhoming:= 3000;
+		homing:=30;
+	ELSE
+		homing:=20;
+	END_IF
+	
+30:
+	IF GVL_Motion.aPumps[i].Linear.iNotMoving THEN
+		runAbsLhoming:=TRUE;
+		resetAxiLhoming:=FALSE;
+		homing:=40;
+	ELSE
+		homing:=30;
+	END_IF
+	
+40:
+	IF NOT GVL_Motion.aPumps[i].Linear.bHomeSensorState THEN
+		resetAxiLhoming:=TRUE;
+		timer10(in:=TRUE, pt:=T#10S);
+		homing:=50;
+	ELSE
+		homing:=40;
+	END_IF
+	
+50:
+	IF timer10.Q THEN
+		zeroPos:=TRUE;
+		timer10(in:=FALSE);
+		homing:=55;
+	ELSE
+		homing:=50;
+	END_IF
+
+55:
+	IF GVL_Motion.aPumps[i].Linear.rActualPos = 0 AND setPosL.Done THEN
+		resetAxiLhoming:=FALSE;
+		zeroPos:=FALSE;
+		home:=FALSE;
+		enableAxiL:=FALSE;
+		runAbsLhoming:=FALSE;
+		homing:=0;
+	ELSE
+		homing:=55;
+	END_IF
+
+END_CASE
+
+moveValv(
+	Axis:= GVL_Motion.aValves[POU_Master_Calib.valveNo].Axis,
+	Execute:= GVL_Marco.enableValv,
+	Position:= valveABSpos,
+	Velocity:= 1500,
+	Acceleration:= 1500,
+	Deceleration:= 1500);
+	
+	
+	]]></ST>
     </Implementation>
     <LineIds Name="POU_Motion">
       <LineId Id="6" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="66" Count="0" />
       <LineId Id="16" Count="0" />
-      <LineId Id="67" Count="0" />
+      <LineId Id="248" Count="1" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="253" Count="2" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="481" Count="1" />
       <LineId Id="15" Count="0" />
       <LineId Id="146" Count="1" />
       <LineId Id="14" Count="0" />
@@ -134,18 +286,85 @@ moveRelL(
       <LineId Id="42" Count="1" />
       <LineId Id="51" Count="0" />
       <LineId Id="57" Count="4" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="228" Count="5" />
+      <LineId Id="227" Count="0" />
       <LineId Id="104" Count="0" />
       <LineId Id="52" Count="0" />
+      <LineId Id="534" Count="0" />
       <LineId Id="105" Count="0" />
+      <LineId Id="535" Count="0" />
       <LineId Id="185" Count="1" />
       <LineId Id="69" Count="5" />
       <LineId Id="108" Count="0" />
-      <LineId Id="106" Count="0" />
-      <LineId Id="75" Count="0" />
       <LineId Id="111" Count="0" />
       <LineId Id="107" Count="0" />
-      <LineId Id="76" Count="17" />
+      <LineId Id="76" Count="2" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="386" Count="1" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="79" Count="7" />
+      <LineId Id="338" Count="6" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="88" Count="5" />
       <LineId Id="53" Count="0" />
+      <LineId Id="393" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="395" Count="3" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="310" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="308" Count="1" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="311" Count="1" />
+      <LineId Id="332" Count="0" />
+      <LineId Id="319" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="315" Count="1" />
+      <LineId Id="314" Count="0" />
+      <LineId Id="317" Count="1" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="365" Count="0" />
+      <LineId Id="349" Count="1" />
+      <LineId Id="333" Count="0" />
+      <LineId Id="335" Count="1" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="351" Count="3" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="356" Count="2" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="359" Count="1" />
+      <LineId Id="362" Count="1" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="368" Count="2" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="361" Count="0" />
+      <LineId Id="372" Count="1" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="403" Count="0" />
+      <LineId Id="378" Count="2" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="410" Count="4" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="415" Count="1" />
+      <LineId Id="409" Count="0" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="239" Count="2" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="242" Count="1" />
+      <LineId Id="245" Count="2" />
     </LineIds>
   </POU>
 </TcPlcObject>
