@@ -28,6 +28,14 @@
     "DEFAULTTIMEZONE": "client",
     "DEFAULTUSERGROUP": "__SystemUsers",
     "DEFINITIONS": {
+        "PLC1.ARRAY_0..10_OF-ST_Results": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Results"
+            },
+            "maxItems": 11,
+            "minItems": 11,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..20_OF-UDINT": {
             "items": {
                 "$ref": "tchmi:general#/definitions/UDINT"
@@ -110,6 +118,15 @@
         "PLC1.ARRAY_1..10_OF-LREAL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/LREAL"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..10_OF-STRING-80": {
+            "items": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
             },
             "maxItems": 10,
             "minItems": 10,
@@ -290,6 +307,15 @@
         "PLC1.ARRAY_1..50_OF-ST_RecipeInfo": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_RecipeInfo"
+            },
+            "maxItems": 50,
+            "minItems": 50,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..50_OF-ST_Results": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Results"
             },
             "maxItems": 50,
             "minItems": 50,
@@ -2875,6 +2901,251 @@
                         {
                             "comment": "T/IC Solvent Volume for each step Rinse 1 | Rinse 2 | Wash 1 | Wash 2",
                             "propertyOrder": 1
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_Results": {
+            "properties": {
+                "Runs_ID": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 24
+                        }
+                    ]
+                },
+                "allowableFail": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 11
+                        }
+                    ]
+                },
+                "calibrationNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "callInterval": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 13
+                        }
+                    ]
+                },
+                "criteria": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 22
+                        }
+                    ]
+                },
+                "dateTime": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 14
+                        }
+                    ]
+                },
+                "density": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "differencePercent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 21
+                        }
+                    ]
+                },
+                "gross": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "grossWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 17
+                        }
+                    ]
+                },
+                "netVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 18
+                        }
+                    ]
+                },
+                "netWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 19
+                        }
+                    ]
+                },
+                "pumpNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "pumpRevs": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 23
+                        }
+                    ]
+                },
+                "replicates": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 12
+                        }
+                    ]
+                },
+                "rest": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "solventNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                },
+                "solventRevision": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "step": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 15
+                        }
+                    ]
+                },
+                "sysMasterRevision": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 10
+                        }
+                    ]
+                },
+                "tare": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "tareWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 16
+                        }
+                    ]
+                },
+                "targetVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/REAL"
+                        },
+                        {
+                            "propertyOrder": 20
+                        }
+                    ]
+                },
+                "userId": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 6
                         }
                     ]
                 }
@@ -9420,6 +9691,36 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Marco.calibResult": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Marco::calibResult",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..50_OF-ST_Results"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Marco.mL_target": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Marco::mL_target",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Marco.revs": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Marco::revs",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/REAL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.M1Motor.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -9779,6 +10080,73 @@
                         "$ref": "tchmi:general#/definitions/String"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.pumpNo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::pumpNo",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/INT"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.replicates": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::replicates",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/INT"
+                    },
+                    {
+                        "comment": "Number of checks (0 ~ 10)"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.result": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::result",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..10_OF-ST_Results"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.selectPump": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::selectPump",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.start": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::start",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.POU_Master_Calib.stop": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::POU_Master_Calib::stop",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
             },
             "USEMAPPING": true
         },
@@ -11249,6 +11617,9 @@
                 "PLC1.GVL_IO.sEL9576T14Status": 3,
                 "PLC1.GVL_IO.stAL1333info": 3,
                 "PLC1.GVL_IO.stEL6910": 3,
+                "PLC1.GVL_Marco.calibResult": 3,
+                "PLC1.GVL_Marco.mL_target": 3,
+                "PLC1.GVL_Marco.revs": 3,
                 "PLC1.GVL_Motion.M1Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M2Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.M3Motor.rActualPosition": 3,
@@ -11272,6 +11643,12 @@
                 "PLC1.GVL_Recipe.sSelectedRecipeName": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume": 3,
+                "PLC1.POU_Master_Calib.pumpNo": 3,
+                "PLC1.POU_Master_Calib.replicates": 3,
+                "PLC1.POU_Master_Calib.result": 3,
+                "PLC1.POU_Master_Calib.selectPump": 3,
+                "PLC1.POU_Master_Calib.start": 3,
+                "PLC1.POU_Master_Calib.stop": 3,
                 "SetLocale": 3,
                 "SubscribeEvents": 3,
                 "TcHmiEventLogger.Diagnostics": 1,

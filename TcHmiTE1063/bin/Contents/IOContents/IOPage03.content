@@ -1,0 +1,816 @@
+<div id="IOPage1_2" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="980" data-tchmi-height="1080">
+
+
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_130" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="495" data-tchmi-height-unit="px" data-tchmi-left="87" data-tchmi-left-unit="px" data-tchmi-src="Resources/Custom/Images/IO Images/EL6910.png" data-tchmi-top="24" data-tchmi-top-unit="px" data-tchmi-width="92" data-tchmi-width-unit="px">
+</div>
+<div id="EL1904EStopChannel1_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="256" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety FB Error">
+</div>
+<div id="EL1904EStopChannel2_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="166" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Lock Doors Command">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="301" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="EL1904ResetPushButton_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="166" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety Run">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="211" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety Error Acknowledge">
+</div>
+<div id="EL6910Status_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="96" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="%s%PLC1.GVL_IO.stEL6910::sEL6910Status%/s%">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_IO.stEL6910::nEL6910State%/s%",
+    "actions": [
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/UINT",
+          "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::nEL6910State%/s%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 8
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%EL6910Status_6::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Operational"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 4
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%EL6910Status_6::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "SAFE_OP"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 3
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%EL6910Status_6::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "BOOT"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 2
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%EL6910Status_6::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "PREOP"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 1
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%EL6910Status_6::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "INIT"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="256" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="EL1904ResetPushButton_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="211" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Bypass Door 3 command">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="482" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety OK">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="436" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety Other Error">
+</div>
+<div id="EL1904ResetPushButton_4" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="346" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Air Pressure OK">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="391" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety Running">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="482" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_9" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="436" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="EL1904ResetPushButton_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="346" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="EL1904FestoSafetyModuleFeedback_10" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="650" data-tchmi-left-unit="px" data-tchmi-top="391" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Spare">
+</div>
+<div id="TcHmi_Controls_Beckhoff_TcHmiImage_131" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="495" data-tchmi-height-unit="px" data-tchmi-left="87" data-tchmi-left-unit="px" data-tchmi-src="Resources/Custom/Images/IO Images/EL1918.png" data-tchmi-top="564" data-tchmi-top-unit="px" data-tchmi-width="92" data-tchmi-width-unit="px">
+</div>
+<div id="EL1904EStopChannel1_10" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="706" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="HMI E-Stop | Channel 1">
+</div>
+<div id="EL1904EStopChannel1_11" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="796" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Side E-Stop | Channel 1">
+</div>
+<div id="EL1904EStopChannel1_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="841" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Side E-Stop | Channel 2">
+</div>
+<div id="EL1904EStopChannel1_18" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="751" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="HMI E-Stop | Channel 2">
+</div>
+<div id="EL1904EStopChannel1_118" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="636" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="%s%PLC1.GVL_IO.sEL1918T04Status%/s%">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_IO.nEL1918T04State%/s%",
+    "actions": [
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/UINT",
+          "symbolExpression": "%s%PLC1.GVL_IO.nEL1918T04State%/s%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 8
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.sEL1918T04Status%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Operational"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.bEL1918T04State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 4
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.sEL1918T04Status%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "SAFE_OP"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.bEL1918T04State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 3
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.sEL1918T04Status%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "BOOT"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.bEL1918T04State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 2
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.sEL1918T04Status%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "PREOP"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.bEL1918T04State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/UINT",
+              "value": 1
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.sEL1918T04Status%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "INIT"
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%s%PLC1.GVL_IO.bEL1918T04State%/s%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="EL1904EStopChannel1_168" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="886" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Reset Button">
+</div>
+<div id="EL1904EStopChannel1_169" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="931" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Door 1 | Channel 1">
+</div>
+<div id="EL1904EStopChannel1_170" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="976" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Door 1 | Channel 2">
+</div>
+<div id="EL1904EStopChannel1_171" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="1021" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Door 1 - Feedback Signal">
+</div>
+<div id="EL1904ResetPushButton_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="24" data-tchmi-top-unit="px" data-tchmi-width="540" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Term 3 : EL6910 | TwinSAFE PLC Module" data-tchmi-text-font-weight="Bold">
+</div>
+<div id="EL1904ResetPushButton_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="564" data-tchmi-top-unit="px" data-tchmi-width="540" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Term 4 : EL1918 | 8-Channel Digital Input Terminal, TwinSAFE" data-tchmi-text-font-weight="Bold">
+</div>
+<div id="TcHmiStateImage_EL6910" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="96" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::bEL6910State%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="166" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::qSafetyRun%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="211" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::qSafetyErrorAck%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="256" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iSafetyFBError%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_4" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="301" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iSafetyComError%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="346" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::qSafetyAirPresureOK%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="391" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iSafetyRunning%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="436" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iSafetyOutError%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="482" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iSafetyOK%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_9" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="166" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::qLockDoorsCommand%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_10" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="211" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.stEL6910::iBypassDoor3Command%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_11" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="256" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="301" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_13" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="346" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_14" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="391" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_15" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="436" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL6910_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="610" data-tchmi-left-unit="px" data-tchmi-top="482" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="636" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_IO.bEL1918T04State%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="706" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[0]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_2" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="751" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[1]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_3" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="796" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[2]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_4" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="841" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[3]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="886" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[4]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="931" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[5]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="976" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[6]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+<div id="TcHmiStateImage_EL1918_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="245" data-tchmi-left-unit="px" data-tchmi-top="1021" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/RedIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.aIOTerm04[7]%/s%">
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": true,
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": false,
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
+  }
+]
+</script>
+</div>
+
+
+<div id="EL1904FestoSafetyModuleFeedback_19" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="285" data-tchmi-left-unit="px" data-tchmi-top="301" data-tchmi-top-unit="px" data-tchmi-width="300" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="16" data-tchmi-text-font-family="Tahoma" data-tchmi-text="Safety Communication Error">
+</div>
+
+
+<div id="TcHmiRectangle_190" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="5" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-top="540" data-tchmi-top-unit="px" data-tchmi-width="950" data-tchmi-width-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+{
+  "color": "rgba(0, 0, 0, 0)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "angle": 90.0,
+  "stopPoints": [
+    {
+      "color": "rgba(255, 255, 255, 1)",
+      "stop": "0%"
+    },
+    {
+      "color": "rgba(210, 210, 210, 1)",
+      "stop": "19.95%"
+    },
+    {
+      "color": "rgba(210, 210, 210, 1)",
+      "stop": "80.05%"
+    },
+    {
+      "color": "rgba(255, 255, 255, 1)",
+      "stop": "100%"
+    }
+  ]
+}
+</script>
+</div>
+</div>
