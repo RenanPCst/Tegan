@@ -297,19 +297,68 @@ END_IF
 //------____________________________--------------------------------------------------------------------------------------------------
 //----- Related to Interlock Errors --------------------------------------------------------------------------------------------------
 
-// Moving M2 and M3 to positions that could hit something
+(* IE-100: M2 Movement NOT allowed *)
 
-// Try going to auto cycle without a recipe
+(* IE-101: M3 Movement Not allowed *)
 
-// Try going to auto cycle without throuth positioned
+(* IE-102: Attempt going Auto Cycle without a Recipe *)
+IF GVL_HMI.bIncoherenceDetected AND NOT GVL_Recipe.bIsThereRecipeActivated THEN
+		GVL_Alarms.arrEventFlag[102]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[102]:= FALSE;	
+END_IF
 
-// Try going to auto cycle without the vials rack in the correct position
+(* IE-103: Attempt going Auto Cycle without Throat stage in correct position *)
+IF GVL_HMI.bIncoherenceDetected AND NOT GVL_IO.gDigInputs.bThroatJigPresent THEN
+		GVL_Alarms.arrEventFlag[103]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[103]:= FALSE;	
+END_IF
 
-// Try going to auto cycle with solvents low level
+(* IE-104: Attempt going Auto Cycle without Vias Rack in correct position *)
+IF GVL_HMI.bIncoherenceDetected AND NOT GVL_IO.bVialRackPresent THEN
+		GVL_Alarms.arrEventFlag[104]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[104]:= FALSE;	
+END_IF
 
-// Try going to auto cycle with waste bottle in a high Level
+(* IE-105: Attempt going Auto Cycle With Solvent 1 Low level *)
 
-// Try to perform a calibration without the calibration box
+IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[1] THEN
+		GVL_Alarms.arrEventFlag[105]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[105]:= FALSE;	
+END_IF
+
+(* IE-106: Attempt going Auto Cycle With Solvent 2 Low level *)
+IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[2] THEN
+		GVL_Alarms.arrEventFlag[106]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[106]:= FALSE;	
+END_IF
+
+(* IE-107: Attempt going Auto Cycle With Solvent 3 Low level *)
+IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[3] THEN
+		GVL_Alarms.arrEventFlag[107]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[107]:= FALSE;	
+END_IF
+
+(* IE-108: Attempt going Auto Cycle With Solvent 4 Low level *)
+IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[4] THEN
+		GVL_Alarms.arrEventFlag[108]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[108]:= FALSE;	
+END_IF
+
+(* IE-109: Attempt going Auto Cycle With Waste Bottle high level *)
+IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.bWasteHighLevel THEN
+		GVL_Alarms.arrEventFlag[109]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[109]:= FALSE;	
+END_IF
+
+(* IE-110: Attempt to perform a calibration procedure without a calibration box *)
 
 
 //*********************************************************END SECTION****************************************************************
@@ -334,7 +383,44 @@ END_IF
 ]]></ST>
     </Implementation>
     <LineIds Name="POU_FaultHandler">
-      <LineId Id="342" Count="324" />
+      <LineId Id="342" Count="289" />
+      <LineId Id="695" Count="1" />
+      <LineId Id="721" Count="0" />
+      <LineId Id="698" Count="0" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="682" Count="0" />
+      <LineId Id="684" Count="3" />
+      <LineId Id="683" Count="0" />
+      <LineId Id="689" Count="5" />
+      <LineId Id="688" Count="0" />
+      <LineId Id="708" Count="1" />
+      <LineId Id="717" Count="3" />
+      <LineId Id="716" Count="0" />
+      <LineId Id="715" Count="0" />
+      <LineId Id="710" Count="0" />
+      <LineId Id="722" Count="0" />
+      <LineId Id="728" Count="3" />
+      <LineId Id="727" Count="0" />
+      <LineId Id="736" Count="0" />
+      <LineId Id="711" Count="0" />
+      <LineId Id="732" Count="3" />
+      <LineId Id="723" Count="0" />
+      <LineId Id="737" Count="0" />
+      <LineId Id="712" Count="0" />
+      <LineId Id="738" Count="3" />
+      <LineId Id="724" Count="0" />
+      <LineId Id="742" Count="0" />
+      <LineId Id="713" Count="0" />
+      <LineId Id="743" Count="3" />
+      <LineId Id="725" Count="0" />
+      <LineId Id="747" Count="0" />
+      <LineId Id="714" Count="0" />
+      <LineId Id="752" Count="3" />
+      <LineId Id="750" Count="0" />
+      <LineId Id="726" Count="0" />
+      <LineId Id="707" Count="0" />
+      <LineId Id="756" Count="0" />
+      <LineId Id="647" Count="19" />
       <LineId Id="54" Count="0" />
     </LineIds>
   </POU>

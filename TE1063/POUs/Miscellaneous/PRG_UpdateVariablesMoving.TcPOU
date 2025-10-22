@@ -20,12 +20,19 @@ ELSE
 	GVL_Safety.SafetyOutputs.bBelowDoorsFeedback := FALSE;
 END_IF
 
-//Mapping bellow doors signals as they are not in safety DI
+// Mapping bellow doors signals as they are not in safety DI
 GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
 
-//Valves Settings Assignment
+// Vial Rack position check
+IF GVL_IO.gProfinetInput.iCurrentValue > 120000 THEN
+	GVL_IO.bVialRackPresent := TRUE;
+ELSE
+	GVL_IO.bVialRackPresent := FALSE;
+END_IF
+
+// Valves Settings Assignment
 IF NOT bValvesSettingsAssignment THEN
 	FOR i := 1 TO 5 DO
 		GVL_Motion.aValves[i].rTargetVel := 1500;
@@ -157,6 +164,9 @@ END_IF
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
+      <LineId Id="456" Count="3" />
+      <LineId Id="461" Count="1" />
+      <LineId Id="460" Count="0" />
       <LineId Id="336" Count="3" />
       <LineId Id="341" Count="0" />
       <LineId Id="343" Count="1" />

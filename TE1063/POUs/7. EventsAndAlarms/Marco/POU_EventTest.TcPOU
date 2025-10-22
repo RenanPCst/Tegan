@@ -53,16 +53,16 @@ GVL_Alarms.arrEventText[9] := 'ES-009: Terminal EL6910 Communication Error.';
 GVL_Alarms.arrEventText[50] := 'ME-050: Vertical Axis Stage Collection Error.';
 GVL_Alarms.arrEventText[51] := 'ME-051: Vertical Axis Sample Recovery Error.';
 GVL_Alarms.arrEventText[52] := 'ME-052: Horizontal Axis Sample Recovery Error.';
-GVL_Alarms.arrEventText[53] := 'ME-053: Opening Control Pomp 1 Error.';
-GVL_Alarms.arrEventText[54] := 'ME-054: Opening Control Pomp 2 Error.';
-GVL_Alarms.arrEventText[55] := 'ME-055: Opening Control Pomp 3 Error.';
-GVL_Alarms.arrEventText[56] := 'ME-056: Opening Control Pomp 4 Error.';
-GVL_Alarms.arrEventText[57] := 'ME-057: Opening Control Pomp 5 Error.';
-GVL_Alarms.arrEventText[58] := 'ME-058: Opening Control Pomp 6 Error.';
-GVL_Alarms.arrEventText[59] := 'ME-059: Opening Control Pomp 7 Error.';
-GVL_Alarms.arrEventText[60] := 'ME-060: Opening Control Pomp 8 Error.';
-GVL_Alarms.arrEventText[61] := 'ME-061: Opening Control Pomp 9 Error.';
-GVL_Alarms.arrEventText[62] := 'ME-062: Opening Control Pomp 10 Error.';
+GVL_Alarms.arrEventText[53] := 'ME-053: Opening Control Pump 1 Motor Error.';
+GVL_Alarms.arrEventText[54] := 'ME-054: Opening Control Pump 2 Motor Error.';
+GVL_Alarms.arrEventText[55] := 'ME-055: Opening Control Pump 3 Motor Error.';
+GVL_Alarms.arrEventText[56] := 'ME-056: Opening Control Pump 4 Motor Error.';
+GVL_Alarms.arrEventText[57] := 'ME-057: Opening Control Pump 5 Motor Error.';
+GVL_Alarms.arrEventText[58] := 'ME-058: Opening Control Pump 6 Motor Error.';
+GVL_Alarms.arrEventText[59] := 'ME-059: Opening Control Pump 7 Motor Error.';
+GVL_Alarms.arrEventText[60] := 'ME-060: Opening Control Pump 8 Motor Error.';
+GVL_Alarms.arrEventText[61] := 'ME-061: Opening Control Pump 9 Motor Error.';
+GVL_Alarms.arrEventText[62] := 'ME-062: Opening Control Pump 10 Motor Error.';
 GVL_Alarms.arrEventText[63] := 'ME-063: Rotary Pump 1 Motor Error.';
 GVL_Alarms.arrEventText[64] := 'ME-064: Rotary Pump 2 Motor Error.';
 GVL_Alarms.arrEventText[65] := 'ME-065: Rotary Pump 3 Motor Error.';
@@ -78,6 +78,13 @@ GVL_Alarms.arrEventText[74] := 'ME-074: Valve Motor 2 Error.';
 GVL_Alarms.arrEventText[75] := 'ME-075: Valve Motor 3 Error.';
 GVL_Alarms.arrEventText[76] := 'ME-076: Valve Motor 4 Error.';
 GVL_Alarms.arrEventText[77] := 'ME-077: Valve Motor 5 Error.';
+GVL_Alarms.arrEventText[78] := 'ME-078: Axis Not Ready for Motion';
+GVL_Alarms.arrEventText[79] := 'ME-079: Motion Command Timeout';
+GVL_Alarms.arrEventText[80] := 'ME-080: Soft Limit Reached';
+GVL_Alarms.arrEventText[81] := 'ME-081: Jog Command Rejected by Interlock';
+GVL_Alarms.arrEventText[82] := 'ME-082: Valve Position Mismatch (no in-slot)';
+GVL_Alarms.arrEventText[83] := 'ME-083: Pump Direction Mismatch';
+GVL_Alarms.arrEventText[84] := 'ME-084: Axis Emergency Stop Deceleration Active';
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
@@ -119,11 +126,28 @@ GVL_Alarms.arrEventText[161] := 'PW-161: Door Sensor Unstable (chattering)';
 
 //----- System Fault -----------------------------------------------------------------------------------------------------------------
 
-GVL_Alarms.arrEventText[200] := 'SF-200: System Powered Up.';
-GVL_Alarms.arrEventText[201] := 'SF-201: ';
-GVL_Alarms.arrEventText[202] := 'SF-202: ';
-GVL_Alarms.arrEventText[203] := 'SF-203: ';
-GVL_Alarms.arrEventText[204] := 'SF-204: ';
+GVL_Alarms.arrEventText[200] := 'SF-200: System Powered Up';
+GVL_Alarms.arrEventText[201] := 'SF-201: EtherCAT Error (bus/offline/STATE)';
+GVL_Alarms.arrEventText[202] := 'SF-202: TwinSAFE Fault (EL6910/EL1918/EL2904)';
+GVL_Alarms.arrEventText[203] := 'SF-203: Watchdog Timeout (PLC task overload)';
+GVL_Alarms.arrEventText[204] := 'SF-204: Drive STO Active (generic)';
+GVL_Alarms.arrEventText[205] := 'SF-205: Axis Homing Failed (generic)';
+GVL_Alarms.arrEventText[206] := 'SF-206: Axis Following Error';
+GVL_Alarms.arrEventText[207] := 'SF-207: Limit Switch Trip (hardware)';
+GVL_Alarms.arrEventText[209] := 'SF-209: Pump Motor Overcurrent/Overtemp';
+GVL_Alarms.arrEventText[210] := 'SF-210: Air Supply Unit Fault (pressure/enable)';
+GVL_Alarms.arrEventText[211] := 'SF-211: Vacuum Leak or Not Achieved (hard limit)';
+GVL_Alarms.arrEventText[212] := 'SF-212: Scale Communication Timeout';
+GVL_Alarms.arrEventText[213] := 'SF-213: Recipe Load Failed (checksum/version)';
+GVL_Alarms.arrEventText[214] := 'SF-214: Data Save Failed (disk I/O)';
+GVL_Alarms.arrEventText[215] := 'SF-215: Disk Space Critically Low';
+GVL_Alarms.arrEventText[216] := 'SF-216: NTP/Clock Large Time Jump Detected';
+GVL_Alarms.arrEventText[217] := 'SF-217: HMI-PLC Heartbeat Lost';
+GVL_Alarms.arrEventText[218] := 'SF-218: UPS On Battery / Power Failure';
+GVL_Alarms.arrEventText[219] := 'SF-219: Analog Sensor Out-of-Range (broken wire?)';
+GVL_Alarms.arrEventText[220] := 'SF-220: DC Invalid Sync Configuration (EtherCAT)';
+GVL_Alarms.arrEventText[221] := 'SF-221: Safety Reset Failed';
+GVL_Alarms.arrEventText[222] := 'SF-222: Unauthorized User Action Blocked';
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
@@ -137,7 +161,16 @@ GVL_Alarms.arrEventText[204] := 'SF-204: ';
       <LineId Id="12" Count="0" />
     </LineIds>
     <LineIds Name="POU_EventTest.ACT_Event_Mapping">
-      <LineId Id="97" Count="102" />
+      <LineId Id="97" Count="52" />
+      <LineId Id="201" Count="5" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="150" Count="40" />
+      <LineId Id="207" Count="7" />
+      <LineId Id="216" Count="2" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="222" Count="7" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="195" Count="4" />
       <LineId Id="79" Count="0" />
     </LineIds>
   </POU>

@@ -31,6 +31,8 @@ bFirstIconSet : BOOL := FALSE;
 fbBlinkEStopSide	: FB_Blink;
 fbBlinkEStopFront	: FB_Blink;
 
+//Solvent status flags
+bSolventIssue : BOOL := FALSE;
 ton500ms : TON;
 i : INT;
 
@@ -196,7 +198,77 @@ END_IF
 (* <HMI Alerts> ********************************************************************************************************* *)
 
 //Auto Cycle Incoherence [when there is something missing to start the auto cycle] 
-GVL_HMI.bIncoherenceDetected := NOT GVL_Recipe.bIsThereRecipeActivated;
+GVL_HMI.bIncoherenceDetected := (NOT GVL_Recipe.bIsThereRecipeActivated) OR (NOT GVL_IO.gDigInputs.bThroatJigPresent) OR (NOT GVL_IO.bVialRackPresent) OR bSolventIssue;
+
+bSolventIssue := GVL_Alarms.aSolventLowLevel[1] OR GVL_Alarms.aSolventLowLevel[2] OR GVL_Alarms.aSolventLowLevel[3] OR GVL_Alarms.aSolventLowLevel[4] OR GVL_Alarms.bWasteHighLevel;
+
+IF GVL_HMI.HMIAnimation.rWasteLevel	> 70 THEN
+	GVL_Alarms.bWasteHighLevel := TRUE;
+ELSE
+	GVL_Alarms.bWasteHighLevel := FALSE;
+END_IF
+
+IF GVL_Recipe.bIsThereRecipeActivated THEN
+	//Checking solvent levels of Rinse 1 Solvent
+	CASE GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1] OF
+	1:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[1] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[1] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[1] := FALSE;
+		END_IF
+	2:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[2] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[2] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[2] := FALSE;
+		END_IF
+
+	3:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[3] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[3] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[3] := FALSE;
+		END_IF
+	4:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[4] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[4] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[4] := FALSE;
+		END_IF
+	END_CASE 
+	
+	//Checking solvent levels of Rinse 2 Solvent
+	CASE GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] OF
+	1:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[1] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[1] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[1] := FALSE;
+		END_IF
+	2:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[2] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[2] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[2] := FALSE;
+		END_IF
+
+	3:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[3] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[3] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[3] := FALSE;
+		END_IF
+	4:
+		IF GVL_HMI.HMIAnimation.aSolventLevel[4] < 30 THEN
+			GVL_Alarms.aSolventLowLevel[4] := TRUE;
+		ELSE
+			GVL_Alarms.aSolventLowLevel[4] := FALSE;
+		END_IF
+	END_CASE 
+END_IF
+
+//-------------------------------------------------
 
 IF GVL_Recipe.bIsThereRecipeActivated THEN
 	GVL_HMI.sActivatedRecipeHomeNaming := concat(GVL_Recipe.stActiveRecipe.stInfo.sMethodName,concat(' | Created by ', concat(GVL_Recipe.stActiveRecipe.stInfo.sCreatedBy,concat(' on ', DATE_TO_STRING(GVL_Recipe.stActiveRecipe.stInfo.dCreationDate)))));
@@ -815,6 +887,35 @@ END_IF]]></ST>
       <LineId Id="492" Count="0" />
       <LineId Id="483" Count="0" />
       <LineId Id="485" Count="0" />
+      <LineId Id="1111" Count="3" />
+      <LineId Id="1116" Count="0" />
+      <LineId Id="1118" Count="1" />
+      <LineId Id="1117" Count="0" />
+      <LineId Id="1045" Count="1" />
+      <LineId Id="1078" Count="0" />
+      <LineId Id="1047" Count="0" />
+      <LineId Id="1050" Count="0" />
+      <LineId Id="1056" Count="0" />
+      <LineId Id="1060" Count="0" />
+      <LineId Id="1062" Count="1" />
+      <LineId Id="1061" Count="0" />
+      <LineId Id="1053" Count="0" />
+      <LineId Id="1065" Count="3" />
+      <LineId Id="1064" Count="0" />
+      <LineId Id="1057" Count="0" />
+      <LineId Id="1054" Count="0" />
+      <LineId Id="1070" Count="3" />
+      <LineId Id="1058" Count="0" />
+      <LineId Id="1055" Count="0" />
+      <LineId Id="1074" Count="3" />
+      <LineId Id="1059" Count="0" />
+      <LineId Id="1052" Count="0" />
+      <LineId Id="1107" Count="0" />
+      <LineId Id="1080" Count="26" />
+      <LineId Id="1079" Count="0" />
+      <LineId Id="1048" Count="0" />
+      <LineId Id="1115" Count="0" />
+      <LineId Id="1038" Count="0" />
       <LineId Id="611" Count="0" />
       <LineId Id="490" Count="0" />
       <LineId Id="612" Count="0" />
