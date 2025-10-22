@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="POU_EventTest" Id="{8d82d617-8835-43c9-9f51-b3200b880010}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM POU_EventTest
 VAR
@@ -27,11 +27,11 @@ fb_EventLog(bEnable:= TRUE,
       <Implementation>
         <ST><![CDATA[//--------------------------------
 (*
-ES ->
-ME ->
-IE ->
+ES -> Emergency Stop
+ME -> Motion Error
+IE -> Interlock Error
 PW -> Process Warning
-SF ->
+SF -> System Fault
 *)
 //----- Emergency Stop ---------------------------------------------------------------------------------------------------------------
 
@@ -63,16 +63,16 @@ GVL_Alarms.arrEventText[59] := 'ME-059: Opening Control Pomp 7 Error.';
 GVL_Alarms.arrEventText[60] := 'ME-060: Opening Control Pomp 8 Error.';
 GVL_Alarms.arrEventText[61] := 'ME-061: Opening Control Pomp 9 Error.';
 GVL_Alarms.arrEventText[62] := 'ME-062: Opening Control Pomp 10 Error.';
-GVL_Alarms.arrEventText[63] := 'ME-063: Pomp Motor 1 Error.';
-GVL_Alarms.arrEventText[64] := 'ME-064: Pomp Motor 2 Error.';
-GVL_Alarms.arrEventText[65] := 'ME-065: Pomp Motor 3 Error.';
-GVL_Alarms.arrEventText[66] := 'ME-066: Pomp Motor 4 Error.';
-GVL_Alarms.arrEventText[67] := 'ME-067: Pomp Motor 5 Error.';
-GVL_Alarms.arrEventText[68] := 'ME-068: Pomp Motor 6 Error.';
-GVL_Alarms.arrEventText[69] := 'ME-069: Pomp Motor 7 Error.';
-GVL_Alarms.arrEventText[70] := 'ME-070: Pomp Motor 8 Error.';
-GVL_Alarms.arrEventText[71] := 'ME-071: Pomp Motor 9 Error.';
-GVL_Alarms.arrEventText[72] := 'ME-072: Pomp Motor 10 Error.';
+GVL_Alarms.arrEventText[63] := 'ME-063: Rotary Pump 1 Motor Error.';
+GVL_Alarms.arrEventText[64] := 'ME-064: Rotary Pump 2 Motor Error.';
+GVL_Alarms.arrEventText[65] := 'ME-065: Rotary Pump 3 Motor Error.';
+GVL_Alarms.arrEventText[66] := 'ME-066: Rotary Pump 4 Motor Error.';
+GVL_Alarms.arrEventText[67] := 'ME-067: Rotary Pump 5 Motor Error.';
+GVL_Alarms.arrEventText[68] := 'ME-068: Rotary Pump 6 Motor Error.';
+GVL_Alarms.arrEventText[69] := 'ME-069: Rotary Pump 7 Motor Error.';
+GVL_Alarms.arrEventText[70] := 'ME-070: Rotary Pump 8 Motor Error.';
+GVL_Alarms.arrEventText[71] := 'ME-071: Rotary Pump 9 Motor Error.';
+GVL_Alarms.arrEventText[72] := 'ME-072: Rotary Pump 10 Motor Error.';
 GVL_Alarms.arrEventText[73] := 'ME-073: Valve Motor 1 Error.';
 GVL_Alarms.arrEventText[74] := 'ME-074: Valve Motor 2 Error.';
 GVL_Alarms.arrEventText[75] := 'ME-075: Valve Motor 3 Error.';
@@ -83,21 +83,37 @@ GVL_Alarms.arrEventText[77] := 'ME-077: Valve Motor 5 Error.';
 
 //----- Interlock Error --------------------------------------------------------------------------------------------------------------
 
-GVL_Alarms.arrEventText[100] := 'IE-100: ';
-GVL_Alarms.arrEventText[101] := 'IE-101: ';
-GVL_Alarms.arrEventText[102] := 'IE-102: ';
-GVL_Alarms.arrEventText[103] := 'IE-103: ';
-GVL_Alarms.arrEventText[104] := 'IE-104: ';
+GVL_Alarms.arrEventText[100] := 'IE-100: M2 Movement Not allowed';
+GVL_Alarms.arrEventText[101] := 'IE-101: M3 Movement Not allowed';
+GVL_Alarms.arrEventText[102] := 'IE-102: Attempt going Auto Cycle without a Recipe';
+GVL_Alarms.arrEventText[103] := 'IE-103: Attempt going Auto Cycle without Throat stage in correct position';
+GVL_Alarms.arrEventText[104] := 'IE-104: Attempt going Auto Cycle without Vias Rack in correct position';
+GVL_Alarms.arrEventText[105] := 'IE-105: Attempt going Auto Cycle With Solvent 1 Low level';
+GVL_Alarms.arrEventText[106] := 'IE-106: Attempt going Auto Cycle With Solvent 2 Low level';
+GVL_Alarms.arrEventText[107] := 'IE-107: Attempt going Auto Cycle With Solvent 3 Low level';
+GVL_Alarms.arrEventText[108] := 'IE-108: Attempt going Auto Cycle With Solvent 4 Low level';
+GVL_Alarms.arrEventText[109] := 'IE-109: Attempt going Auto Cycle With Waste Bottle high level';
+GVL_Alarms.arrEventText[110] := 'IE-110: Attempt to perform a calibration procedure without a calibration box';
+GVL_Alarms.arrEventText[111] := 'IE-111: ';
+GVL_Alarms.arrEventText[112] := 'IE-112: ';
+
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
 //----- Process Warning --------------------------------------------------------------------------------------------------------------
 
-GVL_Alarms.arrEventText[150] := 'PW-150: ';
-GVL_Alarms.arrEventText[151] := 'PW-151: ';
-GVL_Alarms.arrEventText[152] := 'PW-152: ';
-GVL_Alarms.arrEventText[153] := 'PW-153: ';
-GVL_Alarms.arrEventText[154] := 'PW-154: ';
+GVL_Alarms.arrEventText[150] := 'PW-150: Solvent 1 Near Low Level';
+GVL_Alarms.arrEventText[151] := 'PW-151: Solvent 2 Near Low Level';
+GVL_Alarms.arrEventText[152] := 'PW-152: Solvent 3 Near Low Level';
+GVL_Alarms.arrEventText[153] := 'PW-153: Solvent 4 Near Low Level';
+GVL_Alarms.arrEventText[154] := 'PW-154: Waste Bottle Near High Level';
+GVL_Alarms.arrEventText[155] := 'PW-155: Line Pressure Low (pneumatics)';
+GVL_Alarms.arrEventText[156] := 'PW-156: Flow Instability Detected (possible cavitation)';
+GVL_Alarms.arrEventText[157] := 'PW-157: Estimated Cycle Time Exceeded (soft limit)';
+GVL_Alarms.arrEventText[158] := 'PW-158: Scale Communication Jitter (retrying)';
+GVL_Alarms.arrEventText[159] := 'PW-159: Calibration Due (time/usage)';
+GVL_Alarms.arrEventText[160] := 'PW-160: Recipe Uses Deprecated Field(s)';
+GVL_Alarms.arrEventText[161] := 'PW-161: Door Sensor Unstable (chattering)';
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
@@ -111,6 +127,7 @@ GVL_Alarms.arrEventText[204] := 'SF-204: ';
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
+
 ]]></ST>
       </Implementation>
     </Action>
@@ -120,47 +137,7 @@ GVL_Alarms.arrEventText[204] := 'SF-204: ';
       <LineId Id="12" Count="0" />
     </LineIds>
     <LineIds Name="POU_EventTest.ACT_Event_Mapping">
-      <LineId Id="2" Count="0" />
-      <LineId Id="84" Count="0" />
-      <LineId Id="92" Count="0" />
-      <LineId Id="94" Count="0" />
-      <LineId Id="96" Count="0" />
-      <LineId Id="88" Count="0" />
-      <LineId Id="95" Count="0" />
-      <LineId Id="87" Count="0" />
-      <LineId Id="3" Count="0" />
-      <LineId Id="67" Count="0" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="4" Count="6" />
-      <LineId Id="81" Count="1" />
-      <LineId Id="12" Count="1" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="68" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="15" Count="26" />
-      <LineId Id="45" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="46" Count="0" />
-      <LineId Id="44" Count="0" />
-      <LineId Id="47" Count="3" />
-      <LineId Id="52" Count="1" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="54" Count="0" />
-      <LineId Id="74" Count="0" />
-      <LineId Id="51" Count="0" />
-      <LineId Id="55" Count="3" />
-      <LineId Id="60" Count="1" />
-      <LineId Id="75" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="59" Count="0" />
-      <LineId Id="63" Count="3" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="77" Count="0" />
-      <LineId Id="80" Count="0" />
+      <LineId Id="97" Count="102" />
       <LineId Id="79" Count="0" />
     </LineIds>
   </POU>

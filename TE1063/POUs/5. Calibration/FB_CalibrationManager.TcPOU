@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_CalibrationManager" Id="{f5b6651e-f67d-465b-b243-425be4d72cd5}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CalibrationManager
 VAR_INPUT
@@ -509,7 +509,7 @@ CASE eStep OF
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
 																			Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 	//RPM to Degree/sec
-																			Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 		//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 			//RPM to Degree/sec
 																			Dec := GVL_Settings.stPumpParameters.iRunVelocity * 6			//RPM to Degree/sec
 																		  	);
 		END_IF
@@ -662,14 +662,18 @@ END_VAR
 IF (SIZEOF(GVL_Motion.aMotors) >= 3*SIZEOF(GVL_Motion.aMotors[1])) THEN
     GVL_Motion.aMotors[2].Stop();
     GVL_Motion.aMotors[3].Stop();
+	GVL_Motion.aMotors[2].Reset();
+	GVL_Motion.aMotors[3].Reset();
 END_IF
 
 FOR iLocal := 1 TO 10 DO
     GVL_Motion.aPumpsRotary[iLocal].Stop();
+	GVL_Motion.aPumpsRotary[iLocal].Reset();
 END_FOR
 
 FOR iLocal := 1 TO 5 DO
     GVL_Motion.aValvesObj[iLocal].Stop();
+	GVL_Motion.aValvesObj[iLocal].Reset();
 END_FOR
 
 GVL_Calibration.fbScaleDevice.Reset();
@@ -764,7 +768,13 @@ Reset := TRUE;]]></ST>
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
-      <LineId Id="189" Count="19" />
+      <LineId Id="189" Count="3" />
+      <LineId Id="284" Count="1" />
+      <LineId Id="193" Count="3" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="197" Count="3" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="201" Count="7" />
       <LineId Id="276" Count="0" />
       <LineId Id="209" Count="59" />
       <LineId Id="5" Count="0" />

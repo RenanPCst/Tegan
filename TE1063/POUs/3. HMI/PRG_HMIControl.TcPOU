@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_HMIControl" Id="{978beb02-d146-472c-ad6b-2f8739fa70ac}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_HMIControl
 VAR
@@ -90,7 +90,7 @@ GVL_HMI.HMIAnimation.aValveAngle[5]	:= GVL_Motion.aValves[5].rActualPosition / 6
 IF GVL_HMI.eMachineMode = E_MachineMode.MANUAL THEN
 	FOR i := 1 TO 10 DO
 		aPumpStatus[i] := GVL_Motion.aPumpsRotary[i].GetStatus();
-		GVL_HMI.aManualPumpsCmd[i].bBusy := aPumpStatus[i].bBusy;
+		GVL_HMI.aManualPumpsCmd[i].bBusy := NOT GVL_Motion.aPumps[i].Rotary.iNotMoving; //aPumpStatus[i].bBusy;
 	END_FOR
 END_IF
 
@@ -658,8 +658,13 @@ IF GVL_Motion.bInitialHomingDone THEN
 	// Read motor Position
 	rM1MotorPosition := GVL_Motion.aMotors[1].GetPosition();
 	
-	// Scaling the motor position (0 = 0%, -320 = 100%)
-	//rM1MotorPositionPerc := ((rM1MotorPosition - cM1MinPosition) / (cM1MaxPosition - cM1MinPosition)) * 100.0; //Error 06/10/25
+	//Check if cM1MaxPosition has a number different from 0
+	IF cM1MaxPosition > 0 THEN
+		// Scaling the motor position (0 = 0%, -320 = 100%)
+		rM1MotorPositionPerc := ((rM1MotorPosition - cM1MinPosition) / (cM1MaxPosition - cM1MinPosition)) * 100.0; //Error 06/10/25
+	ELSE
+		rM1MotorPositionPerc := 0;
+	END_IF
 	
 	// Limits value in the range 0 and 100%
 	IF rM1MotorPositionPerc < 0 THEN
@@ -685,8 +690,13 @@ IF GVL_Motion.bInitialHomingDone THEN
 	// Read motor Position
 	rM2MotorPosition := GVL_Motion.aMotors[2].GetPosition();
 	
-	// Scaling the motor position (0 = 0%, -320 = 100%)
-	//rM2MotorPositionPerc := ((rM2MotorPosition - cM2MinPosition) / (cM2MaxPosition - cM2MinPosition)) * 100.0; //Error 06/10/25
+	//Check if cM2MaxPosition has a number different from 0
+	IF cM2MaxPosition > 0 THEN
+		// Scaling the motor position (0 = 0%, -320 = 100%)
+		rM2MotorPositionPerc := ((rM2MotorPosition - cM2MinPosition) / (cM2MaxPosition - cM2MinPosition)) * 100.0; //Error 06/10/25
+	ELSE
+		rM2MotorPositionPerc := 0;
+	END_IF
 	
 	// Limits value in the range 0 and 100%
 	IF rM2MotorPositionPerc < 0 THEN
@@ -970,11 +980,17 @@ END_IF]]></ST>
       <LineId Id="59" Count="0" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_M1Animation">
-      <LineId Id="2" Count="20" />
+      <LineId Id="2" Count="7" />
+      <LineId Id="23" Count="5" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="10" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="PRG_HMIControl.ACT_M2Animation">
-      <LineId Id="2" Count="21" />
+      <LineId Id="2" Count="8" />
+      <LineId Id="24" Count="5" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="10" />
       <LineId Id="1" Count="0" />
     </LineIds>
   </POU>

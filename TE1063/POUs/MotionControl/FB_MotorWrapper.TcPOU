@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_MotorWrapper" Id="{e1ed2152-e06a-419a-985a-88258f9f2422}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MotorWrapper IMPLEMENTS IF_Actuator
 VAR_INPUT
@@ -648,7 +648,43 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Generates the pulse just once when it's called
+        <ST><![CDATA[// =================================================================================================
+// 1) Clear all MC_* Execute flags
+// =================================================================================================
+fbMoveAbs.Execute := FALSE;
+fbMoveRel.Execute := FALSE;
+fbMoveVel.Execute := FALSE;
+fbHome.Execute    := FALSE;
+fbStop.Execute    := FALSE;
+
+// =================================================================================================
+// 2) Clear internal request/control flags
+// =================================================================================================
+bMoveAbsRequested := FALSE;
+bMoveRelRequested := FALSE;
+bMoveVelRequested := FALSE;
+bHomeRequest      := FALSE;
+
+bMoveAbsExecute := FALSE;
+bMoveRelExecute := FALSE;
+bMoveVelExecute := FALSE;
+bHomeExecute    := FALSE;
+bStopExecute    := FALSE;
+
+// =================================================================================================
+// 3) Reset exposed status (optional, for clean diagnostics after reset)
+// =================================================================================================
+stStatus.bBusy      := FALSE;
+stStatus.bError     := FALSE;
+stStatus.iErrorCode := 0;
+stStatus.sMessage   := '';
+// stStatus.eState  := E_ActuatorState.eIdle;  // keep or set later when success
+
+// =================================================================================================
+// 4) Build a clean one-scan pulse for MC_Reset via parameter call
+// =================================================================================================
+
+// Generates the pulse just once when it's called
 IF NOT bResetRequested THEN
     bResetExecute := TRUE;
     bResetRequested := TRUE;
@@ -687,9 +723,8 @@ IF bResetRequested THEN
     
 END_IF
 
-Reset := FALSE;
-
-]]></ST>
+// Default Return
+Reset := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="SetPosition" Id="{a529999b-02b0-40ec-9986-934333a30507}">
@@ -946,15 +981,7 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
-      <LineId Id="36" Count="22" />
-      <LineId Id="83" Count="0" />
-      <LineId Id="77" Count="5" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="84" Count="0" />
-      <LineId Id="60" Count="3" />
-      <LineId Id="71" Count="3" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="5" Count="0" />
+      <LineId Id="88" Count="76" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.SetPosition">
       <LineId Id="6" Count="4" />
