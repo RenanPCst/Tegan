@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
-  <POU Name="POU_Master_Calib" Id="{c99ca5ad-edf2-4aef-817b-e9abc6bd5bc5}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM POU_Master_Calib
+  <POU Name="POU_Master_Calib_2" Id="{6bbea130-751c-482b-ab38-2633c1a032a0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM POU_Master_Calib_2
 VAR
 	criteria: REAL := 0.5; // Acceptance Criteria (0.1 ~ 5.0)
 	failures: INT := 0; // Allowable Failures (0 ~ 5)
@@ -90,7 +90,7 @@ CASE state OF
 		state:= 0;
 	END_IF
 	
-10:	//Disable valves
+10:	//Enable the pump motor
 	
 	IF GVL_Motion.aValves[1].Axis.Status.InTargetPosition AND
 		GVL_Motion.aValves[2].Axis.Status.InTargetPosition AND
@@ -101,20 +101,18 @@ CASE state OF
 			GVL_Marco.enableValv[i]:= FALSE;		
 		END_FOR
 		timeWt(in:=FALSE);
-		timer3(in:=TRUE, pt:=T#10S);
 		state:= 20;
 	ELSE
 		state:= 10;
 	END_IF		
 
-20:	//Fill Jar from Box
+20:	//Fill the Jars from Box
 	
-	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Disabled AND (timer3.Q OR timer2.Q) THEN
-		IF repli < 2 THEN
-		revs:= GVL_Marco.revs*2;	
-		END_IF
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Disabled THEN
+		
+		revs:= GVL_Marco.revs*2;
 		GVL_Marco.runFWD[pumpNo]:= TRUE;
-		timer3(in:=FALSE);
+		
 		start:= FALSE;
 		timer2(in:=TRUE, pt:=T#10S);
 		state:= 30;
@@ -122,60 +120,105 @@ CASE state OF
 		state:= 20;
 	END_IF
 
-30: //Waiting
-
-	IF GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving AND timer2.Q THEN
-		GVL_Marco.runFWD[pumpNo]:= FALSE;
+30: //Move valve to position 6
+	
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
+		
+		GVL_Marco.valvPos:= 6;
 		timer2(in:=FALSE);
 		timeWt(in:=TRUE, pt:=T#10S);
-		GVL_Calibration.fbScaleDevice.RequestWeight();
+		
+		GVL_Marco.runFWD[pumpNo]:= FALSE;
+		
+		FOR i:=1 TO 5 BY 1 DO
+			GVL_Marco.enableValv[i]:= TRUE;
+		END_FOR
+		
+		
 		state:= 40;
+		
 	ELSE
 		state:= 30;
 	END_IF
-	
-40: //Make Tara
-	
-	IF timeWt.Q THEN
-		tareWt:= GVL_Calibration.fbScaleDevice.RequestWeight();
-		timeWt(in:=FALSE);
-		state:= 50;
-	ELSE
-		state:= 40;
-	END_IF
-	
-50: //Fill box from jar
 
-	IF tareWt <> 9999.0 THEN
-		GVL_Marco.calibResult[recResult].tareWt:= tareWt;
-		revs:= GVL_Marco.revs;
-		GVL_Marco.runBWD[pumpNo]:= TRUE;
+
+40: //Fill the calibration box(setup) - NO MORE
+
+	IF GVL_Motion.aValves[1].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[2].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[3].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[4].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[5].Axis.Status.InTargetPosition AND timeWt.Q THEN
+		
+		FOR i:= 1 TO 5 BY 1 DO
+			GVL_Marco.enableValv[i]:= FALSE;
+		END_FOR
+		
+		//revs:= GVL_Marco.revs/2;
+		//GVL_Marco.runBWD[pumpNo]:= TRUE;
+		
+		timeWt(in:=FALSE);
 		timer2(in:=TRUE, pt:=T#10S);
-		state:= 60;
-	ELSE
 		state:= 50;
+		
+	ELSE
+		state:= 40;	
 	END_IF
-	
-60: //Waiting
+
+50: //Waiting
 
 	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
 		GVL_Marco.runBWD[pumpNo]:= FALSE;
 		timer2(in:=FALSE);
 		timeWt(in:=TRUE, pt:=T#10S);
 		GVL_Calibration.fbScaleDevice.RequestWeight();
+		state:= 55;
+	ELSE
+		state:= 50;
+	END_IF
+	
+55: //Make Tara
+	
+	IF timeWt.Q THEN
+		tareWt:= GVL_Calibration.fbScaleDevice.RequestWeight();
+		timeWt(in:=FALSE);
+		state:= 60;
+	ELSE
+		state:= 55;
+	END_IF
+	
+60: //Fill box from jar
+
+	IF tareWt <> 9999.0 THEN
+		GVL_Marco.calibResult[recResult].tareWt:= tareWt;
+		revs:= GVL_Marco.revs;
+		GVL_Marco.runBWD[pumpNo]:= TRUE;
+		timer2(in:=TRUE, pt:=T#10S);
 		state:= 70;
 	ELSE
 		state:= 60;
 	END_IF
+	
+70: //Waiting
 
-70: //Get gross weight
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Moving AND timer2.Q THEN
+		GVL_Marco.runBWD[pumpNo]:= FALSE;
+		timer2(in:=FALSE);
+		timeWt(in:=TRUE, pt:=T#10S);
+		GVL_Calibration.fbScaleDevice.RequestWeight();
+		state:= 75;
+	ELSE
+		state:= 70;
+	END_IF
+
+75: //Get gross weight
 	
 	IF timeWt.Q THEN
 		grossWt:= GVL_Calibration.fbScaleDevice.RequestWeight();
 		timeWt(in:=FALSE);
 		state:= 80;
 	ELSE
-		state:= 70;
+		state:= 75;
 	END_IF
 	
 80: //Return jar to box
@@ -187,7 +230,7 @@ CASE state OF
 		recResult:= recResult +1;
 			
 		revs:= GVL_Marco.revs;
-		GVL_Marco.runFWD[pumpNo]:= TRUE;
+		GVL_Marco.runBWD[pumpNo]:= TRUE;
 
 		timer3(in:=TRUE, pt:=T#10S);
 		repli := repli +1; 
@@ -198,36 +241,41 @@ CASE state OF
 
 90: //Check replicates
 
-	IF repli < replicates+1 AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN //Return to the next replicate
+	IF repli < replicates+1 AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN
 		timer3(in:=FALSE);
+		GVL_Marco.runBWD[pumpNo]:= FALSE;
 		timer2(in:=TRUE, pt:=T#10S);
-		GVL_Marco.runFWD[pumpNo]:= FALSE;
-		state:= 20;
-	ELSIF repli >= replicates AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN //Empty the jar to box
+		state:= 50;
+	ELSIF repli >= replicates AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN
 		timer3(in:=FALSE);
-		GVL_Marco.runFWD[pumpNo]:= FALSE;
-		revs:= GVL_Marco.revs*2;
-		GVL_Marco.runBWD[pumpNo]:= TRUE;
+		GVL_Marco.runBWD[pumpNo]:= FALSE;
 		timer2(in:=TRUE, pt:=T#10S);
 		state:= 100;
 	ELSE
 		state:= 90;
 	END_IF
 
-100: 
+100: //Empty the jar to box
 
-	IF  GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving AND timer2.Q THEN
-		timer2(in:=FALSE);
+	IF  GVL_Motion.aValves[1].Axis.Status.InTargetPosition AND 
+		GVL_Motion.aValves[2].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[3].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[4].Axis.Status.InTargetPosition AND
+		GVL_Motion.aValves[5].Axis.Status.InTargetPosition AND timer2.Q THEN
+		
+		revs:= GVL_Marco.revs;
 		IF pumpNo = 10 THEN
-			GVL_Marco.runBWD[pumpNo]:= FALSE;
-			timer3(in:=TRUE, pt:=T#10S);
+			GVL_Marco.runBWD[pumpNo]:= TRUE;
 			state:= 110;
 		ELSE
 			pumpNo:= pumpNo + 1;
 			repli:= 1;
-			timer3(in:=TRUE, pt:=T#10S);
+			timer2(in:=TRUE, pt:=T#10S);
 			state:= 20;
 		END_IF
+				
+		timer2(in:=FALSE);
+		timer3(in:=TRUE, pt:=T#10S);
 		
 	ELSE
 		state:= 100;
@@ -285,7 +333,7 @@ CASE state OF
 	
 END_CASE]]></ST>
     </Implementation>
-    <Method Name="moveValve" Id="{88c3bc66-2468-46ab-bd07-234aef9aacd6}">
+    <Method Name="moveValve" Id="{7d8274b1-957b-4011-8ef2-829aa21b82cd}">
       <Declaration><![CDATA[METHOD moveValve : BOOL
 VAR
 	state: INT;
@@ -336,7 +384,7 @@ CASE state OF
 END_CASE	]]></ST>
       </Implementation>
     </Method>
-    <Method Name="powerOFF" Id="{669f2d6c-8140-4033-8764-af2e2cad1a67}">
+    <Method Name="powerOFF" Id="{30b0883a-4a1b-467e-8465-76f56bd75b4b}">
       <Declaration><![CDATA[METHOD powerOFF : BOOL
 VAR
 	axiPower: MC_Power;
@@ -367,7 +415,7 @@ END_FOR
 ]]></ST>
       </Implementation>
     </Method>
-    <Method Name="runBwd" Id="{d07a1e49-9008-4536-982f-b964c6fea7a0}">
+    <Method Name="runBwd" Id="{eefadefd-fea3-4ebd-9d79-902f701041c8}">
       <Declaration><![CDATA[METHOD runBwd : BOOL
 VAR
 	moveRel: MC_MoveRelative;
@@ -393,7 +441,7 @@ moveRel(
 	Deceleration:= 3000);]]></ST>
       </Implementation>
     </Method>
-    <Method Name="runFwd" Id="{77fa4f85-bb1a-43bf-91a1-3c223717d22d}">
+    <Method Name="runFwd" Id="{1d946b5b-94f3-420d-aaf7-a77846e90b00}">
       <Declaration><![CDATA[METHOD runFwd : BOOL
 VAR
 	moveRel: MC_MoveRelative;
@@ -419,7 +467,7 @@ moveRel(
 	Deceleration:= 3000);]]></ST>
       </Implementation>
     </Method>
-    <LineIds Name="POU_Master_Calib">
+    <LineIds Name="POU_Master_Calib_2">
       <LineId Id="207" Count="0" />
       <LineId Id="327" Count="0" />
       <LineId Id="330" Count="0" />
@@ -462,14 +510,13 @@ moveRel(
       <LineId Id="743" Count="1" />
       <LineId Id="347" Count="0" />
       <LineId Id="271" Count="0" />
-      <LineId Id="946" Count="0" />
       <LineId Id="165" Count="2" />
       <LineId Id="145" Count="0" />
       <LineId Id="125" Count="0" />
       <LineId Id="887" Count="0" />
       <LineId Id="70" Count="0" />
       <LineId Id="841" Count="1" />
-      <LineId Id="948" Count="1" />
+      <LineId Id="73" Count="0" />
       <LineId Id="888" Count="0" />
       <LineId Id="747" Count="0" />
       <LineId Id="329" Count="0" />
@@ -477,6 +524,35 @@ moveRel(
       <LineId Id="76" Count="0" />
       <LineId Id="74" Count="1" />
       <LineId Id="71" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="763" Count="0" />
+      <LineId Id="762" Count="0" />
+      <LineId Id="769" Count="1" />
+      <LineId Id="768" Count="0" />
+      <LineId Id="760" Count="0" />
+      <LineId Id="767" Count="0" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="764" Count="2" />
+      <LineId Id="889" Count="2" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="771" Count="7" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="782" Count="0" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="175" Count="2" />
+      <LineId Id="170" Count="0" />
       <LineId Id="30" Count="0" />
       <LineId Id="38" Count="0" />
       <LineId Id="182" Count="0" />
@@ -546,13 +622,11 @@ moveRel(
       <LineId Id="223" Count="0" />
       <LineId Id="222" Count="0" />
       <LineId Id="442" Count="0" />
+      <LineId Id="341" Count="0" />
       <LineId Id="231" Count="0" />
-      <LineId Id="950" Count="0" />
       <LineId Id="224" Count="0" />
       <LineId Id="232" Count="0" />
       <LineId Id="443" Count="0" />
-      <LineId Id="951" Count="0" />
-      <LineId Id="941" Count="0" />
       <LineId Id="342" Count="0" />
       <LineId Id="927" Count="1" />
       <LineId Id="227" Count="1" />
@@ -560,14 +634,14 @@ moveRel(
       <LineId Id="234" Count="0" />
       <LineId Id="229" Count="0" />
       <LineId Id="236" Count="0" />
-      <LineId Id="795" Count="0" />
-      <LineId Id="942" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="792" Count="4" />
+      <LineId Id="799" Count="0" />
       <LineId Id="930" Count="1" />
-      <LineId Id="945" Count="0" />
       <LineId Id="940" Count="0" />
-      <LineId Id="932" Count="2" />
-      <LineId Id="947" Count="0" />
-      <LineId Id="936" Count="1" />
+      <LineId Id="932" Count="5" />
+      <LineId Id="929" Count="0" />
+      <LineId Id="356" Count="1" />
       <LineId Id="240" Count="2" />
       <LineId Id="239" Count="0" />
       <LineId Id="243" Count="1" />
@@ -599,7 +673,7 @@ moveRel(
       <LineId Id="219" Count="0" />
       <LineId Id="18" Count="0" />
     </LineIds>
-    <LineIds Name="POU_Master_Calib.moveValve">
+    <LineIds Name="POU_Master_Calib_2.moveValve">
       <LineId Id="87" Count="9" />
       <LineId Id="54" Count="0" />
       <LineId Id="110" Count="0" />
@@ -624,7 +698,7 @@ moveRel(
       <LineId Id="81" Count="0" />
       <LineId Id="46" Count="0" />
     </LineIds>
-    <LineIds Name="POU_Master_Calib.powerOFF">
+    <LineIds Name="POU_Master_Calib_2.powerOFF">
       <LineId Id="11" Count="0" />
       <LineId Id="34" Count="4" />
       <LineId Id="32" Count="0" />
@@ -634,14 +708,14 @@ moveRel(
       <LineId Id="33" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
-    <LineIds Name="POU_Master_Calib.runBwd">
+    <LineIds Name="POU_Master_Calib_2.runBwd">
       <LineId Id="19" Count="0" />
       <LineId Id="6" Count="0" />
       <LineId Id="20" Count="0" />
       <LineId Id="7" Count="5" />
       <LineId Id="5" Count="0" />
     </LineIds>
-    <LineIds Name="POU_Master_Calib.runFwd">
+    <LineIds Name="POU_Master_Calib_2.runFwd">
       <LineId Id="19" Count="0" />
       <LineId Id="6" Count="0" />
       <LineId Id="20" Count="0" />
