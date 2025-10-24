@@ -69,10 +69,10 @@ VAR
 	bMoveAbsExecute 	: BOOL;
     bMoveAbsRequested 	: BOOL;
 	bMoveAbsDone		: BOOL;
+	bMoveAbsStarted		: BOOL;
 	rtMoveAbsDone 		: R_TRIG; 
     tonMoveAbs    		: TON;    
     tMoveAbsTout  		: TIME := T#60S;
-	bMoveAbsSeenBusy 	: BOOL; 
 	tonAbsInWin         : TON;         // estabilidade da janela de posição
 	rAbsPosTol          : LREAL := 0.001; // tolerância (ajuste ao teu unit)
 	tAbsStable          : TIME  := T#100MS; // estabilidade da janela
@@ -300,7 +300,7 @@ END_IF
 		bhomeExecute := FALSE;
 		tonHoming.IN := FALSE;
 		bHomeInProgress := FALSE;
-		GVL_Motion.bMotorsHomeDone := TRUE;
+		//GVL_Motion.bMotorsHomeDone := TRUE;
 		bHomeRequest := FALSE;
 		Home := TRUE;
 		RETURN;
@@ -380,44 +380,64 @@ VAR
 	opts : ST_MoveOptions;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Disparo
+        <ST><![CDATA[//Standard Output
+MoveAbsolute := FALSE;
+
+// Trigger the command request
 IF NOT bMoveAbsRequested THEN
     bMoveAbsExecute := TRUE;
     bMoveAbsRequested := TRUE;
 END_IF
 
-// Chamada do bloco
-opts.IgnorePositionMonitoring := TRUE;   // as demais ficam FALSE por padrão
+// MC_MoveAbsolute function block call
+opts.IgnorePositionMonitoring := TRUE;   // Standard practice for move commands
 
 fbMoveAbs(
     Axis := Axis,
     Position := rPosition,
-    Execute := bMoveAbsExecute,
+    Execute := bMoveAbsExecute, // Execute flag is controlled by the logic below
     Velocity := rVelocity,
     Acceleration := rAcc,
     Deceleration := rDec,
 	options := opts
 );
 
-// Derruba Execute assim que o bloco “agarra”
-IF fbMoveAbs.Busy OR fbMoveAbs.Done OR fbMoveAbs.Error OR fbMoveAbs.CommandAborted THEN
+// Release the Execute signal once the block gets in busy or error mode
+IF fbMoveAbs.Busy OR fbMoveAbs.Error OR fbMoveAbs.CommandAborted THEN
     bMoveAbsExecute := FALSE;
 END_IF
 
-// Status
+// Flag that movement has successfully started
+IF fbMoveAbs.Busy THEN
+    bMoveAbsStarted := TRUE;
+END_IF
+
+// Status mapping to the wrapper's public status structure
 stStatus.bBusy := fbMoveAbs.Busy;
 stStatus.bDone := fbMoveAbs.Done;
 stStatus.bError := fbMoveAbs.Error;
 stStatus.iErrorCode := fbMoveAbs.ErrorID;
 
-// Finalização — pedindo Done de verdade
-IF bMoveAbsRequested AND fbMoveAbs.Done THEN
+//Check if there was any erros on the fbMoveAbs block and resets the trigger
+IF bMoveAbsRequested AND bMoveAbsStarted AND 
+   	NOT fbMoveAbs.Busy AND NOT fbMoveAbs.Done AND NOT fbMoveAbs.Error THEN
+		bMoveAbsRequested := FALSE;
+    	bMoveAbsStarted := FALSE;
+	
+		stStatus.bError := TRUE;
+		stStatus.iErrorCode := 9001; // Custom code for 'Motion Aborted/Stuck'
+		stStatus.sMessage := 'Movement started but was silently aborted (check external Stop/Power).';
+END_IF
+	
+// Finalization — true Done confirmation
+IF bMoveAbsRequested AND fbMoveAbs.Done AND bMoveAbsStarted THEN
     bMoveAbsRequested := FALSE;
+	bMoveAbsStarted := FALSE;
     MoveAbsolute := TRUE;
     RETURN;
 END_IF
 
-// Abort/erro
+// Abort/error handling
 IF fbMoveAbs.CommandAborted THEN
     stStatus.eState := E_ActuatorState.eError;
     stStatus.sMessage := 'Command aborted';
@@ -425,9 +445,7 @@ END_IF
 IF fbMoveAbs.Error THEN
     stStatus.eState := E_ActuatorState.eError;
     stStatus.sMessage := 'Error in Move Motor';
-END_IF
-
-MoveAbsolute := FALSE;]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="MoveRelative" Id="{f57948ef-5e1c-4cbd-b496-9bd6108f8456}">
@@ -921,13 +939,30 @@ END_IF
       <LineId Id="53" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveAbsolute">
+      <LineId Id="479" Count="0" />
+      <LineId Id="477" Count="1" />
       <LineId Id="385" Count="6" />
       <LineId Id="430" Count="0" />
       <LineId Id="429" Count="0" />
       <LineId Id="392" Count="6" />
       <LineId Id="432" Count="0" />
-      <LineId Id="399" Count="29" />
-      <LineId Id="5" Count="0" />
+      <LineId Id="399" Count="5" />
+      <LineId Id="451" Count="1" />
+      <LineId Id="448" Count="1" />
+      <LineId Id="447" Count="0" />
+      <LineId Id="405" Count="5" />
+      <LineId Id="476" Count="0" />
+      <LineId Id="467" Count="1" />
+      <LineId Id="466" Count="0" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="469" Count="1" />
+      <LineId Id="473" Count="1" />
+      <LineId Id="472" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="412" Count="2" />
+      <LineId Id="450" Count="0" />
+      <LineId Id="415" Count="12" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.MoveRelative">
       <LineId Id="49" Count="4" />

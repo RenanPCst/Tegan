@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_ScaleDevice" Id="{61aa2783-8d7b-4a50-a982-014b2d41abdc}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_ScaleDevice
 VAR_INPUT
-    sRemoteHost : STRING := '192.168.1.100';
-    nRemotePort : UINT := 8001;
-	 bExecuteRequest : BOOL;
-	 rLastWeight     : LREAL;
+    sRemoteHost 	: STRING := '192.168.1.100';
+    nRemotePort 	: UINT 	 := 8001;
+	bExecuteRequest : BOOL;
+	rLastWeight     : LREAL;
 END_VAR
 
 VAR_OUTPUT
@@ -26,7 +26,7 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Chamado continuamente para manter o FB pronto
+      <ST><![CDATA[// Continous call to keep the function block ready for communication 
 IF bExecuteRequest OR fbTcpClient.bBusy THEN
 	fbTcpClient(
 		sRemoteHost := sRemoteHost,
@@ -40,6 +40,7 @@ IF bExecuteRequest OR fbTcpClient.bBusy THEN
 	);
 END_IF
 
+// Done and Reset flags
 IF fbTcpClient.bConnectionDone THEN
     bExecuteRequest := FALSE;
     rLastWeight := F_ParseWeight(sRawResponse);
@@ -55,10 +56,11 @@ VAR_OUTPUT
     sMessage : STRING;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bExecuteRequest AND NOT fbTcpClient.bBusy THEN
+        <ST><![CDATA[// Triggering fbTcpClient
+IF NOT bExecuteRequest AND NOT fbTcpClient.bBusy THEN
     bExecuteRequest := TRUE;
 END_IF
-
+// Releasing fbTcpClient 
 IF fbTcpClient.bConnectionDone THEN
     RequestWeight := rLastWeight;
     bSuccess := TRUE;
@@ -98,12 +100,14 @@ END_IF]]></ST>
       <LineId Id="244" Count="0" />
       <LineId Id="214" Count="4" />
       <LineId Id="253" Count="0" />
+      <LineId Id="282" Count="0" />
       <LineId Id="219" Count="4" />
       <LineId Id="258" Count="0" />
       <LineId Id="224" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_ScaleDevice.RequestWeight">
+      <LineId Id="28" Count="0" />
       <LineId Id="12" Count="8" />
       <LineId Id="22" Count="0" />
       <LineId Id="5" Count="0" />

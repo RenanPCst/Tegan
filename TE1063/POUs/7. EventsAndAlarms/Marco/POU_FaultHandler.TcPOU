@@ -292,6 +292,14 @@ IF GVL_Motion.aValves[5].iError THEN
 		GVL_Alarms.arrEventFlag[77]:= FALSE;	
 END_IF
 
+
+(*-ME-082: Axis Emergency Stop Pump Deceleration Active-*)
+IF GVL_Motion.bAnyPumpRunning AND NOT GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[82]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[82]:= FALSE;	
+END_IF
+
 //*********************************************************END SECTION****************************************************************
 
 //------____________________________--------------------------------------------------------------------------------------------------
@@ -302,21 +310,21 @@ END_IF
 (* IE-101: M3 Movement Not allowed *)
 
 (* IE-102: Attempt going Auto Cycle without a Recipe *)
-IF GVL_HMI.bIncoherenceDetected AND NOT GVL_Recipe.bIsThereRecipeActivated THEN
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_Recipe.bIsThereRecipeActivated THEN
 		GVL_Alarms.arrEventFlag[102]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[102]:= FALSE;	
 END_IF
 
 (* IE-103: Attempt going Auto Cycle without Throat stage in correct position *)
-IF GVL_HMI.bIncoherenceDetected AND NOT GVL_IO.gDigInputs.bThroatJigPresent THEN
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_IO.gDigInputs.bThroatJigPresent THEN
 		GVL_Alarms.arrEventFlag[103]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[103]:= FALSE;	
 END_IF
 
 (* IE-104: Attempt going Auto Cycle without Vias Rack in correct position *)
-IF GVL_HMI.bIncoherenceDetected AND NOT GVL_IO.bVialRackPresent THEN
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_IO.bVialRackPresent THEN
 		GVL_Alarms.arrEventFlag[104]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[104]:= FALSE;	
@@ -324,35 +332,35 @@ END_IF
 
 (* IE-105: Attempt going Auto Cycle With Solvent 1 Low level *)
 
-IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[1] THEN
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[1] THEN
 		GVL_Alarms.arrEventFlag[105]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[105]:= FALSE;	
 END_IF
 
 (* IE-106: Attempt going Auto Cycle With Solvent 2 Low level *)
-IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[2] THEN
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[2] THEN
 		GVL_Alarms.arrEventFlag[106]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[106]:= FALSE;	
 END_IF
 
 (* IE-107: Attempt going Auto Cycle With Solvent 3 Low level *)
-IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[3] THEN
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[3] THEN
 		GVL_Alarms.arrEventFlag[107]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[107]:= FALSE;	
 END_IF
 
 (* IE-108: Attempt going Auto Cycle With Solvent 4 Low level *)
-IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.aSolventLowLevel[4] THEN
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[4] THEN
 		GVL_Alarms.arrEventFlag[108]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[108]:= FALSE;	
 END_IF
 
 (* IE-109: Attempt going Auto Cycle With Waste Bottle high level *)
-IF GVL_HMI.bIncoherenceDetected AND GVL_Alarms.bWasteHighLevel THEN
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.bWasteHighLevel THEN
 		GVL_Alarms.arrEventFlag[109]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[109]:= FALSE;	
@@ -366,6 +374,75 @@ END_IF
 //------____________________________--------------------------------------------------------------------------------------------------
 //----- Related to Process Warnings --------------------------------------------------------------------------------------------------
 
+(* PW-150: Solvent 1 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[1] THEN
+		GVL_Alarms.arrEventFlag[150]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[150]:= FALSE;	
+END_IF
+
+(* PW-151: Solvent 2 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[2] THEN
+		GVL_Alarms.arrEventFlag[151]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[151]:= FALSE;	
+END_IF
+
+(* PW-152: Solvent 3 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[3] THEN
+		GVL_Alarms.arrEventFlag[152]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[152]:= FALSE;	
+END_IF
+
+(* PW-153: Solvent 4 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[4] THEN
+		GVL_Alarms.arrEventFlag[153]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[153]:= FALSE;	
+END_IF
+
+(* PW-154: Waste Bottle Near High Level *)
+IF GVL_Alarms.bWasteNearHighLevel THEN
+		GVL_Alarms.arrEventFlag[154]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[154]:= FALSE;	
+END_IF
+
+(* PW-162: Profinet Communicaton Error ( Vial Rack pen sensor ) *)
+IF GVL_IO.gProfinetInput.iPnIoBoxState <> 0 THEN
+		GVL_Alarms.arrEventFlag[162]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[162]:= FALSE;	
+END_IF
+
+(* PW-163: Profinet Vial Rack pen sensor error *)
+IF GVL_IO.gProfinetInput.bErrorStatus THEN
+		GVL_Alarms.arrEventFlag[163]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[163]:= FALSE;	
+END_IF
+
+(* PW-163: Internal Waste Tank Overflow sensor *)
+IF GVL_IO.gDigInputs.bWasteOverflowSensor THEN
+		GVL_Alarms.arrEventFlag[164]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[164]:= FALSE;	
+END_IF
+
+(* PW-164: UPS Replace Battery Activated *)
+IF GVL_IO.gDigInputs.bUPSReplaceBattery THEN
+		GVL_Alarms.arrEventFlag[165]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[165]:= FALSE;	
+END_IF
+
+(* PW-165: UPS Ready Signal drop *)
+IF NOT GVL_IO.gDigInputs.bUPSReady THEN
+		GVL_Alarms.arrEventFlag[166]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[166]:= FALSE;	
+END_IF
 
 
 //*********************************************************END SECTION****************************************************************
@@ -373,8 +450,29 @@ END_IF
 //------_________________________-----------------------------------------------------------------------------------------------------
 //----- Related to System Faults -----------------------------------------------------------------------------------------------------
 
+(* SF-200: System Powered Off (PLC on Battery) *)
+IF NOT GVL_IO.gDigInputs.b24VPowerSupplyOK OR NOT GVL_IO.gDigInputs.b48VPowerSupplyOK THEN
+		GVL_Alarms.arrEventFlag[200]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[200]:= FALSE;	
+END_IF
+
+(* SF-202: TwinSAFE Fault (EL6910/EL1918/EL2904) *)
+IF 	GVL_IO.stEL6910.nEL6910State <> 8 OR GVL_IO.nEL1918T04State <> 8 OR GVL_IO.nEL1918T05State <> 8 OR 
+	GVL_IO.nEL1918T06State <> 8 OR GVL_IO.nEL2904T07State <> 8 OR GVL_IO.nEL2904T08State <> 8 OR GVL_IO.nEL2904T19State <> 8 
+	THEN
+		GVL_Alarms.arrEventFlag[202]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[202]:= FALSE;	
+END_IF
 
 
+(* SF-204: Drive STO Active (M1 - M3 or Valves Motors) *)
+IF 	NOT GVL_Safety.iMotorsSTOEnabled THEN
+		GVL_Alarms.arrEventFlag[204]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[204]:= FALSE;	
+END_IF
 
 //*********************************************************END SECTION****************************************************************
 
@@ -383,7 +481,12 @@ END_IF
 ]]></ST>
     </Implementation>
     <LineIds Name="POU_FaultHandler">
-      <LineId Id="342" Count="289" />
+      <LineId Id="342" Count="284" />
+      <LineId Id="791" Count="0" />
+      <LineId Id="790" Count="0" />
+      <LineId Id="793" Count="4" />
+      <LineId Id="792" Count="0" />
+      <LineId Id="627" Count="4" />
       <LineId Id="695" Count="1" />
       <LineId Id="721" Count="0" />
       <LineId Id="698" Count="0" />
@@ -420,7 +523,45 @@ END_IF
       <LineId Id="726" Count="0" />
       <LineId Id="707" Count="0" />
       <LineId Id="756" Count="0" />
-      <LineId Id="647" Count="19" />
+      <LineId Id="647" Count="4" />
+      <LineId Id="798" Count="0" />
+      <LineId Id="806" Count="4" />
+      <LineId Id="801" Count="0" />
+      <LineId Id="812" Count="5" />
+      <LineId Id="811" Count="0" />
+      <LineId Id="819" Count="5" />
+      <LineId Id="818" Count="0" />
+      <LineId Id="826" Count="5" />
+      <LineId Id="825" Count="0" />
+      <LineId Id="833" Count="5" />
+      <LineId Id="832" Count="0" />
+      <LineId Id="846" Count="0" />
+      <LineId Id="850" Count="4" />
+      <LineId Id="849" Count="0" />
+      <LineId Id="839" Count="5" />
+      <LineId Id="768" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="769" Count="4" />
+      <LineId Id="653" Count="0" />
+      <LineId Id="775" Count="5" />
+      <LineId Id="774" Count="0" />
+      <LineId Id="782" Count="0" />
+      <LineId Id="785" Count="4" />
+      <LineId Id="783" Count="1" />
+      <LineId Id="654" Count="4" />
+      <LineId Id="855" Count="0" />
+      <LineId Id="760" Count="4" />
+      <LineId Id="659" Count="1" />
+      <LineId Id="857" Count="1" />
+      <LineId Id="863" Count="1" />
+      <LineId Id="859" Count="2" />
+      <LineId Id="661" Count="0" />
+      <LineId Id="865" Count="0" />
+      <LineId Id="875" Count="0" />
+      <LineId Id="868" Count="1" />
+      <LineId Id="872" Count="2" />
+      <LineId Id="867" Count="0" />
+      <LineId Id="662" Count="4" />
       <LineId Id="54" Count="0" />
     </LineIds>
   </POU>

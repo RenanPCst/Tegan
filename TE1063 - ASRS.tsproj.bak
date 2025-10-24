@@ -1611,8 +1611,8 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}" AutoDeleteType="true">ST_EL6631</Name>
-			<BitSize>96</BitSize>
+			<Name GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}" AutoDeleteType="true">ST_EL6631</Name>
+			<BitSize>128</BitSize>
 			<SubItem>
 				<Name>bCurrentValueInvalid</Name>
 				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
@@ -1648,6 +1648,12 @@ External Setpoint Generation:
 				<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
 				<BitSize>32</BitSize>
 				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>iPnIoBoxState</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000005}">UINT</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>96</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -6713,7 +6719,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{18F9E25C-39A0-AB6B-6051-7CD19DA8FE99}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{B172A84A-685D-73BF-1A18-12A1D14BAAD4}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6810,11 +6816,6 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
@@ -6830,14 +6831,14 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T22State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gProfinetInput</Name>
 							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
-							<Type GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}">ST_EL6631</Type>
+							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
@@ -6878,6 +6879,11 @@ External Setpoint Generation:
 							<Name>GVL_IO.stEL6910.bEL6910State</Name>
 							<Comment><![CDATA[ EL6910 State from IO Terminal Info Data	]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEK1100T22State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.nEL6070State</Name>
@@ -7055,1292 +7061,6 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M1Motor.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M2Motor.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.M3Motor.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[1].nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[2].nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[3].nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[4].nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aValves[5].nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[1].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[2].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[3].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[4].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[5].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[6].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[7].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[8].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[9].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Linear.iHomeSensor</Name>
-							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.Axis.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.nState</Name>
-							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.rActualPos</Name>
-							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.rActualTorque</Name>
-							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.rActualVel</Name>
-							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
-							<Type>LREAL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.iOperational</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.iHomed</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.iNotMoving</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.iError</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.aPumps[10].Rotary.nErrorCode</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.pomp6.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -8406,6 +7126,1400 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Name>GVL_Safety.aEL2904_T19</Name>
 							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
 						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[5].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.iHomeSensor</Name>
+							<Comment><![CDATA[Terminal 23 to 32 - EL7062 UINT Input]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.Axis.NcToPlc</Name>
+							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.nState</Name>
+							<Comment><![CDATA[Actual State (Axis StatusWord)]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.rActualPos</Name>
+							<Comment><![CDATA[Real Actual Axis Position (Position Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.rActualTorque</Name>
+							<Comment><![CDATA[Real Actual Axis Torque (Torque Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.rActualVel</Name>
+							<Comment><![CDATA[Real Actual Axis Velocity (Velocity Actual Value)]]></Comment>
+							<Type>LREAL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.iOperational</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.iHomed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.iNotMoving</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.nErrorCode</Name>
+							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
@@ -8455,6 +8569,68 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STOErrorAck</Name>
+							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyOutputs</Name>
+							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorLockCommand</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyEnable</Name>
+							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyReset</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8720,81 +8896,9 @@ M1 Motor Safety]]></Comment>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
-						<Var>
-							<Name>GVL_Motion.pomp6.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STOErrorAck</Name>
-							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyOutputs</Name>
-							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorLockCommand</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyEnable</Name>
-							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyReset</Name>
-							<Type>BOOL</Type>
-						</Var>
 					</Vars>
 					<Vars VarGrpType="8" AreaNo="4">
 						<Name>PlcTask Retains</Name>
-						<Var>
-							<Name>GVL_Retain.iRunNumber</Name>
-							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
-							<Type>UDINT</Type>
-							<InOut>7</InOut>
-						</Var>
 						<Var>
 							<Name>GVL_Retain.rValveLastPosition</Name>
 							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
@@ -8808,14 +8912,14 @@ M1 Motor Safety]]></Comment>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.iCalibrationNumber</Name>
+							<Name>GVL_Retain.iRunNumber</Name>
+							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
 							<Type>UDINT</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
-							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
-							<Type>DATE</Type>
+							<Name>GVL_Retain.iCalibrationNumber</Name>
+							<Type>UDINT</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
@@ -8828,6 +8932,12 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Retain.rLinearPumpsLastAdjustUser</Name>
 							<Comment><![CDATA[ Linear pumps last adjusted username]]></Comment>
 							<Type>STRING(128)</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
+							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
+							<Type>DATE</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
@@ -44742,6 +44852,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bErrorStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Error_Status"/>
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bWarningStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Warning_Status"/>
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^iCurrentValue" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Current Value"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^iPnIoBoxState" VarB="Inputs^PnIoBoxState"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].nState" VarB="InfoData^State"/>

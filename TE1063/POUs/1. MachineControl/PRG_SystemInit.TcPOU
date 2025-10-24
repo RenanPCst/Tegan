@@ -71,7 +71,7 @@ IF NOT bEnableDone AND bAllResetDone THEN
 		
 		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3]; 
 		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
-		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
+		bAllRotaryPumpsEnabled  := (*aRotaryPumpsEnabled[1] AND*) aRotaryPumpsEnabled[2] AND (*aRotaryPumpsEnabled[3] AND*) aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
 		
 		//TODO: Time out to show error in the screen on every step
 		IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllRotaryPumpsEnabled THEN
@@ -136,15 +136,17 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
 	IF NOT bResetCheck[18] THEN
 			bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
 	END_IF
+	(*
 	IF NOT bResetCheck[19] THEN
 			bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
-	END_IF
+	END_IF*)
 	IF NOT bResetCheck[20] THEN
 			bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
 	END_IF
+	(*
 	IF NOT bResetCheck[21] THEN
 			bResetCheck[21] := GVL_Motion.aPumpsRotary[3].Reset();
-	END_IF
+	END_IF*)
 	IF NOT bResetCheck[22] THEN
 			bResetCheck[22] := GVL_Motion.aPumpsRotary[4].Reset();
 	END_IF
@@ -172,8 +174,8 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
        bResetCheck[5] AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] AND
        bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
        bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
-       bResetCheck[17] AND bResetCheck[18] AND bResetCheck[19] AND bResetCheck[20] AND
-	   bResetCheck[21] AND bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
+       bResetCheck[17] AND bResetCheck[18] (*AND bResetCheck[19]*) AND bResetCheck[20] AND
+	   (*bResetCheck[21] AND*) bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
 	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28] THEN
 		bAllResetDone := TRUE;
 	ELSE
@@ -465,7 +467,11 @@ END_IF
     </Method>
     <LineIds Name="PRG_SystemInit">
       <LineId Id="1672" Count="22" />
-      <LineId Id="1698" Count="102" />
+      <LineId Id="1698" Count="59" />
+      <LineId Id="2036" Count="0" />
+      <LineId Id="1758" Count="4" />
+      <LineId Id="2037" Count="0" />
+      <LineId Id="1763" Count="37" />
       <LineId Id="1802" Count="182" />
       <LineId Id="5" Count="0" />
     </LineIds>
