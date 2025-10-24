@@ -6,7 +6,7 @@ VAR
 	criteria: REAL := 0.5; // Acceptance Criteria (0.1 ~ 5.0)
 	failures: INT := 0; // Allowable Failures (0 ~ 5)
 	targetVolume: REAL := 0.50; // Volume Target (mL)
-	replicates: INT := 5; // Number of checks (0 ~ 10)
+	replicates: INT := 2; // Number of checks (0 ~ 10)
 	tareWt: REAL; //Weight before
 	grossWt: REAL; //Weight after
 	netWt: REAL; // rsult of (grossWt - tareWt)
@@ -109,9 +109,9 @@ CASE state OF
 
 20:	//Fill Jar from Box
 	
-	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Disabled AND (timer3.Q OR timer2.Q) THEN
+	IF NOT GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.Disabled AND (timer3.Q OR timeWt.Q) THEN
 		IF repli < 2 THEN
-		revs:= GVL_Marco.revs*2;	
+		revs:= GVL_Marco.revs*2.4;	
 		END_IF
 		GVL_Marco.runFWD[pumpNo]:= TRUE;
 		timer3(in:=FALSE);
@@ -186,8 +186,8 @@ CASE state OF
 		GVL_Marco.calibResult[recResult].pumpNo:= pumpNo;
 		recResult:= recResult +1;
 			
-		revs:= GVL_Marco.revs;
-		GVL_Marco.runFWD[pumpNo]:= TRUE;
+		//revs:= GVL_Marco.revs;
+		//GVL_Marco.runFWD[pumpNo]:= TRUE;
 
 		timer3(in:=TRUE, pt:=T#10S);
 		repli := repli +1; 
@@ -200,13 +200,13 @@ CASE state OF
 
 	IF repli < replicates+1 AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN //Return to the next replicate
 		timer3(in:=FALSE);
-		timer2(in:=TRUE, pt:=T#10S);
+		timeWt(in:=TRUE, pt:=T#10S);
 		GVL_Marco.runFWD[pumpNo]:= FALSE;
 		state:= 20;
 	ELSIF repli >= replicates AND timer3.Q AND GVL_Motion.aPumps[pumpNo].Rotary.Axis.Status.NotMoving THEN //Empty the jar to box
 		timer3(in:=FALSE);
 		GVL_Marco.runFWD[pumpNo]:= FALSE;
-		revs:= GVL_Marco.revs*2;
+		revs:= GVL_Marco.revs*2.4;
 		GVL_Marco.runBWD[pumpNo]:= TRUE;
 		timer2(in:=TRUE, pt:=T#10S);
 		state:= 100;

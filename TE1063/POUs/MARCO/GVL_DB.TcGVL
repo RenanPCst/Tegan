@@ -24,15 +24,18 @@ slctLastRun: STRING(1000) := 'SELECT TOP 1 [runNo], [airDryTime], [analyst], [ca
 slctVDbyNo: T_Maxstring := 'SELECT [pump], [stage], [rinse1], [rinse2], [wash1], [wash2], [runNo] FROM [dbo].[VOLUME_DATA] WHERE [methodID]=#1#;';
 slctLastMethodID: STRING(1000) := 'SELECT TOP 1 [methodID] FROM [dbo].[METHODS] ORDER BY [methodID] DESC; ';
 slctLastMethod: STRING(1000) := 'SELECT TOP 1 [methodName], [methodRevision], [methodCreatedBy], [methodCreatedOn], [solvent_R1], [solvent_R2], [solvent_W1], [solvent_W2], [time_R1], [time_R2], [time_W1], [time_W2], [velocity_R1], [velocity_R2], [velocity_W1], [velocity_W2], [soakTime], [agitate_1_Time], [agitate_2_Time], [vialsToFill], [vialPrimeVol], [vial_1_FillVol], [vial_2_4_FillVol], [airDryTime], [methodID] FROM [dbo].[METHODS] ORDER BY [methodID] DESC; ';
+slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBRATION] ORDER BY [calibrationNo] DESC;';
+isrtCalib: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION] ( [userId], [density], [solventNo], [solventRevision], [sysMasterRevision], [allowableFail], [replicates], [callInterval], [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [Runs_ID]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', $'#12#$', $'#13#$', $'#14#$', $'#15#$', $'#16#$', $'#17#$', $'#18#$', $'#19#$', $'#20#$') ';
+
 
 (******************************************************************************************************)
 
 (***** Pump Calibration Report Variables **************************************************************)
 
 bBuildPCR			: BOOL;
-//stParameter_PCR		: ARRAY[0..5] OF ST_Parameters_PCR;
-//astData_PCR	  		: ARRAY[0..100] OF ST_Data_PCR;
-
+stParameter_PCR		: ARRAY[0..5] OF ST_Parameters_PCR;
+astData_PCR	  		: ARRAY[0..100] OF ST_Data_PCR;
+lastCalibID			: ARRAY[0..1] OF INT;
 
 
 (******************************************************************************************************)
@@ -40,7 +43,7 @@ bBuildPCR			: BOOL;
 (***** Post-Run Report Variables **********************************************************************)
 
 bBuildPRRW		: BOOL;
-//stPostRunReport	: array[0..5] of ST_PostRunReport;
+stPostRunReport	: ARRAY[0..5] OF ST_PostRunReport;
 lastRunID		: ARRAY[0..1] OF INT;
 
 (******************************************************************************************************)
@@ -48,23 +51,23 @@ lastRunID		: ARRAY[0..1] OF INT;
 (***** User History Report Variables ******************************************************************)
 
 bBuildUHR	   : BOOL;
-//astData_UHR	   : ARRAY[0..100] OF ST_Data_UHR;
+astData_UHR	   : ARRAY[0..100] OF ST_Data_UHR;
 
 (******************************************************************************************************)
 
 (***** Current Users List Variables *****************************************************************)
 
 bBuildCUL	   : BOOL;
-//astData_CUL	   : ARRAY[0..100] OF ST_Data_CUL;
+astData_CUL	   : ARRAY[0..100] OF ST_Data_CUL;
 
 (******************************************************************************************************)
 
 (***** Method Report Variables ************************************************************************)
 
 bBuildMR		: BOOL;
-//stParameter_MR	: ARRAY[0..5] OF ST_Parameters_MR;
-//astVolData		: ARRAY[1..10] OF ST_Data_PRR;
-//astData_MR	   	: ARRAY[0..100] OF ST_Data_MR;
+stParameter_MR	: ARRAY[0..5] OF ST_Parameters_MR;
+astVolData		: ARRAY[1..10] OF ST_Data_PRR;
+astData_MR	   	: ARRAY[0..100] OF ST_Data_MR;
 
 (******************************************************************************************************)
 
