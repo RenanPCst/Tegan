@@ -22,7 +22,7 @@ VAR
 	nome: STRING;
 	cmdIn: STRING(10000);
 	cmdSlc: STRING(10000);
-	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID);
+	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION);
 	status: STRING;
 	str: STRING;
 	lastRunID: STRING;
@@ -133,7 +133,7 @@ SELECT_POST_LAST_CALIBRATION_ID:
 		bExecute:= FALSE;
 	END_IF
 
-INSERT_RUN_VD:
+INSERT_CALIBRATION:
 
 	cmdIn:= GVL_DB.isrtCalib;
 	insertCalibValues(start:=bExecuteIn, line:= POU_Master_Calib.recResult);
@@ -148,6 +148,8 @@ INSERT_RUN_VD:
 		state:= INSERT_RUN_VD;
 		bExecuteIn:= FALSE;
 	END_IF
+
+
 	
 ERROR_STATE:
 
@@ -312,6 +314,7 @@ END_IF]]></ST>
       <LineId Id="325" Count="0" />
       <LineId Id="390" Count="14" />
       <LineId Id="383" Count="0" />
+      <LineId Id="434" Count="1" />
       <LineId Id="405" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
