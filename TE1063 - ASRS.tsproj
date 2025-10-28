@@ -1611,8 +1611,8 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}" AutoDeleteType="true">ST_EL6631</Name>
-			<BitSize>96</BitSize>
+			<Name GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}" AutoDeleteType="true">ST_EL6631</Name>
+			<BitSize>128</BitSize>
 			<SubItem>
 				<Name>bCurrentValueInvalid</Name>
 				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
@@ -1648,6 +1648,12 @@ External Setpoint Generation:
 				<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
 				<BitSize>32</BitSize>
 				<BitOffs>64</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>iPnIoBoxState</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000005}">UINT</Type>
+				<BitSize>16</BitSize>
+				<BitOffs>96</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -1921,6 +1927,31 @@ External Setpoint Generation:
 			</ArrayInfo>
 		</DataType>
 		<DataType>
+			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
+			<BitSize>24</BitSize>
+			<SubItem>
+				<Name>bStageCollectionLeftLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bSampleRecoveryLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bStageCollectionRightLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}" AutoDeleteType="true">ST_EL2809</Name>
 			<BitSize>72</BitSize>
 			<SubItem>
@@ -1985,31 +2016,6 @@ External Setpoint Generation:
 				<Comment><![CDATA[ Solenoid Valve C ]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>64</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
-			<BitSize>24</BitSize>
-			<SubItem>
-				<Name>bStageCollectionLeftLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bSampleRecoveryLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>8</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bStageCollectionRightLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>16</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -2117,18 +2123,18 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{29CAAFD0-28B6-D9D0-3B0E-64B337839191}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF BOOL</Name>
-			<BitSize>40</BitSize>
-			<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
+			<Name GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF LREAL</Name>
+			<BitSize>320</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</BaseType>
 			<ArrayInfo>
 				<LBound>1</LBound>
 				<Elements>5</Elements>
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF LREAL</Name>
-			<BitSize>320</BitSize>
-			<BaseType GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</BaseType>
+			<Name GUID="{29CAAFD0-28B6-D9D0-3B0E-64B337839191}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF BOOL</Name>
+			<BitSize>40</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
 			<ArrayInfo>
 				<LBound>1</LBound>
 				<Elements>5</Elements>
@@ -2667,9 +2673,8 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
-					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
+					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6714,7 +6719,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{9E42C006-E7DC-606D-5400-90820AC49006}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{A61F49E0-2FD5-9139-648E-0798CF76AB0E}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6811,6 +6816,11 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
@@ -6826,18 +6836,18 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Name>GVL_IO.nEK1100T22State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gProfinetInput</Name>
 							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
-							<Type GUID="{59B0D9B9-5A3E-4ACA-B9F1-2C3CBEC45B1B}">ST_EL6631</Type>
+							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T22State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Name>GVL_IO.nEL6070State</Name>
+							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
@@ -6879,11 +6889,6 @@ External Setpoint Generation:
 							<Name>GVL_IO.stEL6910.bEL6910State</Name>
 							<Comment><![CDATA[ EL6910 State from IO Terminal Info Data	]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEL6070State</Name>
-							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.nEL1918T04State</Name>
@@ -7095,6 +7100,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.M1Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.M2Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7137,6 +7146,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.M2Motor.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
@@ -7183,6 +7196,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.M3Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aValves[1].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7225,6 +7242,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aValves[1].nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[2].Axis.NcToPlc</Name>
@@ -7271,6 +7292,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aValves[2].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aValves[3].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7313,6 +7338,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aValves[3].nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[4].Axis.NcToPlc</Name>
@@ -7359,6 +7388,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aValves[4].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aValves[5].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7403,6 +7436,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aValves[5].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7445,6 +7482,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.iHomeSensor</Name>
@@ -7496,6 +7537,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[2].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7538,6 +7583,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[2].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[2].Linear.iHomeSensor</Name>
@@ -7589,6 +7638,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[3].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7631,6 +7684,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[3].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[3].Linear.iHomeSensor</Name>
@@ -7682,6 +7739,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[4].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7724,6 +7785,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[4].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[4].Linear.iHomeSensor</Name>
@@ -7775,6 +7840,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[5].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7817,6 +7886,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[5].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[5].Linear.iHomeSensor</Name>
@@ -7868,6 +7941,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[6].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7910,6 +7987,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[6].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[6].Linear.iHomeSensor</Name>
@@ -7961,6 +8042,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[7].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8003,6 +8088,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[7].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[7].Linear.iHomeSensor</Name>
@@ -8054,6 +8143,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[8].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8096,6 +8189,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[8].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[8].Linear.iHomeSensor</Name>
@@ -8147,6 +8244,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[9].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8189,6 +8290,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[9].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[9].Linear.iHomeSensor</Name>
@@ -8240,6 +8345,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[10].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8282,6 +8391,10 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_Motion.aPumps[10].Linear.nErrorCode</Name>
 							<Type>UDINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[10].Linear.iHomeSensor</Name>
@@ -8333,6 +8446,10 @@ External Setpoint Generation:
 							<Type>UDINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bSafetyEnable</Name>
 							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
 							<Type>BOOL</Type>
@@ -8346,10 +8463,6 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						<Var>
 							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Motion.pomp6.NcToPlc</Name>
-							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
@@ -8416,14 +8529,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.qSafetyRun</Name>
@@ -8722,10 +8835,6 @@ M1 Motor Safety]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Motion.pomp6.PlcToNc</Name>
-							<Type GUID="{96B75FEB-2D84-43BE-A3EC-D9A681F27D52}" Namespace="MC">PLCTONC_AXIS_REF</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.iM4STOErrorAck</Name>
 							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
@@ -8791,15 +8900,15 @@ M1 Motor Safety]]></Comment>
 					<Vars VarGrpType="8" AreaNo="4">
 						<Name>PlcTask Retains</Name>
 						<Var>
-							<Name>GVL_Retain.bPositionIsValid</Name>
-							<Comment><![CDATA[Position valid flag]]></Comment>
-							<Type GUID="{29CAAFD0-28B6-D9D0-3B0E-64B337839191}">ARRAY [1..5] OF BOOL</Type>
-							<InOut>7</InOut>
-						</Var>
-						<Var>
 							<Name>GVL_Retain.rValveLastPosition</Name>
 							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
 							<Type GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}">ARRAY [1..5] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.bPositionIsValid</Name>
+							<Comment><![CDATA[Position valid flag]]></Comment>
+							<Type GUID="{29CAAFD0-28B6-D9D0-3B0E-64B337839191}">ARRAY [1..5] OF BOOL</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
@@ -43617,10 +43726,7 @@ Bit 8 - 15 : reserved]]></Comment>
 				</Image>
 				<Box Id="2" BoxType="9121">
 					<Name>dl-pn1</Name>
-					<Comment><![CDATA[
-The GSDML is not available!
-
-GSDML Name: GSDML-V2.3-Keyence-DL-PN1-20230224.xml
+					<Comment><![CDATA[GSDML Name: GSDML-V2.3-Keyence-DL-PN1-20230224.xml
 Path: $(TWINCAT3DIR)Config\Io\Profinet\
 VendorName: Keyence
 OrderNumber: DL-PN1
@@ -43678,7 +43784,7 @@ SW Release Version: 1.00]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 					</Vars>
-					<Profinet DeviceId="4500" VendorId="509" FrameOffset="49152" IPAdd="c0a80202" ProtocolType="3" BoxOnDeviceTyp="119" MaxPhysSlotNr="16" InstanceServerPort="50000" InstanceClientPort="50001" InstanceId="1" InstanceNumberOfARs="1" InstanceNumberOfAPIs="1" MinDeviceInterval="64" SavePnIoBoxValues="0100" Phase="1" WatchdogFaktor="3" ReductionRatio="16" SendClockFaktor="32" MaxInputLen="1440" MaxOutputLen="1440" SendClockFactorData="2000" RedRatio="020004000800100020004000800000010002" BoxTypeInfo="DL-PN1 PROFINET IO Device" PDOmapping="1" OutputErrorBehavior="2" GSDMLPath="$(TWINCAT3DIR)Config\Io\Profinet\GSDML-V2.3-Keyence-DL-PN1-20230224.xml" ImagePath="C:\TwinCAT\3.1\Config\Io\Profinet\GSDML-01FD-1194-DL-PN1.bmp" MainFamily="Sensors" ProductFamily="Keyence Profinet Compatible Network Unit" OrderNr="DL-PN1" DefaultDNSName="dl-pn1" VendorName="Keyence" FamDescription="Profinet Compatible Network Unit" GraphicFile="GSDML-01FD-1194-DL-PN1" SWVersion="1.00" HWVersion="1.00" AltLanguage="7">
+					<Profinet DeviceId="4500" VendorId="509" FrameOffset="49152" IPAdd="c0a80202" ProtocolType="3" BoxOnDeviceTyp="119" MaxPhysSlotNr="16" AvailableSlots="0..16" InstanceServerPort="50000" InstanceClientPort="50001" InstanceId="1" InstanceNumberOfARs="1" InstanceNumberOfAPIs="1" MinDeviceInterval="64" SavePnIoBoxValues="0100" Phase="1" WatchdogFaktor="3" ReductionRatio="16" SendClockFaktor="32" MaxInputLen="1440" MaxOutputLen="1440" SendClockFactorData="2000" RedRatio="020004000800100020004000800000010002" BoxTypeInfo="DL-PN1 PROFINET IO Device" PDOmapping="1" OutputErrorBehavior="2" GSDMLPath="$(TWINCAT3DIR)Config\Io\Profinet\GSDML-V2.3-Keyence-DL-PN1-20230224.xml" ImagePath="C:\TwinCAT\3.1\Config\Io\Profinet\GSDML-01FD-1194-DL-PN1.bmp" MainFamily="Sensors" ProductFamily="Keyence Profinet Compatible Network Unit" OrderNr="DL-PN1" DefaultDNSName="dl-pn1" VendorName="Keyence" FamDescription="Profinet Compatible Network Unit" GraphicFile="GSDML-01FD-1194-DL-PN1" SWVersion="1.00" HWVersion="1.00" AltLanguage="7">
 						<UsedGsdmlModule ModuleIdentNumber="1" ModuleName="DAP Module" InfoText="DL-PN1 PROFINET IO Device" OrderNumber="DL-PN1">
 							<Slot>0</Slot>
 						</UsedGsdmlModule>
@@ -44746,6 +44852,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bErrorStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Error_Status"/>
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^bWarningStatus" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Sensor Status^Warning_Status"/>
 				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^iCurrentValue" VarB="API^Term 3 (GT2-***)^Subterm 5 (GT2-***)^Inputs^Current Value"/>
+				<Link VarA="PlcTask Inputs^GVL_IO.gProfinetInput^iPnIoBoxState" VarB="Inputs^PnIoBoxState"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 6 (EtherCAT)^Box 10 (AMI8000-0100)">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].nState" VarB="InfoData^State"/>
@@ -44774,6 +44881,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M1 Motor - SR Vertical">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M1Motor.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44786,6 +44894,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M2 Motor - SC Vertical">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M2Motor.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44798,6 +44907,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M3 Motor - SC Horizontal">
 				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.M3Motor.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44810,6 +44920,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M4 Motor - Valve 1">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[1].Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[1].bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[1].iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[1].iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[1].iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44822,6 +44933,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M5 Motor - Valve 2">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[2].Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[2].bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[2].iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[2].iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[2].iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44834,6 +44946,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M6 Motor - Valve 3">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[3].iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44846,6 +44959,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M7 Motor - Valve 4">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[4].Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[4].bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[4].iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[4].iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[4].iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -44858,6 +44972,7 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^M8 Motor - Valve 5">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[5].Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[5].bMotionCommandsLocked" VarB="Outputs^ToPlc^StateDWord^MotionCommandsLocked"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[5].iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[5].iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aValves[5].iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>

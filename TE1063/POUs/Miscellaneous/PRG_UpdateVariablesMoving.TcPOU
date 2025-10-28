@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_UpdateVariablesMoving" Id="{8cee1700-2e8b-41ec-ad51-7968702f1049}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_UpdateVariablesMoving
 VAR
@@ -20,12 +20,19 @@ ELSE
 	GVL_Safety.SafetyOutputs.bBelowDoorsFeedback := FALSE;
 END_IF
 
-//Mapping bellow doors signals as they are not in safety DI
+// Mapping bellow doors signals as they are not in safety DI
 GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
 
-//Valves Settings Assignment
+// Vial Rack position check
+IF GVL_IO.gProfinetInput.iCurrentValue > 120000 THEN
+	GVL_IO.bVialRackPresent := TRUE;
+ELSE
+	GVL_IO.bVialRackPresent := FALSE;
+END_IF
+
+// Valves Settings Assignment
 IF NOT bValvesSettingsAssignment THEN
 	FOR i := 1 TO 5 DO
 		GVL_Motion.aValves[i].rTargetVel := 1500;
@@ -40,10 +47,10 @@ IF NOT bPumpsFactorAssignment THEN
 
 	GVL_Motion.aPumps[1].Rotary.rPumpFactorFillJars  := 0.10;
 	GVL_Motion.aPumps[2].Rotary.rPumpFactorFillJars  := 0.10;
-	GVL_Motion.aPumps[3].Rotary.rPumpFactorFillJars  := 0.138;
+	GVL_Motion.aPumps[3].Rotary.rPumpFactorFillJars  := 0.10;
 	GVL_Motion.aPumps[4].Rotary.rPumpFactorFillJars  := 0.10;
-	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillJars  := 0.101832994; //0.075075075;
-	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillJars  := 0.05;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillJars  := 0.10;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillJars  := 0.10;
 	GVL_Motion.aPumps[7].Rotary.rPumpFactorFillJars  := 0.10;
 	GVL_Motion.aPumps[8].Rotary.rPumpFactorFillJars  := 0.10;
 	GVL_Motion.aPumps[9].Rotary.rPumpFactorFillJars  := 0.10;
@@ -53,8 +60,8 @@ IF NOT bPumpsFactorAssignment THEN
 	GVL_Motion.aPumps[2].Rotary.rPumpFactorFillCalBox  := 0.10;
 	GVL_Motion.aPumps[3].Rotary.rPumpFactorFillCalBox  := 0.10;
 	GVL_Motion.aPumps[4].Rotary.rPumpFactorFillCalBox  := 0.10;
-	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillCalBox  := 0.101832994; //0.075075075;
-	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillCalBox  := 0.05;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFillCalBox  := 0.10;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFillCalBox  := 0.10;
 	GVL_Motion.aPumps[7].Rotary.rPumpFactorFillCalBox  := 0.10;
 	GVL_Motion.aPumps[8].Rotary.rPumpFactorFillCalBox  := 0.10;
 	GVL_Motion.aPumps[9].Rotary.rPumpFactorFillCalBox  := 0.10;
@@ -64,8 +71,8 @@ IF NOT bPumpsFactorAssignment THEN
 	GVL_Motion.aPumps[2].Rotary.rPumpFactorFromCalBox  := 0.10;
 	GVL_Motion.aPumps[3].Rotary.rPumpFactorFromCalBox  := 0.10;
 	GVL_Motion.aPumps[4].Rotary.rPumpFactorFromCalBox  := 0.10;
-	GVL_Motion.aPumps[5].Rotary.rPumpFactorFromCalBox  := 0.101832994; //0.075075075;
-	GVL_Motion.aPumps[6].Rotary.rPumpFactorFromCalBox  := 0.05;
+	GVL_Motion.aPumps[5].Rotary.rPumpFactorFromCalBox  := 0.10;
+	GVL_Motion.aPumps[6].Rotary.rPumpFactorFromCalBox  := 0.10;
 	GVL_Motion.aPumps[7].Rotary.rPumpFactorFromCalBox  := 0.10;
 	GVL_Motion.aPumps[8].Rotary.rPumpFactorFromCalBox  := 0.10;
 	GVL_Motion.aPumps[9].Rotary.rPumpFactorFromCalBox  := 0.10;
@@ -157,6 +164,9 @@ END_IF
       <LineId Id="94" Count="0" />
       <LineId Id="67" Count="1" />
       <LineId Id="70" Count="1" />
+      <LineId Id="456" Count="3" />
+      <LineId Id="461" Count="1" />
+      <LineId Id="460" Count="0" />
       <LineId Id="336" Count="3" />
       <LineId Id="341" Count="0" />
       <LineId Id="343" Count="1" />

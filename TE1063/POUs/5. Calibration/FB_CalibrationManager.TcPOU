@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_CalibrationManager" Id="{f5b6651e-f67d-465b-b243-425be4d72cd5}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CalibrationManager
 VAR_INPUT
@@ -202,7 +202,7 @@ CASE eStep OF
 	E_CalibStep.POSITION_MOTORS:
 	
 		sStatus := 'Positioning motors M2 and M3';
-				
+		
 		// Positioning motors M2 and M3 to calibration position 
 		IF NOT bMoveMotorM3 THEN
 			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(GVL_Settings.stMachineParam.aM3Position[6], GVL_Settings.stMachineParam.rM3Velocity, GVL_Settings.stMachineParam.rM3Accleration, GVL_Settings.stMachineParam.rM3Deceleration);
@@ -249,11 +249,11 @@ CASE eStep OF
 		sStatus := CONCAT('Filling up the jar number: ', TO_STRING(iPumpIndex));
 		
 		IF aPumpSettings[iPumpIndex].bSelected THEN
-			rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + GVL_Settings.stPumpParameters.iFillolventTubesFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+			rDistanceByVol := F_VolumeToSteps_Path(rVolume := ((*aPumpSettings[iPumpIndex].rTargetVolume +*) GVL_Settings.stPumpParameters.iFillolventTubesFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 			// Filling up the jar to start the calibration
 			IF NOT bMovePump THEN
 				bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(	Distance := rDistanceByVol, 
-																				Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 	//RPM to Degree/sec
+																				Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
 																				Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6,   		//RPM to Degree/sec
 																				Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
 																			 );
@@ -332,7 +332,9 @@ CASE eStep OF
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
 		GVL_Calibration.aCalibCheckResult[iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
 		GVL_calibration.stPumpCalibrationData[iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
+		
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := aVolumeSetpoint[iPumpIndex], iPumpIndex := iPumpIndex, ePath := E_PumpPath.FillCalBox );
+		
 		GVL_Calibration.aCalibCheckResult[iResultIndex].nRevsDone := TO_UINT(rDistanceByVol/360);
 		GVL_calibration.stPumpCalibrationData[iResultIndex].iPumpRevs := TO_UINT(rDistanceByVol/360);
 		
@@ -504,12 +506,12 @@ CASE eStep OF
 
 		sStatus := CONCAT('Empty the jar number: ',TO_STRING(iPumpIndex));
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
-		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aVolumeSetpoint[iPumpIndex] + GVL_Settings.stPumpParameters.iEmptyFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
+		rDistanceByVol := F_VolumeToSteps_Path(rVolume := ((*aVolumeSetpoint[iPumpIndex] +*) GVL_Settings.stPumpParameters.iEmptyFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
 		
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
 																			Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 	//RPM to Degree/sec
-																			Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 		//RPM to Degree/sec
+																			Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 			//RPM to Degree/sec
 																			Dec := GVL_Settings.stPumpParameters.iRunVelocity * 6			//RPM to Degree/sec
 																		  	);
 		END_IF
@@ -638,6 +640,7 @@ CASE eStep OF
 		iDataCount := iResultIndex - 1;
         bDone := TRUE;
         bBusy := FALSE;
+		
         // Remains here till external reset
 	
     E_CalibStep.ERROR:
@@ -662,14 +665,18 @@ END_VAR
 IF (SIZEOF(GVL_Motion.aMotors) >= 3*SIZEOF(GVL_Motion.aMotors[1])) THEN
     GVL_Motion.aMotors[2].Stop();
     GVL_Motion.aMotors[3].Stop();
+	GVL_Motion.aMotors[2].Reset();
+	GVL_Motion.aMotors[3].Reset();
 END_IF
 
 FOR iLocal := 1 TO 10 DO
     GVL_Motion.aPumpsRotary[iLocal].Stop();
+	GVL_Motion.aPumpsRotary[iLocal].Reset();
 END_FOR
 
 FOR iLocal := 1 TO 5 DO
     GVL_Motion.aValvesObj[iLocal].Stop();
+	GVL_Motion.aValvesObj[iLocal].Reset();
 END_FOR
 
 GVL_Calibration.fbScaleDevice.Reset();
@@ -754,17 +761,29 @@ Reset := TRUE;]]></ST>
       <LineId Id="3412" Count="0" />
       <LineId Id="3419" Count="0" />
       <LineId Id="3411" Count="0" />
-      <LineId Id="2915" Count="320" />
+      <LineId Id="2915" Count="105" />
+      <LineId Id="3516" Count="0" />
+      <LineId Id="3021" Count="0" />
+      <LineId Id="3517" Count="0" />
+      <LineId Id="3022" Count="213" />
       <LineId Id="3422" Count="6" />
       <LineId Id="3421" Count="0" />
       <LineId Id="3242" Count="1" />
       <LineId Id="3431" Count="2" />
       <LineId Id="3430" Count="0" />
-      <LineId Id="3244" Count="84" />
+      <LineId Id="3244" Count="76" />
+      <LineId Id="3524" Count="0" />
+      <LineId Id="3321" Count="7" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
-      <LineId Id="189" Count="19" />
+      <LineId Id="189" Count="3" />
+      <LineId Id="284" Count="1" />
+      <LineId Id="193" Count="3" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="197" Count="3" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="201" Count="7" />
       <LineId Id="276" Count="0" />
       <LineId Id="209" Count="59" />
       <LineId Id="5" Count="0" />

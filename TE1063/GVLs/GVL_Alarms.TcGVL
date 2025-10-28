@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <GVL Name="GVL_Alarms" Id="{046a5301-5506-40ac-a704-744f0bfa435c}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
@@ -9,6 +9,15 @@ VAR_GLOBAL
 	arrEventLogs	: ARRAY[0..300] OF T_MaxSTring;	// Logged events messages - displayed in alarm history
 	arrEventFlag	: ARRAY[0..300] OF BOOL;		// Events triggers
 
+	(* Flags to trigger the alarms/events *) //--------------------------------------------------------------------
+	
+	aSolventLowLevel	 : ARRAY[1..4] OF BOOL; //Flags to check the solvent levels before going to auto cycle
+	aSolventNearLowLevel : ARRAY[1..4] OF BOOL; //Flags to warning if the solvent levels are near low level
+	bWasteHighLevel		 : BOOL; //Flag to check waste reservoir level before going to auto cycle
+	bWasteNearHighLevel	 : BOOL; //Flag to warning if waste reservoir is new high level
+	
+	bPumpsEStopTriggered : BOOL; //Flag when pumps were running and a emergency stop is triggered
+	
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

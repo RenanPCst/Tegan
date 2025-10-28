@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_SafetyHandle" Id="{8e15bf43-686d-46b2-be47-568f063f8b7c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_SafetyHandle
 VAR
@@ -8,6 +8,8 @@ VAR
 	bAirSupplyReset	: BOOL	:= FALSE;
 	
 	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
+	
+	i	: USINT;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -58,11 +60,35 @@ IF bLockDoors THEN
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := TRUE;
 	ELSE
 	GVL_Safety.SafetyOutputs.bLockDoorSafety := FALSE;
+END_IF
+
+// ====================================================================
+// 1. SAFETY FAULT LOGIC (STOP & DISABLE ALL PUMPS)
+// ====================================================================
+// This section executes every PLC cycle while the safety condition is NOT met.
+
+IF NOT GVL_Safety.bSafetyEnable AND GVL_Motion.bInitialHomingDone THEN
+	// Immediate Stop and Disable all pumps and linear motors for safety
+	FOR i := 1 TO 10 DO
+		// 1. Initiate Controlled Stop (MC_Stop) to cancel any active motion commands
+		GVL_Motion.aPumpsRotary[i].Stop(); 
+		GVL_Motion.aPumpsLinear[i].Stop();
+		
+		// 2. Immediate Torque Cut-Off (MC_Power.Enable := FALSE)
+		GVL_Motion.aPumpsRotary[i].Disable();
+		GVL_Motion.aPumpsLinear[i].Disable();
+		
+		
+	END_FOR
 END_IF]]></ST>
     </Implementation>
     <LineIds Name="PRG_SafetyHandle">
       <LineId Id="9" Count="46" />
       <LineId Id="5" Count="0" />
+      <LineId Id="67" Count="15" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="66" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
