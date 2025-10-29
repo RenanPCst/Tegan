@@ -169,7 +169,7 @@ INSERT_CALIBRATION:
 	
 SELECT_LAST_SYSTEM_ID:
 	
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastCalibID), pCmdAddr:= ADR(GVL_DB.slctLastCalibID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastSys), pCmdAddr:= ADR(GVL_DB.slctLastSys), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.stSysParameters), pDestAddr:= ADR(GVL_DB.stSysParameters), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= IDLE_STATE;

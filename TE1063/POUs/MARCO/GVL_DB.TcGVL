@@ -31,7 +31,7 @@ slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBR
 isrtCalib: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION_HEAD] ( [userID], [density], [solventNo], [solventRevision], [allowableFail], [replicates], [callInterval], [sysRevisionNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', #8#) ';
 isrtCalibValues: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION] ( [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', #12#) ';
 //SYSTEM CMD
-slctLastSys: STRING(5000) := ;
+slctLastSys: STRING(5000) := 'SELECT TOP 1 [gen_SealAndPump], [cal_AcceptanceCriteria], [cal_AllowableFail], [cal_Replicates], [cal_PumpCallIntervalDays], [cal_CloseAppOnCompletation], [AirDryTimeOnCompletation], [lkt_AllowableLeakTestFail], [lkt_LeakTestBuildupTime], [lkt_LeakTestHoldTime], [lkt_LeakTestPressure], [mec_PlatesClosedPosition], [mec_PlatesDryPosition], [mec_PlatesVelocity], [mec_MaxCurrentFastDown], [mec_MaxCurrentSlowDown], [mec_MaxCurrentSlowUp], [pmp_MeterVelocity], [pmp_RunVelocity], [pmp_EmptyFactor], [pmp_FillSolventTubesFactor], [smp_AboveCalibration], [smp_VialSetSpacing], [smp_IntoResBottom], [smp_IntoResDispense], [smp_IntoResWeigh], [smp_IntoVials], [sec_DisplayManualControl], [sec_CheckLogonEachRun], [createdBy], [createdDate], [sysRevisionNo] FROM [dbo].[SYSTEM] ORDER BY [sysRevisionNo] DESC; ';
 
 (******************************************************************************************************)
 
@@ -76,7 +76,9 @@ astData_MR	   	: ARRAY[0..100] OF ST_Data_MR;
 
 (******************************************************************************************************)
 
-(***** System Settings Report Variables ***************************************************************)
+(***** System Parameters Variables ***************************************************************)
+
+stSysParameters	: ARRAY[0..1] OF ST_SysParameters;
 
 (******************************************************************************************************)
 
