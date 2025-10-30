@@ -306,8 +306,18 @@ END_IF
 //----- Related to Interlock Errors --------------------------------------------------------------------------------------------------
 
 (* IE-100: M2 Movement NOT allowed *)
+IF GVL_HMI.bM2MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[100]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[100]:= FALSE;	
+END_IF
 
 (* IE-101: M3 Movement Not allowed *)
+IF GVL_HMI.bM2MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[101]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[101]:= FALSE;	
+END_IF
 
 (* IE-102: Attempt going Auto Cycle without a Recipe *)
 IF GVL_HMI.bIncoherenceAlert AND NOT GVL_Recipe.bIsThereRecipeActivated THEN
@@ -367,7 +377,11 @@ IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.bWasteHighLevel THEN
 END_IF
 
 (* IE-110: Attempt to perform a calibration procedure without a calibration box *)
-
+IF GVL_HMI.bCalNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[110]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[110]:= FALSE;	
+END_IF
 
 //*********************************************************END SECTION****************************************************************
 
@@ -488,8 +502,12 @@ END_IF
       <LineId Id="792" Count="0" />
       <LineId Id="627" Count="4" />
       <LineId Id="695" Count="1" />
+      <LineId Id="879" Count="3" />
       <LineId Id="721" Count="0" />
+      <LineId Id="883" Count="0" />
       <LineId Id="698" Count="0" />
+      <LineId Id="885" Count="3" />
+      <LineId Id="884" Count="0" />
       <LineId Id="646" Count="0" />
       <LineId Id="682" Count="0" />
       <LineId Id="684" Count="3" />
@@ -522,6 +540,7 @@ END_IF
       <LineId Id="750" Count="0" />
       <LineId Id="726" Count="0" />
       <LineId Id="707" Count="0" />
+      <LineId Id="889" Count="3" />
       <LineId Id="756" Count="0" />
       <LineId Id="647" Count="4" />
       <LineId Id="798" Count="0" />

@@ -53,7 +53,7 @@ VAR
     rAcceptanceCrit  : REAL := 0.5; // Acceptance percentage (from HMI)
     iAllowableFail   : INT := 2; 	// Max failures from pump settings
     iMaxReplicates   : INT := 2; 	// Replicate count (from HMI)
-	iResultIndex	 : INT;		 	// Array index on calibration results
+	iResultIndex	 : INT;	// Array index on calibration results
 	
 	bMovePump		 : BOOL := FALSE;
     bMoveMotorM2     : BOOL := FALSE; // Motion trigger M2
@@ -277,8 +277,8 @@ CASE eStep OF
 
 	
     E_CalibStep.WEIGH_BEFORE:
-
-        sStatus := 'Taring scale...';
+		
+        sStatus := CONCAT('Pump ', CONCAT(TO_STRING(iPumpIndex), CONCAT(' | Check ', CONCAT(TO_STRING(iReplicate + 1), ' | Taring Scale..'))));
         IF bRequestWeight AND NOT bWeightReady THEN
             rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
             IF GVL_Calibration.fbScaleDevice.bWeightReady THEN
@@ -327,7 +327,7 @@ CASE eStep OF
 	
     E_CalibStep.WITHDRAW_BACKWARDS:
 
-		sStatus := CONCAT(CONCAT('Check ',CONCAT(TO_STRING(iReplicate + 1),CONCAT(' | Pumping to calibration box: ', TO_STRING(aVolumeSetpoint[iPumpIndex])))),' ml');
+		sStatus := CONCAT(CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex),CONCAT(' | Check ',TO_STRING(iReplicate + 1)))),CONCAT(' | Pumping to calibration box: ',CONCAT(TO_STRING(aVolumeSetpoint[iPumpIndex]),' ml')));
 
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
 		GVL_Calibration.aCalibCheckResult[iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
@@ -363,7 +363,7 @@ CASE eStep OF
 	
     E_CalibStep.WEIGH_AFTER:
 
-		sStatus := 'Requesting Gross Weight... ';
+		sStatus := CONCAT('Pump ', CONCAT(TO_STRING(iPumpIndex), CONCAT(' | Check ', CONCAT(TO_STRING(iReplicate + 1), ' | Requesting Gross Weight...'))));
 	
         IF bRequestWeight AND NOT bWeightReady THEN
             rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
@@ -478,7 +478,7 @@ CASE eStep OF
 	
     E_CalibStep.RETURN_FORWARD:
 
-		sStatus := CONCAT('Returning solvent back to the Jar number : ',TO_STRING(iPumpIndex));
+		sStatus := CONCAT(CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex), CONCAT(' | Check ', CONCAT(TO_STRING(iReplicate + 1), ' | ')))), CONCAT('Returning solvent back to the Jar number : ', TO_STRING(iPumpIndex)));
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + 5), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 			
         IF NOT bMovePump THEN
@@ -504,7 +504,7 @@ CASE eStep OF
   
 	E_CalibStep.EMPTYJAR_BACKWARDS:
 
-		sStatus := CONCAT('Empty the jar number: ',TO_STRING(iPumpIndex));
+		sStatus := CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex),CONCAT(' | Empty the jar number: ',TO_STRING(iPumpIndex))));
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := ((*aVolumeSetpoint[iPumpIndex] +*) GVL_Settings.stPumpParameters.iEmptyFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
 		
@@ -761,11 +761,15 @@ Reset := TRUE;]]></ST>
       <LineId Id="3412" Count="0" />
       <LineId Id="3419" Count="0" />
       <LineId Id="3411" Count="0" />
-      <LineId Id="2915" Count="105" />
+      <LineId Id="2915" Count="100" />
+      <LineId Id="3610" Count="0" />
+      <LineId Id="3017" Count="3" />
       <LineId Id="3516" Count="0" />
       <LineId Id="3021" Count="0" />
       <LineId Id="3517" Count="0" />
-      <LineId Id="3022" Count="213" />
+      <LineId Id="3022" Count="142" />
+      <LineId Id="3629" Count="0" />
+      <LineId Id="3166" Count="69" />
       <LineId Id="3422" Count="6" />
       <LineId Id="3421" Count="0" />
       <LineId Id="3242" Count="1" />
