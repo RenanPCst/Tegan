@@ -1927,31 +1927,6 @@ External Setpoint Generation:
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
-			<BitSize>24</BitSize>
-			<SubItem>
-				<Name>bStageCollectionLeftLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bSampleRecoveryLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>8</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bStageCollectionRightLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>16</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
 			<Name GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}" AutoDeleteType="true">ST_EL2809</Name>
 			<BitSize>72</BitSize>
 			<SubItem>
@@ -2016,6 +1991,31 @@ External Setpoint Generation:
 				<Comment><![CDATA[ Solenoid Valve C ]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>64</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
+			<BitSize>24</BitSize>
+			<SubItem>
+				<Name>bStageCollectionLeftLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bSampleRecoveryLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bStageCollectionRightLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -2673,8 +2673,8 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
 					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
+					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6719,7 +6719,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{DBBDB766-EF21-2FCD-6DBD-6F8770C30619}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{D5293568-2552-A772-A5EE-58021A90FD27}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6811,6 +6811,11 @@ External Setpoint Generation:
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[ Aknowledge input]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
@@ -6826,14 +6831,14 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gProfinetInput</Name>
 							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
 							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[ Aknowledge input]]></Comment>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
@@ -6874,11 +6879,6 @@ External Setpoint Generation:
 							<Name>GVL_IO.stEL6910.bEL6910State</Name>
 							<Comment><![CDATA[ EL6910 State from IO Terminal Info Data	]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.nEK1100T22State</Name>
@@ -6931,14 +6931,14 @@ External Setpoint Generation:
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEL9410T12State</Name>
-							<Comment><![CDATA[ State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.bEL9410UPStatus</Name>
 							<Comment><![CDATA[ Terminal UP Status]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEL9410T12State</Name>
+							<Comment><![CDATA[ State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bEL9410USStatus</Name>
@@ -8474,13 +8474,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -8524,6 +8524,16 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
 						<Var>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Comment><![CDATA[ Reset input]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
@@ -8549,26 +8559,12 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Comment><![CDATA[ Reset input]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bSafetyErrorAck</Name>
 							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8835,6 +8831,10 @@ M1 Motor Safety]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Safety.iM4STOErrorAck</Name>
 							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
@@ -8900,12 +8900,6 @@ M1 Motor Safety]]></Comment>
 					<Vars VarGrpType="8" AreaNo="4">
 						<Name>PlcTask Retains</Name>
 						<Var>
-							<Name>GVL_Retain.iRunNumber</Name>
-							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
-							<Type>UDINT</Type>
-							<InOut>7</InOut>
-						</Var>
-						<Var>
 							<Name>GVL_Retain.rValveLastPosition</Name>
 							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
 							<Type GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}">ARRAY [1..5] OF LREAL</Type>
@@ -8918,14 +8912,14 @@ M1 Motor Safety]]></Comment>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.iCalibrationNumber</Name>
+							<Name>GVL_Retain.iRunNumber</Name>
+							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
 							<Type>UDINT</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
-							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
-							<Type>DATE</Type>
+							<Name>GVL_Retain.iCalibrationNumber</Name>
+							<Type>UDINT</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
@@ -8938,6 +8932,12 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Retain.rLinearPumpsLastAdjustUser</Name>
 							<Comment><![CDATA[ Linear pumps last adjusted username]]></Comment>
 							<Type>STRING(128)</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
+							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
+							<Type>DATE</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>

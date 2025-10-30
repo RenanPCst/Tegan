@@ -20,6 +20,24 @@ VAR_GLOBAL
 	
 	rDiskUsage_C : LREAL;   // % Percentage usage of C: on IPC hard drive
 	
+	bTCPCLientConnectError	: BOOL; // TCP Client FB_SocketConnect error Flag
+	bTCPCLientSendError		: BOOL; // TCP Client FB_SocketSend error Flag
+	bTCPCLientReceiveError	: BOOL; // TCP Client FB_SocketReceive error Flag
+	bTCPCLientCloseError	: BOOL; // TCP Client FB_SocketCloseAll or FB_SocketClose error Flag
+ 
+	
+	(* Motion Timeouts *) //---------------------------------------------------------------------------------------
+	//System Init
+	bMotionResetTimeout		: BOOL;	// Motion Timeout during Reset step on PRG_SystemInit
+	bMotionEnableTimeout	: BOOL; // Motion Timeout during Enable step on PRG_SystemInit
+	bMotionHomeTimeout		: BOOL; // Motion Timeout during Homing step on PRG_SystemInit
+	bMotionMoveAbsTimeout	: BOOL; // Motion Timeout during Move Absolute step on PRG_SystemInit
+	
+	sMotionResetTimeoutAxis		: STRING(64); // String including the axis names to be part of alarm text - Motion Timeout during Reset step on PRG_SystemInit
+	sMotionEnableTimeoutAxis	: STRING(64); // String including the axis names to be part of alarm text - Motion Timeout during Enable step on PRG_SystemInit
+	sMotionHomeTimeoutAxis		: STRING(64); // String including the axis names to be part of alarm text - Motion Timeout during Homing step on PRG_SystemInit
+	sMotionMoveAbsTimeoutAxis	: STRING(64); // String including the axis names to be part of alarm text - Motion Timeout during Move Absolute step on PRG_SystemInit
+	
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

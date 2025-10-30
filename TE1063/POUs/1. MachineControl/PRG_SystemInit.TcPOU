@@ -7,6 +7,7 @@ VAR_OUTPUT
 END_VAR
 VAR
 	i               : INT;
+	j				: INT;
     bAllDone        : BOOL := FALSE;
     bStartedAction  : BOOL := FALSE;
     bInitComplete   : BOOL := FALSE;
@@ -44,15 +45,18 @@ VAR
 	tonResetDelay	: ton;
 	tonEnableDelay	: ton;
 	
+	//Timeout timers for each step
+	tonResetTimeOut		: ton;
+	tonEnableTimeOut	: ton;
+	tonHomeTimeOut		: ton;
+	tonMoveAbsTimeOut	: ton;
+		
 	stStatus : ST_ActuatorStatus;
 	
 	END_IFIF: INT;
 	rVelocity: LREAL;
 	
-END_VAR
-
-
-]]></Declaration>
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Step 2: Enable all motors and valves ****************************************************************************************************
 IF NOT bEnableDone AND bAllResetDone THEN
@@ -71,9 +75,39 @@ IF NOT bEnableDone AND bAllResetDone THEN
 		
 		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3]; 
 		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
-		bAllRotaryPumpsEnabled  := (*aRotaryPumpsEnabled[1] AND*) aRotaryPumpsEnabled[2] AND (*aRotaryPumpsEnabled[3] AND*) aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
+		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND (*aRotaryPumpsEnabled[3] AND*) aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
 		
-		//TODO: Time out to show error in the screen on every step
+		//Reset Timeout Monitoring and trigger 
+		tonEnableTimeOut(IN := TRUE, PT := T#10S);
+		IF tonEnableTimeOut.Q THEN
+			FOR j := 1 TO 3 DO // M1 - M3 | Create the string with the axis that were no enabled during the timeot time. 
+				IF NOT aMotorsEnabled[j] THEN
+					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if enabled not worked
+				END_IF
+			END_FOR 
+			FOR j := 1 TO 5 DO // V1 - V5 | Create the string with the axis that were no enabled during the timeot time. 
+				IF NOT aValvesEnabled[j] THEN
+					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j+3]); // Add axis to the string if enabled not worked
+				END_IF
+			END_FOR 
+			FOR j := 1 TO 10 DO // RP1 - RP10 | Create the string with the axis that were no enabled during the timeot time. 
+				IF NOT aRotaryPumpsEnabled[j] THEN
+					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j+18]); // Add axis to the string if enabled not worked
+				END_IF
+			END_FOR 
+			GVL_Alarms.bMotionEnableTimeout := TRUE; // Alarm Trigger flag
+		END_IF
+		
+		//Transition Logig to the next step
 		IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllRotaryPumpsEnabled THEN
 			bEnableDone := TRUE;
 		END_IF
@@ -136,10 +170,9 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
 	IF NOT bResetCheck[18] THEN
 			bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
 	END_IF
-	(*
 	IF NOT bResetCheck[19] THEN
 			bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
-	END_IF*)
+	END_IF
 	IF NOT bResetCheck[20] THEN
 			bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
 	END_IF
@@ -174,14 +207,28 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
        bResetCheck[5] AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] AND
        bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
        bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
-       bResetCheck[17] AND bResetCheck[18] (*AND bResetCheck[19]*) AND bResetCheck[20] AND
+       bResetCheck[17] AND bResetCheck[18] AND bResetCheck[19] AND bResetCheck[20] AND
 	   (*bResetCheck[21] AND*) bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
 	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28] THEN
 		bAllResetDone := TRUE;
 	ELSE
 		bAllResetDone := FALSE;
 	END_IF
-		
+	
+	//Reset Timeout Monitoring and trigger 
+	tonResetTimeOut(IN := TRUE, PT := T#10S);
+	IF tonResetTimeOut.Q THEN // Axis 1 to 28 | Create the string with the axis that were no reseted during the timeout time. 
+		FOR j := 1 TO 28 DO
+			IF NOT bResetCheck[j] THEN
+				IF GVL_Alarms.sMotionResetTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+					GVL_Alarms.sMotionResetTimeoutAxis := CONCAT(GVL_Alarms.sMotionResetTimeoutAxis, ', ');
+				END_IF
+				GVL_Alarms.sMotionResetTimeoutAxis := CONCAT(GVL_Alarms.sMotionResetTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Reset not worked
+			END_IF
+		END_FOR 
+		GVL_Alarms.bMotionResetTimeout := TRUE; // Alarm Trigger flag
+	END_IF
+	
 END_IF
 
 //Timer to delay time between reset and move command
@@ -271,6 +318,28 @@ IF NOT bStartedAction AND bAllResetDone AND tonEnableDelay.Q THEN
             bStartedAction := TRUE;
         END_IF	
 		
+		// Homing Timeout Monitoring and trigger ------------------------------------------
+		tonHomeTimeOut(IN := TRUE, PT := T#40S);
+		IF tonHomeTimeOut.Q THEN
+			FOR j := 1 TO 3 DO
+				IF NOT bHomeMotorDone[j] THEN // M1 - M3 | Create the string with the axis that were not homed during the timeot time. 
+					IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Homing not worked
+				END_IF
+			END_FOR 
+			FOR j := 1 TO 5 DO
+				IF NOT bHomeValveDone[j] THEN // V1 - V5 | Create the string with the axis that were not homed during the timeot time. 
+					IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, GVL_Constant.sMotionText[j + 3]); // Add axis to the string if Homing not worked
+				END_IF
+			END_FOR 
+			GVL_Alarms.bMotionHomeTimeout := TRUE; // Alarm Trigger flag
+		END_IF
+		
     ELSE //If the machine already did the home before, just move to zero position
 		// Confirm linear motor 3 is done
 		bLinearMotorsHomingDone := bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3];
@@ -315,6 +384,28 @@ IF NOT bStartedAction AND bAllResetDone AND tonEnableDelay.Q THEN
         IF bLinearMotorsHomingDone AND bValvesHomingDone THEN 
             bStartedAction := TRUE;
         END_IF
+		
+		// Move Absolute Timeout Monitoring and trigger ------------------------------------------
+		tonMoveAbsTimeOut(IN := TRUE, PT := T#40S);
+		IF tonMoveAbsTimeOut.Q THEN
+			FOR j := 1 TO 3 DO
+				IF NOT bHomeMotorDone[j] THEN // M1 - M3 | Create the string with the axis that were not Moved during the timeot time. 
+					IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Homing not worked
+				END_IF
+			END_FOR 
+			FOR j := 1 TO 5 DO
+				IF NOT bHomeValveDone[j] THEN // V1 - V5 | Create the string with the axis that were not Moved during the timeot time.
+					IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
+						GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
+					END_IF
+					GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, GVL_Constant.sMotionText[j + 3]); // Add axis to the string if Homing not worked
+				END_IF
+			END_FOR 
+			GVL_Alarms.bMotionMoveAbsTimeout := TRUE; // Alarm Trigger flag
+		END_IF
 		
     END_IF
 END_IF
@@ -447,10 +538,24 @@ IF bResetExecute THEN
 	
 	tonResetDelay(IN := FALSE, PT := T#1S);
 	tonEnableDelay(IN := FALSE, PT := T#1S);
+	tonResetTimeOut(IN := FALSE);
+	tonEnableTimeOut(IN := FALSE);
+	tonHomeTimeOut(IN := FALSE);
+	tonMoveAbsTimeOut(IN := FALSE);
 	
 	stStatus.bDone := FALSE;
 	stStatus.bBusy := FALSE;
 	stStatus.bError := FALSE;
+	
+	GVL_Alarms.bMotionResetTimeout		:= FALSE;
+	GVL_Alarms.bMotionEnableTimeout		:= FALSE;
+	GVL_Alarms.bMotionHomeTimeout		:= FALSE;
+	GVL_Alarms.bMotionMoveAbsTimeout	:= FALSE;
+	
+	GVL_Alarms.sMotionResetTimeoutAxis		:= '';
+	GVL_Alarms.sMotionEnableTimeoutAxis		:= '';
+	GVL_Alarms.sMotionHomeTimeoutAxis		:= '';
+	GVL_Alarms.sMotionMoveAbsTimeoutAxis	:= '';
 		
 	IF bResetRequest THEN
 		bResetExecute := FALSE;
@@ -466,13 +571,61 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="PRG_SystemInit">
-      <LineId Id="1672" Count="22" />
-      <LineId Id="1698" Count="59" />
+      <LineId Id="1672" Count="18" />
+      <LineId Id="2133" Count="4" />
+      <LineId Id="2191" Count="1" />
+      <LineId Id="2190" Count="0" />
+      <LineId Id="2138" Count="2" />
+      <LineId Id="2200" Count="6" />
+      <LineId Id="2199" Count="0" />
+      <LineId Id="2208" Count="6" />
+      <LineId Id="2207" Count="0" />
+      <LineId Id="2141" Count="0" />
+      <LineId Id="2132" Count="0" />
+      <LineId Id="2130" Count="1" />
+      <LineId Id="1692" Count="2" />
+      <LineId Id="1698" Count="58" />
       <LineId Id="2036" Count="0" />
       <LineId Id="1758" Count="4" />
       <LineId Id="2037" Count="0" />
       <LineId Id="1763" Count="37" />
-      <LineId Id="1802" Count="182" />
+      <LineId Id="2129" Count="0" />
+      <LineId Id="2096" Count="0" />
+      <LineId Id="2098" Count="0" />
+      <LineId Id="2123" Count="0" />
+      <LineId Id="2127" Count="0" />
+      <LineId Id="2187" Count="1" />
+      <LineId Id="2186" Count="0" />
+      <LineId Id="2128" Count="0" />
+      <LineId Id="2125" Count="1" />
+      <LineId Id="2099" Count="1" />
+      <LineId Id="2097" Count="0" />
+      <LineId Id="1802" Count="87" />
+      <LineId Id="2142" Count="0" />
+      <LineId Id="2144" Count="2" />
+      <LineId Id="2154" Count="1" />
+      <LineId Id="2181" Count="1" />
+      <LineId Id="2180" Count="0" />
+      <LineId Id="2156" Count="1" />
+      <LineId Id="2147" Count="0" />
+      <LineId Id="2153" Count="0" />
+      <LineId Id="2148" Count="0" />
+      <LineId Id="2184" Count="1" />
+      <LineId Id="2183" Count="0" />
+      <LineId Id="2149" Count="3" />
+      <LineId Id="2143" Count="0" />
+      <LineId Id="1890" Count="44" />
+      <LineId Id="2158" Count="0" />
+      <LineId Id="2173" Count="0" />
+      <LineId Id="2160" Count="3" />
+      <LineId Id="2175" Count="1" />
+      <LineId Id="2174" Count="0" />
+      <LineId Id="2164" Count="4" />
+      <LineId Id="2178" Count="1" />
+      <LineId Id="2177" Count="0" />
+      <LineId Id="2169" Count="3" />
+      <LineId Id="2159" Count="0" />
+      <LineId Id="1935" Count="49" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_SystemInit.Reset">
@@ -504,7 +657,12 @@ END_IF
       <LineId Id="110" Count="10" />
       <LineId Id="157" Count="1" />
       <LineId Id="170" Count="0" />
+      <LineId Id="179" Count="2" />
+      <LineId Id="178" Count="0" />
       <LineId Id="159" Count="3" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="184" Count="7" />
+      <LineId Id="183" Count="0" />
       <LineId Id="62" Count="0" />
       <LineId Id="70" Count="0" />
       <LineId Id="73" Count="0" />
