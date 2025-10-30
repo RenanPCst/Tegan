@@ -22,7 +22,7 @@ VAR
 	nome: STRING;
 	cmdIn: STRING(10000);
 	cmdSlc: STRING(10000);
-	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD);
+	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD, SELECT_VOLUME_DATA, INSERT_VOLUME_DATA);
 	status: STRING;
 	str: STRING;
 	lastRunID: STRING;
@@ -83,22 +83,6 @@ INSERT_RUN:
 		state:= ERROR_STATE;
 	ELSE
 		state:= INSERT_RUN;
-		bExecuteIn:= FALSE;
-	END_IF
-
-INSERT_RUN_VD:
-
-	cmdIn:= GVL_DB.isrtVD;
-	insertRunVD(start:=bExecuteIn);
-	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= bExecuteIn, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
-	
-	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
-		bExecuteIn:= FALSE;
-	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
-	ELSE
-		state:= INSERT_RUN_VD;
 		bExecuteIn:= FALSE;
 	END_IF
 
@@ -254,6 +238,38 @@ UPDATE_DEACTV_METHOD:
 		//bExecuteIn:= FALSE;
 	END_IF	
 	
+SELECT_VOLUME_DATA:
+	
+	cmdSlc:= GVL_DB.slctVD;
+	selectVD(start:=TRUE, methodID:= '1');
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 10, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_VOLUME_DATA;
+		bExecute:= FALSE;
+	END_IF
+	
+INSERT_VOLUME_DATA:
+
+	cmdIn:= GVL_DB.isrtVD;
+	insertVD(start:=TRUE, methodID:= '11', line:= i);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_VOLUME_DATA;
+		//bExecuteIn:= FALSE;
+	END_IF	
+	
 ERROR_STATE:
 
 	bExecute:= FALSE;
@@ -406,25 +422,6 @@ FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#40#'), pInsertStri
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="insertRunVD" Id="{93609b44-5a4c-4d18-b9c4-6e93596731b1}">
-      <Declaration><![CDATA[METHOD insertRunVD : BOOL
-VAR_INPUT
-	start: bool;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF start THEN
-str:= INT_TO_STRING(GVL_DB.astVolData[1].runNo);	
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astVolData[1].pump), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astVolData[1].stage), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astVolData[1].rinse1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astVolData[1].rinse2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astVolData[1].wash1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astVolData[1].wash2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(str), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="insertSys" Id="{53667956-19d2-445b-bdaf-4b8baaabd0fa}">
       <Declaration><![CDATA[METHOD insertSys : BOOL
 VAR_INPUT
@@ -468,6 +465,32 @@ FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#31#'), pInsertStri
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="insertVD" Id="{df3eedca-543a-4b76-a0dd-55698bdfc8eb}">
+      <Declaration><![CDATA[METHOD insertVD : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodID: STRING;
+	line: INT;
+END_VAR
+
+
+VAR
+	sysRevisionNo: STRING;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF start THEN
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astVolData[line].pump), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astVolData[line].stage), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astVolData[line].rinse1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astVolData[line].rinse2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astVolData[line].wash1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astVolData[line].wash2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="selectMethod" Id="{3322be0a-de7d-4c5b-87cb-ab465ca0f5dd}">
       <Declaration><![CDATA[METHOD selectMethod : BOOL
 VAR_INPUT
@@ -483,6 +506,22 @@ END_VAR
 IF start THEN
 FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#1#'), pInsertString:= ADR(methodName), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
 FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#2#'), pInsertString:= ADR(methodRevision), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="selectVD" Id="{f8fd114d-9a54-4bb7-8313-77b01d8ebc73}">
+      <Declaration><![CDATA[METHOD selectVD : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodID: STRING;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#1#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -536,14 +575,7 @@ END_IF]]></ST>
       <LineId Id="280" Count="7" />
       <LineId Id="279" Count="0" />
       <LineId Id="302" Count="0" />
-      <LineId Id="265" Count="0" />
-      <LineId Id="388" Count="0" />
-      <LineId Id="303" Count="0" />
-      <LineId Id="326" Count="0" />
-      <LineId Id="305" Count="0" />
-      <LineId Id="316" Count="8" />
-      <LineId Id="304" Count="0" />
-      <LineId Id="355" Count="3" />
+      <LineId Id="356" Count="2" />
       <LineId Id="374" Count="8" />
       <LineId Id="325" Count="0" />
       <LineId Id="390" Count="14" />
@@ -570,6 +602,12 @@ END_IF]]></ST>
       <LineId Id="605" Count="14" />
       <LineId Id="604" Count="0" />
       <LineId Id="620" Count="0" />
+      <LineId Id="624" Count="13" />
+      <LineId Id="623" Count="0" />
+      <LineId Id="638" Count="0" />
+      <LineId Id="640" Count="13" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="654" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
       <LineId Id="137" Count="1" />
@@ -608,12 +646,6 @@ END_IF]]></ST>
       <LineId Id="45" Count="0" />
       <LineId Id="38" Count="6" />
     </LineIds>
-    <LineIds Name="DB_Query.insertRunVD">
-      <LineId Id="47" Count="0" />
-      <LineId Id="52" Count="0" />
-      <LineId Id="5" Count="6" />
-      <LineId Id="44" Count="0" />
-    </LineIds>
     <LineIds Name="DB_Query.insertSys">
       <LineId Id="57" Count="0" />
       <LineId Id="47" Count="0" />
@@ -625,10 +657,23 @@ END_IF]]></ST>
       <LineId Id="103" Count="0" />
       <LineId Id="44" Count="0" />
     </LineIds>
+    <LineIds Name="DB_Query.insertVD">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="78" Count="6" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
     <LineIds Name="DB_Query.selectMethod">
       <LineId Id="57" Count="0" />
       <LineId Id="47" Count="0" />
       <LineId Id="5" Count="1" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.selectVD">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="0" />
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.updateMethod">
