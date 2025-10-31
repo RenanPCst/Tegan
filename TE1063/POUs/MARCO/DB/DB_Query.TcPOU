@@ -290,7 +290,7 @@ INSERT_USER:
 SELECT_ALL_CURRENT_USERS:
 	
 	cmdSlc:= GVL_DB.slctCurrentUser;
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= IDLE_STATE;
@@ -305,7 +305,7 @@ SELECT_ALL_CURRENT_USERS:
 SELECT_ALL_USERS:
 	
 	cmdSlc:= GVL_DB.slctAllUsers;
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= IDLE_STATE;
