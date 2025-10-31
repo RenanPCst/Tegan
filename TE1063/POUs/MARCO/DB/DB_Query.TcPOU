@@ -22,7 +22,7 @@ VAR
 	nome: STRING;
 	cmdIn: STRING(10000);
 	cmdSlc: STRING(10000);
-	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD, SELECT_VOLUME_DATA, INSERT_VOLUME_DATA);
+	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD, SELECT_VOLUME_DATA, INSERT_VOLUME_DATA, INSERT_USER, SELECT_ALL_USERS,SELECT_ALL_CURRENT_USERS);
 	status: STRING;
 	str: STRING;
 	lastRunID: STRING;
@@ -35,6 +35,7 @@ END_VAR
 
 CASE state OF
 	
+
 IDLE_STATE:
 	
 	state:= IDLE_STATE;
@@ -270,6 +271,52 @@ INSERT_VOLUME_DATA:
 		//bExecuteIn:= FALSE;
 	END_IF	
 	
+INSERT_USER:
+
+	cmdIn:= GVL_DB.isrtUser;
+	insertUser(start:=TRUE, line:= i);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_USER;
+		//bExecuteIn:= FALSE;
+	END_IF	
+	
+SELECT_ALL_CURRENT_USERS:
+	
+	cmdSlc:= GVL_DB.slctCurrentUser;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_CURRENT_USERS;
+		bExecute:= FALSE;
+	END_IF
+	
+SELECT_ALL_USERS:
+	
+	cmdSlc:= GVL_DB.slctAllUsers;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_USERS;
+		bExecute:= FALSE;
+	END_IF
+	
 ERROR_STATE:
 
 	bExecute:= FALSE;
@@ -465,6 +512,27 @@ FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#31#'), pInsertStri
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="insertUser" Id="{0694d5fd-7d7a-4599-91eb-5aed0d1f83d7}">
+      <Declaration><![CDATA[METHOD insertUser : BOOL
+VAR_INPUT
+	start: BOOL;
+	line: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF start THEN
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].userID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].acessLevel), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactionType), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactionDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].addDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].enteredBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="insertVD" Id="{df3eedca-543a-4b76-a0dd-55698bdfc8eb}">
       <Declaration><![CDATA[METHOD insertVD : BOOL
 VAR_INPUT
@@ -547,6 +615,7 @@ END_IF]]></ST>
       <LineId Id="51" Count="0" />
       <LineId Id="95" Count="1" />
       <LineId Id="98" Count="0" />
+      <LineId Id="683" Count="0" />
       <LineId Id="100" Count="1" />
       <LineId Id="385" Count="0" />
       <LineId Id="479" Count="1" />
@@ -605,9 +674,21 @@ END_IF]]></ST>
       <LineId Id="624" Count="13" />
       <LineId Id="623" Count="0" />
       <LineId Id="638" Count="0" />
-      <LineId Id="640" Count="13" />
+      <LineId Id="640" Count="2" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="644" Count="9" />
       <LineId Id="639" Count="0" />
       <LineId Id="654" Count="0" />
+      <LineId Id="685" Count="13" />
+      <LineId Id="684" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="702" Count="2" />
+      <LineId Id="706" Count="9" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="717" Count="0" />
+      <LineId Id="719" Count="12" />
+      <LineId Id="718" Count="0" />
+      <LineId Id="716" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
       <LineId Id="137" Count="1" />
@@ -655,6 +736,14 @@ END_IF]]></ST>
       <LineId Id="94" Count="8" />
       <LineId Id="93" Count="0" />
       <LineId Id="103" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertUser">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="78" Count="5" />
+      <LineId Id="101" Count="0" />
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertVD">
