@@ -19,6 +19,22 @@ VAR
 	iDataCount : INT;
     i : INT;
 	
+	fbSolenoidControl		: FB_SolenoidControl;
+	bPressureUpExecute 		: BOOL := FALSE;
+    bPressureUpRequested 	: BOOL := FALSE;
+	bSealStages				: BOOL := FALSE;
+	bPressureUpSolenoids	: BOOL := FALSE;
+	bHoldPressureExecute 	: BOOL := FALSE;
+    bHoldPressureRequested 	: BOOL := FALSE;
+	bHoldPressureSolenoids	: BOOL := FALSE;
+	bStopLeakTestExecute 	: BOOL := FALSE;
+    bStopLeakTestRequested 	: BOOL := FALSE;
+	bStopLeakTestSolenoids 	: BOOL := FALSE;
+	
+	bStopM1Motor 			: BOOL := FALSE;
+	bResetM1Motor 			: BOOL := FALSE;
+	tonResetMotorDelay 		: ton;
+	
 	bLinearPumpsEnabled		: BOOL := FALSE;
 	bLinearPumpsHomed		: BOOL := FALSE;
 	bLinearPumpsOldPosStart	: BOOL := FALSE;
@@ -29,6 +45,7 @@ VAR
 	bLinearPumpsOldPosMove	: ARRAY[1..10] OF BOOL;
 	aLinearPumpsMoveDone 	: ARRAY[1..10] OF BOOL; // Tracks per-axis move completion
 	
+	bCalPressureUpSystemBt: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -61,6 +78,21 @@ IF fbLeakTest.bLeakTestError THEN
 	IF NOT bLeakTestReset THEN
 		bLeakTestReset := fbLeakTest.Reset();
 	END_IF
+END_IF
+
+// HMI Button responsible for pressurize the system
+IF GVL_HMI.bCalPressureUpSystemBt THEN
+	GVL_HMI.bCalPressureUpSystemBt := NOT PressureUp();
+END_IF
+
+// HMI Button responsible for hold the air in the system after the system pressure up
+IF GVL_HMI.bCalHoldSysPressureBt THEN
+	GVL_HMI.bCalHoldSysPressureBt := NOT HoldSystemPressure();
+END_IF
+
+// HMI Button responsible for stopping the leak test
+IF GVL_HMI.bCalStopLeakTestBt THEN
+	GVL_HMI.bCalStopLeakTestBt := NOT StopLeakTest();
 END_IF
 
 (* Calibration Procedure *) //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -231,6 +263,43 @@ ELSE
 	EnableLinearPumps := FALSE;
 END_IF
 *)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HoldSystemPressure" Id="{b53ac1a1-3cdf-4e1b-96c9-26b0e48279bc}">
+      <Declaration><![CDATA[METHOD PRIVATE HoldSystemPressure : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//FB Execute 
+fbSolenoidControl( bExecute := bHoldPressureSolenoids, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
+
+// 0. Trigger
+IF NOT bHoldPressureRequested THEN
+    bHoldPressureExecute := TRUE;
+    bHoldPressureRequested := TRUE;
+END_IF
+
+// 1. Close Solenoid B and keep A Open to hold the system pressure
+IF bHoldPressureExecute AND bHoldPressureRequested THEN
+	bHoldPressureSolenoids := TRUE;
+END_IF
+
+IF fbSolenoidControl.bDone THEN
+	bHoldPressureSolenoids := FALSE;
+	bHoldPressureExecute := FALSE;
+END_IF
+
+// 3. Done - Reset and Return True
+IF NOT bHoldPressureSolenoids AND NOT bHoldPressureExecute AND bHoldPressureRequested THEN
+	bHoldPressureRequested := FALSE;
+	HoldSystemPressure := TRUE;
+	RETURN;
+ELSE
+	HoldSystemPressure := FALSE;
+END_IF
+
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="HomeLinearPumps" Id="{6200dfda-dea4-466c-9cdb-75115aff6d05}">
@@ -434,6 +503,54 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="PressureUp" Id="{4cc623c4-aa5f-412a-9079-553ef54306c5}">
+      <Declaration><![CDATA[METHOD PRIVATE PressureUp : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//FB Execute 
+fbSolenoidControl( bExecute := bPressureUpSolenoids, eSolenoidSet := E_SolenoidSet.LEAKTEST);
+
+// 0. Trigger
+IF NOT bPressureUpRequested THEN
+    bPressureUpExecute := TRUE;
+	bSealStages	:= TRUE;
+    bPressureUpRequested := TRUE;
+END_IF
+
+// 1. Sealing Stages (M1 axis)
+IF bSealStages THEN
+	bSealStages := NOT GVL_Motion.aMotors[1].MoveAbsolute( rPosition := GVL_Settings.stMachineParam.aM1Position[2], rVelocity := GVL_Settings.stMachineParam.rM1Velocity, rAcc := GVL_Settings.stMachineParam.rM1Accleration, rDec := GVL_Settings.stMachineParam.rM1Deceleration);
+END_IF
+
+// 2. Open Solenoid B and A to pressure up the system
+IF NOT bSealStages AND bPressureUpRequested THEN
+	bPressureUpSolenoids := TRUE;
+END_IF
+
+
+
+IF fbSolenoidControl.bDone THEN
+	bPressureUpSolenoids := FALSE;
+	bPressureUpExecute := FALSE;
+END_IF
+
+// 3. Done - Reset and Return True
+IF bPressureUpRequested AND NOT bPressureUpExecute AND NOT bSealStages THEN
+	bPressureUpRequested := FALSE;
+	PressureUp := TRUE;
+	RETURN;
+ELSE
+	PressureUp := FALSE;
+END_IF
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Reset" Id="{27813d8d-2df7-44d9-b974-4b44cba9f55d}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
@@ -452,6 +569,17 @@ bLinearPumpsHomed		 := FALSE;
 bLinearPumpsOldPosStart	 := FALSE;
 bLinearPumpsOldPosDone	 := FALSE;
 
+bPressureUpExecute 		 := FALSE;
+bPressureUpRequested 	 := FALSE;
+bSealStages				 := FALSE;
+bPressureUpSolenoids	 := FALSE;
+bHoldPressureExecute 	 := FALSE;
+bHoldPressureRequested 	 := FALSE;
+bHoldPressureSolenoids	 := FALSE;
+bStopLeakTestExecute 	 := FALSE;
+bStopLeakTestRequested 	 := FALSE;
+bStopLeakTestSolenoids 	 := FALSE;
+
 FOR i := 1 TO 10 DO
 	aLinearPumpsEnable[i] := FALSE;
 	aLinearPumpsHoming[i] := FALSE;
@@ -460,6 +588,70 @@ END_FOR
 
 Reset := TRUE;
 RETURN;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StopLeakTest" Id="{881665d9-2804-4b8d-9d93-9edb8f3e78d7}">
+      <Declaration><![CDATA[METHOD PRIVATE StopLeakTest : BOOL
+VAR_INPUT
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// FB Execute 
+fbSolenoidControl( bExecute := bStopLeakTestSolenoids, eSolenoidSet := E_SolenoidSet.IDLE);
+
+//Timer Delay between stop and reset the motor
+IF bStopM1Motor AND bStopLeakTestSolenoids THEN
+	tonResetMotorDelay(in := TRUE, pt := T#1S);
+ELSE
+	tonResetMotorDelay(in := FALSE, pt := T#1S);
+END_IF
+
+// CLean Internal flags
+GVL_HMI.bCalPressureUpSystemBt := FALSE;
+GVL_HMI.bCalHoldSysPressureBt := FALSE;
+
+// 0. Trigger
+IF NOT bStopLeakTestRequested THEN
+    bStopLeakTestExecute := TRUE;
+    bStopLeakTestRequested := TRUE;
+END_IF
+
+// 1. Stop Motor M1
+IF NOT bStopM1Motor THEN
+	bStopM1Motor := GVL_Motion.aMotors[1].Stop();
+END_IF
+
+// 2. Close Solenoid B and C 
+IF bStopM1Motor AND NOT bStopLeakTestExecute AND bStopLeakTestRequested THEN
+	bStopLeakTestSolenoids := TRUE;
+END_IF
+
+IF fbSolenoidControl.bDone THEN
+	bStopLeakTestSolenoids := FALSE;
+	bStopLeakTestExecute := FALSE;
+END_IF
+
+// 3. Reset Motor M1
+IF tonResetMotorDelay.Q AND NOT bResetM1Motor THEN
+	bResetM1Motor := GVL_Motion.aMotors[1].Reset();
+END_IF
+
+// 4. Done - Reset and Return True
+IF NOT bStopLeakTestSolenoids AND NOT bStopLeakTestExecute AND bStopLeakTestRequested AND bResetM1Motor THEN
+	bStopM1Motor := FALSE;
+	bResetM1Motor := FALSE;
+	bStopLeakTestRequested := FALSE;
+	tonResetMotorDelay(in := FALSE);
+	StopLeakTest := TRUE;
+	RETURN;
+ELSE
+	StopLeakTest := FALSE;
+END_IF
+
+
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -489,6 +681,17 @@ RETURN;
       <LineId Id="48" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="26" Count="0" />
+      <LineId Id="534" Count="0" />
+      <LineId Id="527" Count="1" />
+      <LineId Id="532" Count="1" />
+      <LineId Id="546" Count="0" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="555" Count="0" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="547" Count="0" />
+      <LineId Id="540" Count="2" />
+      <LineId Id="539" Count="0" />
       <LineId Id="189" Count="0" />
       <LineId Id="65" Count="1" />
       <LineId Id="156" Count="1" />
@@ -558,6 +761,17 @@ RETURN;
       <LineId Id="5" Count="0" />
       <LineId Id="25" Count="0" />
     </LineIds>
+    <LineIds Name="PRG_Calibration.HoldSystemPressure">
+      <LineId Id="42" Count="0" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="6" Count="2" />
+      <LineId Id="10" Count="3" />
+      <LineId Id="19" Count="3" />
+      <LineId Id="25" Count="11" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="37" Count="0" />
+    </LineIds>
     <LineIds Name="PRG_Calibration.HomeLinearPumps">
       <LineId Id="660" Count="1" />
       <LineId Id="913" Count="0" />
@@ -597,16 +811,80 @@ RETURN;
       <LineId Id="90" Count="1" />
       <LineId Id="5" Count="0" />
     </LineIds>
+    <LineIds Name="PRG_Calibration.PressureUp">
+      <LineId Id="54" Count="2" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="26" Count="2" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="52" Count="1" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
       <LineId Id="9" Count="2" />
       <LineId Id="14" Count="1" />
       <LineId Id="18" Count="5" />
+      <LineId Id="39" Count="4" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="45" Count="3" />
+      <LineId Id="38" Count="0" />
       <LineId Id="26" Count="2" />
       <LineId Id="30" Count="1" />
       <LineId Id="29" Count="0" />
       <LineId Id="33" Count="0" />
       <LineId Id="32" Count="0" />
       <LineId Id="34" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.StopLeakTest">
+      <LineId Id="46" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="71" Count="3" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="19" Count="4" />
+      <LineId Id="48" Count="4" />
+      <LineId Id="24" Count="9" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="34" Count="2" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="38" Count="5" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="14" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

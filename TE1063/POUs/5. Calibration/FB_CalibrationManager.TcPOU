@@ -49,6 +49,8 @@ VAR
     rScaleWeight     : LREAL; // Latest scale result
 	rDistanceByVol	 : LREAL; // MoveRelative distance
 	rPercentDifference : LREAL; //Percentual Difference between net volume and tagert volume
+	rFillJarTotalVol : LREAL;
+	rEmptyJarTotalVol: LREAL;
 	
     rAcceptanceCrit  : REAL := 0.5; // Acceptance percentage (from HMI)
     iAllowableFail   : INT := 2; 	// Max failures from pump settings
@@ -161,7 +163,7 @@ CASE eStep OF
 
 		IF bWeightReady THEN
 			
-			bBoxWeightOK := (rScaleWeight >= 1100.0) AND (rScaleWeight <= 1300.0);
+			bBoxWeightOK := (rScaleWeight >= 900.0) AND (rScaleWeight <= 1300.0);
 			
 			IF tonStepTimeout.Q THEN
 				//GVL_HMI.aAlarmFlags[1] := TRUE; // Timeout during motor positioning
@@ -249,7 +251,12 @@ CASE eStep OF
 		sStatus := CONCAT('Filling up the jar number: ', TO_STRING(iPumpIndex));
 		
 		IF aPumpSettings[iPumpIndex].bSelected THEN
-			rDistanceByVol := F_VolumeToSteps_Path(rVolume := ((*aPumpSettings[iPumpIndex].rTargetVolume +*) GVL_Settings.stPumpParameters.iFillolventTubesFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+			IF iPumpIndex = 1 THEN
+				rFillJarTotalVol := aPumpSettings[iPumpIndex].rTargetVolume + GVL_Settings.stPumpParameters.iFillolventTubesFactor;
+			ELSE
+				rFillJarTotalVol := GVL_Settings.stPumpParameters.iFillolventTubesFactor;
+			END_IF
+			rDistanceByVol := F_VolumeToSteps_Path(rVolume := rFillJarTotalVol, iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 			// Filling up the jar to start the calibration
 			IF NOT bMovePump THEN
 				bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(	Distance := rDistanceByVol, 
@@ -506,7 +513,14 @@ CASE eStep OF
 
 		sStatus := CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex),CONCAT(' | Empty the jar number: ',TO_STRING(iPumpIndex))));
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
-		rDistanceByVol := F_VolumeToSteps_Path(rVolume := ((*aVolumeSetpoint[iPumpIndex] +*) GVL_Settings.stPumpParameters.iEmptyFactor), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
+		
+		IF iPumpIndex = 1 THEN
+			rEmptyJarTotalVol := aVolumeSetpoint[iPumpIndex] + GVL_Settings.stPumpParameters.iEmptyFactor;
+		ELSE
+			rEmptyJarTotalVol := GVL_Settings.stPumpParameters.iEmptyFactor;
+		END_IF
+		
+		rDistanceByVol := F_VolumeToSteps_Path(rVolume := rEmptyJarTotalVol, iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
 		
         IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
@@ -709,12 +723,13 @@ iPumpIndex    := 1;
 iReplicate    := 0;
 iResultIndex  := 1;
 
-rWeightBefore := 0.0;
-rWeightAfter  := 0.0;
-rWeightDelta  := 0.0;
-rVolume       := 0.0;
-rScaleWeight  := 0.0;
-rDistanceByVol:= 0.0;
+rWeightBefore 	 := 0.0;
+rWeightAfter  	 := 0.0;
+rWeightDelta  	 := 0.0;
+rVolume       	 := 0.0;
+rScaleWeight  	 := 0.0;
+rDistanceByVol   := 0.0;
+rFillJarTotalVol := 0.0;
 
 // 5) Optional “hard” cleanup: clear selections and results
 IF bHard THEN
@@ -761,7 +776,11 @@ Reset := TRUE;]]></ST>
       <LineId Id="3412" Count="0" />
       <LineId Id="3419" Count="0" />
       <LineId Id="3411" Count="0" />
-      <LineId Id="2915" Count="100" />
+      <LineId Id="2915" Count="22" />
+      <LineId Id="3713" Count="1" />
+      <LineId Id="3716" Count="1" />
+      <LineId Id="3715" Count="0" />
+      <LineId Id="2938" Count="77" />
       <LineId Id="3610" Count="0" />
       <LineId Id="3017" Count="3" />
       <LineId Id="3516" Count="0" />
@@ -769,7 +788,12 @@ Reset := TRUE;]]></ST>
       <LineId Id="3517" Count="0" />
       <LineId Id="3022" Count="142" />
       <LineId Id="3629" Count="0" />
-      <LineId Id="3166" Count="69" />
+      <LineId Id="3166" Count="25" />
+      <LineId Id="3724" Count="0" />
+      <LineId Id="3719" Count="0" />
+      <LineId Id="3729" Count="3" />
+      <LineId Id="3727" Count="1" />
+      <LineId Id="3193" Count="42" />
       <LineId Id="3422" Count="6" />
       <LineId Id="3421" Count="0" />
       <LineId Id="3242" Count="1" />
@@ -789,7 +813,9 @@ Reset := TRUE;]]></ST>
       <LineId Id="287" Count="0" />
       <LineId Id="201" Count="7" />
       <LineId Id="276" Count="0" />
-      <LineId Id="209" Count="59" />
+      <LineId Id="209" Count="28" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="238" Count="30" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

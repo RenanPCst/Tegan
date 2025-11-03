@@ -517,28 +517,28 @@ IF 	NOT GVL_Safety.iMotorsSTOEnabled THEN
 END_IF
 
 (* SF-212: Scale Communication Error - TCP Connect *)
-IF 	NOT GVL_Alarms.bTCPCLientConnectError THEN
+IF 	GVL_Alarms.bTCPCLientConnectError THEN
 		GVL_Alarms.arrEventFlag[212]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[212]:= FALSE;	
 END_IF
 
 (* SF-213: Scale Communication Error - TCP Send Message *)
-IF 	NOT GVL_Alarms.bTCPCLientSendError THEN
+IF 	GVL_Alarms.bTCPCLientSendError THEN
 		GVL_Alarms.arrEventFlag[213]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[213]:= FALSE;	
 END_IF
 
 (* SF-214: Scale Communication Error - TCP Receive Message *)
-IF 	NOT GVL_Alarms.bTCPCLientReceiveError THEN
+IF 	GVL_Alarms.bTCPCLientReceiveError THEN
 		GVL_Alarms.arrEventFlag[214]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[214]:= FALSE;	
 END_IF
 
 (* SF-215: Scale Communication Error - TCP Close Communication *)
-IF 	NOT GVL_Alarms.bTCPCLientCloseError THEN
+IF 	GVL_Alarms.bTCPCLientCloseError THEN
 		GVL_Alarms.arrEventFlag[215]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[215]:= FALSE;	
