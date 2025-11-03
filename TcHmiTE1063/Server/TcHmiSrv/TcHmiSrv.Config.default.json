@@ -28,6 +28,14 @@
     "DEFAULTTIMEZONE": "client",
     "DEFAULTUSERGROUP": "__SystemUsers",
     "DEFINITIONS": {
+        "PLC1.ARRAY_0..1000_OF-ST_Data_CUL": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Data_CUL"
+            },
+            "maxItems": 1001,
+            "minItems": 1001,
+            "type": "array"
+        },
         "PLC1.ARRAY_0..10_OF-ST_Results": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_Results"
@@ -1023,6 +1031,98 @@
                         },
                         {
                             "propertyOrder": 3
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_Data_CUL": {
+            "properties": {
+                "ID_user": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/DINT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "acessLevel": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "addDate": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "enteredBy": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "transactedBy": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "transactionDate": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "transactionType": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "userID": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
                         }
                     ]
                 }
@@ -5772,6 +5872,16 @@
             "MAPPING": "PLC1::GVL_Constant::aSolventsAvailable",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..5_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.astData_CUL": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::astData_CUL",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..1000_OF-ST_Data_CUL"
             },
             "USEMAPPING": true
         },
@@ -11307,6 +11417,7 @@
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_Constant.aSolventsAvailable": 3,
+                "PLC1.GVL_DB.astData_CUL": 3,
                 "PLC1.GVL_HMI.HMIAnimation": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aSolventLevel": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aValveAngle": 3,

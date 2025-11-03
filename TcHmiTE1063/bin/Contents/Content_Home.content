@@ -6360,4 +6360,71 @@
 ]
 </script>
 </div>
+<div id="btnDownloadPDF_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="980" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF CUL" data-tchmi-top="258" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "btnDownloadPDF_6.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Função que usa a string lida do PLC",
+          "          function showMessageFromPLC(message) {",
+          "          \t\talert(\"Mensagem do PLC: \" + message);",
+          "          }",
+          "          // Leitura da variável do PLC",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_CUL%/s%', function (data) {",
+          "              if (data.error === TcHmi.Errors.NONE) {",
+          "                  let plcString = data.value; // valor retornado do PLC (string)",
+          "                  // Chamar a função passando a string",
+          "                  //gerarRelatorioPDF(plcString);",
+          "                  //const dadosDoJSON = JSON.parse(plcString);",
+          "                  genCurrentUserList(plcString,'Current Users List');",
+          "                  /*if (dadosDoJSON.reportInfo.reoportSubName == 'Post-Run Report'){",
+          "\t\t\t\t\tgenPostRunReport(plcString);",
+          "                  }",
+          "                  if (dadosDoJSON.reportInfo.reoportSubName == 'Current Users List'){",
+          "\t\t\t\t\tgenCurrentUserList(plcString,'30/09/2025','MarcoA','Current Users List');",
+          "                  }",
+          "                  if (dadosDoJSON.reportInfo.reoportSubName == 'Method Report'){",
+          "\t\t\t\t\tgenMethodReport(plcString);",
+          "                  }",
+          "                  if (dadosDoJSON.reportInfo.reoportSubName == 'Pump Calibration Report'){",
+          "\t\t\t\t\tgenPumpCalibrationReport(plcString);",
+          "                  }",
+          "                  if (dadosDoJSON.reportInfo.reoportSubName == 'User History Report'){",
+          "\t\t\t\t\tgenUserHistoryReport(plcString);",
+          "                  }*/",
+          "                  ",
+          "              } else {",
+          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
+          "              }",
+          "          });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+
+</div>
 </div>
