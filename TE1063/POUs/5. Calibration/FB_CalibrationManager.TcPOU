@@ -53,7 +53,7 @@ VAR
     rAcceptanceCrit  : REAL := 0.5; // Acceptance percentage (from HMI)
     iAllowableFail   : INT := 2; 	// Max failures from pump settings
     iMaxReplicates   : INT := 2; 	// Replicate count (from HMI)
-	iResultIndex	 : INT;		 	// Array index on calibration results
+	//iResultIndex	 : INT;		 	// Array index on calibration results
 	
 	bMovePump		 : BOOL := FALSE;
     bMoveMotorM2     : BOOL := FALSE; // Motion trigger M2
@@ -109,7 +109,7 @@ CASE eStep OF
 			bBusy := TRUE;
 			iPumpIndex := 1;
 			iReplicate := 0;
-			iResultIndex := 1; // first log row
+			GVL_Calibration.iResultIndex := 1; // first log row
 			bStartCalibration := FALSE;
 			eStep := E_CalibStep.DELAY;
 		END_IF
@@ -299,10 +299,10 @@ CASE eStep OF
 					rWeightBefore := rScaleWeight;
 					
 					GVL_HMI.aCalPumpResults[iPumpIndex].rTareWeight := rWeightBefore;
-					GVL_Calibration.aCalibCheckResult[iResultIndex].rTareWeight := rWeightBefore;
-					GVL_calibration.stPumpCalibrationData[iResultIndex].rTareWeigth := rWeightBefore;
-					GVL_Calibration.aCalibCheckResult[iResultIndex].nPumpIndex := TO_USINT(iPumpIndex);
-					GVL_Calibration.stPumpCalibrationData[iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
+					GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].rTareWeight := rWeightBefore;
+					GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := rWeightBefore;
+					GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].nPumpIndex := TO_USINT(iPumpIndex);
+					GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
 	
 					bWeightReady   := TRUE;
 					bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
@@ -312,10 +312,10 @@ CASE eStep OF
 		IF bWeightReady THEN
 			IF (rWeightBefore >= 0 AND rWeightBefore <= 1300) THEN
 				GVL_HMI.aCalPumpResults[iPumpIndex].rTareWeight := rWeightBefore;
-				GVL_Calibration.aCalibCheckResult[iResultIndex].rTareWeight := rWeightBefore;
-				GVL_calibration.stPumpCalibrationData[iResultIndex].rTareWeigth := rWeightBefore;
-				GVL_Calibration.aCalibCheckResult[iResultIndex].nPumpIndex := TO_USINT(iPumpIndex);
-				GVL_Calibration.stPumpCalibrationData[iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
+				GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].rTareWeight := rWeightBefore;
+				GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := rWeightBefore;
+				GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].nPumpIndex := TO_USINT(iPumpIndex);
+				GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
 				rDistanceByVol := 0.0;
 				bWeightReady := FALSE;
 				eStep := E_CalibStep.WITHDRAW_BACKWARDS;
@@ -330,13 +330,13 @@ CASE eStep OF
 		sStatus := CONCAT(CONCAT('Check ',CONCAT(TO_STRING(iReplicate + 1),CONCAT(' | Pumping to calibration box: ', TO_STRING(aVolumeSetpoint[iPumpIndex])))),' ml');
 
 		aVolumeSetpoint[iPumpIndex] := aPumpSettings[iPumpIndex].rTargetVolume;
-		GVL_Calibration.aCalibCheckResult[iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
-		GVL_calibration.stPumpCalibrationData[iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
+		GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
+		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTargetVolume := aPumpSettings[iPumpIndex].rTargetVolume;
 		
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := aVolumeSetpoint[iPumpIndex], iPumpIndex := iPumpIndex, ePath := E_PumpPath.FillCalBox );
 		
-		GVL_Calibration.aCalibCheckResult[iResultIndex].nRevsDone := TO_UINT(rDistanceByVol/360);
-		GVL_calibration.stPumpCalibrationData[iResultIndex].iPumpRevs := TO_UINT(rDistanceByVol/360);
+		GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].nRevsDone := TO_UINT(rDistanceByVol/360);
+		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpRevs := TO_UINT(rDistanceByVol/360);
 		
 		IF NOT bMovePump THEN
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
@@ -391,14 +391,14 @@ CASE eStep OF
 					GVL_HMI.aCalPumpResults[iPumpIndex].rActualVolume := rWeightDelta;
 	
 					// Mirror to logs
-					GVL_Calibration.aCalibCheckResult[iResultIndex].rGrossWeight := rWeightAfter;
-					GVL_calibration.stPumpCalibrationData[iResultIndex].rGrossWeigth := rWeightAfter;
-					GVL_Calibration.aCalibCheckResult[iResultIndex].rNetWeight := rWeightDelta;
-					GVL_calibration.stPumpCalibrationData[iResultIndex].rNetWeigth := rWeightDelta;
+					GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].rGrossWeight := rWeightAfter;
+					GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rGrossWeigth := rWeightAfter;
+					GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].rNetWeight := rWeightDelta;
+					GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetWeigth := rWeightDelta;
 	
 					// Density-based volume
-					GVL_calibration.stPumpCalibrationData[iResultIndex].rNetVolume := rWeightDelta / rSolventDensity;
-					rVolume := GVL_calibration.stPumpCalibrationData[iResultIndex].rNetVolume;
+					GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume := rWeightDelta / rSolventDensity;
+					rVolume := GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume;
 	
 					bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
 				END_IF
@@ -436,19 +436,19 @@ CASE eStep OF
 		IF bWeightReady AND bDTReady THEN
 			
 			rPercentDifference := ((rVolume - aPumpSettings[iPumpIndex].rTargetVolume)  / aPumpSettings[iPumpIndex].rTargetVolume) * 100;
-			GVL_Calibration.stPumpCalibrationData[iResultIndex].rDifferenceUl := rVolume - aPumpSettings[iPumpIndex].rTargetVolume;
-			GVL_Calibration.stPumpCalibrationData[iResultIndex].dDateTime := sStamp;
-			GVL_Calibration.stPumpCalibrationData[iResultIndex].rDifferencePercent := rPercentDifference;
-			GVL_Calibration.stPumpCalibrationData[iResultIndex].rCriteria := rAcceptanceCrit;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferenceUl := rVolume - aPumpSettings[iPumpIndex].rTargetVolume;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].dDateTime := sStamp;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferencePercent := rPercentDifference;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rCriteria := rAcceptanceCrit;
 			
 			//pupulate gross weight and net weight
 			IF rPercentDifference <= rAcceptanceCrit THEN
 				aPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.PASSED;
 				GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.PASSED;
- 				GVL_Calibration.aCalibCheckResult[iResultIndex].eStatus := E_CalibrationStatus.PASSED;
+ 				GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].eStatus := E_CalibrationStatus.PASSED;
 			ELSE
 				GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
- 				GVL_Calibration.aCalibCheckResult[iResultIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
+ 				GVL_Calibration.aCalibCheckResult[GVL_Calibration.iResultIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
 				(*
 				aPumpResults[iPumpIndex].iFailures := aPumpResults[iPumpIndex].iFailures + 1;
 				aPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.FAILED;
@@ -464,9 +464,9 @@ CASE eStep OF
 			
 			iReplicate := iReplicate + 1;
 			
-			GVL_Calibration.stPumpCalibrationData[iResultIndex].sStep := CONCAT('Check ', TO_STRING(iReplicate));
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := CONCAT('Check ', TO_STRING(iReplicate));
 			
-			iResultIndex := iResultIndex + 1;
+			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
 			
 			IF iReplicate >= GVL_Settings.stCalibParameters.iReplicatesSetpoint THEN
 				eStep := E_CalibStep.EMPTYJAR_BACKWARDS;
@@ -637,7 +637,7 @@ CASE eStep OF
 		
     E_CalibStep.COMPLETE:
         sStatus := 'Calibration Complete';
-		iDataCount := iResultIndex - 1;
+		iDataCount := GVL_Calibration.iResultIndex - 1;
         bDone := TRUE;
         bBusy := FALSE;
 		
@@ -707,7 +707,7 @@ END_FOR
 // 4) Reset indexes and temporaries
 iPumpIndex    := 1;
 iReplicate    := 0;
-iResultIndex  := 1;
+GVL_Calibration.iResultIndex  := 1;
 
 rWeightBefore := 0.0;
 rWeightAfter  := 0.0;

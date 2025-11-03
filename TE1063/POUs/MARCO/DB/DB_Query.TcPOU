@@ -22,7 +22,7 @@ VAR
 	nome: STRING;
 	cmdIn: STRING(10000);
 	cmdSlc: STRING(10000);
-	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION);
+	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD, SELECT_VOLUME_DATA, INSERT_VOLUME_DATA, INSERT_USER, SELECT_ALL_USERS,SELECT_ALL_CURRENT_USERS);
 	status: STRING;
 	str: STRING;
 	lastRunID: STRING;
@@ -31,17 +31,20 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
+      <ST><![CDATA[//FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
 
 CASE state OF
 	
+
 IDLE_STATE:
 	
 	state:= IDLE_STATE;
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= FALSE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= FALSE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 		
 SELECT_POST_LAST_RUN:
 	
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastRun), pCmdAddr:= ADR(GVL_DB.slctLastRun), nStartIndex:= 0, nRecordCount:= 5, cbRecordArraySize:= SIZEOF(GVL_DB.stPostRunReport), pDestAddr:= ADR(GVL_DB.stPostRunReport), bExecute:= bExecute, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastRun), pCmdAddr:= ADR(GVL_DB.slctLastRun), nStartIndex:= 0, nRecordCount:= 5, cbRecordArraySize:= SIZEOF(GVL_DB.stPostRunReport), pDestAddr:= ADR(GVL_DB.stPostRunReport), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= IDLE_STATE;
@@ -53,45 +56,11 @@ SELECT_POST_LAST_RUN:
 		bExecute:= FALSE;
 	END_IF
 	
-	
-SELECT_POST_LAST_RUN_ID:
-	
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastRunID), pCmdAddr:= ADR(GVL_DB.slctLastRunID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastRunID), pDestAddr:= ADR(GVL_DB.lastRunID), bExecute:= bExecute, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
-	
-	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
-		bExecute:= FALSE;
-	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
-	ELSE
-		state:= SELECT_POST_LAST_RUN_ID;
-		bExecute:= FALSE;
-	END_IF
-	
-SELECT_VD_BY_NO:
-
-	insertString:= GVL_DB.slctVDbyNo;
-	lastRunID := INT_TO_STRING(GVL_DB.lastRunID[0]);
-	FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(lastRunID), pDstString:= ADR(GVL_DB.slctVDbyNo), nDstSize:= SIZEOF(GVL_DB.slctVDbyNo));
-	
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctVDbyNo), pCmdAddr:= ADR(GVL_DB.slctVDbyNo), nStartIndex:= 0, nRecordCount:= 10, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= bExecute, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
-	
-	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
-		bExecute:= FALSE;
-	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
-	ELSE
-		state:= SELECT_VD_BY_NO;
-		bExecute:= FALSE;
-	END_IF
-	
-
 INSERT_RUN:
 	
 	cmdIn:= GVL_DB.isrtRun;
-	insertRunValues(start:=bExecuteIn);
-	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= bExecuteIn, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	insertRunValues(start:=TRUE);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
 		state:= IDLE_STATE;
@@ -103,25 +72,9 @@ INSERT_RUN:
 		bExecuteIn:= FALSE;
 	END_IF
 
-INSERT_RUN_VD:
-
-	cmdIn:= GVL_DB.isrtVD;
-	insertRunVD(start:=bExecuteIn);
-	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= bExecuteIn, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
-	
-	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
-		bExecuteIn:= FALSE;
-	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
-	ELSE
-		state:= INSERT_RUN_VD;
-		bExecuteIn:= FALSE;
-	END_IF
-
 SELECT_POST_LAST_CALIBRATION_ID:
 	
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastCalibID), pCmdAddr:= ADR(GVL_DB.slctLastCalibID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= bExecute, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastCalibID), pCmdAddr:= ADR(GVL_DB.slctLastCalibID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= IDLE_STATE;
@@ -133,11 +86,11 @@ SELECT_POST_LAST_CALIBRATION_ID:
 		bExecute:= FALSE;
 	END_IF
 
-INSERT_CALIBRATION:
+INSERT_CALIBRATION_VALUES:
 
-	cmdIn:= GVL_DB.isrtCalib;
-	insertCalibValues(start:=bExecuteIn, line:= POU_Master_Calib.recResult);
-	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= bExecuteIn, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	cmdIn:= GVL_DB.isrtCalibValues;
+	insertCalibValues(start:=TRUE, line:= GVL_Calibration.iResultIndex);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
 		state:= IDLE_STATE;
@@ -145,11 +98,209 @@ INSERT_CALIBRATION:
 	ELSIF FB_Insert.bError THEN	
 		state:= ERROR_STATE;
 	ELSE
-		state:= INSERT_RUN_VD;
+		state:= INSERT_CALIBRATION_VALUES;
 		bExecuteIn:= FALSE;
 	END_IF
 
+INSERT_CALIBRATION:
 
+	cmdIn:= GVL_DB.isrtCalib;
+	insertCalib(start:=TRUE);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_CALIBRATION;
+		//bExecuteIn:= FALSE;
+	END_IF
+	
+SELECT_LAST_SYSTEM_ID:
+	
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastSys), pCmdAddr:= ADR(GVL_DB.slctLastSys), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.stSysParameters), pDestAddr:= ADR(GVL_DB.stSysParameters), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_LAST_SYSTEM_ID;
+		bExecute:= FALSE;
+	END_IF	
+	
+INSERT_SYS_PARAMETERS:
+
+	cmdIn:= GVL_DB.isrtSys;
+	insertSys(start:=TRUE);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_SYS_PARAMETERS;
+		//bExecuteIn:= FALSE;
+	END_IF	
+
+SELECT_ALL_METHODS:
+	
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctAllMethods), pCmdAddr:= ADR(GVL_DB.slctAllMethods), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.listOfMethod), pDestAddr:= ADR(GVL_DB.listOfMethod), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_METHODS;
+		bExecute:= FALSE;
+	END_IF
+	
+SELECT_ALL_ACTV_METHODS:
+	
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctAllActvMethod), pCmdAddr:= ADR(GVL_DB.slctAllActvMethod), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.listOfMethod), pDestAddr:= ADR(GVL_DB.listOfMethod), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_ACTV_METHODS;
+		bExecute:= FALSE;
+	END_IF
+	
+SELECT_WHOLE_METHODS:
+	
+	cmdSlc:= GVL_DB.slctMethod;
+	selectMethod(start:=TRUE, methodName:= '2 Water Washes (using Alliance vials)', methodRevision:= '9');
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 26, cbRecordArraySize:= SIZEOF(GVL_DB.stParameter_MR), pDestAddr:= ADR(GVL_DB.stParameter_MR), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_WHOLE_METHODS;
+		bExecute:= FALSE;
+	END_IF
+	
+INSERT_NEW_METHOD:
+
+	cmdIn:= GVL_DB.isrtNewMethod;
+	insertMethod(start:=TRUE);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_NEW_METHOD;
+		//bExecuteIn:= FALSE;
+	END_IF	
+
+UPDATE_DEACTV_METHOD:
+
+	cmdIn:= GVL_DB.updtDactvMethod;
+	updateMethod(start:=TRUE, methodName:= '2 Water Washes (using Alliance vials)', methodRevision:= '1');
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= UPDATE_DEACTV_METHOD;
+		//bExecuteIn:= FALSE;
+	END_IF	
+	
+SELECT_VOLUME_DATA:
+	
+	cmdSlc:= GVL_DB.slctVD;
+	selectVD(start:=TRUE, methodID:= '1');
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 10, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_VOLUME_DATA;
+		bExecute:= FALSE;
+	END_IF
+	
+INSERT_VOLUME_DATA:
+
+	cmdIn:= GVL_DB.isrtVD;
+	insertVD(start:=TRUE, methodID:= '11', line:= i);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_VOLUME_DATA;
+		//bExecuteIn:= FALSE;
+	END_IF	
+	
+INSERT_USER:
+
+	cmdIn:= GVL_DB.isrtUser;
+	insertUser(start:=TRUE, line:= i);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= INSERT_USER;
+		//bExecuteIn:= FALSE;
+	END_IF	
+	
+SELECT_ALL_CURRENT_USERS:
+	
+	cmdSlc:= GVL_DB.slctCurrentUser;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_CURRENT_USERS;
+		bExecute:= FALSE;
+	END_IF
+	
+SELECT_ALL_USERS:
+	
+	cmdSlc:= GVL_DB.slctAllUsers;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= ERROR_STATE;
+	ELSE
+		state:= SELECT_ALL_USERS;
+		bExecute:= FALSE;
+	END_IF
 	
 ERROR_STATE:
 
@@ -159,35 +310,96 @@ ERROR_STATE:
 		
 END_CASE]]></ST>
     </Implementation>
+    <Method Name="insertCalib" Id="{04796082-46d0-4881-a277-bdc8481c6e70}">
+      <Declaration><![CDATA[METHOD insertCalib : BOOL
+VAR_INPUT
+	start: BOOL;
+END_VAR
+
+
+VAR
+	sysRevisionNo: STRING;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[sysRevisionNo:= INT_TO_STRING(GVL_DB.stParameter_PCR.sysRevisionNo);
+
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.userID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.density), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.solventNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.solventRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.allowableFail), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.replicates), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stParameter_PCR.callInterval), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(sysRevisionNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="insertCalibValues" Id="{b4b4219c-c49e-4d85-8ecc-39525f3a4943}">
       <Declaration><![CDATA[METHOD insertCalibValues : BOOL
 VAR_INPUT
 	start: BOOL;
 	line: INT;
 END_VAR
+
+VAR
+	CalibrationNo: STRING;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CalibrationNo:= INT_TO_STRING(GVL_DB.astData_PCR[line].CalibrationNo);
+
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].dateTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].pumpNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].step), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].tareWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].grossWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].netVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].netWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].targetVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].differencePercent), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].criteria), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].pumpRevs), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(CalibrationNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="insertMethod" Id="{28bec1f1-562b-498f-976b-131c3ec1fe86}">
+      <Declaration><![CDATA[METHOD insertMethod : BOOL
+VAR_INPUT
+	start: BOOL;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF start THEN
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].methodName), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].methodRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].methodCreatedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].methodCreatedOn), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].solvent_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].solvent_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].solvent_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].solvent_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].time_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].time_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].time_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].time_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#13#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].velocity_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].velocity_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].velocity_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].velocity_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].soakTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#18#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].agitate_1_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#19#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].agitate_2_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#20#'), pInsertString:= ADR(GVL_DB.stPostRunReport[line].vialsToFill), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stParameter_MR.methodName), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stParameter_MR.methodRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stParameter_MR.methodCreatedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stParameter_MR.methodCreatedOn), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stParameter_MR.solvent_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stParameter_MR.solvent_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stParameter_MR.solvent_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.stParameter_MR.solvent_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.stParameter_MR.time_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.stParameter_MR.time_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.stParameter_MR.time_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(GVL_DB.stParameter_MR.time_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#13#'), pInsertString:= ADR(GVL_DB.stParameter_MR.velocity_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertString:= ADR(GVL_DB.stParameter_MR.velocity_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_DB.stParameter_MR.velocity_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(GVL_DB.stParameter_MR.velocity_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(GVL_DB.stParameter_MR.soakTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#18#'), pInsertString:= ADR(GVL_DB.stParameter_MR.agitate_1_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#19#'), pInsertString:= ADR(GVL_DB.stParameter_MR.agitate_2_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#20#'), pInsertString:= ADR(GVL_DB.stParameter_MR.vialsToFill), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#21#'), pInsertString:= ADR(GVL_DB.stParameter_MR.vialPrimeVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#22#'), pInsertString:= ADR(GVL_DB.stParameter_MR.vial_1_FillVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#23#'), pInsertString:= ADR(GVL_DB.stParameter_MR.vial_2_4_FillVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#24#'), pInsertString:= ADR(GVL_DB.stParameter_MR.airDryTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#25#'), pInsertString:= ADR(GVL_DB.stParameter_MR.methodStatus), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -196,68 +408,175 @@ END_IF]]></ST>
 VAR_INPUT
 	start: bool;
 END_VAR
-]]></Declaration>
+
+VAR
+	methodID: STRING;
+	CalibrationNo: STRING;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF start THEN
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].methodName), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].methodRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].methodCreatedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].methodCreatedOn), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].time_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].time_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].time_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].time_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#13#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].velocity_R1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].velocity_R2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].velocity_W1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].velocity_W2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].soakTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#18#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].agitate_1_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#19#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].agitate_2_Time), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#20#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].vialsToFill), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#21#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].vialPrimeVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#22#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].vial_1_FillVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#23#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].vial_2_4_FillVol), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#24#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].airDryTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#25#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].analyst), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#26#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].calibrationNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#27#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].comment), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#28#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].softwareVersion), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#29#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].sysMasterRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#30#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].sysSettingsRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#31#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].meterVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#32#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].runVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#33#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].emptyTubesFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#34#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].fillTubesFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#35#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent1NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#36#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent2NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#37#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent3NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#38#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].solvent4NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#39#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].timeEventStarted), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#40#'), pInsertString:= ADR(GVL_Report.stPostRunReport[0].timeEventCompleted), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+        <ST><![CDATA[methodID:= INT_TO_STRING(GVL_DB.stPostRunReport[0].methodID);
+CalibrationNo:= INT_TO_STRING(GVL_DB.stPostRunReport[0].CalibrationNo);
+
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].analyst), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].comment), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].softwareVersion), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].sysMasterRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].sysSettingsRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].meterVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].runVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].emptyTubesFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].fillTubesFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].solvent1NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].solvent2NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].solvent3NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#13#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].solvent4NameRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].timeEventStarted), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].timeEventCompleted), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(CalibrationNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="insertRunVD" Id="{93609b44-5a4c-4d18-b9c4-6e93596731b1}">
-      <Declaration><![CDATA[METHOD insertRunVD : BOOL
+    <Method Name="insertSys" Id="{53667956-19d2-445b-bdaf-4b8baaabd0fa}">
+      <Declaration><![CDATA[METHOD insertSys : BOOL
 VAR_INPUT
-	start: bool;
+	start: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF start THEN
-str:= INT_TO_STRING(GVL_Report.astVolData[1].runNo);	
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_Report.astVolData[1].pump), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_Report.astVolData[1].stage), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_Report.astVolData[1].rinse1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_Report.astVolData[1].rinse2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_Report.astVolData[1].wash1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_Report.astVolData[1].wash2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(str), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].gen_SealAndPump), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].cal_AcceptanceCriteria), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].cal_AllowableFail), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].cal_Replicates), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].cal_PumpCallIntervalDays), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].cal_CloseAppOnCompletation), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].AirDryTimeOnCompletation), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].lkt_AllowableLeakTestFail), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].lkt_LeakTestBuildupTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].lkt_LeakTestHoldTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].lkt_LeakTestPressure), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_PlatesClosedPosition), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#13#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_PlatesDryPosition), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_PlatesVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_MaxCurrentFastDown), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_MaxCurrentSlowDown), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].mec_MaxCurrentSlowUp), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#18#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].pmp_MeterVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#19#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].pmp_RunVelocity), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#20#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].pmp_EmptyFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#21#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].pmp_FillSolventTubesFactor), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#22#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_AboveCalibration), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#23#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_VialSetSpacing), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#24#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_IntoResBottom), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#25#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_IntoResDispense), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#26#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_IntoResWeigh), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#27#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].smp_IntoVials), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#28#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].sec_DisplayManualControl), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#29#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].sec_CheckLogonEachRun), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#30#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].createdBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#31#'), pInsertString:= ADR(GVL_DB.stSysParameters[1].createdDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="insertUser" Id="{0694d5fd-7d7a-4599-91eb-5aed0d1f83d7}">
+      <Declaration><![CDATA[METHOD insertUser : BOOL
+VAR_INPUT
+	start: BOOL;
+	line: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF start THEN
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].userID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].acessLevel), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactionType), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactionDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].transactedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].addDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.astData_CUL[line].enteredBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="insertVD" Id="{df3eedca-543a-4b76-a0dd-55698bdfc8eb}">
+      <Declaration><![CDATA[METHOD insertVD : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodID: STRING;
+	line: INT;
+END_VAR
+
+
+VAR
+	sysRevisionNo: STRING;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF start THEN
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astVolData[line].pump), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astVolData[line].stage), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astVolData[line].rinse1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astVolData[line].rinse2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astVolData[line].wash1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astVolData[line].wash2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="selectMethod" Id="{3322be0a-de7d-4c5b-87cb-ab465ca0f5dd}">
+      <Declaration><![CDATA[METHOD selectMethod : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodName: STRING;
+	methodRevision: STRING;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#1#'), pInsertString:= ADR(methodName), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
+FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#2#'), pInsertString:= ADR(methodRevision), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="selectVD" Id="{f8fd114d-9a54-4bb7-8313-77b01d8ebc73}">
+      <Declaration><![CDATA[METHOD selectVD : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodID: STRING;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdSlc), pDeleteString:= ADR('#1#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdSlc), nDstSize:= SIZEOF(cmdSlc));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="updateMethod" Id="{5b8b5bab-8814-45bd-98b5-1066903aae2f}">
+      <Declaration><![CDATA[METHOD updateMethod : BOOL
+VAR_INPUT
+	start: BOOL;
+	methodName: STRING;
+	methodRevision: STRING;
+END_VAR
+
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF start THEN
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(methodName), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(methodRevision), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -265,8 +584,10 @@ END_IF]]></ST>
       <LineId Id="51" Count="0" />
       <LineId Id="95" Count="1" />
       <LineId Id="98" Count="0" />
+      <LineId Id="683" Count="0" />
       <LineId Id="100" Count="1" />
       <LineId Id="385" Count="0" />
+      <LineId Id="479" Count="1" />
       <LineId Id="211" Count="0" />
       <LineId Id="104" Count="1" />
       <LineId Id="108" Count="0" />
@@ -279,43 +600,58 @@ END_IF]]></ST>
       <LineId Id="239" Count="0" />
       <LineId Id="205" Count="0" />
       <LineId Id="202" Count="0" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="143" Count="2" />
-      <LineId Id="161" Count="0" />
-      <LineId Id="240" Count="7" />
-      <LineId Id="142" Count="0" />
-      <LineId Id="175" Count="0" />
-      <LineId Id="177" Count="0" />
-      <LineId Id="387" Count="0" />
-      <LineId Id="259" Count="1" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="258" Count="0" />
-      <LineId Id="179" Count="0" />
-      <LineId Id="195" Count="0" />
-      <LineId Id="248" Count="7" />
-      <LineId Id="176" Count="0" />
-      <LineId Id="126" Count="0" />
-      <LineId Id="262" Count="2" />
+      <LineId Id="263" Count="1" />
       <LineId Id="327" Count="0" />
       <LineId Id="293" Count="1" />
       <LineId Id="267" Count="0" />
       <LineId Id="280" Count="7" />
       <LineId Id="279" Count="0" />
       <LineId Id="302" Count="0" />
-      <LineId Id="265" Count="0" />
-      <LineId Id="388" Count="0" />
-      <LineId Id="303" Count="0" />
-      <LineId Id="326" Count="0" />
-      <LineId Id="305" Count="0" />
-      <LineId Id="316" Count="8" />
-      <LineId Id="304" Count="0" />
-      <LineId Id="355" Count="3" />
+      <LineId Id="356" Count="2" />
       <LineId Id="374" Count="8" />
       <LineId Id="325" Count="0" />
       <LineId Id="390" Count="14" />
       <LineId Id="383" Count="0" />
-      <LineId Id="434" Count="1" />
+      <LineId Id="434" Count="0" />
+      <LineId Id="464" Count="13" />
+      <LineId Id="435" Count="0" />
       <LineId Id="405" Count="0" />
+      <LineId Id="483" Count="11" />
+      <LineId Id="512" Count="1" />
+      <LineId Id="498" Count="13" />
+      <LineId Id="495" Count="0" />
+      <LineId Id="542" Count="12" />
+      <LineId Id="496" Count="0" />
+      <LineId Id="555" Count="0" />
+      <LineId Id="576" Count="11" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="588" Count="0" />
+      <LineId Id="559" Count="13" />
+      <LineId Id="558" Count="0" />
+      <LineId Id="573" Count="0" />
+      <LineId Id="590" Count="13" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="605" Count="14" />
+      <LineId Id="604" Count="0" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="624" Count="13" />
+      <LineId Id="623" Count="0" />
+      <LineId Id="638" Count="0" />
+      <LineId Id="640" Count="2" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="644" Count="9" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="654" Count="0" />
+      <LineId Id="685" Count="13" />
+      <LineId Id="684" Count="0" />
+      <LineId Id="699" Count="0" />
+      <LineId Id="702" Count="2" />
+      <LineId Id="706" Count="9" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="717" Count="0" />
+      <LineId Id="719" Count="12" />
+      <LineId Id="718" Count="0" />
+      <LineId Id="716" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
       <LineId Id="137" Count="1" />
@@ -323,21 +659,81 @@ END_IF]]></ST>
       <LineId Id="139" Count="0" />
       <LineId Id="99" Count="0" />
     </LineIds>
-    <LineIds Name="DB_Query.insertCalibValues">
+    <LineIds Name="DB_Query.insertCalib">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
       <LineId Id="47" Count="0" />
-      <LineId Id="5" Count="19" />
+      <LineId Id="5" Count="7" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertCalibValues">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="11" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertMethod">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="75" Count="17" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="94" Count="4" />
+      <LineId Id="103" Count="0" />
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertRunValues">
-      <LineId Id="47" Count="0" />
-      <LineId Id="5" Count="32" />
-      <LineId Id="45" Count="0" />
-      <LineId Id="38" Count="6" />
-    </LineIds>
-    <LineIds Name="DB_Query.insertRunVD">
-      <LineId Id="47" Count="0" />
       <LineId Id="52" Count="0" />
-      <LineId Id="5" Count="6" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="16" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertSys">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="75" Count="17" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="94" Count="8" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertUser">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="78" Count="5" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertVD">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="78" Count="6" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.selectMethod">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.selectVD">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.updateMethod">
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="5" Count="1" />
       <LineId Id="44" Count="0" />
     </LineIds>
   </POU>
