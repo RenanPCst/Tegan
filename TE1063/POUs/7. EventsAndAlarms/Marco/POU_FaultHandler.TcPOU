@@ -411,6 +411,13 @@ IF GVL_HMI.bCalNotAllowedTrigger THEN
 		GVL_Alarms.arrEventFlag[110]:= FALSE;	
 END_IF
 
+(* IE-111: M1 Movement Not allowed *)
+IF GVL_HMI.bM1MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[111]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[111]:= FALSE;	
+END_IF
+
 //*********************************************************END SECTION****************************************************************
 
 //------____________________________--------------------------------------------------------------------------------------------------
@@ -607,6 +614,10 @@ END_IF
       <LineId Id="707" Count="0" />
       <LineId Id="889" Count="3" />
       <LineId Id="756" Count="0" />
+      <LineId Id="974" Count="0" />
+      <LineId Id="973" Count="0" />
+      <LineId Id="975" Count="3" />
+      <LineId Id="972" Count="0" />
       <LineId Id="647" Count="4" />
       <LineId Id="798" Count="0" />
       <LineId Id="806" Count="4" />

@@ -13,24 +13,23 @@ END_VAR
 
 VAR
     eState        : (IDLE, SET_VALVES, DONE);
-	bStart : BOOL := FALSE; //Start flag
+	bExecPrev    : BOOL := FALSE;   // memória da execução anterior p/ borda
+    bRisingEdge  : BOOL;            // pulso de 1 ciclo na subida de bExecute
 	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF NOT bStart THEN
-	eState := IDLE;
-	bStart := bExecute;
-END_IF
-
-CASE eState OF
+      <ST><![CDATA[CASE eState OF
     IDLE:
-		bDone := FALSE; //Resets done flag
-        IF bStart THEN
+        bDone := FALSE; // Reinicia a flag done
+
+        // Transição: Vai para SET_VALVES se bExecute for TRUE
+        IF bExecute THEN
             eState := SET_VALVES;
         END_IF;
 
-    SET_VALVES: //Setting position accordantly pneumatics drawnings for Solenoid Valves A, B e C. 
+    SET_VALVES: // Configuração das saídas
+        // Seu CASE eSolenoidSet permanece aqui
         CASE eSolenoidSet OF
             E_SolenoidSet.IDLE:
                 GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
@@ -40,7 +39,7 @@ CASE eState OF
                 GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
                 GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
                 GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
-           E_SolenoidSet.LEAKTESTMONITORING:
+            E_SolenoidSet.LEAKTESTMONITORING:
                 GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
                 GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
                 GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
@@ -49,29 +48,25 @@ CASE eState OF
                 GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
                 GVL_IO.gDigOutputs.bSolenoidValveC := TRUE;
         END_CASE;
+        
+        // Transição: Vai imediatamente para DONE após configurar as válvulas
         eState := DONE;
     
     DONE:
+        // Seta a flag de conclusão
         bDone := TRUE;
+        
+        // Transição: Espera o comando bExecute ser desativado
         IF NOT bExecute THEN
             eState := IDLE;
-            bDone := FALSE;
-            eSolenoidSet := E_SolenoidSet.IDLE;
+            // O reset de bDone para FALSE ocorre no estado IDLE
         END_IF;
 END_CASE;]]></ST>
     </Implementation>
     <LineIds Name="FB_SolenoidControl">
-      <LineId Id="83" Count="0" />
-      <LineId Id="85" Count="0" />
-      <LineId Id="90" Count="0" />
-      <LineId Id="86" Count="0" />
-      <LineId Id="84" Count="0" />
-      <LineId Id="21" Count="1" />
-      <LineId Id="91" Count="0" />
-      <LineId Id="23" Count="24" />
-      <LineId Id="64" Count="5" />
-      <LineId Id="48" Count="0" />
+      <LineId Id="113" Count="40" />
       <LineId Id="9" Count="0" />
+      <LineId Id="154" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

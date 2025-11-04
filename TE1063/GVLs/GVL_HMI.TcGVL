@@ -99,6 +99,11 @@ VAR_GLOBAL
 	bCalBoxNeedsAttention	: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to fill up the calibration box
 	bCalBoxFixed			: BOOL := FALSE; // Feedback from hmi to tell the system that the calibration box is ready to continue
 	
+	bCalMoveValves			: BOOL  := FALSE; // Manual Valves Movement from calibration screen 
+	iCalMoveValvesPosition	: USINT := 1; 	  // Manual Valves Position from calibration screen 
+	bCalMoveM1Motor			: BOOL  := FALSE; // Manual M1 Motor Movement from calibration screen 
+	iCalMoveM1MotorPosition	: USINT := 1; 	  // Manual M1 Motor Position from calibration screen 
+	
 	// <\Calibration> ------------------------------------------------------------------------------------------------------------------------------------------
 	
 	// Machine Settings 
@@ -124,6 +129,7 @@ VAR_GLOBAL
 	bStopPumpsBt 			: BOOL;	// Button Stop pumps movememnt from manual screen
 	
 	(* Alarms and Events triggers from HMI JS Trigger*) //-------------------------------------------------------------------------------------------------------------
+	bM1MoveNotAllowedTrigger	: BOOL;	// 'IE-100: M1 Movement Not allowed'; (* JS from Run M1 Button - Manual screen *)
 	bM2MoveNotAllowedTrigger	: BOOL;	// 'IE-100: M2 Movement Not allowed'; (* JS from Run M2 Button - Manual screen *)
 	bM3MoveNotAllowedTrigger	: BOOL;	// 'IE-101: M3 Movement Not allowed'; (* JS from Run M3 Button - Manual screen *)
 	bCalNotAllowedTrigger		: BOOL;	// 'IE-110: Attempt to perform a calibration procedure without a calibration box'; (* JS from Start Calibration Button - Calibration screen *)

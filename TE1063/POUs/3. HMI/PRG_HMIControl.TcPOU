@@ -37,6 +37,7 @@ ton500ms : TON;
 i : INT;
 
 //Timers for releasing interlock signals.
+tonInterlockReleaseM1 : ton;
 tonInterlockReleaseM2 : ton;
 tonInterlockReleaseM3 : ton;
 
@@ -292,6 +293,12 @@ END_IF
 
 (* <\HMI Alerts> ******************************************************************************************************* *)
 (* Motors Interlock *) // Releasing alarm trigger after 2 seconds.
+IF GVL_HMI.bM1MoveNotAllowedTrigger THEN
+	tonInterlockReleaseM1(In := TRUE, PT := T#2S);
+ELSE
+	tonInterlockReleaseM1(In := FALSE, PT := T#2S);
+END_IF
+
 IF GVL_HMI.bM2MoveNotAllowedTrigger THEN
 	tonInterlockReleaseM2(In := TRUE, PT := T#2S);
 ELSE
@@ -302,6 +309,10 @@ IF GVL_HMI.bM3MoveNotAllowedTrigger THEN
 	tonInterlockReleaseM3(In := TRUE, PT := T#2S);
 ELSE
 	tonInterlockReleaseM3(In := FALSE, PT := T#2S);
+END_IF
+
+IF tonInterlockReleaseM1.Q THEN
+	GVL_HMI.bM1MoveNotAllowedTrigger := FALSE;
 END_IF
 
 IF tonInterlockReleaseM2.Q THEN
@@ -966,12 +977,17 @@ END_IF]]></ST>
       <LineId Id="491" Count="0" />
       <LineId Id="489" Count="0" />
       <LineId Id="576" Count="0" />
+      <LineId Id="1296" Count="3" />
+      <LineId Id="1295" Count="0" />
+      <LineId Id="1300" Count="0" />
       <LineId Id="1228" Count="1" />
       <LineId Id="1250" Count="1" />
       <LineId Id="1230" Count="0" />
       <LineId Id="1237" Count="2" />
       <LineId Id="1252" Count="1" />
       <LineId Id="1236" Count="0" />
+      <LineId Id="1302" Count="2" />
+      <LineId Id="1301" Count="0" />
       <LineId Id="1242" Count="0" />
       <LineId Id="1241" Count="0" />
       <LineId Id="1243" Count="1" />
