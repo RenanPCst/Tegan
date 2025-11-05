@@ -236,7 +236,7 @@ END_IF
 
 (* M1 Motor Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
 IF GVL_HMI.bCalMoveM1Motor AND GVL_IO.gDigInputs.bThroatJigPresent THEN
-	GVL_HMI.bCalMoveM1Motor := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_HMI.iCalMoveM1MotorPosition,
+	GVL_HMI.bCalMoveM1Motor := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition],
                         														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
                         														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
                        															rDec := GVL_Settings.stMachineParam.rM1Deceleration
