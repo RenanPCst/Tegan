@@ -39,18 +39,21 @@ VAR
     aDirection       : ARRAY[1..10] OF E_PumpDirection; // Direction per pump
     aVelocity        : ARRAY[1..10] OF REAL; // Velocity per pump
 
-    fbPumps          : FB_AllPumpsController; // Instance of pump controller
-    rWeightBefore    : LREAL; // Weight before pump operation
-    rWeightAfter     : LREAL; // Weight after pump operation
-    rWeightDelta     : LREAL; // Weight difference
-	rVolume			 : LREAL; // Volume calculated 
-    bRequestWeight   : BOOL := FALSE; // Trigger for requesting scale
-	bWeightReady	 : BOOL := FALSE; // Trigger when weigth is ready
-    rScaleWeight     : LREAL; // Latest scale result
-	rDistanceByVol	 : LREAL; // MoveRelative distance
-	rPercentDifference : LREAL; //Percentual Difference between net volume and tagert volume
-	rFillJarTotalVol : LREAL;
-	rEmptyJarTotalVol: LREAL;
+    fbPumps          	: FB_AllPumpsController; // Instance of pump controller
+    rWeightBefore    	: LREAL; // Weight before pump operation
+    rWeightAfter     	: LREAL; // Weight after pump operation
+    rWeightDelta     	: LREAL; // Weight difference
+	rVolume			 	: LREAL; // Volume calculated
+	rPumpVolumeSum	 	: LREAL := 0.00; // Sum volume for each pump for average calculus
+	rPumpAverageVolume 	: LREAL := 0.00; // Calculated average volume of each pump at the end of replicates 
+    bRequestWeight   	: BOOL := FALSE; // Trigger for requesting scale
+	bWeightReady	 	: BOOL := FALSE; // Trigger when weigth is ready
+	bPumpAdjustNeed	 	: BOOL := FALSE; // Flag that indicates if the checking pump needs to be adjusted or not. 
+    rScaleWeight     	: LREAL; // Latest scale result
+	rDistanceByVol	 	: LREAL; // MoveRelative distance
+	rPercentDifference 	: LREAL; //Percentual Difference between net volume and tagert volume
+	rFillJarTotalVol 	: LREAL;
+	rEmptyJarTotalVol	: LREAL;
 	
     rAcceptanceCrit  : REAL := 0.5; // Acceptance percentage (from HMI)
     iAllowableFail   : INT := 2; 	// Max failures from pump settings
@@ -112,6 +115,9 @@ CASE eStep OF
 			iPumpIndex := 1;
 			iReplicate := 0;
 			iResultIndex := 1; // first log row
+			rPumpVolumeSum := 0.00;
+			rPumpAverageVolume := 0.00;
+			bPumpAdjustNeed := FALSE;
 			bStartCalibration := FALSE;
 			eStep := E_CalibStep.DELAY;
 		END_IF
@@ -405,7 +411,9 @@ CASE eStep OF
 	
 					// Density-based volume
 					GVL_calibration.stPumpCalibrationData[iResultIndex].rNetVolume := rWeightDelta / rSolventDensity;
+					
 					rVolume := GVL_calibration.stPumpCalibrationData[iResultIndex].rNetVolume;
+					rPumpVolumeSum := rPumpVolumeSum + rVolume;
 	
 					bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
 				END_IF
@@ -449,13 +457,14 @@ CASE eStep OF
 			GVL_Calibration.stPumpCalibrationData[iResultIndex].rCriteria := rAcceptanceCrit;
 			
 			//pupulate gross weight and net weight
-			IF rPercentDifference <= rAcceptanceCrit THEN
+			IF ABS(rPercentDifference) <= rAcceptanceCrit THEN
 				aPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.PASSED;
 				GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.PASSED;
  				GVL_Calibration.aCalibCheckResult[iResultIndex].eStatus := E_CalibrationStatus.PASSED;
 			ELSE
 				GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
  				GVL_Calibration.aCalibCheckResult[iResultIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
+				bPumpAdjustNeed := TRUE;
 				(*
 				aPumpResults[iPumpIndex].iFailures := aPumpResults[iPumpIndex].iFailures + 1;
 				aPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.FAILED;
@@ -476,12 +485,53 @@ CASE eStep OF
 			iResultIndex := iResultIndex + 1;
 			
 			IF iReplicate >= GVL_Settings.stCalibParameters.iReplicatesSetpoint THEN
-				eStep := E_CalibStep.EMPTYJAR_BACKWARDS;
+				rPumpAverageVolume :=  	rPumpVolumeSum / iReplicate;
+				IF bPumpAdjustNeed THEN
+					iReplicate := 0;
+					bPumpAdjustNeed := FALSE;
+					eStep := E_CalibStep.PUMPFACTOR_ADJUST;
+				ELSE
+					eStep := E_CalibStep.EMPTYJAR_BACKWARDS;
+				END_IF
 			ELSE
 				eStep := E_CalibStep.RETURN_FORWARD;
 			END_IF
+			
 			bWeightReady := FALSE;
 		END_IF
+		
+	E_CalibStep.PUMPFACTOR_ADJUST:
+		// Calculate the new factor
+		
+		// new factor := target / Trunc((target / (Average / revs) ) + 0.5) 
+		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_Calibration.aCalibCheckResult[iResultIndex-1].nRevsDone))+ 0.5));
+		
+		// Populate the adjustment row	
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].sStep := 'Adjustment';
+		GVL_Calibration.aCalibCheckResult[iResultIndex].rTareWeight := 0.00;
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].rTareWeigth := 0.00;
+		GVL_Calibration.aCalibCheckResult[iResultIndex].rGrossWeight := 0.00;
+		GVL_calibration.stPumpCalibrationData[iResultIndex].rGrossWeigth := 0.00;
+		GVL_Calibration.aCalibCheckResult[iResultIndex].rNetWeight := 0.00;
+		GVL_calibration.stPumpCalibrationData[iResultIndex].rNetWeigth := 0.00;
+		
+		GVL_Calibration.aCalibCheckResult[iResultIndex].rActualVolume := 0.00;
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].rNetVolume := 0.00;
+		GVL_Calibration.aCalibCheckResult[iResultIndex].rTargetVolume := 0.00;
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].rTargetVolume := 0.00;
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].rDifferencePercent := 0.00;
+		
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].rCriteria := 0.00;
+		GVL_Calibration.stPumpCalibrationData[iResultIndex].iPumpRevs := TO_UINT(aPumpSettings[iPumpIndex].rTargetVolume / GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox);	
+		
+		// final transition
+		rPumpAverageVolume := 0.00;
+		rPumpVolumeSum := 0.00;
+		iReplicate := 0;
+		iResultIndex := iResultIndex + 1;
+		eStep := E_CalibStep.RETURN_FORWARD;
+		
 	
     E_CalibStep.RETURN_FORWARD:
 
@@ -538,6 +588,8 @@ CASE eStep OF
     E_CalibStep.NEXT_PUMP:
         iPumpIndex := iPumpIndex + 1;
         iReplicate := 0;
+		rPumpAverageVolume := 0.00;
+		rPumpVolumeSum := 0.00;
         IF iPumpIndex <= 10 THEN
             eStep := E_CalibStep.FILLJAR_FORWARD;
         ELSE
@@ -765,7 +817,10 @@ Reset := TRUE;]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_CalibrationManager">
-      <LineId Id="2779" Count="126" />
+      <LineId Id="2779" Count="24" />
+      <LineId Id="3865" Count="1" />
+      <LineId Id="3824" Count="0" />
+      <LineId Id="2804" Count="101" />
       <LineId Id="3414" Count="0" />
       <LineId Id="2910" Count="1" />
       <LineId Id="3415" Count="1" />
@@ -786,14 +841,53 @@ Reset := TRUE;]]></ST>
       <LineId Id="3516" Count="0" />
       <LineId Id="3021" Count="0" />
       <LineId Id="3517" Count="0" />
-      <LineId Id="3022" Count="142" />
+      <LineId Id="3022" Count="62" />
+      <LineId Id="3855" Count="0" />
+      <LineId Id="3085" Count="0" />
+      <LineId Id="3857" Count="0" />
+      <LineId Id="3086" Count="49" />
+      <LineId Id="3818" Count="0" />
+      <LineId Id="3136" Count="19" />
+      <LineId Id="3858" Count="0" />
+      <LineId Id="3834" Count="2" />
+      <LineId Id="3838" Count="2" />
+      <LineId Id="3833" Count="0" />
+      <LineId Id="3157" Count="2" />
+      <LineId Id="3826" Count="0" />
+      <LineId Id="3160" Count="1" />
+      <LineId Id="3828" Count="1" />
+      <LineId Id="3832" Count="0" />
+      <LineId Id="3877" Count="0" />
+      <LineId Id="3843" Count="0" />
+      <LineId Id="3874" Count="0" />
+      <LineId Id="3848" Count="0" />
+      <LineId Id="3888" Count="0" />
+      <LineId Id="3891" Count="3" />
+      <LineId Id="3882" Count="3" />
+      <LineId Id="3895" Count="1" />
+      <LineId Id="3899" Count="0" />
+      <LineId Id="3897" Count="0" />
+      <LineId Id="3900" Count="0" />
+      <LineId Id="3898" Count="0" />
+      <LineId Id="3901" Count="1" />
+      <LineId Id="3889" Count="0" />
+      <LineId Id="3869" Count="0" />
+      <LineId Id="3841" Count="0" />
+      <LineId Id="3863" Count="1" />
+      <LineId Id="3867" Count="0" />
+      <LineId Id="3842" Count="0" />
+      <LineId Id="3846" Count="0" />
+      <LineId Id="3830" Count="0" />
+      <LineId Id="3162" Count="2" />
       <LineId Id="3629" Count="0" />
       <LineId Id="3166" Count="25" />
       <LineId Id="3724" Count="0" />
       <LineId Id="3719" Count="0" />
       <LineId Id="3729" Count="3" />
       <LineId Id="3727" Count="1" />
-      <LineId Id="3193" Count="42" />
+      <LineId Id="3193" Count="17" />
+      <LineId Id="3861" Count="1" />
+      <LineId Id="3211" Count="24" />
       <LineId Id="3422" Count="6" />
       <LineId Id="3421" Count="0" />
       <LineId Id="3242" Count="1" />
