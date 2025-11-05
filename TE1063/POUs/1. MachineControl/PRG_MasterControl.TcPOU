@@ -64,6 +64,12 @@ IF NOT GVL_Safety.bSafetyEnable THEN
 	GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
 END_IF
 
+//Reset PRG`s when in system init 
+IF (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
+	PRG_Calibration.Reset();
+	PRG_StateMachine.Reset();
+END_IF
+
 //Reset the Reset flags every time gets out of auto cycle
 IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
 	bResetSMDone := FALSE;
@@ -177,6 +183,10 @@ END_CASE
       <LineId Id="129" Count="0" />
       <LineId Id="123" Count="2" />
       <LineId Id="122" Count="0" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="666" Count="2" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="669" Count="0" />
       <LineId Id="181" Count="0" />
       <LineId Id="178" Count="0" />
       <LineId Id="177" Count="0" />

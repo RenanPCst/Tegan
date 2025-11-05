@@ -7151,6 +7151,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bCalHoldSysPressureBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalHoldSysPressureBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI Button responsible for shut the air off the system"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bCalLeakTestButton": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -7235,6 +7252,74 @@
             "MAPPING": "PLC1::GVL_HMI::bCalLinearPumpsStopBt",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalMoveValves": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalMoveValves",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Manual Valves Movement from calibration screen"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalNotAllowedTrigger": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalNotAllowedTrigger",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "'IE-110: Attempt to perform a calibration procedure without a calibration box'; (* JS from Start Calibration Button - Calibration screen *)"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalPressureUpSystemBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalPressureUpSystemBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI Button responsible for pressurize the system"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bCalStopLeakTestBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bCalStopLeakTestBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI Button responsible for stopping the leak test"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -7338,6 +7423,57 @@
                     },
                     {
                         "comment": "Incoherence Monitoring that could block master controll to enter in autoCycle"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bM1MoveNotAllowedTrigger": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bM1MoveNotAllowedTrigger",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "'IE-100: M1 Movement Not allowed'; (* JS from Run M1 Button - Manual screen *)"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bM2MoveNotAllowedTrigger": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bM2MoveNotAllowedTrigger",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "'IE-100: M2 Movement Not allowed'; (* JS from Run M2 Button - Manual screen *)"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bM3MoveNotAllowedTrigger": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bM3MoveNotAllowedTrigger",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "'IE-101: M3 Movement Not allowed'; (* JS from Run M3 Button - Manual screen *)"
                     }
                 ]
             },
@@ -7755,6 +7891,23 @@
                     },
                     {
                         "$ref": "tchmi:server#/definitions/PLC1.E_MachineMode"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.iCalMoveValvesPosition": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::iCalMoveValvesPosition",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/USINT"
+                    },
+                    {
+                        "comment": "Manual Valves Movement from calibration screen"
                     }
                 ]
             },
@@ -8857,6 +9010,24 @@
                     {
                         "comment": "Term21_I.13 Calibration Box Present",
                         "propertyOrder": 13
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_IO.gDigInputs.bThroatJigPresent": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_IO::gDigInputs::bThroatJigPresent",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Term21_I.14 Throat Jig Present",
+                        "propertyOrder": 14
                     }
                 ]
             },
@@ -10271,55 +10442,64 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_Motion.M1Motor.rActualPosition": {
+        "PLC1.GVL_Motion.M1Motor.rActualPos": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_Motion::M1Motor::rActualPosition",
+            "MAPPING": "PLC1::GVL_Motion::M1Motor::rActualPos",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/LREAL"
                     },
                     {
-                        "comment": "Show de actual motor position",
-                        "propertyOrder": 8
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
                     }
                 ]
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_Motion.M2Motor.rActualPosition": {
+        "PLC1.GVL_Motion.M2Motor.rActualPos": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_Motion::M2Motor::rActualPosition",
+            "MAPPING": "PLC1::GVL_Motion::M2Motor::rActualPos",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/LREAL"
                     },
                     {
-                        "comment": "Show de actual motor position",
-                        "propertyOrder": 8
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
                     }
                 ]
             },
             "USEMAPPING": true
         },
-        "PLC1.GVL_Motion.M3Motor.rActualPosition": {
+        "PLC1.GVL_Motion.M3Motor.rActualPos": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::GVL_Motion::M3Motor::rActualPosition",
+            "MAPPING": "PLC1::GVL_Motion::M3Motor::rActualPos",
             "SCHEMA": {
                 "allOf": [
                     {
                         "$ref": "tchmi:general#/definitions/LREAL"
                     },
                     {
-                        "comment": "Show de actual motor position",
-                        "propertyOrder": 8
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
                     }
                 ]
             },
@@ -10525,6 +10705,27 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aValves.0.rActualPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[0]::rActualPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aValves.0.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10538,6 +10739,27 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aValves.1.rActualPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[1]::rActualPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
                     }
                 ]
             },
@@ -10561,6 +10783,27 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aValves.2.rActualPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[2]::rActualPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aValves.2.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10579,6 +10822,27 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aValves.3.rActualPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[3]::rActualPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aValves.3.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10592,6 +10856,27 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aValves.4.rActualPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[4]::rActualPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "comment": "Real Actual Axis Position (Position Actual Value)",
+                        "propertyOrder": 11
                     }
                 ]
             },
@@ -10628,6 +10913,60 @@
                     },
                     {
                         "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Settings.stMachineParam.aM1Position": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Settings::stMachineParam::aM1Position",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..3_OF-INT"
+                    },
+                    {
+                        "comment": "M1 Motor - Stage Collection Vertical Axis  |1=HomePosition|2=SealPosition|3=DryPosition|",
+                        "propertyOrder": 2
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Settings.stMachineParam.aM2Position": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Settings::stMachineParam::aM2Position",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..4_OF-INT"
+                    },
+                    {
+                        "comment": "M2 Motor - Sample Recovery Vertical Axis   |1=HomePosition|2=Waste|3=Fill Vials|4=Calibration|",
+                        "propertyOrder": 3
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Settings.stMachineParam.aM3Position": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Settings::stMachineParam::aM3Position",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..6_OF-INT"
+                    },
+                    {
+                        "comment": "M3 Motor - Sample Recovery Horizontal Axis |1=HomePosition/Waste|2=VialLine1|3=VialLine2|4=VialLine3|5=VialLine4|6=Calibration|",
+                        "propertyOrder": 4
                     }
                 ]
             },
@@ -13087,6 +13426,7 @@
                 "PLC1.GVL_HMI.bBtStopCycle": 3,
                 "PLC1.GVL_HMI.bCalBoxFixed": 3,
                 "PLC1.GVL_HMI.bCalBoxNeedsAttention": 3,
+                "PLC1.GVL_HMI.bCalHoldSysPressureBt": 3,
                 "PLC1.GVL_HMI.bCalLeakTestButton": 3,
                 "PLC1.GVL_HMI.bCalLeakTestError": 3,
                 "PLC1.GVL_HMI.bCalLeakTestFail": 3,
@@ -13095,6 +13435,10 @@
                 "PLC1.GVL_HMI.bCalLinearPumpsHomeBt": 3,
                 "PLC1.GVL_HMI.bCalLinearPumpsMoveBt": 3,
                 "PLC1.GVL_HMI.bCalLinearPumpsStopBt": 3,
+                "PLC1.GVL_HMI.bCalMoveValves": 3,
+                "PLC1.GVL_HMI.bCalNotAllowedTrigger": 3,
+                "PLC1.GVL_HMI.bCalPressureUpSystemBt": 3,
+                "PLC1.GVL_HMI.bCalStopLeakTestBt": 3,
                 "PLC1.GVL_HMI.bDelayStart": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeButton": 3,
                 "PLC1.GVL_HMI.bDeleteRecipeConfirm": 3,
@@ -13109,6 +13453,9 @@
                 "PLC1.GVL_HMI.bIncoherenceAlert": 3,
                 "PLC1.GVL_HMI.bIncoherenceDetected": 3,
                 "PLC1.GVL_HMI.bLinearPumpOldPosition": 3,
+                "PLC1.GVL_HMI.bM1MoveNotAllowedTrigger": 3,
+                "PLC1.GVL_HMI.bM2MoveNotAllowedTrigger": 3,
+                "PLC1.GVL_HMI.bM3MoveNotAllowedTrigger": 3,
                 "PLC1.GVL_HMI.bMachineModeBlinking": 3,
                 "PLC1.GVL_HMI.bMachineModeScan": 3,
                 "PLC1.GVL_HMI.bNewRecipeButton": 3,
@@ -13138,6 +13485,7 @@
                 "PLC1.GVL_HMI.bStartCalibrationBt": 3,
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
                 "PLC1.GVL_HMI.eMachineMode": 3,
+                "PLC1.GVL_HMI.iCalMoveValvesPosition": 3,
                 "PLC1.GVL_HMI.iDelayStart": 3,
                 "PLC1.GVL_HMI.iDelayTimeMin": 3,
                 "PLC1.GVL_HMI.iFileCount": 3,
@@ -13250,6 +13598,7 @@
                 "PLC1.GVL_IO.bInAckSignal": 3,
                 "PLC1.GVL_IO.bInResetSignal": 3,
                 "PLC1.GVL_IO.gDigInputs.bCalibrationBoxPresent": 3,
+                "PLC1.GVL_IO.gDigInputs.bThroatJigPresent": 3,
                 "PLC1.GVL_IO.nAL1333Box1State": 3,
                 "PLC1.GVL_IO.nAMI8000Box10State": 3,
                 "PLC1.GVL_IO.nAMI8000Box11State": 3,
@@ -13331,8 +13680,11 @@
                 "PLC1.GVL_Marco.calibResult": 3,
                 "PLC1.GVL_Marco.mL_target": 3,
                 "PLC1.GVL_Marco.revs": 3,
+                "PLC1.GVL_Motion.M1Motor.rActualPos": 3,
                 "PLC1.GVL_Motion.M1Motor.rActualPosition": 3,
+                "PLC1.GVL_Motion.M2Motor.rActualPos": 3,
                 "PLC1.GVL_Motion.M2Motor.rActualPosition": 3,
+                "PLC1.GVL_Motion.M3Motor.rActualPos": 3,
                 "PLC1.GVL_Motion.M3Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.0.Linear.iOperational": 3,
                 "PLC1.GVL_Motion.aPumps.0.Linear.rActualPosition": 3,
@@ -13345,15 +13697,23 @@
                 "PLC1.GVL_Motion.aPumps.7.Linear.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.8.Linear.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.9.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.0.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.0.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.1.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.1.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.2.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.2.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.3.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.3.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.4.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.4.rActualPosition": 3,
                 "PLC1.GVL_Recipe.aAvailableFiles": 3,
                 "PLC1.GVL_Recipe.sSelectedRecipeName": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume": 3,
+                "PLC1.GVL_Settings.stMachineParam.aM1Position": 3,
+                "PLC1.GVL_Settings.stMachineParam.aM2Position": 3,
+                "PLC1.GVL_Settings.stMachineParam.aM3Position": 3,
                 "PLC1.POU_Master_Calib.pumpNo": 3,
                 "PLC1.POU_Master_Calib.replicates": 3,
                 "PLC1.POU_Master_Calib.result": 3,

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_AllPumpsController" Id="{6c354a05-b130-4608-b4fa-0a03f44c30f1}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_AllPumpsController
 VAR_INPUT
@@ -375,7 +375,7 @@ IF bStopRotaryPump[10] THEN
 	bStopRotaryPump[10] := NOT GVL_Motion.aPumpsRotary[10].Stop();
 END_IF
 
-IF (*NOT bStopRotaryPump[1] AND*) NOT bStopRotaryPump[2] AND NOT bStopRotaryPump[3] AND NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
+IF NOT bStopRotaryPump[1] AND NOT bStopRotaryPump[2] AND (*NOT bStopRotaryPump[3] AND*) NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
 	bRequestStopAllPumps := FALSE;
 	StopAllPumps := TRUE;
 	RETURN;

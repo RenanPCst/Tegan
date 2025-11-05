@@ -75,6 +75,10 @@ VAR_GLOBAL
 	bCalLeakTestError		: BOOL := FALSE; // Leak test error flag
 	rCalLeakTestPressure	: LREAL;		 // Leak test pressure reading from sensor
 	
+	bCalPressureUpSystemBt	: BOOL := FALSE; // HMI Button responsible for pressurize the system
+	bCalHoldSysPressureBt	: BOOL := FALSE; // HMI Button responsible for shut the air off the system
+	bCalStopLeakTestBt		: BOOL := FALSE; // HMI Button responsible for stopping the leak test
+	
 	bCalLinearPumpsEnableBt	: BOOL := FALSE; // Linear pumps Enable motors button
 	bCalLinearPumpsHomeBt	: BOOL := FALSE; // Linear pumps Homing motors button
 	bCalLinearPumpsMoveBt	: BOOL := FALSE; // Linear pumps Move motors button
@@ -94,6 +98,11 @@ VAR_GLOBAL
 	
 	bCalBoxNeedsAttention	: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to fill up the calibration box
 	bCalBoxFixed			: BOOL := FALSE; // Feedback from hmi to tell the system that the calibration box is ready to continue
+	
+	bCalMoveValves			: BOOL  := FALSE; // Manual Valves Movement from calibration screen 
+	iCalMoveValvesPosition	: USINT := 1; 	  // Manual Valves Position from calibration screen 
+	bCalMoveM1Motor			: BOOL  := FALSE; // Manual M1 Motor Movement from calibration screen 
+	iCalMoveM1MotorPosition	: USINT := 1; 	  // Manual M1 Motor Position from calibration screen 
 	
 	// <\Calibration> ------------------------------------------------------------------------------------------------------------------------------------------
 	
@@ -119,6 +128,12 @@ VAR_GLOBAL
 	bRunPumpsByDistanceBt 	: BOOL;	// Button Run pumps by Distance from manual screen
 	bStopPumpsBt 			: BOOL;	// Button Stop pumps movememnt from manual screen
 	
+	(* Alarms and Events triggers from HMI JS Trigger*) //-------------------------------------------------------------------------------------------------------------
+	bM1MoveNotAllowedTrigger	: BOOL;	// 'IE-100: M1 Movement Not allowed'; (* JS from Run M1 Button - Manual screen *)
+	bM2MoveNotAllowedTrigger	: BOOL;	// 'IE-100: M2 Movement Not allowed'; (* JS from Run M2 Button - Manual screen *)
+	bM3MoveNotAllowedTrigger	: BOOL;	// 'IE-101: M3 Movement Not allowed'; (* JS from Run M3 Button - Manual screen *)
+	bCalNotAllowedTrigger		: BOOL;	// 'IE-110: Attempt to perform a calibration procedure without a calibration box'; (* JS from Start Calibration Button - Calibration screen *)
+		
 	// <IO Screen> Variables for IO Screen use (*-----------------------------------------------------------------------------------------------)
 	
 	nSelectedIO		: UDINT; // Selection made by IO screen combobox
