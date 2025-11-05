@@ -6360,11 +6360,11 @@
 ]
 </script>
 </div>
-<div id="btnDownloadPDF_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="980" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF CUL" data-tchmi-top="258" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<div id="btnDownloadPDF_10" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="970" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF CUL" data-tchmi-top="258" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "btnDownloadPDF_6.onPressed",
+    "event": "btnDownloadPDF_10.onPressed",
     "actions": [
       {
         "objectType": "JavaScript",
@@ -6375,60 +6375,11 @@
           "          \t\talert(\"Mensagem do PLC: \" + message);",
           "          }",
           "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_CUL%/s%', function (data) {",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.listAllSystem%/s%', function (data) {",
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let plcArrayData = data.value; // value from PLC (array)",
           "                  // Function Call",
           "                  genCurrentUserList(plcArrayData,'Current Users List');                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
-          "              }",
-          "          });"
-        ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
-      }
-    ]
-  }
-]
-</script>
-
-<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
-{
-  "topLeft": 5.0,
-  "topRight": 5.0,
-  "bottomLeft": 5.0,
-  "bottomRight": 5.0,
-  "topLeftUnit": "px",
-  "topRightUnit": "px",
-  "bottomLeftUnit": "px",
-  "bottomRightUnit": "px"
-}
-</script>
-
-
-</div>
-<div id="btnDownloadPDF_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="980" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF UHL" data-tchmi-top="318" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
-<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-[
-  {
-    "event": "btnDownloadPDF_7.onPressed",
-    "actions": [
-      {
-        "objectType": "JavaScript",
-        "active": true,
-        "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_CUL%/s%', function (data) {",
-          "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let plcArrayData = data.value; // value from PLC (array)",
-          "                  // Function Call",
-          "                  genUserHistoryReport(plcArrayData, 'User History Report');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
