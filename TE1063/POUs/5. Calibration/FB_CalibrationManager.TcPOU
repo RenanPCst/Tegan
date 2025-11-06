@@ -355,7 +355,7 @@ CASE eStep OF
 			bMovePump := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative( 	Distance := - rDistanceByVol, 
 																			Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 	//RPM to Degree/sec
 																			Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 		//RPM to Degree/sec
-																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6			//RPM to Degree/sec
+																			Dec := GVL_Settings.stPumpParameters.iMeterVelocity				//RPM to Degree/sec
 																		 	);
 		END_IF
 		
@@ -504,7 +504,11 @@ CASE eStep OF
 		// Calculate the new factor
 		
 		// new factor := target / Trunc((target / (Average / revs) ) + 0.5) 
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_Calibration.aCalibCheckResult[iResultIndex-1].nRevsDone))+ 0.5));
+		GVL_Retain.aCalibrationPumpFactor[iPumpindex] := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_Calibration.aCalibCheckResult[iResultIndex-1].nRevsDone))+ 0.5));
+		
+		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillJars   := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFromCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
 		
 		// Populate the adjustment row	
 		GVL_Calibration.stPumpCalibrationData[iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
@@ -859,8 +863,11 @@ Reset := TRUE;]]></ST>
       <LineId Id="3832" Count="0" />
       <LineId Id="3877" Count="0" />
       <LineId Id="3843" Count="0" />
-      <LineId Id="3874" Count="0" />
+      <LineId Id="3992" Count="0" />
+      <LineId Id="3994" Count="0" />
+      <LineId Id="3993" Count="0" />
       <LineId Id="3848" Count="0" />
+      <LineId Id="3990" Count="1" />
       <LineId Id="3888" Count="0" />
       <LineId Id="3891" Count="3" />
       <LineId Id="3882" Count="3" />
