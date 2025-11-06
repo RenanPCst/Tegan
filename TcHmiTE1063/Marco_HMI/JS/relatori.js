@@ -678,9 +678,10 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         const sysData = sysDataArray;
         let yPosicao = 65;
         let xPosition = 90;
+        let n = sysDataArray[0].sysRevisionNo;
 
         // 2. Criar a instância jsPDF
-        const doc = new jspdf.jsPDF();
+        const doc = new jspdf.jsPDF({orientation: 'l'});
         
         // 3. header function
         const drawHeader = () => {
@@ -695,94 +696,94 @@ async function genSysHistoryReport(sysDataArray, reportName) {
             doc.text(`Database Name: `, 100, 35);
             doc.text(`Printed by: `, 100, 40);
             // line
-            doc.line(10, 50, 200, 50);
+            doc.line(10, 50, 215, 50);
             // table header
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.text(`Section`, 10, 55);
-            doc.text(`Parameter`, 60, 55);
-            doc.text(`Value`, 90, 55);
-            doc.text(`Revision`, 130, 55);
-            doc.text(`Created By`, 170, 55);
-            doc.text(`Date Created`, 180, 55);
-            doc.line(10, 57.5, 200, 57.5);
+            doc.text(`Parameter`, 40, 55);
+            doc.text(`Value`, 90, 55, { align: "right" });
+            doc.text(`Revision`, 110, 55, { align: "center" });
+            doc.text(`Created By`, 125, 55, { align: "left" });
+            doc.text(`Date Created`, 210, 55, { align: "right" });
+            doc.line(10, 57.5, 215, 57.5);
             // reset font
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8);
-            yPosicao = 63;
+            yPosicao = 65;
         };
-        const drawRevision = () => {
+        const drawRevision = (data = sysDataArray[n]) => {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.text(`Revision: ${sysData.sysRevisionNo.toString()}`, 10, 60);
+            doc.text(`Revision: ${data.sysRevisionNo}`, 10, 61.5);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8);
             doc.text(`Calibration`, 10, 65);
-            doc.text(`AcceptanceCriteria`, 60, 65);
+            doc.text(`AcceptanceCriteria`, 40, 65);
             doc.text(`Calibration`, 10, 68);
-            doc.text(`AllowableFailures`, 60, 68);
+            doc.text(`AllowableFailures`, 40, 68);
             doc.text(`Calibration`, 10, 71);
-            doc.text(`Replicates`, 60, 71);
+            doc.text(`Replicates`, 40, 71);
             doc.text(`Calibration`, 10, 74);
-            doc.text(`PumpCallIntervalDays`, 60, 74);
+            doc.text(`PumpCallIntervalDays`, 40, 74);
             doc.text(`Calibration`, 10, 77);
-            doc.text(`CloaseAppOnCompletation`, 60, 77);
+            doc.text(`CloaseAppOnCompletation`, 40, 77);
             doc.text(`Calibration`, 10, 80);
-            doc.text(`AirDryTimeOnCompletation`, 60, 80);
+            doc.text(`AirDryTimeOnCompletation`, 40, 80);
             doc.text(`General`, 10, 83);
-            doc.text(`SealAndPump`, 60, 83);
+            doc.text(`SealAndPump`, 40, 83);
             doc.text(`LeakTest`, 10, 86);
-            doc.text(`AllowableLeakTestFailures`, 60, 86);
+            doc.text(`AllowableLeakTestFailures`, 40, 86);
             doc.text(`LeakTest`, 10, 89);
-            doc.text(`LeakTestBuildupTime`, 60, 89);
+            doc.text(`LeakTestBuildupTime`, 40, 89);
             doc.text(`LeakTest`, 10, 92);
-            doc.text(`LeakTestHoldTime`, 60, 92);
+            doc.text(`LeakTestHoldTime`, 40, 92);
             doc.text(`LeakTest`, 10, 95);
-            doc.text(`LeakTestPressure`, 60, 95);
+            doc.text(`LeakTestPressure`, 40, 95);
             doc.text(`Lift_Mechanism`, 10, 98);
-            doc.text(`PlatesClosedPosition`, 60, 98);
+            doc.text(`PlatesClosedPosition`, 40, 98);
             doc.text(`Lift_Mechanism`, 10, 101);
-            doc.text(`PlatesDryPosition`, 60, 101);
+            doc.text(`PlatesDryPosition`, 40, 101);
             doc.text(`Lift_Mechanism`, 10, 104);
-            doc.text(`PlatesVelocity`, 60, 104);
+            doc.text(`PlatesVelocity`, 40, 104);
             doc.text(`Lift_Mechanism`, 10, 107);
-            doc.text(`MaxCurrentFastDown`, 60, 107);
+            doc.text(`MaxCurrentFastDown`, 40, 107);
             doc.text(`Lift_Mechanism`, 10, 110);
-            doc.text(`MaxCurrentSlowDown`, 60, 110);
+            doc.text(`MaxCurrentSlowDown`, 40, 110);
             doc.text(`Lift_Mechanism`, 10, 113);
-            doc.text(`MaxCurrentSlowUp`, 60, 113);
+            doc.text(`MaxCurrentSlowUp`, 40, 113);
             doc.text(`Pumps`, 10, 116);
-            doc.text(`MeterVelocity`, 60, 116);
+            doc.text(`MeterVelocity`, 40, 116);
             doc.text(`Pumps`, 10, 119);
-            doc.text(`RunVelocity`, 60, 119);
+            doc.text(`RunVelocity`, 40, 119);
             doc.text(`Pumps`, 10, 122);
-            doc.text(`EmptyFactor`, 60, 122);
+            doc.text(`EmptyFactor`, 40, 122);
             doc.text(`Pumps`, 10, 125);
-            doc.text(`FillSolventTubesFactor`, 60, 125);
+            doc.text(`FillSolventTubesFactor`, 40, 125);
             doc.text(`Sampler`, 10, 128);
-            doc.text(`AboveCalibration`, 60, 128);
+            doc.text(`AboveCalibration`, 40, 128);
             doc.text(`Sampler`, 10, 131);
-            doc.text(`AboveVialSet1`, 60, 131);
+            doc.text(`AboveVialSet1`, 40, 131);
             doc.text(`Sampler`, 10, 134);
-            doc.text(`VialSetSpacing`, 60, 134);
+            doc.text(`VialSetSpacing`, 40, 134);
             doc.text(`Sampler`, 10, 137);
-            doc.text(`IntoResBottom`, 60, 137);
+            doc.text(`IntoResBottom`, 40, 137);
             doc.text(`Sampler`, 10, 140);
-            doc.text(`IntoResDispense`, 60, 140);
+            doc.text(`IntoResDispense`, 40, 140);
             doc.text(`Sampler`, 10, 143);
-            doc.text(`IntoResWeigh`, 60, 143);
+            doc.text(`IntoResWeigh`, 40, 143);
             doc.text(`Sampler`, 10, 146);
-            doc.text(`IntoVials`, 60, 146);
+            doc.text(`IntoVials`, 40, 146);
             doc.text(`Sampler`, 10, 149);
-            doc.text(`IntoWaste`, 60, 149);
+            doc.text(`IntoWaste`, 40, 149);
             doc.text(`Security`, 10, 152);
-            doc.text(`DisplayManualControl`, 60, 152);
+            doc.text(`DisplayManualControl`, 40, 152);
             doc.text(`Security`, 10, 155);
-            doc.text(`CheckLogonEachRun`, 60, 155);
+            doc.text(`CheckLogonEachRun`, 40, 155);
         };
         
         drawHeader();
-        drawRevision();
+        //drawRevision();
 
         // 4. Add Data into the Table
         doc.setFont("helvetica", "normal");
@@ -797,27 +798,166 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         );
 
         filteredData.forEach(item => {
-            if (yPosicao > 280) { // adjust for your margin
+            if (yPosicao > 90) { // adjust for your margin
                 doc.addPage();
                 drawHeader();
-                drawRevision();
             }
-            doc.text(item.cal_AcceptanceCriteria, xPosition, yPosicao);
-            doc.text(item.sysRevisionNo.toString(), xPosition+50, yPosicao);
-            doc.text(item.createdBy, xPosition+80, yPosicao);
-            doc.text(item.createdDate, xPosition+120, yPosicao);
-
-            doc.text(item.cal_AllowableFail, xPosition, yPosicao+3);
-            doc.text(item.sysRevisionNo.toString(), xPosition+50, yPosicao+3);
-            doc.text(item.createdBy, xPosition+80, yPosicao+3);
-            doc.text(item.createdDate, xPosition+120, yPosicao+3);
-
-            doc.text(item.cal_Replicates, xPosition, yPosicao+6);
-            doc.text(item.sysRevisionNo.toString(), xPosition+50, yPosicao+6);
-            doc.text(item.createdBy, xPosition+80, yPosicao+6);
-            doc.text(item.createdDate, xPosition+120, yPosicao+6);
+            n = item.sysRevisionNo;
+            drawRevision(sysDataArray.find(d => d.sysRevisionNo === n));
             
-            yPosicao += 90; // Aumenta a posição vertical para a próxima linha
+            doc.text(item.cal_AcceptanceCriteria, xPosition, yPosicao, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao);
+            doc.text(item.createdDate, 210, yPosicao, { align: "right" });
+
+            doc.text(item.cal_AllowableFail, xPosition, yPosicao+3, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+3, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+3);
+            doc.text(item.createdDate, 210, yPosicao+3, { align: "right" });
+
+            doc.text(item.cal_Replicates, xPosition, yPosicao+6, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+6, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+6);
+            doc.text(item.createdDate, 210, yPosicao+6, { align: "right" });
+
+            doc.text(item.cal_PumpCallIntervalDays, xPosition, yPosicao+9, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+9, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+9);
+            doc.text(item.createdDate, 210, yPosicao+9, { align: "right" });
+
+            doc.text(item.cal_CloseAppOnCompletation, xPosition, yPosicao+12, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+12, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+12);
+            doc.text(item.createdDate, 210, yPosicao+12, { align: "right" });
+
+            doc.text(item.AirDryTimeOnCompletation, xPosition, yPosicao+15, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+15, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+15);
+            doc.text(item.createdDate, 210, yPosicao+15, { align: "right" });
+
+            doc.text(item.gen_SealAndPump, xPosition, yPosicao+18, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+18, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+18);
+            doc.text(item.createdDate, 210, yPosicao+18, { align: "right" });
+
+            doc.text(item.lkt_AllowableLeakTestFail, xPosition, yPosicao+21, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+21, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+21);
+            doc.text(item.createdDate, 210, yPosicao+21, { align: "right" });
+
+            doc.text(item.lkt_LeakTestBuildupTime, xPosition, yPosicao+24, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+24, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+24);
+            doc.text(item.createdDate, 210, yPosicao+24, { align: "right" });
+
+            doc.text(item.lkt_LeakTestHoldTime, xPosition, yPosicao+27, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+27, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+27);
+            doc.text(item.createdDate, 210, yPosicao+27, { align: "right" });
+
+            doc.text(item.lkt_LeakTestPressure, xPosition, yPosicao+30, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+30, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+30);
+            doc.text(item.createdDate, 210, yPosicao+30, { align: "right" });
+
+            doc.text(item.mec_PlatesClosedPosition, xPosition, yPosicao+33, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+33, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+33);
+            doc.text(item.createdDate, 210, yPosicao+33, { align: "right" });
+
+            doc.text(item.mec_PlatesDryPosition, xPosition, yPosicao+36, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+36, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+36);
+            doc.text(item.createdDate, 210, yPosicao+36, { align: "right" });
+
+            doc.text(item.mec_PlatesVelocity, xPosition, yPosicao+39, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+39, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+39);
+            doc.text(item.createdDate, 210, yPosicao+39, { align: "right" });
+
+            doc.text(item.mec_MaxCurrentFastDown, xPosition, yPosicao+42, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+42, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+42);
+            doc.text(item.createdDate, 210, yPosicao+42, { align: "right" });
+
+            doc.text(item.mec_MaxCurrentSlowDown, xPosition, yPosicao+45, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+45, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+45);
+            doc.text(item.createdDate, 210, yPosicao+45, { align: "right" });
+
+            doc.text(item.mec_MaxCurrentSlowUp, xPosition, yPosicao+48, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+48, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+48);
+            doc.text(item.createdDate, 210, yPosicao+48, { align: "right" });
+
+            doc.text(item.pmp_MeterVelocity, xPosition, yPosicao+51, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+51, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+51);
+            doc.text(item.createdDate, 210, yPosicao+51, { align: "right" });
+
+            doc.text(item.pmp_RunVelocity, xPosition, yPosicao+54, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+54, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+54);
+            doc.text(item.createdDate, 210, yPosicao+54, { align: "right" });
+
+            doc.text(item.pmp_EmptyFactor, xPosition, yPosicao+57, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+57, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+57);
+            doc.text(item.createdDate, 210, yPosicao+57, { align: "right" });
+
+            doc.text(item.pmp_FillSolventTubesFactor, xPosition, yPosicao+60, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+60, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+60);
+            doc.text(item.createdDate, 210, yPosicao+60, { align: "right" });
+
+            doc.text(item.smp_AboveCalibration, xPosition, yPosicao+63, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+63, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+63);
+            doc.text(item.createdDate, 210, yPosicao+63, { align: "right" });
+
+            
+
+            doc.text(item.smp_VialSetSpacing, xPosition, yPosicao+69, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+69, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+69);
+            doc.text(item.createdDate, 210, yPosicao+69, { align: "right" });
+
+            doc.text(item.smp_IntoResBottom, xPosition, yPosicao+72, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+72, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+72);
+            doc.text(item.createdDate, 210, yPosicao+72, { align: "right" });
+
+            doc.text(item.smp_IntoResDispense, xPosition, yPosicao+75, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+75, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+75);
+            doc.text(item.createdDate, 210, yPosicao+75, { align: "right" });
+
+            doc.text(item.smp_IntoResWeigh, xPosition, yPosicao+78, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+78, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+78);
+            doc.text(item.createdDate, 210, yPosicao+78, { align: "right" });
+
+            doc.text(item.smp_IntoVials, xPosition, yPosicao+84, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+84, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+84);
+            doc.text(item.createdDate, 210, yPosicao+84, { align: "right" });
+
+
+
+            doc.text(item.sec_DisplayManualControl, xPosition, yPosicao+87, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+87, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+87);
+            doc.text(item.createdDate, 210, yPosicao+87, { align: "right" });
+
+            doc.text(item.sec_CheckLogonEachRun, xPosition, yPosicao+90, { align: "right" });
+            doc.text(item.sysRevisionNo.toString(), xPosition+20, yPosicao+90, {align: "center"});
+            doc.text(item.createdBy, 125, yPosicao+90);
+            doc.text(item.createdDate, 210, yPosicao+90, { align: "right" });
+            
+
+            
+            yPosicao += 95; // Aumenta a posição vertical para a próxima linha
+            
         });
         
         // 5. add page numbers after content
