@@ -36,11 +36,27 @@
       {
         "objectType": "WriteToSymbol",
         "active": true,
-        "symbolExpression": "%ctrl%TcHmiRectangle_indexBackground::StrokeThickness%/ctrl%",
+        "symbolExpression": "%s%PLC1.GVL_HMI.bHomeScreenLoaded%/s%",
         "value": {
           "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/MeasurementValue",
-          "value": 0.0
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": true
+        },
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "TcHmiRectangle_indexBackground.onDetached",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.GVL_HMI.bHomeScreenLoaded%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "value": false
         },
         "asyncWait": true
       }
@@ -4650,7 +4666,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.0.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "WriteToSymbol",
@@ -4663,27 +4679,6 @@
             {
               "transformType": "Rotate",
               "angle": "%f%%s%PLC1.GVL_Motion.aValves.0.rActualPos%/s%/20%/f%"
-            }
-          ]
-        },
-        "asyncWait": true
-      }
-    ]
-  },
-  {
-    "event": "TcHmi_Controls_Beckhoff_HomeValve1ActualPos.onAttached",
-    "actions": [
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_HomeValve1ActualPos::Transform%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TransformList",
-          "value": [
-            {
-              "transformType": "Rotate",
-              "angle": "%f%%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%/20%/f%"
             }
           ]
         },
@@ -4707,7 +4702,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.0.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "Condition",
@@ -4959,303 +4954,6 @@
                   "objectType": "Symbol",
                   "valueType": "tchmi:general#/definitions/LREAL",
                   "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPos%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 6100.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [6]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "else": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [ ]"
-                },
-                "asyncWait": true
-              }
-            ]
-          }
-        ],
-        "asyncWait": true
-      }
-    ]
-  },
-  {
-    "event": "TcHmiTextblock_Valve1Pos.onAttached",
-    "actions": [
-      {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-          {
-            "if": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": -100.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 200.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [1]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 1100.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 1300.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [2]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 2300.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 2500.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [3]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 3500.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 3700.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [4]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 4700.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 4900.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve1Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 1 [5]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 5900.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.rActualPosition%/s%"
                 },
                 "compare2": {
                   "objectType": "StaticValue",
@@ -5308,7 +5006,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.1.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "Condition",
@@ -5560,303 +5258,6 @@
                   "objectType": "Symbol",
                   "valueType": "tchmi:general#/definitions/LREAL",
                   "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPos%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 6100.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [6]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "else": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [ ]"
-                },
-                "asyncWait": true
-              }
-            ]
-          }
-        ],
-        "asyncWait": true
-      }
-    ]
-  },
-  {
-    "event": "TcHmiTextblock_Valve2Pos.onAttached",
-    "actions": [
-      {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-          {
-            "if": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": -100.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 200.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [1]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 1100.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 1300.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [2]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 2300.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 2500.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [3]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 3500.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 3700.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [4]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 4700.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 4900.0
-                },
-                "compareOperator": "<=",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiTextblock_Valve2Pos::Text%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "value": "Valve 2 [5]"
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "elseif": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "value": 5900.0
-                },
-                "compareOperator": ">=",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/LREAL",
-                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%"
                 },
                 "compare2": {
                   "objectType": "StaticValue",
@@ -5907,1805 +5308,914 @@
 <div id="TcHmiTextblock_Valve3Pos" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="24" data-tchmi-height-unit="px" data-tchmi-left="665" data-tchmi-left-unit="px" data-tchmi-text="Valve 3 [  ]" data-tchmi-top="1335" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-background-image-horizontal-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size-unit="%" data-tchmi-text-font-size="120" data-tchmi-zindex="13" data-tchmi-text-font-weight="Bold">
 
     <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-        [
-        {
-        "event": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%",
-        "actions": [
-        {
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
+    "actions": [
+      {
         "objectType": "Condition",
         "active": true,
         "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
-        ],
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "event": "TcHmiTextblock_Valve3Pos.onAttached",
-        "actions": [
-        {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 3 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": -100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 200.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [1]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1300.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [2]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2300.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2500.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [3]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3500.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3700.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [4]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4700.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4900.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [5]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 5900.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 6100.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [6]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve3Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 3 [ ]"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
         ],
         "asyncWait": true
-        }
-        ]
-        }
-        ]
-    </script>
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmiTextblock_Valve4Pos" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="24" data-tchmi-height-unit="px" data-tchmi-left="752" data-tchmi-left-unit="px" data-tchmi-text="Valve 4 [  ]" data-tchmi-top="1335" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-background-image-horizontal-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size-unit="%" data-tchmi-text-font-size="120" data-tchmi-zindex="13" data-tchmi-text-font-weight="Bold">
 
     <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-        [
-        {
-        "event": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%",
-        "actions": [
-        {
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
+    "actions": [
+      {
         "objectType": "Condition",
         "active": true,
         "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
-        ],
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "event": "TcHmiTextblock_Valve4Pos.onAttached",
-        "actions": [
-        {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 4 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": -100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 200.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [1]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1300.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [2]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2300.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2500.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [3]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3500.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3700.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [4]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4700.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4900.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [5]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 5900.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 6100.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [6]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve4Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 4 [ ]"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
         ],
         "asyncWait": true
-        }
-        ]
-        }
-        ]
-    </script>
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmiTextblock_Valve5Pos" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="24" data-tchmi-height-unit="px" data-tchmi-left="842" data-tchmi-left-unit="px" data-tchmi-text="Valve 5 [  ]" data-tchmi-top="1335" data-tchmi-top-unit="px" data-tchmi-width="80" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-background-image-horizontal-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size-unit="%" data-tchmi-text-font-size="120" data-tchmi-zindex="13" data-tchmi-text-font-weight="Bold">
 
     <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
-        [
-        {
-        "event": "%s%PLC1.GVL_Motion.aValves.4.rActualPosition%/s%",
-        "actions": [
-        {
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
+    "actions": [
+      {
         "objectType": "Condition",
         "active": true,
         "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
-        ],
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "event": "TcHmiTextblock_Valve5Pos.onAttached",
-        "actions": [
-        {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-        {
-        "if": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": -100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 200.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [1]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1100.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 1300.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [2]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2300.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 2500.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [3]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3500.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 3700.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [4]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4700.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 4900.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [5]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "elseif": [
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 5900.0
-        },
-        "compareOperator": ">=",
-        "logic": null
-        },
-        {
-        "compare1": {
-        "objectType": "Symbol",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
-        },
-        "compare2": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/LREAL",
-        "value": 6100.0
-        },
-        "compareOperator": "<=",
-        "logic": "AND"
-        }
-        ],
-        "then": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [6]"
-        },
-        "asyncWait": true
-        }
-        ]
-        },
-        {
-        "else": [
-        {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
-        "value": {
-        "objectType": "StaticValue",
-        "valueType": "tchmi:general#/definitions/String",
-        "value": "Valve 5 [ ]"
-        },
-        "asyncWait": true
-        }
-        ]
-        }
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": -100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 200.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [1]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1100.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 1300.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [2]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2300.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 2500.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [3]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3500.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 3700.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [4]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4700.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 4900.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [5]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "elseif": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 5900.0
+                },
+                "compareOperator": ">=",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/LREAL",
+                  "value": 6100.0
+                },
+                "compareOperator": "<=",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [6]"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiTextblock_Valve5Pos::Text%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "value": "Valve 5 [ ]"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
         ],
         "asyncWait": true
-        }
-        ]
-        }
-        ]
-    </script>
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmiRectangle_214" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="43" data-tchmi-height-unit="px" data-tchmi-left="14" data-tchmi-left-unit="px" data-tchmi-top="455" data-tchmi-top-unit="px" data-tchmi-width="114" data-tchmi-width-unit="px" data-tchmi-zindex="55">
 
@@ -7759,7 +6269,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.1.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "WriteToSymbol",
@@ -7778,27 +6288,6 @@
         "asyncWait": true
       }
     ]
-  },
-  {
-    "event": "TcHmi_Controls_Beckhoff_HomeValve2ActualPos.onAttached",
-    "actions": [
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_HomeValve2ActualPos::Transform%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TransformList",
-          "value": [
-            {
-              "transformType": "Rotate",
-              "angle": "%f%%s%PLC1.GVL_Motion.aValves.1.rActualPosition%/s%/20%/f%"
-            }
-          ]
-        },
-        "asyncWait": true
-      }
-    ]
   }
 ]
 </script>
@@ -7808,7 +6297,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.2.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "WriteToSymbol",
@@ -7827,27 +6316,6 @@
         "asyncWait": true
       }
     ]
-  },
-  {
-    "event": "TcHmi_Controls_Beckhoff_HomeValve3ActualPos.onAttached",
-    "actions": [
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_HomeValve3ActualPos::Transform%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TransformList",
-          "value": [
-            {
-              "transformType": "Rotate",
-              "angle": "%f%%s%PLC1.GVL_Motion.aValves.2.rActualPosition%/s%/20%/f%"
-            }
-          ]
-        },
-        "asyncWait": true
-      }
-    ]
   }
 ]
 </script>
@@ -7857,7 +6325,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.3.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "WriteToSymbol",
@@ -7876,27 +6344,6 @@
         "asyncWait": true
       }
     ]
-  },
-  {
-    "event": "TcHmi_Controls_Beckhoff_HomeValve4ActualPos.onAttached",
-    "actions": [
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_HomeValve4ActualPos::Transform%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TransformList",
-          "value": [
-            {
-              "transformType": "Rotate",
-              "angle": "%f%%s%PLC1.GVL_Motion.aValves.3.rActualPosition%/s%/20%/f%"
-            }
-          ]
-        },
-        "asyncWait": true
-      }
-    ]
   }
 ]
 </script>
@@ -7906,7 +6353,7 @@
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%",
+    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
     "actions": [
       {
         "objectType": "WriteToSymbol",
@@ -7919,27 +6366,6 @@
             {
               "transformType": "Rotate",
               "angle": "%f%%s%PLC1.GVL_Motion.aValves.4.rActualPos%/s%/20%/f%"
-            }
-          ]
-        },
-        "asyncWait": true
-      }
-    ]
-  },
-  {
-    "event": "TcHmi_Controls_Beckhoff_HomeValve5ActualPos.onAttached",
-    "actions": [
-      {
-        "objectType": "WriteToSymbol",
-        "active": true,
-        "symbolExpression": "%ctrl%TcHmi_Controls_Beckhoff_HomeValve5ActualPos::Transform%/ctrl%",
-        "value": {
-          "objectType": "StaticValue",
-          "valueType": "tchmi:framework#/definitions/TransformList",
-          "value": [
-            {
-              "transformType": "Rotate",
-              "angle": "%f%%s%PLC1.GVL_Motion.aValves.4.rActualPosition%/s%/20%/f%"
             }
           ]
         },

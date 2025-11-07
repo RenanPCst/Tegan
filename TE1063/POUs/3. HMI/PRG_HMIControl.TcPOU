@@ -118,7 +118,7 @@ END_IF
 
 //Scan period for hmi refresh
 //IF GVL_HMI.eMachineMode <> E_MachineMode.CALIBRATION AND GVL_HMI.eMachineMode <> E_MachineMode.MANUAL THEN
-	fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
+	fbHMIScan(bEnable := GVL_HMI.bHomeScreenLoaded, tPeriod := T#500MS);
 	GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
 //ELSE
 //	GVL_HMI.bMachineModeScan := FALSE;

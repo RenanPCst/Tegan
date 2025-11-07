@@ -155,19 +155,19 @@
 
     // Load currently logged-in user info and update UI
     function refreshCurrentUserInfo() {
-        TcHmi.Symbol.readEx2('%i%UserManagement::CurrentUser::Name%', function (data) {
+        TcHmi.Symbol.readEx2('%s%UserManagement::CurrentUser::Name%/s%', function (data) {
             if (data.error === TcHmi.Errors.NONE) {
                 TcHmi.Controls.get('TcHmiTextblock_CurrentUserName').setText(data.value);
             }
         });
 
-        TcHmi.Symbol.readEx2('%i%UserManagement::CurrentUser::Groups%', function (data) {
+        TcHmi.Symbol.readEx2('%s%UserManagement::CurrentUser::Groups%/s%', function (data) {
             if (data.error === TcHmi.Errors.NONE) {
                 TcHmi.Controls.get('TcHmiTextblock_CurrentUserGroup').setText(data.value.join(', '));
             }
         });
 
-        TcHmi.Symbol.readEx2('%i%UserManagement::CurrentUser::AutoLogout%', function (data) {
+        TcHmi.Symbol.readEx2('%i%UserManagement::CurrentUser::AutoLogout%/i%', function (data) {
             if (data.error === TcHmi.Errors.NONE) {
                 TcHmi.Controls.get('TcHmiTextblock_CurrentAutoLogout').setText(data.value);
             }
