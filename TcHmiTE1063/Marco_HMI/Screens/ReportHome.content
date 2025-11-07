@@ -22,7 +22,7 @@
 </div>
 <div id="TcHmiTextblock_1032" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="90" data-tchmi-left-unit="px" data-tchmi-text="Last Calibration Results" data-tchmi-top="10" data-tchmi-top-unit="px" data-tchmi-width="194" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-zindex="4" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-font-size="20" data-tchmi-background-image="Themes/Base/Base.theme">
 </div>
-<div id="TcHmiRectangle_216" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="546" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-top="52" data-tchmi-top-unit="px" data-tchmi-width="950" data-tchmi-width-unit="px" data-tchmi-zindex="0">
+<div id="TcHmiRectangle_216" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="546" data-tchmi-height-unit="px" data-tchmi-left="77" data-tchmi-left-unit="px" data-tchmi-top="17" data-tchmi-top-unit="px" data-tchmi-width="950" data-tchmi-width-unit="px" data-tchmi-zindex="0">
 
 <script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
 {
@@ -443,7 +443,7 @@
 }
 </script>
 </div>
-<div id="btnDownloadPDF_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="118" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF CUL" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<div id="btnDownloadPDF_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="118" data-tchmi-left-unit="px" data-tchmi-text="Current Users" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -492,11 +492,11 @@
 
 
 </div>
-<div id="btnDownloadPDF_9" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="258" data-tchmi-left-unit="px" data-tchmi-text="GEN PDF UHL" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<div id="btnDownloadPDF_11" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="404" data-tchmi-left-unit="px" data-tchmi-text="System History" data-tchmi-top="117" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "btnDownloadPDF_9.onPressed",
+    "event": "btnDownloadPDF_11.onPressed",
     "actions": [
       {
         "objectType": "JavaScript",
@@ -507,11 +507,109 @@
           "          \t\talert(\"Mensagem do PLC: \" + message);",
           "          }",
           "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.listOfSys%/s%', function (data) {",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.listAllSystem%/s%', function (data) {",
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let sysDataArray = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genSysHistoryReport(sysDataArray, 'System Settingd History');                  ",
+          "                  genSysHistoryReport(sysDataArray, 'System Settings Report History');                  ",
+          "              } else {",
+          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
+          "              }",
+          "          });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+
+</div>
+<div id="btnDownloadPDF_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="118" data-tchmi-left-unit="px" data-tchmi-text="User History" data-tchmi-top="204" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "btnDownloadPDF_12.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Call the PDF generator function",
+          "          function showMessageFromPLC(message) {",
+          "          \t\talert(\"Mensagem do PLC: \" + message);",
+          "          }",
+          "          // Wrinting the PLC variable",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_CUL%/s%', function (data) {",
+          "              if (data.error === TcHmi.Errors.NONE) {",
+          "                  let plcArrayData = data.value; // value from PLC (array)",
+          "                  // Function Call",
+          "                  genUserHistoryReport(plcArrayData,'User History Repor');                  ",
+          "              } else {",
+          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
+          "              }",
+          "          });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+
+</div>
+<div id="btnDownloadPDF_13" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="404" data-tchmi-left-unit="px" data-tchmi-text="Current System" data-tchmi-top="204" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "btnDownloadPDF_13.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Call the PDF generator function",
+          "          function showMessageFromPLC(message) {",
+          "          \t\talert(\"Mensagem do PLC: \" + message);",
+          "          }",
+          "          // Wrinting the PLC variable",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stSysParameters%/s%', function (data) {",
+          "              if (data.error === TcHmi.Errors.NONE) {",
+          "                  let sysDataArray = data.value; // value from PLC (array)",
+          "                  // Function Call",
+          "                  genCurrentSysReport(sysDataArray, 'System Settings Report');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
