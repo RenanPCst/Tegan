@@ -158,6 +158,15 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.ARRAY_1..10_OF-ST_CalibrationPumpResult": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_CalibrationPumpResult"
+            },
+            "maxItems": 10,
+            "minItems": 10,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-ST_HMI_VolumesRow": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_HMI_VolumesRow"
@@ -476,7 +485,8 @@
                 2,
                 3,
                 4,
-                5
+                5,
+                6
             ],
             "options": [
                 {
@@ -502,6 +512,10 @@
                 {
                     "label": "ADJUSTMENT_NEEDED",
                     "value": 5
+                },
+                {
+                    "label": "UNKNOWN",
+                    "value": 6
                 }
             ],
             "type": "integer"
@@ -969,6 +983,77 @@
             },
             "type": "object"
         },
+        "PLC1.ST_CalibrationPumpResult": {
+            "properties": {
+                "eStatus": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PLC1.E_CalibrationStatus"
+                        },
+                        {
+                            "comment": "Actual pump calibration state",
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "iRevsDone": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/UINT"
+                        },
+                        {
+                            "comment": "Number of revolutions done",
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "rAvgGrossWeight": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "comment": "Average Gross Weight(mg)",
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "rAvgNetVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "comment": "Average Net Volume (mL)",
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "rAvgTareWeight": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "comment": "Average Tare Weight (mg)",
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "rTargetVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/LREAL"
+                        },
+                        {
+                            "comment": "Target Volume",
+                            "propertyOrder": 1
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "PLC1.ST_CalibrationSettings": {
             "properties": {
                 "bDelayStart": {
@@ -1034,7 +1119,7 @@
                 "iReplicatesSetpoint": {
                     "allOf": [
                         {
-                            "$ref": "tchmi:general#/definitions/INT"
+                            "$ref": "tchmi:general#/definitions/UINT"
                         },
                         {
                             "propertyOrder": 2
@@ -6796,6 +6881,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.aCalPumpResults": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::aCalPumpResults",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Rotary Pumps result structure"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-ST_CalibrationPumpResult"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.aCalibLinearPumps": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -7925,6 +8027,23 @@
                     },
                     {
                         "$ref": "tchmi:server#/definitions/PLC1.E_MachineMode"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.iCalMoveM1MotorPosition": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::iCalMoveM1MotorPosition",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/USINT"
+                    },
+                    {
+                        "comment": "Manual M1 Motor Position from calibration screen"
                     }
                 ]
             },
@@ -13425,6 +13544,7 @@
                 "PLC1.GVL_HMI.HMI_SelectedMode": 3,
                 "PLC1.GVL_HMI.ManualMov": 3,
                 "PLC1.GVL_HMI.aAvailableFiles": 3,
+                "PLC1.GVL_HMI.aCalPumpResults": 3,
                 "PLC1.GVL_HMI.aCalibLinearPumps": 3,
                 "PLC1.GVL_HMI.aCalibPumps": 3,
                 "PLC1.GVL_HMI.aIOAMI8000": 3,
@@ -13521,6 +13641,7 @@
                 "PLC1.GVL_HMI.bStartCalibrationBt": 3,
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
                 "PLC1.GVL_HMI.eMachineMode": 3,
+                "PLC1.GVL_HMI.iCalMoveM1MotorPosition": 3,
                 "PLC1.GVL_HMI.iCalMoveValvesPosition": 3,
                 "PLC1.GVL_HMI.iDelayStart": 3,
                 "PLC1.GVL_HMI.iDelayTimeMin": 3,

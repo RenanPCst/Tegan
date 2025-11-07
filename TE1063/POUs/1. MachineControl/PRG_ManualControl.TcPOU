@@ -17,7 +17,7 @@ VAR
 	bRunPumpsBySpeed	  : BOOL := FALSE;
 	bRunPumpsByVolume	  : BOOL := FALSE;
 	bRunPumpsByDistance	  : BOOL := FALSE;
-	
+	iM3Position			  : LREAL;
 	aMotorBusy	: ARRAY[1..3] OF BOOL;
 	
 	fbPumpsController : FB_AllPumpsController;
@@ -64,14 +64,14 @@ rActualPosM3 := rMotorsActualPosition[3];
 CASE iTargetPosM2 OF
     3: // Fill Vials
         bAllowMoveM2 := (
-            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[2]) <= rTol OR
-            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[3]) <= rTol OR
-            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[4]) <= rTol OR
-            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[5]) <= rTol
+            ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[2]) <= rTol OR //AboveVilSet1
+            ABS(rActualPosM3 - (GVL_Settings.stMachineParam.aM3Position[2]+GVL_Settings.stMachineParam.aM3Position[3])) <= rTol OR 	//AboveVilSet2
+            ABS(rActualPosM3 - (GVL_Settings.stMachineParam.aM3Position[2]+(2*GVL_Settings.stMachineParam.aM3Position[3]))) <= rTol OR	//AboveVilSet3
+            ABS(rActualPosM3 - (GVL_Settings.stMachineParam.aM3Position[2]+(3*GVL_Settings.stMachineParam.aM3Position[3]))) <= rTol		//AboveVilSet4
         );
 
     4: // Calibration
-        bAllowMoveM2 := ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[6]) <= rTol;
+        bAllowMoveM2 := ABS(rActualPosM3 - GVL_Settings.stMachineParam.aM3Position[4]) <= rTol;
 
     ELSE
         bAllowMoveM2 := TRUE;
@@ -106,8 +106,16 @@ IF GVL_HMI.aManualMotorsCmd[3].bRun THEN
         GVL_HMI.aManualMotorsCmd[3].bRun := FALSE;
         // TODO: Block flag or alarm
     ELSE
+		CASE GVL_HMI.aManualMotorsCmd[3].iPosition OF 
+			1: iM3Position := GVL_Settings.stMachineParam.aM3Position[1];
+			2: iM3Position := GVL_Settings.stMachineParam.aM3Position[2];
+			3: iM3Position := GVL_Settings.stMachineParam.aM3Position[2] + GVL_Settings.stMachineParam.aM3Position[3];
+			4: iM3Position := GVL_Settings.stMachineParam.aM3Position[2] + (2*GVL_Settings.stMachineParam.aM3Position[3]);
+			5: iM3Position := GVL_Settings.stMachineParam.aM3Position[2] + (3*GVL_Settings.stMachineParam.aM3Position[3]);
+			6: iM3Position := GVL_Settings.stMachineParam.aM3Position[4];
+		END_CASE
         GVL_HMI.aManualMotorsCmd[3].bRun := NOT GVL_Motion.aMotors[3].MoveAbsolute(
-            rPosition := GVL_Settings.stMachineParam.aM3Position[GVL_HMI.aManualMotorsCmd[3].iPosition],
+            rPosition := iM3Position,
             rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
             rAcc := GVL_Settings.stMachineParam.rM3Accleration,
             rDec := GVL_Settings.stMachineParam.rM3Deceleration
@@ -330,7 +338,12 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       </Implementation>
     </Action>
     <LineIds Name="PRG_ManualControl">
-      <LineId Id="846" Count="153" />
+      <LineId Id="846" Count="72" />
+      <LineId Id="1156" Count="1" />
+      <LineId Id="1159" Count="1" />
+      <LineId Id="1162" Count="2" />
+      <LineId Id="1158" Count="0" />
+      <LineId Id="919" Count="80" />
       <LineId Id="1023" Count="0" />
       <LineId Id="1021" Count="0" />
       <LineId Id="1000" Count="0" />
