@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="POU_Load_SysParameters" Id="{b300a1c3-5439-4a2b-a404-0e54d95758d7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM POU_Load_SysParameters
+VAR
+	state: INT;
+	timer: ton;
+END_VAR
+
+VAR_INPUT
+	start: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timer();
+
+CASE state OF
+	
+0:
+	IF NOT start THEN
+		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_SYSTEM_ID;
+		timer(in:=TRUE, pt:=T#10S);
+		state:= 10;
+	ELSE
+		state:= 0;
+	END_IF
+	
+10:
+
+	IF NOT DB_Query.FB_SelectArray.bBusy AND timer.Q THEN
+		start:= TRUE;	
+		timer(in:=FALSE);
+		GVL_Settings.stCalibParameters.rAcceptanceCriteria				:= STRING_TO_LREAL(GVL_DB.stSysParameters.cal_AcceptanceCriteria);
+		GVL_Settings.stCalibParameters.iAllowableFailures				:= STRING_TO_USINT(GVL_DB.stSysParameters.cal_AllowableFail);
+		GVL_Settings.stCalibParameters.iReplicatesSetpoint				:= STRING_TO_INT(GVL_DB.stSysParameters.cal_Replicates);
+		GVL_Settings.stCalibParameters.iCalIntervalDays					:= STRING_TO_UINT(GVL_DB.stSysParameters.cal_PumpCallIntervalDays);
+		// Close app on Completation
+		GVL_Settings.stCalibParameters.iAirDryTimeSec					:= STRING_TO_UINT(GVL_DB.stSysParameters.AirDryTimeOnCompletation);
+		// Seal And Pump
+		GVL_Settings.stLeakTestParameters.iAllowableLeakTestFailures	:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_AllowableLeakTestFail);
+		GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestBuildupTime);
+		GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestHoldTime);
+		GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit		:= STRING_TO_REAL(GVL_DB.stSysParameters.lkt_LeakTestPressure);
+		// Plates close position
+		// Plates Dry Position
+		GVL_Settings.stMachineParam.rM1Velocity							:= STRING_TO_LREAL(gvl_DB.stSysParameters.mec_PlatesVelocity);
+		// Max current fast down
+		// Max current slow down
+		// Max current slow up
+		GVL_Settings.stPumpParameters.iMeterVelocity					:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_MeterVelocity);
+		GVL_Settings.stPumpParameters.iRunVelocity						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_RunVelocity);
+		GVL_Settings.stPumpParameters.iEmptyFactor						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_EmptyFactor);
+		GVL_Settings.stPumpParameters.iFillolventTubesFactor			:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_FillSolventTubesFactor);
+		// Above Calibration
+		// Above vial set 1
+		// Vial set spacing
+		// into res bottom
+		// Into res dispense
+		// Into res weigh
+		// Into vials
+		// Into waste
+		// Display Manual Control
+		// Check Logon Each Run
+		state:= 0;
+	ELSE
+		state:= 10;
+	END_IF
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="POU_Load_SysParameters">
+      <LineId Id="6" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="56" Count="2" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="23" Count="6" />
+      <LineId Id="31" Count="23" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -22,305 +22,307 @@ VAR
 	nome: STRING;
 	cmdIn: STRING(10000);
 	cmdSlc: STRING(10000);
-	state: (IDLE_STATE, ERROR_STATE, SELECT_POST_LAST_RUN, SELECT_POST_LAST_RUN_ID, SELECT_VD_BY_NO, INSERT_RUN, INSERT_RUN_VD, SELECT_POST_LAST_CALIBRATION_ID, INSERT_CALIBRATION, INSERT_CALIBRATION_VALUES, SELECT_ALL_SYSTEM, SELECT_LAST_SYSTEM_ID, INSERT_SYS_PARAMETERS, SELECT_ALL_METHODS, SELECT_WHOLE_METHODS, SELECT_ALL_ACTV_METHODS, INSERT_NEW_METHOD, UPDATE_DEACTV_METHOD, SELECT_VOLUME_DATA, INSERT_VOLUME_DATA, INSERT_USER, SELECT_ALL_USERS,SELECT_ALL_CURRENT_USERS);
 	status: STRING;
 	str: STRING;
 	lastRunID: STRING;
 	i: INT;
 	tempCmd: string(5000);
 END_VAR
-]]></Declaration>
+
+VAR_INPUT
+	state: E_DB_QUERY_STATE;
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[//FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
 
 CASE state OF
 	
 
-IDLE_STATE:
+E_DB_QUERY_STATE.IDLE_STATE:
 	
-	state:= IDLE_STATE;
+	state:= E_DB_QUERY_STATE.IDLE_STATE;
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= FALSE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= FALSE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 		
-SELECT_POST_LAST_RUN:
+E_DB_QUERY_STATE.SELECT_POST_LAST_RUN:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastRun), pCmdAddr:= ADR(GVL_DB.slctLastRun), nStartIndex:= 0, nRecordCount:= 5, cbRecordArraySize:= SIZEOF(GVL_DB.stPostRunReport), pDestAddr:= ADR(GVL_DB.stPostRunReport), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_POST_LAST_RUN;
+		state:= E_DB_QUERY_STATE.SELECT_POST_LAST_RUN;
 		bExecute:= FALSE;
 	END_IF
 	
-INSERT_RUN:
+E_DB_QUERY_STATE.INSERT_RUN:
 	
 	cmdIn:= GVL_DB.isrtRun;
 	insertRunValues(start:=TRUE);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_RUN;
+		state:= E_DB_QUERY_STATE.INSERT_RUN;
 		bExecuteIn:= FALSE;
 	END_IF
 
-SELECT_POST_LAST_CALIBRATION_ID:
+E_DB_QUERY_STATE.SELECT_POST_LAST_CALIBRATION_ID:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastCalibID), pCmdAddr:= ADR(GVL_DB.slctLastCalibID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_POST_LAST_CALIBRATION_ID;
+		state:= E_DB_QUERY_STATE.SELECT_POST_LAST_CALIBRATION_ID;
 		bExecute:= FALSE;
 	END_IF
 
-INSERT_CALIBRATION_VALUES:
+E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES:
 
 	cmdIn:= GVL_DB.isrtCalibValues;
 	insertCalibValues(start:=TRUE, line:= GVL_Calibration.iResultIndex);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_CALIBRATION_VALUES;
+		state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES;
 		bExecuteIn:= FALSE;
 	END_IF
 
-INSERT_CALIBRATION:
+E_DB_QUERY_STATE.INSERT_CALIBRATION:
 
 	cmdIn:= GVL_DB.isrtCalib;
 	insertCalib(start:=TRUE);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_CALIBRATION;
+		state:= E_DB_QUERY_STATE.INSERT_CALIBRATION;
 		//bExecuteIn:= FALSE;
 	END_IF
 	
-SELECT_LAST_SYSTEM_ID:
+E_DB_QUERY_STATE.SELECT_LAST_SYSTEM_ID:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastSys), pCmdAddr:= ADR(GVL_DB.slctLastSys), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.stSysParameters), pDestAddr:= ADR(GVL_DB.stSysParameters), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_LAST_SYSTEM_ID;
+		state:= E_DB_QUERY_STATE.SELECT_LAST_SYSTEM_ID;
 		bExecute:= FALSE;
 	END_IF	
 	
-SELECT_ALL_SYSTEM:
+E_DB_QUERY_STATE.SELECT_ALL_SYSTEM:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctAllSys), pCmdAddr:= ADR(GVL_DB.slctAllSys), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.listAllSystem), pDestAddr:= ADR(GVL_DB.listAllSystem), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_ALL_SYSTEM;
+		state:= E_DB_QUERY_STATE.SELECT_ALL_SYSTEM;
 		bExecute:= FALSE;
 	END_IF
 	
-INSERT_SYS_PARAMETERS:
+E_DB_QUERY_STATE.INSERT_SYS_PARAMETERS:
 
 	cmdIn:= GVL_DB.isrtSys;
 	insertSys(start:=TRUE);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_SYS_PARAMETERS;
+		state:= E_DB_QUERY_STATE.INSERT_SYS_PARAMETERS;
 		//bExecuteIn:= FALSE;
 	END_IF	
 
-SELECT_ALL_METHODS:
+E_DB_QUERY_STATE.SELECT_ALL_METHODS:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctAllMethods), pCmdAddr:= ADR(GVL_DB.slctAllMethods), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.listOfMethod), pDestAddr:= ADR(GVL_DB.listOfMethod), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_ALL_METHODS;
+		state:= E_DB_QUERY_STATE.SELECT_ALL_METHODS;
 		bExecute:= FALSE;
 	END_IF
 	
-SELECT_ALL_ACTV_METHODS:
+E_DB_QUERY_STATE.SELECT_ALL_ACTV_METHODS:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctAllActvMethod), pCmdAddr:= ADR(GVL_DB.slctAllActvMethod), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.listOfMethod), pDestAddr:= ADR(GVL_DB.listOfMethod), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_ALL_ACTV_METHODS;
+		state:= E_DB_QUERY_STATE.SELECT_ALL_ACTV_METHODS;
 		bExecute:= FALSE;
 	END_IF
 	
-SELECT_WHOLE_METHODS:
+E_DB_QUERY_STATE.SELECT_WHOLE_METHODS:
 	
 	cmdSlc:= GVL_DB.slctMethod;
 	selectMethod(start:=TRUE, methodName:= '2 Water Washes (using Alliance vials)', methodRevision:= '9');
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 26, cbRecordArraySize:= SIZEOF(GVL_DB.stParameter_MR), pDestAddr:= ADR(GVL_DB.stParameter_MR), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_WHOLE_METHODS;
+		state:= E_DB_QUERY_STATE.SELECT_WHOLE_METHODS;
 		bExecute:= FALSE;
 	END_IF
 	
-INSERT_NEW_METHOD:
+E_DB_QUERY_STATE.INSERT_NEW_METHOD:
 
 	cmdIn:= GVL_DB.isrtNewMethod;
 	insertMethod(start:=TRUE);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_NEW_METHOD;
+		state:= E_DB_QUERY_STATE.INSERT_NEW_METHOD;
 		//bExecuteIn:= FALSE;
 	END_IF	
 
-UPDATE_DEACTV_METHOD:
+E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD:
 
 	cmdIn:= GVL_DB.updtDactvMethod;
 	updateMethod(start:=TRUE, methodName:= '2 Water Washes (using Alliance vials)', methodRevision:= '1');
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= UPDATE_DEACTV_METHOD;
+		state:= E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD;
 		//bExecuteIn:= FALSE;
 	END_IF	
 	
-SELECT_VOLUME_DATA:
+E_DB_QUERY_STATE.SELECT_VOLUME_DATA:
 	
 	cmdSlc:= GVL_DB.slctVD;
 	selectVD(start:=TRUE, methodID:= '1');
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 10, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_VOLUME_DATA;
+		state:= E_DB_QUERY_STATE.SELECT_VOLUME_DATA;
 		bExecute:= FALSE;
 	END_IF
 	
-INSERT_VOLUME_DATA:
+E_DB_QUERY_STATE.INSERT_VOLUME_DATA:
 
 	cmdIn:= GVL_DB.isrtVD;
 	insertVD(start:=TRUE, methodID:= '11', line:= i);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_VOLUME_DATA;
+		state:= E_DB_QUERY_STATE.INSERT_VOLUME_DATA;
 		//bExecuteIn:= FALSE;
 	END_IF	
 	
-INSERT_USER:
+E_DB_QUERY_STATE.INSERT_USER:
 
 	cmdIn:= GVL_DB.isrtUser;
 	insertUser(start:=TRUE, line:= i);
 	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
 	
 	IF NOT FB_Insert.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecuteIn:= FALSE;
 	ELSIF FB_Insert.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= INSERT_USER;
+		state:= E_DB_QUERY_STATE.INSERT_USER;
 		//bExecuteIn:= FALSE;
 	END_IF	
 	
-SELECT_ALL_CURRENT_USERS:
+E_DB_QUERY_STATE.SELECT_ALL_CURRENT_USERS:
 	
 	cmdSlc:= GVL_DB.slctCurrentUser;
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_ALL_CURRENT_USERS;
+		state:= E_DB_QUERY_STATE.SELECT_ALL_CURRENT_USERS;
 		bExecute:= FALSE;
 	END_IF
 	
-SELECT_ALL_USERS:
+E_DB_QUERY_STATE.SELECT_ALL_USERS:
 	
 	cmdSlc:= GVL_DB.slctAllUsers;
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 1000, cbRecordArraySize:= SIZEOF(GVL_DB.astData_CUL), pDestAddr:= ADR(GVL_DB.astData_CUL), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= IDLE_STATE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
 	ELSIF FB_SelectArray.bError THEN	
-		state:= ERROR_STATE;
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= SELECT_ALL_USERS;
+		state:= E_DB_QUERY_STATE.SELECT_ALL_USERS;
 		bExecute:= FALSE;
 	END_IF
 	
-ERROR_STATE:
+E_DB_QUERY_STATE.ERROR_STATE:
 
 	bExecute:= FALSE;
 	status:= 'SQL Error!';
-	state:= IDLE_STATE;
+	state:= E_DB_QUERY_STATE.IDLE_STATE;
 		
 END_CASE]]></ST>
     </Implementation>
