@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
-  <POU Name="POU_Load_SysParameters" Id="{b300a1c3-5439-4a2b-a404-0e54d95758d7}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM POU_Load_SysParameters
+  <POU Name="DB_Load_SysParameters" Id="{b300a1c3-5439-4a2b-a404-0e54d95758d7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM DB_Load_SysParameters
 VAR
 	state: INT;
 	timer: ton;
@@ -29,6 +29,7 @@ CASE state OF
 	IF NOT DB_Query.FB_SelectArray.bBusy AND timer.Q THEN
 		start:= TRUE;	
 		timer(in:=FALSE);
+		GVL_Settings.sysRevNumber										:= GVL_DB.stSysParameters.sysRevisionNo;
 		GVL_Settings.stCalibParameters.rAcceptanceCriteria				:= STRING_TO_LREAL(GVL_DB.stSysParameters.cal_AcceptanceCriteria);
 		GVL_Settings.stCalibParameters.iAllowableFailures				:= STRING_TO_USINT(GVL_DB.stSysParameters.cal_AllowableFail);
 		GVL_Settings.stCalibParameters.iReplicatesSetpoint				:= STRING_TO_INT(GVL_DB.stSysParameters.cal_Replicates);
@@ -66,7 +67,7 @@ CASE state OF
 	END_IF
 END_CASE]]></ST>
     </Implementation>
-    <LineIds Name="POU_Load_SysParameters">
+    <LineIds Name="DB_Load_SysParameters">
       <LineId Id="6" Count="0" />
       <LineId Id="69" Count="0" />
       <LineId Id="5" Count="0" />
@@ -82,6 +83,7 @@ END_CASE]]></ST>
       <LineId Id="15" Count="0" />
       <LineId Id="21" Count="0" />
       <LineId Id="71" Count="0" />
+      <LineId Id="80" Count="0" />
       <LineId Id="23" Count="6" />
       <LineId Id="31" Count="23" />
       <LineId Id="17" Count="0" />

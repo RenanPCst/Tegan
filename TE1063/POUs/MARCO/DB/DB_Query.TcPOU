@@ -34,10 +34,7 @@ VAR_INPUT
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[//FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
-
 CASE state OF
-	
-
 E_DB_QUERY_STATE.IDLE_STATE:
 	
 	state:= E_DB_QUERY_STATE.IDLE_STATE;
@@ -74,7 +71,7 @@ E_DB_QUERY_STATE.INSERT_RUN:
 		bExecuteIn:= FALSE;
 	END_IF
 
-E_DB_QUERY_STATE.SELECT_POST_LAST_CALIBRATION_ID:
+E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID:
 	
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(GVL_DB.slctLastCalibID), pCmdAddr:= ADR(GVL_DB.slctLastCalibID), nStartIndex:= 0, nRecordCount:= 1, cbRecordArraySize:= SIZEOF(GVL_DB.lastCalibID), pDestAddr:= ADR(GVL_DB.lastCalibID), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
@@ -84,7 +81,7 @@ E_DB_QUERY_STATE.SELECT_POST_LAST_CALIBRATION_ID:
 	ELSIF FB_SelectArray.bError THEN	
 		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
-		state:= E_DB_QUERY_STATE.SELECT_POST_LAST_CALIBRATION_ID;
+		state:= E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID;
 		bExecute:= FALSE;
 	END_IF
 
@@ -326,6 +323,26 @@ E_DB_QUERY_STATE.ERROR_STATE:
 		
 END_CASE]]></ST>
     </Implementation>
+    <Action Name="Fill_Calibration_Data" Id="{0b2ca2f2-5f1e-435f-8fbd-291533b605b5}">
+      <Implementation>
+        <ST><![CDATA[
+FOR i:=1 TO 100 BY 1 DO 
+GVL_DB.astData_PCR[i].CalibrationNo			:= GVL_DB.stParameter_PCR.CalibrationNo;
+GVL_DB.astData_PCR[i].criteria				:= real_to_string(GVL_Calibration.stPumpCalibrationData[i].rCriteria);
+GVL_DB.astData_PCR[i].dateTime				:= GVL_Calibration.stPumpCalibrationData[i].dDateTime;
+GVL_DB.astData_PCR[i].differencePercent		:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent);
+GVL_DB.astData_PCR[i].grossWt				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth);
+GVL_DB.astData_PCR[i].netVolume				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rNetVolume);
+GVL_DB.astData_PCR[i].netWt					:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rNetWeigth);
+GVL_DB.astData_PCR[i].pumpNo				:= usint_to_string(GVL_Calibration.stPumpCalibrationData[i].iPumpNumber);
+GVL_DB.astData_PCR[i].pumpRevs				:= uint_to_string(GVL_Calibration.stPumpCalibrationData[i].iPumpRevs);
+GVL_DB.astData_PCR[i].step					:= GVL_Calibration.stPumpCalibrationData[i].sStep;
+GVL_DB.astData_PCR[i].tareWt				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rTareWeigth);
+GVL_DB.astData_PCR[i].targetVolume			:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rTargetVolume);
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="insertCalib" Id="{04796082-46d0-4881-a277-bdc8481c6e70}">
       <Declaration><![CDATA[METHOD insertCalib : BOOL
 VAR_INPUT
@@ -598,9 +615,7 @@ END_IF]]></ST>
     </Method>
     <LineIds Name="DB_Query">
       <LineId Id="51" Count="0" />
-      <LineId Id="95" Count="1" />
-      <LineId Id="98" Count="0" />
-      <LineId Id="683" Count="0" />
+      <LineId Id="96" Count="0" />
       <LineId Id="100" Count="1" />
       <LineId Id="385" Count="0" />
       <LineId Id="479" Count="1" />
@@ -678,6 +693,13 @@ END_IF]]></ST>
       <LineId Id="140" Count="0" />
       <LineId Id="139" Count="0" />
       <LineId Id="99" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.Fill_Calibration_Data">
+      <LineId Id="15" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="10" />
+      <LineId Id="16" Count="1" />
     </LineIds>
     <LineIds Name="DB_Query.insertCalib">
       <LineId Id="53" Count="0" />
