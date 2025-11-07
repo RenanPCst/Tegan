@@ -976,3 +976,300 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         alert("An Error Occured! Verify the console for more details.");
     }
 };
+async function genCurrentSysReport(sysDataArray, reportName) {
+    try {
+
+        const sysData = sysDataArray;
+        let yPosicao = 65;
+        let xPosition = 90;
+        let n = sysDataArray.sysRevisionNo;
+
+        // 2. Criar a instância jsPDF
+        const doc = new jspdf.jsPDF({orientation: 'l'});
+        
+        // 3. header function
+        const drawHeader = () => {
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text('TEGAN 1063 - Automated Sample Recovery System', 10, 15);
+            doc.text(reportName, 10, 25);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Report Date: `, 10, 35);
+            doc.text(`System ID: `, 10, 40);
+            doc.text(`Database Name: `, 100, 35);
+            doc.text(`Printed by: `, 100, 40);
+            // line
+            doc.line(10, 50, 215, 50);
+            // table header
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Section`, 10, 55);
+            doc.text(`Parameter`, 40, 55);
+            doc.text(`Value`, 90, 55, { align: "right" });
+            doc.text(`Revision`, 110, 55, { align: "center" });
+            doc.text(`Created By`, 125, 55, { align: "left" });
+            doc.text(`Date Created`, 210, 55, { align: "right" });
+            doc.line(10, 57.5, 215, 57.5);
+            // reset font
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            yPosicao = 65;
+        };
+        const drawRevision = () => {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text(`Revision: ${sysData.sysRevisionNo}`, 10, 61.5);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.text(`Calibration`, 10, 65);
+            doc.text(`AcceptanceCriteria`, 40, 65);
+            doc.text(`Calibration`, 10, 68);
+            doc.text(`AllowableFailures`, 40, 68);
+            doc.text(`Calibration`, 10, 71);
+            doc.text(`Replicates`, 40, 71);
+            doc.text(`Calibration`, 10, 74);
+            doc.text(`PumpCallIntervalDays`, 40, 74);
+            doc.text(`Calibration`, 10, 77);
+            doc.text(`CloaseAppOnCompletation`, 40, 77);
+            doc.text(`Calibration`, 10, 80);
+            doc.text(`AirDryTimeOnCompletation`, 40, 80);
+            doc.text(`General`, 10, 83);
+            doc.text(`SealAndPump`, 40, 83);
+            doc.text(`LeakTest`, 10, 86);
+            doc.text(`AllowableLeakTestFailures`, 40, 86);
+            doc.text(`LeakTest`, 10, 89);
+            doc.text(`LeakTestBuildupTime`, 40, 89);
+            doc.text(`LeakTest`, 10, 92);
+            doc.text(`LeakTestHoldTime`, 40, 92);
+            doc.text(`LeakTest`, 10, 95);
+            doc.text(`LeakTestPressure`, 40, 95);
+            doc.text(`Lift_Mechanism`, 10, 98);
+            doc.text(`PlatesClosedPosition`, 40, 98);
+            doc.text(`Lift_Mechanism`, 10, 101);
+            doc.text(`PlatesDryPosition`, 40, 101);
+            doc.text(`Lift_Mechanism`, 10, 104);
+            doc.text(`PlatesVelocity`, 40, 104);
+            doc.text(`Lift_Mechanism`, 10, 107);
+            doc.text(`MaxCurrentFastDown`, 40, 107);
+            doc.text(`Lift_Mechanism`, 10, 110);
+            doc.text(`MaxCurrentSlowDown`, 40, 110);
+            doc.text(`Lift_Mechanism`, 10, 113);
+            doc.text(`MaxCurrentSlowUp`, 40, 113);
+            doc.text(`Pumps`, 10, 116);
+            doc.text(`MeterVelocity`, 40, 116);
+            doc.text(`Pumps`, 10, 119);
+            doc.text(`RunVelocity`, 40, 119);
+            doc.text(`Pumps`, 10, 122);
+            doc.text(`EmptyFactor`, 40, 122);
+            doc.text(`Pumps`, 10, 125);
+            doc.text(`FillSolventTubesFactor`, 40, 125);
+            doc.text(`Sampler`, 10, 128);
+            doc.text(`AboveCalibration`, 40, 128);
+            doc.text(`Sampler`, 10, 131);
+            doc.text(`AboveVialSet1`, 40, 131);
+            doc.text(`Sampler`, 10, 134);
+            doc.text(`VialSetSpacing`, 40, 134);
+            doc.text(`Sampler`, 10, 137);
+            doc.text(`IntoResBottom`, 40, 137);
+            doc.text(`Sampler`, 10, 140);
+            doc.text(`IntoResDispense`, 40, 140);
+            doc.text(`Sampler`, 10, 143);
+            doc.text(`IntoResWeigh`, 40, 143);
+            doc.text(`Sampler`, 10, 146);
+            doc.text(`IntoVials`, 40, 146);
+            doc.text(`Sampler`, 10, 149);
+            doc.text(`IntoWaste`, 40, 149);
+            doc.text(`Security`, 10, 152);
+            doc.text(`DisplayManualControl`, 40, 152);
+            doc.text(`Security`, 10, 155);
+            doc.text(`CheckLogonEachRun`, 40, 155);
+        };
+        
+        drawHeader();
+        //drawRevision();
+
+        // 4. Add Data into the Table
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+
+
+       
+            if (yPosicao > 90) { // adjust for your margin
+                doc.addPage();
+                drawHeader();
+            }
+            n = sysData.sysRevisionNo;
+            drawRevision();
+            
+            doc.text(sysData.cal_AcceptanceCriteria, xPosition, yPosicao, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao);
+            doc.text(sysData.createdDate, 210, yPosicao, { align: "right" });
+
+            doc.text(sysData.cal_AllowableFail, xPosition, yPosicao+3, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+3, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+3);
+            doc.text(sysData.createdDate, 210, yPosicao+3, { align: "right" });
+
+            doc.text(sysData.cal_Replicates, xPosition, yPosicao+6, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+6, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+6);
+            doc.text(sysData.createdDate, 210, yPosicao+6, { align: "right" });
+
+            doc.text(sysData.cal_PumpCallIntervalDays, xPosition, yPosicao+9, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+9, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+9);
+            doc.text(sysData.createdDate, 210, yPosicao+9, { align: "right" });
+
+            doc.text(sysData.cal_CloseAppOnCompletation, xPosition, yPosicao+12, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+12, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+12);
+            doc.text(sysData.createdDate, 210, yPosicao+12, { align: "right" });
+
+            doc.text(sysData.AirDryTimeOnCompletation, xPosition, yPosicao+15, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+15, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+15);
+            doc.text(sysData.createdDate, 210, yPosicao+15, { align: "right" });
+
+            doc.text(sysData.gen_SealAndPump, xPosition, yPosicao+18, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+18, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+18);
+            doc.text(sysData.createdDate, 210, yPosicao+18, { align: "right" });
+
+            doc.text(sysData.lkt_AllowableLeakTestFail, xPosition, yPosicao+21, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+21, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+21);
+            doc.text(sysData.createdDate, 210, yPosicao+21, { align: "right" });
+
+            doc.text(sysData.lkt_LeakTestBuildupTime, xPosition, yPosicao+24, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+24, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+24);
+            doc.text(sysData.createdDate, 210, yPosicao+24, { align: "right" });
+
+            doc.text(sysData.lkt_LeakTestHoldTime, xPosition, yPosicao+27, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+27, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+27);
+            doc.text(sysData.createdDate, 210, yPosicao+27, { align: "right" });
+
+            doc.text(sysData.lkt_LeakTestPressure, xPosition, yPosicao+30, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+30, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+30);
+            doc.text(sysData.createdDate, 210, yPosicao+30, { align: "right" });
+
+            doc.text(sysData.mec_PlatesClosedPosition, xPosition, yPosicao+33, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+33, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+33);
+            doc.text(sysData.createdDate, 210, yPosicao+33, { align: "right" });
+
+            doc.text(sysData.mec_PlatesDryPosition, xPosition, yPosicao+36, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+36, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+36);
+            doc.text(sysData.createdDate, 210, yPosicao+36, { align: "right" });
+
+            doc.text(sysData.mec_PlatesVelocity, xPosition, yPosicao+39, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+39, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+39);
+            doc.text(sysData.createdDate, 210, yPosicao+39, { align: "right" });
+
+            doc.text(sysData.mec_MaxCurrentFastDown, xPosition, yPosicao+42, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+42, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+42);
+            doc.text(sysData.createdDate, 210, yPosicao+42, { align: "right" });
+
+            doc.text(sysData.mec_MaxCurrentSlowDown, xPosition, yPosicao+45, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+45, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+45);
+            doc.text(sysData.createdDate, 210, yPosicao+45, { align: "right" });
+
+            doc.text(sysData.mec_MaxCurrentSlowUp, xPosition, yPosicao+48, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+48, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+48);
+            doc.text(sysData.createdDate, 210, yPosicao+48, { align: "right" });
+
+            doc.text(sysData.pmp_MeterVelocity, xPosition, yPosicao+51, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+51, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+51);
+            doc.text(sysData.createdDate, 210, yPosicao+51, { align: "right" });
+
+            doc.text(sysData.pmp_RunVelocity, xPosition, yPosicao+54, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+54, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+54);
+            doc.text(sysData.createdDate, 210, yPosicao+54, { align: "right" });
+
+            doc.text(sysData.pmp_EmptyFactor, xPosition, yPosicao+57, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+57, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+57);
+            doc.text(sysData.createdDate, 210, yPosicao+57, { align: "right" });
+
+            doc.text(sysData.pmp_FillSolventTubesFactor, xPosition, yPosicao+60, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+60, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+60);
+            doc.text(sysData.createdDate, 210, yPosicao+60, { align: "right" });
+
+            doc.text(sysData.smp_AboveCalibration, xPosition, yPosicao+63, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+63, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+63);
+            doc.text(sysData.createdDate, 210, yPosicao+63, { align: "right" });
+
+            
+
+            doc.text(sysData.smp_VialSetSpacing, xPosition, yPosicao+69, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+69, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+69);
+            doc.text(sysData.createdDate, 210, yPosicao+69, { align: "right" });
+
+            doc.text(sysData.smp_IntoResBottom, xPosition, yPosicao+72, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+72, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+72);
+            doc.text(sysData.createdDate, 210, yPosicao+72, { align: "right" });
+
+            doc.text(sysData.smp_IntoResDispense, xPosition, yPosicao+75, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+75, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+75);
+            doc.text(sysData.createdDate, 210, yPosicao+75, { align: "right" });
+
+            doc.text(sysData.smp_IntoResWeigh, xPosition, yPosicao+78, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+78, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+78);
+            doc.text(sysData.createdDate, 210, yPosicao+78, { align: "right" });
+
+            doc.text(sysData.smp_IntoVials, xPosition, yPosicao+84, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+84, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+84);
+            doc.text(sysData.createdDate, 210, yPosicao+84, { align: "right" });
+
+
+
+            doc.text(sysData.sec_DisplayManualControl, xPosition, yPosicao+87, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+87, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+87);
+            doc.text(sysData.createdDate, 210, yPosicao+87, { align: "right" });
+
+            doc.text(sysData.sec_CheckLogonEachRun, xPosition, yPosicao+90, { align: "right" });
+            doc.text(sysData.sysRevisionNo.toString(), xPosition+20, yPosicao+90, {align: "center"});
+            doc.text(sysData.createdBy, 125, yPosicao+90);
+            doc.text(sysData.createdDate, 210, yPosicao+90, { align: "right" });
+            
+
+            
+            yPosicao += 95; // Aumenta a posição vertical para a próxima linha
+            
+       
+        
+        // 5. add page numbers after content
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(`Page ${i} of ${totalPages}`, 200, 5, { align: "center" });
+        }
+
+        // 6. Save PDF File
+        doc.save(`${reportName}.pdf`);
+
+    } catch (erro) {
+        console.error("Falha ao gerar o PDF:", erro);
+        alert("An Error Occured! Verify the console for more details.");
+    }
+};
