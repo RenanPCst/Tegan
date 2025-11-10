@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_SetSolenoid" Id="{2f71664d-ad34-48c2-8dc8-59f8d0fe2c84}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SetSolenoid
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="AirDry" Id="{a8293fa8-9464-4f1f-ad94-3fb93520fc78}">
+      <Declaration><![CDATA[METHOD AirDry : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AirDry:= FALSE;
+
+GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+GVL_IO.gDigOutputs.bSolenoidValveC := TRUE;
+
+AirDry := TRUE;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HoldPressure" Id="{981066b5-d51f-42a3-860b-3eb971036e6b}">
+      <Declaration><![CDATA[METHOD HoldPressure : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[HoldPressure:= FALSE;
+
+GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
+GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+
+HoldPressure := TRUE;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Idle" Id="{c8d592fb-4026-4675-95df-925b93b61cb8}">
+      <Declaration><![CDATA[METHOD Idle : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Idle:= FALSE;
+
+GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
+GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+
+Idle := TRUE;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="PressureUp" Id="{431bf55b-2b33-4299-9b61-7c5d049add12}">
+      <Declaration><![CDATA[METHOD PressureUp : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[PressureUp:= FALSE;
+
+GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
+GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
+GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+
+PressureUp := TRUE;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_SetSolenoid">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetSolenoid.AirDry">
+      <LineId Id="6" Count="1" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetSolenoid.HoldPressure">
+      <LineId Id="6" Count="1" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetSolenoid.Idle">
+      <LineId Id="6" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="7" Count="2" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SetSolenoid.PressureUp">
+      <LineId Id="6" Count="1" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

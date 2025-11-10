@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_LeakTest" Id="{21d6925c-1467-47b6-a1a0-80200f2aa3f7}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_LeakTest
 VAR_INPUT
@@ -107,7 +107,7 @@ END_VAR]]></Declaration>
 
     PRESSURIZE:
         // Waits for the pressurization time to complete
-        tonPressuring(IN := bPressureTime, PT := T#20S);
+        tonPressuring(IN := bPressureTime, PT := UINT_TO_TIME(GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime * 1000));
         IF tonPressuring.Q THEN
             // Switches solenoids to LEAKTESTMONITORING configuration before monitoring begins
             fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
@@ -136,7 +136,7 @@ END_VAR]]></Declaration>
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := rScaledPressure * 0.85; //TODO: Just for testing purposes... need to be adjusted to 0.95
+			rClosedSystemPressure := GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit; //TODO: Just for testing purposes... need to be adjusted to 0.95
 			bPressureTaken := TRUE;
 		ELSE
 

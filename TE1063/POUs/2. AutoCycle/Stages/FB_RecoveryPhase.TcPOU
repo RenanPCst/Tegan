@@ -85,7 +85,7 @@ CASE eRecoveryState OF
             eRecoveryState := E_RecoveryState.Metering_Solvent1;
         END_IF;
 
-    E_RecoveryState.Metering_Solvent1:
+    E_RecoveryState.Metering_Solvent1: //Change for external FB to run in paralell if needed 
 
         MeteringSolvent1(); 
         IF bMovementComplete THEN
@@ -985,9 +985,9 @@ GetPumpVolume := volume;]]></ST>
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity :=  GVL_Settings.stPumpParameters.iMeterVelocity * 6, // GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed
+																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
+																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity  // Slow deceleration to ensure smoothness on metering
 																			);
 			END_IF
         END_FOR
@@ -1058,9 +1058,9 @@ END_CASE
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, //GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed, 
+																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
+																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity // Slow deceleration to ensure smoothness on metering 
 																			);
 			END_IF
         END_FOR
@@ -1109,7 +1109,7 @@ END_CASE
 
     	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] 	:= fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6);
 		END_FOR
 		
 		IF fAgitationTime > 0 THEN
@@ -1120,9 +1120,9 @@ END_CASE
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, 
+																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, 
+																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6 
 																			);
 			END_IF
         END_FOR
@@ -1237,7 +1237,7 @@ END_CASE
 
     	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] 	:= fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6);
 		END_FOR
 		
 		IF fAgitationTime > 0 THEN
@@ -1248,9 +1248,9 @@ END_CASE
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed,
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6,
+																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, 
+																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6 
 																			);
 			END_IF
         END_FOR
