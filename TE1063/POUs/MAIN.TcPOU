@@ -69,12 +69,14 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[DB_Query();
+      <ST><![CDATA[
+DB_Query();//Has to stay here!
 
  //Call State Machine and peripheral programs
 PRG_MasterControl(); 
 PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();
+DB_Load_SysParameters();
 
 
 //Can be put into Low task event
@@ -273,8 +275,10 @@ END_IF
 //<\Pressure Testing>-----------------------------------------------------------------------------------------------------------------------------]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
+      <LineId Id="7498" Count="0" />
       <LineId Id="7362" Count="1" />
       <LineId Id="6870" Count="3" />
+      <LineId Id="7497" Count="0" />
       <LineId Id="7289" Count="0" />
       <LineId Id="6874" Count="9" />
       <LineId Id="7294" Count="0" />
