@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_RecoveryPhase" Id="{83f5ec5b-6c67-443f-8065-7a3e8ba1c7ee}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RecoveryPhase
 
@@ -511,7 +511,7 @@ EstimateTotalTime := rTotalTime + 180;]]></ST>
 		
 	2: // M2 and M3 Motors movement
 		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 1 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2], //vial line 1
+			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2], //vial line 1 | AboveVialSet1
 															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
 															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
 															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
@@ -615,7 +615,7 @@ END_CASE]]></ST>
 		
 	2: // M2 and M3 Motors movement
 		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 1 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[3], //Vial line 2
+			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + GVL_Settings.stMachineParam.aM3Position[3], //Vial line 2 | AboveVialSet1 + VialSetSpacing
 															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
 															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
 															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
@@ -721,7 +721,7 @@ END_CASE]]></ST>
 		
 	2: // M2 and M3 Motors movement
 		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 3 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[4], //Vial line 3
+			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + (2 * GVL_Settings.stMachineParam.aM3Position[3]), //Vial line 3 | AboveVialSet1 + (2 * VialSetSpacing)
 															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
 															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
 															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
@@ -827,7 +827,7 @@ END_CASE]]></ST>
 		
 	2: // M2 and M3 Motors movement
 		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 3 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[5], //Vial line 4
+			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + (3 * GVL_Settings.stMachineParam.aM3Position[3]), //Vial line 4| AboveVialSet1 + (3 * VialSetSpacing)
 															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
 															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
 															rDec := GVL_Settings.stMachineParam.rM3Deceleration	

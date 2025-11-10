@@ -120,8 +120,9 @@ END_IF
 IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.bStartCalibration := TRUE;
 	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
-	GVL_Calibration.iReplicatesSetpoint := GVL_Settings.stCalibParameters.iReplicatesSetpoint; //Modifided 10/11/2025
-	GVL_Calibration.rAcceptanceCriteria := GVL_Settings.stCalibParameters.rAcceptanceCriteria; //Modifided 10/11/2025
+	GVL_Calibration.iReplicatesSetpoint := GVL_Settings.stCalibParameters.iReplicatesSetpoint; //Modifided 10/11/2025 //GVL_HMI.stHMICalibParameters.iReplicatesSetpoint;
+	GVL_Calibration.rAcceptanceCriteria := GVL_Settings.stCalibParameters.rAcceptanceCriteria; //Modifided 10/11/2025 //GVL_HMI.stHMICalibParameters.rAcceptanceCriteria;
+	GVL_Calibration.iAllowableFailures	:= GVL_HMI.stHMICalibParameters.iAllowableFailures;
 	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
 	GVL_HMI.bStartCalibrationBt := FALSE;
 	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
@@ -777,6 +778,23 @@ FOR i := 1 TO 10 DO
 	aLinearPumpsMoveDone[i] := FALSE;
 END_FOR
 
+FOR i := 1 TO 100 DO
+	GVL_Calibration.stPumpCalibrationData[i].dDateTime 			:= '';
+	GVL_Calibration.stPumpCalibrationData[i].iPumpNumber 		:= 0;
+	GVL_Calibration.stPumpCalibrationData[i].iPumpRevs 			:= 0;
+	GVL_Calibration.stPumpCalibrationData[i].rCriteria 			:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent := 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rDifferenceUl 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rNetVolume 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rNetWeigth 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rTareWeigth 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].rTargetVolume 		:= 0.0;
+	GVL_Calibration.stPumpCalibrationData[i].sStep 				:= '';
+END_FOR
+
+fbCalibrationManager.Reset(bHard := TRUE);
+
 Reset := TRUE;
 RETURN;
 ]]></ST>
@@ -950,10 +968,12 @@ END_IF*)
       <LineId Id="65" Count="1" />
       <LineId Id="156" Count="1" />
       <LineId Id="159" Count="0" />
-      <LineId Id="161" Count="2" />
+      <LineId Id="161" Count="1" />
+      <LineId Id="715" Count="0" />
+      <LineId Id="163" Count="0" />
       <LineId Id="348" Count="0" />
       <LineId Id="435" Count="0" />
-      <LineId Id="716" Count="0" />
+      <LineId Id="774" Count="0" />
       <LineId Id="158" Count="0" />
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
@@ -1126,8 +1146,15 @@ END_IF*)
       <LineId Id="30" Count="1" />
       <LineId Id="104" Count="0" />
       <LineId Id="29" Count="0" />
-      <LineId Id="33" Count="0" />
-      <LineId Id="32" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="10" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="125" Count="0" />
       <LineId Id="34" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>

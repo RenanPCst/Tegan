@@ -20,6 +20,14 @@ aPumpStatus			: ARRAY[1..10] OF ST_ActuatorStatus;
 fbBlinkPumpArrowFWD	: ARRAY[1..10] OF FB_Blink;
 fbBlinkPumpArrowBWD	: ARRAY[1..10] OF FB_Blink;
 
+//Headbar Machine Mode transition
+fbBlinkMachineModeName 	: FB_Blink;
+ePrevMode               : E_MachineMode := E_MachineMode.IMEDIATE_FAULT; 
+rTrigChange             : R_TRIG;
+bStateChanged           : BOOL;
+tpChangePulse           : TP; // gera um pulso de PT quando IN sobe
+bBlinkMode              : BOOL;
+
 //Doors Animation
 fbBlinkDoor	: ARRAY[1..6] OF FB_Blink;
 fbHMIScan	: FB_Blink;
@@ -61,6 +69,27 @@ GVL_HMI.HMIDigOutputs.bAlarmLampGreen 	:= GVL_IO.gDigOutputs.bTowerGreenLight; /
 ACT_M1Animation();
 ACT_M2Animation();
 
+(* Head Bar Blinking *) //----------------------------------------------------------------------------------------------------
+// 1) State changed?
+rTrigChange(CLK := (GVL_HMI.eMachineMode <> ePrevMode));
+bStateChanged := rTrigChange.Q;
+
+// 2) Short pulse whe changed
+tpChangePulse(IN := bStateChanged, PT := T#500MS);
+
+// 3) Blinking states
+bBlinkMode := (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_READY)
+           OR (GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT);
+
+// Blinking F
+fbBlinkMachineModeName(bEnable := bBlinkMode, tPeriod := T#1S);
+
+// 4) HMI Output
+GVL_HMI.bMachineModeBlinking := tpChangePulse.Q OR (bBlinkMode AND fbBlinkMachineModeName.bBlink);
+
+// 5) Update previous machine mode
+ePrevMode := GVL_HMI.eMachineMode;
+
 (* <Linear Pumps Old Position> ----------------------------------------------------------------------------------------- *)
 // display linear pumps old position saved on persistent memory when in Calibration Mode
 IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
@@ -72,11 +101,12 @@ IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
 END_IF
 
 (* <Pump Factor Showing> ----------------------------------------------------------------------------------------------- *)
-IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
+(*IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
 	FOR i := 1 TO 10 DO
 		GVL_HMI.aCalPumpResults[i].rPumpFactor := GVL_Motion.aPumps[i].Rotary.rPumpFactorFromCalBox;
 	END_FOR
 END_IF
+*)
 
 (* <Safety Controls> ----------------------------------------------------------------------------------------------------*)
 ton500ms(IN := NOT ton500ms.Q, PT := T#500MS);
@@ -118,7 +148,7 @@ END_IF
 
 //Scan period for hmi refresh
 //IF GVL_HMI.eMachineMode <> E_MachineMode.CALIBRATION AND GVL_HMI.eMachineMode <> E_MachineMode.MANUAL THEN
-	fbHMIScan(bEnable := TRUE, tPeriod := T#500MS);
+	fbHMIScan(bEnable := GVL_HMI.bHomeScreenLoaded, tPeriod := T#500MS);
 	GVL_HMI.bMachineModeScan := fbHMIScan.bBlink;
 //ELSE
 //	GVL_HMI.bMachineModeScan := FALSE;
@@ -832,6 +862,11 @@ END_IF]]></ST>
       <LineId Id="669" Count="0" />
       <LineId Id="671" Count="0" />
       <LineId Id="255" Count="10" />
+      <LineId Id="1362" Count="0" />
+      <LineId Id="1365" Count="0" />
+      <LineId Id="1386" Count="13" />
+      <LineId Id="1402" Count="3" />
+      <LineId Id="1363" Count="0" />
       <LineId Id="817" Count="1" />
       <LineId Id="825" Count="0" />
       <LineId Id="820" Count="1" />
@@ -846,6 +881,7 @@ END_IF]]></ST>
       <LineId Id="906" Count="1" />
       <LineId Id="905" Count="0" />
       <LineId Id="900" Count="0" />
+      <LineId Id="1349" Count="0" />
       <LineId Id="780" Count="0" />
       <LineId Id="782" Count="1" />
       <LineId Id="781" Count="0" />
