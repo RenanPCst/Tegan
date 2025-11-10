@@ -120,11 +120,12 @@ END_IF
 IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.bStartCalibration := TRUE;
 	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
-	GVL_Calibration.iReplicatesSetpoint := GVL_HMI.stHMICalibParameters.iReplicatesSetpoint;
-	GVL_Calibration.rAcceptanceCriteria := GVL_HMI.stHMICalibParameters.rAcceptanceCriteria;
+	GVL_Calibration.iReplicatesSetpoint := GVL_Settings.stCalibParameters.iReplicatesSetpoint; //Modifided 10/11/2025
+	GVL_Calibration.rAcceptanceCriteria := GVL_Settings.stCalibParameters.rAcceptanceCriteria; //Modifided 10/11/2025
 	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
 	GVL_HMI.bStartCalibrationBt := FALSE;
 	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
+	DB_Create_Calibration();	//Create a new calibration inside the DB.
 END_IF
 
 //calibration procedure calling
@@ -952,6 +953,7 @@ END_IF*)
       <LineId Id="161" Count="2" />
       <LineId Id="348" Count="0" />
       <LineId Id="435" Count="0" />
+      <LineId Id="716" Count="0" />
       <LineId Id="158" Count="0" />
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
