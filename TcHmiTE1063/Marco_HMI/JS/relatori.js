@@ -26,7 +26,13 @@
 }*/
 
 // Relatorio.js
-
+function formatNumber(value, decimals) {
+    const num = parseFloat(value);
+    if (!isNaN(num)) {
+        return num.toFixed(decimals);
+    }
+    return value;
+}
 
 async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray,  reportName) {
     try {
@@ -217,7 +223,38 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         doc.text(`Completed`, xPosition, yPosicao+57.5, { align: "left" });
 
         // 8. Save PDF File
-        doc.save(`${dadosDoJSON.reportInfo.fileName}.pdf`);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${dadosDoJSON.reportInfo.fileName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -368,7 +405,38 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         xPosition += 45;
         
         // 7. Save PDF File
-        doc.save(`${reportName}.pdf`);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -388,7 +456,7 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         // 2. Criar a instância jsPDF
         const doc = new jspdf.jsPDF();
         
-        const drawHeader = () => {
+        const drawHeader = (data = calibHeadArray) => {
         // 3. Adicionar as informações do cabeçalho (reportInfo)
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
@@ -417,15 +485,15 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         doc.text(`Replicates: `, 140, 60);
         doc.text(`Call Interval (Days): `, 140, 65);
         doc.setFont("helvetica", "normal");
-        doc.text(calibHead.CalibrationNo.toString(), 35, 55);
-        doc.text(calibHead.userID, 25, 60);
-        doc.text(calibHead.density.toFixed(4), 25, 65);
-        doc.text(calibHead.solventNo, 95, 55);
-        doc.text(calibHead.solventRevision, 110, 60);
-        doc.text(calibHead.sysRevisionNo.toString(), 115, 65);
-        doc.text(calibHead.allowableFail, 175, 55);
-        doc.text(calibHead.replicates, 160, 60);
-        doc.text(calibHead.callInterval, 175, 65);
+        doc.text(data.CalibrationNo.toString(), 35, 55);
+        doc.text(data.userID, 25, 60);
+        doc.text(data.density, 25, 65);
+        doc.text(data.solventNo, 95, 55);
+        doc.text(data.solventRevision, 110, 60);
+        doc.text(data.sysRevisionNo.toString(), 115, 65);
+        doc.text(data.allowableFail, 175, 55);
+        doc.text(data.replicates, 160, 60);
+        doc.text(data.callInterval, 175, 65);
 
         // 5. Adicionar o cabeçalho da tabela
         doc.setFontSize(8);
@@ -477,12 +545,12 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
             doc.text(item.dateTime, xPosition, yPosicao);
             doc.text(item.pumpNo, xPosition+34, yPosicao);
             doc.text(item.step, xPosition+42, yPosicao);
-            doc.text(item.tareWt, xPosition+67, yPosicao, { align: "center" });
-            doc.text(item.grossWt, xPosition+83, yPosicao, { align: "center" });
-            doc.text(item.netWt, xPosition+99, yPosicao, { align: "center" });
-            doc.text(item.netVolume, xPosition+115, yPosicao, { align: "center" });
-            doc.text(item.targetVolume, xPosition+131, yPosicao, { align: "center" });
-            doc.text(item.differencePercent, xPosition+147, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.tareWt, 3), xPosition+67, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.grossWt, 3), xPosition+83, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.netWt, 3), xPosition+99, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.netVolume, 2), xPosition+115, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.targetVolume, 2), xPosition+131, yPosicao, { align: "center" });
+            doc.text(formatNumber(item.differencePercent, 2), xPosition+147, yPosicao, { align: "center" });
             doc.text(item.criteria, xPosition+163, yPosicao, { align: "center" });
             doc.text(item.pumpRevs, xPosition+179, yPosicao, { align: "center" });
             
@@ -498,7 +566,40 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         }
   
         // 8. Salvar o arquivo PDF
-        doc.save(`${reportName}.pdf`);
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -580,7 +681,38 @@ async function genCurrentUserList(userDataArray, reportName) {
         }
 
         // 6. Save PDF File
-        doc.save(`${reportName}.pdf`);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload();
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -664,7 +796,38 @@ async function genUserHistoryReport(userDataArray, reportName) {
         }
 
         // 6. Save PDF File
-        doc.save(`${reportName}.pdf`);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload();
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -969,7 +1132,40 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         }
 
         // 6. Save PDF File
-        doc.save(`${reportName}.pdf`);
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);
@@ -1266,7 +1462,40 @@ async function genCurrentSysReport(sysDataArray, reportName) {
         }
 
         // 6. Save PDF File
-        doc.save(`${reportName}.pdf`);
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+        //doc.save(`${reportName}.pdf`);
 
     } catch (erro) {
         console.error("Falha ao gerar o PDF:", erro);

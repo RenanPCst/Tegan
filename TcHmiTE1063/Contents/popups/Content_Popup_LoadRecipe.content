@@ -17,14 +17,14 @@
 }
 </script>
 </div>
-<div id="TcHmiDatagrid" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid"  data-tchmi-height="270" data-tchmi-height-unit="px" data-tchmi-left="20" data-tchmi-left-unit="px" data-tchmi-top="56" data-tchmi-top-unit="px" data-tchmi-width="832" data-tchmi-width-unit="px"  data-tchmi-src-data="%s%PLC1.GVL_HMI.aAvailableFiles%/s%">
+<div id="TcHmiDatagrid" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiDatagrid"  data-tchmi-height="270" data-tchmi-height-unit="px" data-tchmi-left="24" data-tchmi-left-unit="px" data-tchmi-top="56" data-tchmi-top-unit="px" data-tchmi-width="828" data-tchmi-width-unit="px" data-tchmi-src-data="%s%PLC1.GVL_DB.listOfMethod%/s%">
     <script data-tchmi-target-attribute="data-tchmi-src-column" type="application/json">
 [
   {
-    "name": "sMethodName",
+    "name": "methodName",
     "label": "Method Name",
     "control": "TextBlock",
-    "width": 415,
+    "width": 710,
     "widthUnit": "px",
     "resize": true,
     "sortable": false,
@@ -40,45 +40,7 @@
     "autoSelectText": false
   },
   {
-    "name": "sCreatedBy",
-    "label": "Created By",
-    "control": "TextBlock",
-    "width": 150,
-    "widthUnit": "px",
-    "resize": true,
-    "sortable": true,
-    "minWidth": 70,
-    "minWidthUnit": "px",
-    "editable": false,
-    "horizontalAlignment": "Center",
-    "verticalAlignment": "Center",
-    "headerHorizontalAlignment": "Center",
-    "headerVerticalAlignment": "Center",
-    "ignoreEscapeSequences": false,
-    "autoFocusOut": true,
-    "autoSelectText": false
-  },
-  {
-    "name": "dCreationDate",
-    "label": "Creation Date",
-    "control": "TextBlock",
-    "width": 150,
-    "widthUnit": "px",
-    "resize": true,
-    "sortable": true,
-    "minWidth": 70,
-    "minWidthUnit": "px",
-    "editable": false,
-    "horizontalAlignment": "Center",
-    "verticalAlignment": "Center",
-    "headerHorizontalAlignment": "Center",
-    "headerVerticalAlignment": "Center",
-    "ignoreEscapeSequences": false,
-    "autoFocusOut": true,
-    "autoSelectText": false
-  },
-  {
-    "name": "iRevision",
+    "name": "methodRevision",
     "label": "Revision",
     "control": "TextBlock",
     "width": 50,
@@ -98,22 +60,7 @@
   }
 ]
 </script>
-<script data-tchmi-target-attribute="data-tchmi-src-data" type="application/json">
-[
-  {
-    "Test1": "Example Data",
-    "Test2": 42,
-    "Test3": true,
-    "Test4": "Editable Data"
-  },
-  {
-    "Test1": "Example Data",
-    "Test2": 3.1415,
-    "Test3": false,
-    "Test4": "Editable Data"
-  }
-]
-</script>
+
 <script data-tchmi-target-attribute="data-tchmi-cell-content-padding" type="application/json">
 {
   "left": 3,
@@ -127,6 +74,38 @@
 }
 </script>
 
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiDatagrid.onSelectedItemChanged",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.GVL_DB.methodName%/s%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%f%%ctrl%TcHmiDatagrid::selectedRowValue%/ctrl%.methodName%/f%"
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.GVL_DB.methodRevision%/s%",
+        "value": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/String",
+          "symbolExpression": "%f%%ctrl%TcHmiDatagrid::selectedRowValue%/ctrl%.methodRevision%/f%"
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmiButton_BtLoadSelectedRecipe" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="493" data-tchmi-left-unit="px" data-tchmi-text="Load Selected Recipe" data-tchmi-top="376" data-tchmi-top-unit="px" data-tchmi-width="160" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Bold">
 
@@ -135,6 +114,17 @@
   {
     "event": "TcHmiButton_BtLoadSelectedRecipe.onPressed",
     "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%s%PLC1.DB_Query.state%/s%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:server#/definitions/PLC1.E_DB_QUERY_STATE",
+          "value": 14
+        },
+        "asyncWait": true
+      },
       {
         "objectType": "JavaScript",
         "active": true,
@@ -180,7 +170,7 @@
           "\t\t\t\t\t\t\t                alert('Error loading Recipe!');",
           "\t\t\t\t\t\t\t                TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bRecipeLoadFailed%/s%', false);",
           "\t\t\t\t\t\t\t                TcHmi.Controls.get('TcHmiPopup_LoadRecipe').close();",
-          "\t\t\t\t\t\t\t            } else if (++pollCount > 40) { // Timeout after ~4 seconds",
+          "\t\t\t\t\t\t\t            } else if (++pollCount > 110) { // Timeout after ~11 seconds",
           "\t\t\t\t\t\t\t                clearInterval(pollInterval);",
           "\t\t\t\t\t\t\t                alert('Timeout: No response from PLC!');",
           "\t\t\t\t\t\t\t                TcHmi.Controls.get('TcHmiPopup_LoadRecipe').close();",

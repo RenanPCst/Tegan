@@ -26,7 +26,8 @@ VAR
 	str: STRING;
 	lastRunID: STRING;
 	i: INT;
-	tempCmd: string(5000);
+	tempCmd: STRING(5000);
+	timerVD: ton;
 END_VAR
 
 VAR_INPUT
@@ -34,6 +35,14 @@ VAR_INPUT
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[//FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
+timerVD();
+Fill_Calibration_Data();
+Fill_Method_Data();
+
+IF timerVD.Q THEN
+	state:= E_DB_QUERY_STATE.SELECT_VOLUME_DATA;
+END_IF
+
 CASE state OF
 E_DB_QUERY_STATE.IDLE_STATE:
 	
@@ -192,12 +201,13 @@ E_DB_QUERY_STATE.SELECT_ALL_ACTV_METHODS:
 E_DB_QUERY_STATE.SELECT_WHOLE_METHODS:
 	
 	cmdSlc:= GVL_DB.slctMethod;
-	selectMethod(start:=TRUE, methodName:= '2 Water Washes (using Alliance vials)', methodRevision:= '9');
+	selectMethod(start:=TRUE, methodName:= GVL_DB.methodName, methodRevision:= GVL_DB.methodRevision);
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 26, cbRecordArraySize:= SIZEOF(GVL_DB.stParameter_MR), pDestAddr:= ADR(GVL_DB.stParameter_MR), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
-		state:= E_DB_QUERY_STATE.IDLE_STATE;
+		timerVD(in:= TRUE, pt:= T#3S);
 		bExecute:= FALSE;
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
 	ELSIF FB_SelectArray.bError THEN	
 		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
@@ -240,12 +250,13 @@ E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD:
 E_DB_QUERY_STATE.SELECT_VOLUME_DATA:
 	
 	cmdSlc:= GVL_DB.slctVD;
-	selectVD(start:=TRUE, methodID:= '1');
+	selectVD(start:=TRUE, methodID:= INT_TO_STRING(GVL_DB.stParameter_MR.methodID));
 	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 10, cbRecordArraySize:= SIZEOF(GVL_DB.astVolData), pDestAddr:= ADR(GVL_DB.astVolData), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
-	IF NOT FB_SelectArray.bBusy THEN
+	IF NOT FB_SelectArray.bBusy AND timerVD.Q THEN
 		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
+		
 	ELSIF FB_SelectArray.bError THEN	
 		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
@@ -323,26 +334,130 @@ E_DB_QUERY_STATE.ERROR_STATE:
 		
 END_CASE]]></ST>
     </Implementation>
-    <Action Name="Fill_Calibration_Data" Id="{0b2ca2f2-5f1e-435f-8fbd-291533b605b5}">
+    <Method Name="Fill_Calibration_Data" Id="{d59b2a6e-d6b9-48b7-be19-8a8a00342b04}">
+      <Declaration><![CDATA[METHOD Fill_Calibration_Data : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
       <Implementation>
-        <ST><![CDATA[
+        <ST><![CDATA[FOR i:=1 TO 100 BY 1 DO 
+GVL_DB.astData_PCR[i].CalibrationNo			:= 0;
+GVL_DB.astData_PCR[i].criteria				:= '';
+GVL_DB.astData_PCR[i].dateTime				:= '';
+GVL_DB.astData_PCR[i].differencePercent		:= '';
+GVL_DB.astData_PCR[i].grossWt				:= '';
+GVL_DB.astData_PCR[i].netVolume				:= '';
+GVL_DB.astData_PCR[i].netWt					:= '';
+GVL_DB.astData_PCR[i].pumpNo				:= '';
+GVL_DB.astData_PCR[i].pumpRevs				:= '';
+GVL_DB.astData_PCR[i].step					:= '';
+GVL_DB.astData_PCR[i].tareWt				:= '';
+GVL_DB.astData_PCR[i].targetVolume			:= '';
+END_FOR
+
 FOR i:=1 TO 100 BY 1 DO 
 GVL_DB.astData_PCR[i].CalibrationNo			:= GVL_DB.stParameter_PCR.CalibrationNo;
-GVL_DB.astData_PCR[i].criteria				:= real_to_string(GVL_Calibration.stPumpCalibrationData[i].rCriteria);
+GVL_DB.astData_PCR[i].criteria				:= REAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rCriteria);
 GVL_DB.astData_PCR[i].dateTime				:= GVL_Calibration.stPumpCalibrationData[i].dDateTime;
-GVL_DB.astData_PCR[i].differencePercent		:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent);
-GVL_DB.astData_PCR[i].grossWt				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth);
-GVL_DB.astData_PCR[i].netVolume				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rNetVolume);
-GVL_DB.astData_PCR[i].netWt					:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rNetWeigth);
-GVL_DB.astData_PCR[i].pumpNo				:= usint_to_string(GVL_Calibration.stPumpCalibrationData[i].iPumpNumber);
-GVL_DB.astData_PCR[i].pumpRevs				:= uint_to_string(GVL_Calibration.stPumpCalibrationData[i].iPumpRevs);
+GVL_DB.astData_PCR[i].differencePercent		:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent);
+GVL_DB.astData_PCR[i].grossWt				:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth);
+GVL_DB.astData_PCR[i].netVolume				:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rNetVolume);
+GVL_DB.astData_PCR[i].netWt					:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rNetWeigth);
+GVL_DB.astData_PCR[i].pumpNo				:= USINT_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].iPumpNumber);
+GVL_DB.astData_PCR[i].pumpRevs				:= UINT_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].iPumpRevs);
 GVL_DB.astData_PCR[i].step					:= GVL_Calibration.stPumpCalibrationData[i].sStep;
-GVL_DB.astData_PCR[i].tareWt				:= lreal_to_string(GVL_Calibration.stPumpCalibrationData[i].rTareWeigth);
+GVL_DB.astData_PCR[i].tareWt				:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rTareWeigth);
 GVL_DB.astData_PCR[i].targetVolume			:= LREAL_TO_STRING(GVL_Calibration.stPumpCalibrationData[i].rTargetVolume);
-END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Fill_Method_Data" Id="{d51d889f-7cbb-4120-a8cc-95084a764cad}">
+      <Declaration><![CDATA[METHOD Fill_Method_Data : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	j: INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.agitate_1_Time)*1000);
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.agitate_2_Time)*1000);
+GVL_Recipe.stCurrentRecipe.stOtherParams.tAirDryTime := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.airDryTime)*1000);
+GVL_Recipe.stCurrentRecipe.stInfo.sCreatedBy := GVL_DB.stParameter_MR.methodCreatedBy;
+//GVL_Recipe.stCurrentRecipe.stInfo.dCreationDate := GVL_DB.stParameter_MR.methodCreatedOn;
+GVL_Recipe.stCurrentRecipe.stInfo.sMethodName := GVL_DB.stParameter_MR.methodName;
+GVL_Recipe.stCurrentRecipe.stInfo.iRevision := STRING_TO_INT(GVL_DB.stParameter_MR.methodRevision);
+GVL_Recipe.stCurrentRecipe.stOtherParams.tSoakTime := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.soakTime)*1000);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[1] := STRING_TO_USINT(GVL_DB.stParameter_MR.solvent_R1);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[2] := STRING_TO_USINT(GVL_DB.stParameter_MR.solvent_R2);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[3] := STRING_TO_USINT(GVL_DB.stParameter_MR.solvent_W1);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aSolventN[4] := STRING_TO_USINT(GVL_DB.stParameter_MR.solvent_W2);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1] := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.time_R1)*1000);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2] := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.time_R2)*1000);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3] := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.time_W1)*1000);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4] := DINT_TO_TIME(STRING_TO_DINT(GVL_DB.stParameter_MR.time_W2)*1000);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[1] := STRING_TO_INT(GVL_DB.stParameter_MR.velocity_R1);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[2] := STRING_TO_INT(GVL_DB.stParameter_MR.velocity_R2);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[3] := STRING_TO_INT(GVL_DB.stParameter_MR.velocity_W1);
+GVL_Recipe.stCurrentRecipe.stSolventsTimes.aVelocity[4] := STRING_TO_INT(GVL_DB.stParameter_MR.velocity_W2);
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVial1FillVol := STRING_TO_REAL(GVL_DB.stParameter_MR.vial_1_FillVol);
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVials2_4FillVol := STRING_TO_REAL(GVL_DB.stParameter_MR.vial_2_4_FillVol);
+GVL_Recipe.stCurrentRecipe.stOtherParams.rVialPrimeVol := STRING_TO_REAL(GVL_DB.stParameter_MR.vialPrimeVol);
+GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill := STRING_TO_USINT(GVL_DB.stParameter_MR.vialsToFill);
+
+GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[1].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[1].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[1].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[1].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[2].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[2].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[2].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[2].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[3].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[3].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[3].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[3].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[4].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[4].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[4].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[4].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[5].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[5].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[5].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[5].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[6].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[6].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[6].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[6].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[7].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[7].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[7].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[7].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[8].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[8].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[8].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[8].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[9].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[9].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[9].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[9].wash2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[1] := STRING_TO_REAL(GVL_DB.astVolData[10].rinse1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[2] := STRING_TO_REAL(GVL_DB.astVolData[10].rinse2);
+GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[3] := STRING_TO_REAL(GVL_DB.astVolData[10].wash1);
+GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[4] := STRING_TO_REAL(GVL_DB.astVolData[10].wash2);
+
+
+
+
+
+
+
+
+
 ]]></ST>
       </Implementation>
-    </Action>
+    </Method>
     <Method Name="insertCalib" Id="{04796082-46d0-4881-a277-bdc8481c6e70}">
       <Declaration><![CDATA[METHOD insertCalib : BOOL
 VAR_INPUT
@@ -379,20 +494,20 @@ VAR
 	CalibrationNo: STRING;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[CalibrationNo:= INT_TO_STRING(GVL_DB.astData_PCR[line].CalibrationNo);
+        <ST><![CDATA[CalibrationNo:= INT_TO_STRING(GVL_DB.astData_PCR[line-1].CalibrationNo);
 
 IF start THEN
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].dateTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].pumpNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].step), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].tareWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].grossWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].netVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].netWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].targetVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].differencePercent), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].criteria), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
-FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.astData_PCR[line].pumpRevs), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].dateTime), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].pumpNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].step), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].tareWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].grossWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].netVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].netWt), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].targetVolume), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].differencePercent), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].criteria), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#11#'), pInsertString:= ADR(GVL_DB.astData_PCR[line-1].pumpRevs), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#12#'), pInsertString:= ADR(CalibrationNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 
 END_IF]]></ST>
@@ -615,6 +730,11 @@ END_IF]]></ST>
     </Method>
     <LineIds Name="DB_Query">
       <LineId Id="51" Count="0" />
+      <LineId Id="837" Count="0" />
+      <LineId Id="805" Count="0" />
+      <LineId Id="836" Count="0" />
+      <LineId Id="846" Count="3" />
+      <LineId Id="804" Count="0" />
       <LineId Id="96" Count="0" />
       <LineId Id="100" Count="1" />
       <LineId Id="385" Count="0" />
@@ -661,7 +781,13 @@ END_IF]]></ST>
       <LineId Id="576" Count="11" />
       <LineId Id="575" Count="0" />
       <LineId Id="588" Count="0" />
-      <LineId Id="559" Count="13" />
+      <LineId Id="559" Count="4" />
+      <LineId Id="840" Count="0" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="844" Count="0" />
+      <LineId Id="567" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="568" Count="4" />
       <LineId Id="558" Count="0" />
       <LineId Id="573" Count="0" />
       <LineId Id="590" Count="13" />
@@ -669,7 +795,11 @@ END_IF]]></ST>
       <LineId Id="605" Count="14" />
       <LineId Id="604" Count="0" />
       <LineId Id="620" Count="0" />
-      <LineId Id="624" Count="13" />
+      <LineId Id="624" Count="4" />
+      <LineId Id="842" Count="0" />
+      <LineId Id="630" Count="2" />
+      <LineId Id="843" Count="0" />
+      <LineId Id="633" Count="4" />
       <LineId Id="623" Count="0" />
       <LineId Id="638" Count="0" />
       <LineId Id="640" Count="2" />
@@ -695,11 +825,40 @@ END_IF]]></ST>
       <LineId Id="99" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.Fill_Calibration_Data">
-      <LineId Id="15" Count="0" />
-      <LineId Id="2" Count="0" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="3" Count="10" />
-      <LineId Id="16" Count="1" />
+      <LineId Id="24" Count="12" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="6" Count="12" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.Fill_Method_Data">
+      <LineId Id="23" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="40" Count="3" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="48" Count="18" />
+      <LineId Id="72" Count="2" />
+      <LineId Id="76" Count="2" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="80" Count="2" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="84" Count="2" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="95" Count="2" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="100" Count="2" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="109" Count="2" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="112" Count="2" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="115" Count="2" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="118" Count="2" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="89" Count="5" />
+      <LineId Id="87" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertCalib">
       <LineId Id="53" Count="0" />

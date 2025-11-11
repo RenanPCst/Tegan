@@ -29,7 +29,7 @@ isrtNewMethod: STRING(5000) := 'INSERT INTO [dbo].[METHODS] ( [methodName], [met
 isrtVD: string(5000) := 'INSERT INTO [dbo].[VOLUME_DATA] ( [pump], [stage], [rinse1], [rinse2], [wash1], [wash2], [methodID]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', #7#) ';
 updtDactvMethod: STRING(5000) := 'UPDATE [dbo].[METHODS] SET [methodStatus] = $'deactivated$' WHERE [methodName] = $'#1#$' AND [methodRevision] = $'#2#$'';
 //CALIBRATION CMD
-slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBRATION] ORDER BY [calibrationNo] DESC;';
+slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBRATION_HEAD] ORDER BY [calibrationNo] DESC;';
 isrtCalib: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION_HEAD] ( [userID], [density], [solventNo], [solventRevision], [allowableFail], [replicates], [callInterval], [sysRevisionNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', #8#) ';
 isrtCalibValues: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION] ( [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', #12#) ';
 //SYSTEM CMD
@@ -82,6 +82,9 @@ bBuildMR		: BOOL;
 stParameter_MR	: ST_Parameters_MR;
 astVolData		: ARRAY[1..10] OF ST_VolumeData;
 listOfMethod	: ARRAY[1..500] OF ST_ListMethod;
+methodName		: STRING;
+methodRevision	: STRING;
+
 
 (******************************************************************************************************)
 
