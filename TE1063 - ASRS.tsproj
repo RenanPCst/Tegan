@@ -2123,12 +2123,30 @@ External Setpoint Generation:
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF LREAL</Name>
-			<BitSize>320</BitSize>
+			<Name GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..10] OF LREAL</Name>
+			<BitSize>640</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</BaseType>
 			<ArrayInfo>
 				<LBound>1</LBound>
-				<Elements>5</Elements>
+				<Elements>10</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
+			<Name GUID="{22728B82-A99E-1178-70C3-33731C966BD6}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..10] OF BOOL</Name>
+			<BitSize>80</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>10</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
+			<Name GUID="{FD712DE2-A9A8-B1EA-D89A-1EA9C51DFA31}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..10] OF SINT</Name>
+			<BitSize>80</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000003}">SINT</BaseType>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>10</Elements>
 			</ArrayInfo>
 		</DataType>
 		<DataType>
@@ -2141,12 +2159,12 @@ External Setpoint Generation:
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..10] OF LREAL</Name>
-			<BitSize>640</BitSize>
+			<Name GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..5] OF LREAL</Name>
+			<BitSize>320</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</BaseType>
 			<ArrayInfo>
 				<LBound>1</LBound>
-				<Elements>10</Elements>
+				<Elements>5</Elements>
 			</ArrayInfo>
 		</DataType>
 		<DataType>
@@ -2673,9 +2691,9 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
-					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
+					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
+					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6720,7 +6738,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{A695A1F9-6BA7-34A0-4FA8-1BADD543A717}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{68C9DFEB-74BC-0592-07DA-7A432E6ADDA2}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6812,19 +6830,14 @@ External Setpoint Generation:
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bInAckSignal</Name>
-							<Comment><![CDATA[ Aknowledge input]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInAckSignal</Name>
+							<Comment><![CDATA[ Aknowledge input]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gAnalogInputs</Name>
@@ -6837,19 +6850,9 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T22State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gProfinetInput</Name>
 							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
 							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEL6070State</Name>
-							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
@@ -6890,6 +6893,21 @@ External Setpoint Generation:
 							<Name>GVL_IO.stEL6910.bEL6910State</Name>
 							<Comment><![CDATA[ EL6910 State from IO Terminal Info Data	]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEK1100T22State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEL6070State</Name>
+							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.nEL1918T04State</Name>
@@ -7057,6 +7075,17 @@ External Setpoint Generation:
 							<Type GUID="{6AE51ED4-2F21-994D-0AF2-434ED0E81DC1}">ARRAY [1..8] OF USINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOErrorAck</Name>
+							<Comment><![CDATA[Motors variables 
+AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7102,6 +7131,14 @@ External Setpoint Generation:
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M1Motor.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7153,6 +7190,14 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.M2Motor.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M2Motor.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.M3Motor.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7198,6 +7243,14 @@ External Setpoint Generation:
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M3Motor.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.M3Motor.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7249,6 +7302,14 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aValves[1].bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[1].bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aValves[2].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7294,6 +7355,14 @@ External Setpoint Generation:
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[2].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[2].bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7345,6 +7414,14 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aValves[3].bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[3].bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aValves[4].Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7390,6 +7467,14 @@ External Setpoint Generation:
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aValves[4].bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aValves[4].bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7441,75 +7526,12 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Name>GVL_Motion.aValves[5].bPositiveDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bM1STOErrorAck</Name>
-							<Comment><![CDATA[Motors variables 
-AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
+							<Name>GVL_Motion.aValves[5].bNegativeDirection</Name>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bResetButtonBlink</Name>
-							<Comment><![CDATA[reset button blink signal]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM1STOEnabled</Name>
-							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM2STOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bM3STOEnabled</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorClosedAlias</Name>
-							<Comment><![CDATA[Doors Logic Safety Alias Data exchange]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bTopDoorsClosedFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorLockedFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirEnabledFeedback</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T07</Name>
-							<Comment><![CDATA[EL2904 Monitoring Outputs]]></Comment>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T08</Name>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.aEL2904_T19</Name>
-							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.NcToPlc</Name>
@@ -7557,6 +7579,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7613,6 +7643,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[1].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[2].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7658,6 +7696,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[2].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7714,6 +7760,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[2].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[3].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7759,6 +7813,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[3].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7815,6 +7877,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[3].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[4].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7860,6 +7930,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[4].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -7916,6 +7994,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[4].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[5].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -7961,6 +8047,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[5].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8017,6 +8111,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[5].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[6].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8062,6 +8164,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[6].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8118,6 +8228,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[6].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[7].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8163,6 +8281,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[7].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8219,6 +8345,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[7].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[8].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8264,6 +8398,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[8].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8320,6 +8462,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[8].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[9].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8365,6 +8515,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[9].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8421,6 +8579,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[9].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>GVL_Motion.aPumps[10].Linear.Axis.NcToPlc</Name>
 							<Type GUID="{25521FAA-EA5F-4C7F-8864-BBCCDACD2E98}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
@@ -8466,6 +8632,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[10].Linear.bMotionCommandsLocked</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Linear.bNegativeDirection</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8521,14 +8695,77 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.bMotionCommandsLocked</Name>
 							<Type>BOOL</Type>
 						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.bPositiveDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Motion.aPumps[10].Rotary.bNegativeDirection</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSTOErrorAckPulse</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iMotorsSTOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bResetButtonBlink</Name>
+							<Comment><![CDATA[reset button blink signal]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM1STOEnabled</Name>
+							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM2STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bM3STOEnabled</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorClosedAlias</Name>
+							<Comment><![CDATA[Doors Logic Safety Alias Data exchange]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bTopDoorsClosedFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorLockedFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirEnabledFeedback</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T07</Name>
+							<Comment><![CDATA[EL2904 Monitoring Outputs]]></Comment>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T08</Name>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.aEL2904_T19</Name>
+							<Type GUID="{064EA673-04B6-D0C1-CD14-82E56022843A}">ARRAY [1..4] OF BOOL</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
-						<Var>
-							<Name>GVL_IO.bInResetSignal</Name>
-							<Comment><![CDATA[ Reset input]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
 						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
@@ -8538,6 +8775,11 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Name>GVL_IO.gDigOutputs</Name>
 							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
 							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bInResetSignal</Name>
+							<Comment><![CDATA[ Reset input]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.qSafetyRun</Name>
@@ -8557,6 +8799,19 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						<Var>
 							<Name>GVL_IO.stEL6910.qSafetyAirPresureOK</Name>
 							<Comment><![CDATA[ Terminal 3 Safety Air Presure Check]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyRestart</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -8641,81 +8896,6 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aValves[5].nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyRestart</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STOErrorAck</Name>
-							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM4STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM5STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM6STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM7STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STOErrorAck</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.iM8STORun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.SafetyOutputs</Name>
-							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoorLockCommand</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyEnable</Name>
-							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bAirSupplyReset</Name>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.aPumps[1].Linear.Axis.PlcToNc</Name>
@@ -8897,19 +9077,143 @@ M1 Motor Safety]]></Comment>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
 						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STOErrorAck</Name>
+							<Comment><![CDATA[AX8000 M4 - M8 Drive Safety Error Ack and Run]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM4STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM5STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM6STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM7STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STOErrorAck</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.iM8STORun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyOutputs</Name>
+							<Type GUID="{04F2D4B3-E60C-9638-6ADB-0E4CC3055A0E}">ST_SafetyOutputs</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoorLockCommand</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bDoor3BypassAccepted</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyEnable</Name>
+							<Comment><![CDATA[Air Supply Safety Alias Data exchange]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bAirSupplyReset</Name>
+							<Type>BOOL</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="8" AreaNo="4">
 						<Name>PlcTask Retains</Name>
 						<Var>
-							<Name>GVL_Retain.rValveLastPosition</Name>
-							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
-							<Type GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}">ARRAY [1..5] OF LREAL</Type>
+							<Name>PRG_HMIControl.aPrevTurns</Name>
+							<Comment><![CDATA[ Integração por bomba (estado interno do jar)]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aPrevInit</Name>
+							<Type GUID="{22728B82-A99E-1178-70C3-33731C966BD6}">ARRAY [1..10] OF BOOL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aJarMl</Name>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aSegDir</Name>
+							<Comment><![CDATA[ -1 / 0 / +1]]></Comment>
+							<Type GUID="{FD712DE2-A9A8-B1EA-D89A-1EA9C51DFA31}">ARRAY [1..10] OF SINT</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aSegAbsMl</Name>
+							<Comment><![CDATA[ mL acumulados no segmento atual (|mL|)]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aSegAbsMlPrev</Name>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aUnitsPerTurn</Name>
+							<Comment><![CDATA[ graus->volta]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aDeadVolCfg_ml</Name>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aRecircWasActive</Name>
+							<Comment><![CDATA[ para detectar borda de entrada/saída]]></Comment>
+							<Type GUID="{22728B82-A99E-1178-70C3-33731C966BD6}">ARRAY [1..10] OF BOOL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aRecircBaseMl</Name>
+							<Comment><![CDATA[ patamar antes de entrar em recirculação]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>PRG_HMIControl.aDispMl</Name>
+							<Comment><![CDATA[ nível exibido (pode divergir de aJarMl na recirculação)]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
 							<Name>GVL_Retain.bPositionIsValid</Name>
 							<Comment><![CDATA[Position valid flag]]></Comment>
 							<Type GUID="{29CAAFD0-28B6-D9D0-3B0E-64B337839191}">ARRAY [1..5] OF BOOL</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.rValveLastPosition</Name>
+							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
+							<Type GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}">ARRAY [1..5] OF LREAL</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
@@ -8945,6 +9249,12 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Retain.iPumpCalibrationCount</Name>
 							<Comment><![CDATA[ Pump Calibration counting number to register on report]]></Comment>
 							<Type>UDINT</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.aCalibrationPumpFactor</Name>
+							<Comment><![CDATA[ Pump Factor for rotary pump]]></Comment>
+							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
 							<InOut>7</InOut>
 						</Var>
 					</Vars>
@@ -43721,7 +44031,7 @@ Bit 8 - 15 : reserved]]></Comment>
 			</Device>
 			<Device Id="5" DevType="119" AmsPort="28677" AmsNetId="192.168.0.162.6.1" RemoteName="Device 5 (EL6631)">
 				<Name>Device 5 (EL6631)</Name>
-				<DevData>000000002000000000000000a08601005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff000105215140040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
+				<DevData>000000002000000000000000a08601005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff0001059c7e3a040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
 				<Image Id="10" AddrType="4" ImageType="3" SizeIn="8" SizeOut="35">
 					<Name>Image</Name>
 				</Image>
@@ -44998,6 +45308,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 1 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[1].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45022,6 +45334,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 10 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[10].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45046,6 +45360,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 2 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[2].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45070,6 +45386,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 3 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[3].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45094,6 +45412,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 4 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[4].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45118,6 +45438,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 5 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[5].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45142,6 +45464,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 6 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[6].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45165,6 +45489,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 				<Link VarA="PlcTask Outputs^GVL_Motion.aPumps[7].Linear.Axis.PlcToNc" VarB="Inputs^FromPlc"/>
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 7 - Rotary">
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[7].Linear.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[7].Linear.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[7].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[7].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[7].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
@@ -45190,6 +45516,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 8 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[8].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>
@@ -45214,6 +45542,8 @@ Submodule Info: GT2 I/O Device. See Users Manual for Detail.
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Pump 9 - Rotary">
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.Axis.NcToPlc" VarB="Outputs^ToPlc"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.bNegativeDirection" VarB="Outputs^ToPlc^StateDWord^NegativeDirection"/>
+				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.bPositiveDirection" VarB="Outputs^ToPlc^StateDWord^PositiveDirection"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.iError" VarB="Outputs^ToPlc^StateDWord^Error"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.iHomed" VarB="Outputs^ToPlc^StateDWord^Homed"/>
 				<Link VarA="PlcTask Inputs^GVL_Motion.aPumps[9].Rotary.iNotMoving" VarB="Outputs^ToPlc^StateDWord^NotMoving"/>

@@ -29,7 +29,8 @@ VAR
 
     tonCalDelay      : TON; // General delay timer
     tonStepTimeout   : TON; // Timeout per step
-	tonMotorsDelay	 : ton; // Delay time after positioning the motors
+	tonMotorsDelay	 : TON; // Delay time after positioning the motors
+	tonAirDry		 : TON; // Timer to be using air if needed after calibration
 	tonWeigthStabilization : TON; //Time after the pump finish to wait for stable weigth
 	
 	bExecutePulse   : R_TRIG; // Edge detection for bExecute
@@ -53,10 +54,12 @@ VAR
     bRequestWeight   	: BOOL := FALSE; // Trigger for requesting scale
 	bWeightReady	 	: BOOL := FALSE; // Trigger when weigth is ready
 	bPumpAdjustNeed	 	: BOOL := FALSE; // Flag that indicates if the checking pump needs to be adjusted or not. 
+	bAirDryTrigger		: BOOL := FALSE; // Flag to trigger the air dry timer. 
     rScaleWeight     	: LREAL; // Latest scale result
 	rDistanceByVol	 	: LREAL; // MoveRelative distance
 	rPercentDifference 	: LREAL; // Percentual Difference between net volume and tagert volume
 	iNumberOfAdjusts	: UINT;  // Count of adjustments needed for each pump index
+	rPosTolerance		: LREAL := 5.0; // Position Tolerance in mm to make sure there is no noise in the reading
 	rFillJarTotalVol 	: LREAL;
 	rEmptyJarTotalVol	: LREAL;
 	
@@ -66,9 +69,12 @@ VAR
 	iResultIndex	 : INT;	// Array index on calibration results
 	
 	bMovePump		 : BOOL := FALSE;
+	bMoveMotorM1     : BOOL := FALSE; // Motion trigger M1
     bMoveMotorM2     : BOOL := FALSE; // Motion trigger M2
     bMoveMotorM3     : BOOL := FALSE; // Motion trigger M3
+	bSetSolenoids	 : BOOL := FALSE; // SetSolenoids flag
     bMoveValve       : ARRAY[1..5] OF BOOL; // Valve position tracking
+	
 
     i                : USINT;// Loop index helper
     bBoxPresent      : BOOL; // True if calibration box detected
@@ -707,9 +713,46 @@ CASE eStep OF
 		
 		IF tonMotorsDelay.Q THEN
 			tonStepTimeout(IN := FALSE);
-			eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			IF GVL_Settings.stCalibParameters.iAirDryTimeSec > 0 THEN // IF Air Dry time settings is greater than zero go to air dry step
+				eStep := E_CalibStep.AIR_DRY_TIME;
+			ELSE
+				eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			END_IF
 		END_IF
    
+		
+	E_CalibStep.AIR_DRY_TIME:
+		IF NOT bSetSolenoids THEN
+			//Check if the M1 motor is not on seal stages position
+			IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos + rPosTolerance) AND NOT bMoveMotorM1 THEN
+				IF NOT bMoveMotorM1 THEN
+					bMoveMotorM1 := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[2],
+																			rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+																			rAcc	  := GVL_Settings.stMachineParam.rM1Accleration,
+																			rDec	  := GVL_Settings.stMachineParam.rM1Deceleration);
+				END_IF
+			ELSE
+				//M1 Position ok
+				bSetSolenoids := GVL_IO.gSetSolenoidControl.AirDry(); //Open Solenoids
+				bMoveMotorM1 := TRUE;
+			END_IF
+		ELSE
+			bMoveMotorM1 := FALSE;
+			bAirDryTrigger := TRUE;
+		END_IF
+		
+		// Air Dry Timer
+		tonAirDry( IN := bAirDryTrigger, PT := UINT_TO_TIME(GVL_Settings.stCalibParameters.iAirDryTimeSec*1000));
+		
+		IF tonAirDry.Q THEN
+			//Return Solenoids to Idle state
+			IF GVL_IO.gSetSolenoidControl.Idle() THEN
+				bSetSolenoids := FALSE;
+				//Transition
+				eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			END_IF
+		END_IF
+	
 	E_CalibStep.REPORT_INFO_UPDATE: //TODO: Update the variables without hardcode
 		//Reset Motors Flags
 		bMoveMotorM2 := FALSE;
@@ -942,7 +985,38 @@ Reset := TRUE;]]></ST>
       <LineId Id="4468" Count="21" />
       <LineId Id="4501" Count="145" />
       <LineId Id="5184" Count="0" />
-      <LineId Id="4647" Count="536" />
+      <LineId Id="4647" Count="442" />
+      <LineId Id="5325" Count="1" />
+      <LineId Id="5328" Count="1" />
+      <LineId Id="5327" Count="0" />
+      <LineId Id="5091" Count="1" />
+      <LineId Id="5277" Count="1" />
+      <LineId Id="5301" Count="0" />
+      <LineId Id="5279" Count="0" />
+      <LineId Id="5285" Count="1" />
+      <LineId Id="5292" Count="0" />
+      <LineId Id="5294" Count="2" />
+      <LineId Id="5293" Count="0" />
+      <LineId Id="5289" Count="1" />
+      <LineId Id="5298" Count="0" />
+      <LineId Id="5300" Count="0" />
+      <LineId Id="5287" Count="0" />
+      <LineId Id="5312" Count="0" />
+      <LineId Id="5317" Count="0" />
+      <LineId Id="5313" Count="0" />
+      <LineId Id="5302" Count="0" />
+      <LineId Id="5314" Count="0" />
+      <LineId Id="5307" Count="1" />
+      <LineId Id="5281" Count="0" />
+      <LineId Id="5316" Count="0" />
+      <LineId Id="5322" Count="0" />
+      <LineId Id="5318" Count="0" />
+      <LineId Id="5320" Count="0" />
+      <LineId Id="5323" Count="1" />
+      <LineId Id="5321" Count="0" />
+      <LineId Id="5319" Count="0" />
+      <LineId Id="5280" Count="0" />
+      <LineId Id="5093" Count="90" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.ACT_CleanStart">

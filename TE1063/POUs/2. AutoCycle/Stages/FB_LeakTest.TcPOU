@@ -97,36 +97,33 @@ END_VAR]]></Declaration>
     
     SET_SOLENOIDS:
         // Sets the solenoids to LEAKTEST configuration
-        fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTEST);
+        (*fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTEST);
         IF fbSolenoidControl.bDone THEN
 			bPressureTime := TRUE;
 			fbSolenoidControl(bExecute := FALSE);	//Reset fbSolenoidControl
 			//moving to next state
             eState := PRESSURIZE;
-        END_IF;
+        END_IF;*)
+		IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
+			bPressureTime := TRUE;
+			//moving to next state
+            eState := PRESSURIZE;
+		END_IF
 
     PRESSURIZE:
         // Waits for the pressurization time to complete
         tonPressuring(IN := bPressureTime, PT := UINT_TO_TIME(GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime * 1000));
         IF tonPressuring.Q THEN
-            // Switches solenoids to LEAKTESTMONITORING configuration before monitoring begins
-            fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
-            IF fbSolenoidControl.bDone THEN
 				bPressureTime := FALSE;
                 eState := CLOSE_AIR;
-            END_IF;
         END_IF;
 		
 	CLOSE_AIR:
 		// Sets the solenoids to LEAKTEST configuration
-        fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.LEAKTESTMONITORING);
-        IF fbSolenoidControl.bDone THEN
+        IF GVL_IO.gSetSolenoidControl.HoldPressure() THEN
 			bPressureTime := TRUE;
-			fbSolenoidControl(bExecute := FALSE);	//Reset fbSolenoidControl
-			//moving to next state
-            eState := MONITOR;
-        END_IF;
-		
+			eState := MONITOR;
+		END_IF
 	
     MONITOR:
         // Reads and scales the pressure sensor value
@@ -136,25 +133,18 @@ END_VAR]]></Declaration>
         END_IF
 		
 		IF NOT 	bPressureTaken THEN
-			rClosedSystemPressure := GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit; //TODO: Just for testing purposes... need to be adjusted to 0.95
+			rClosedSystemPressure := GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit; //LeakTest threshold from settings
 			bPressureTaken := TRUE;
 		ELSE
 
 			tonMonitoring(in := bPressureInput, PT := UDINT_TO_TIME(tMonitorTime*1000));
 			// Verifies if the measured pressure meets the required limit
 			IF rScaledPressure >= rClosedSystemPressure AND tonMonitoring.Q THEN
-				//Event looger message
-				fbEventHandler(
-					bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := 'Leak Test', sMessage := 'Leak Test performed with Success!', bDone => bEventDone);
-				ResetEventTrigger();
 				bPressureTaken := FALSE;
 				//moving to next state
 				eState := DONE;
 			ELSIF rScaledPressure < rClosedSystemPressure THEN
-
 				bPressureTaken := FALSE;
-				fbEventHandler( bExecute  := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := 'Leak Test', sMessage := 'Pressure below required limit!', bDone => bEventDone);
-				ResetEventTrigger();
 				//Moving to error state
 				eState := ERROR;
 			END_IF;
@@ -235,13 +225,24 @@ END_IF;]]></ST>
       <LineId Id="920" Count="1" />
       <LineId Id="600" Count="11" />
       <LineId Id="613" Count="14" />
-      <LineId Id="629" Count="36" />
-      <LineId Id="885" Count="0" />
-      <LineId Id="667" Count="27" />
+      <LineId Id="629" Count="30" />
+      <LineId Id="991" Count="1" />
+      <LineId Id="994" Count="1" />
+      <LineId Id="993" Count="0" />
+      <LineId Id="660" Count="4" />
+      <LineId Id="668" Count="1" />
+      <LineId Id="671" Count="4" />
+      <LineId Id="997" Count="0" />
+      <LineId Id="999" Count="0" />
+      <LineId Id="998" Count="0" />
+      <LineId Id="683" Count="11" />
       <LineId Id="957" Count="0" />
       <LineId Id="695" Count="0" />
       <LineId Id="956" Count="0" />
-      <LineId Id="697" Count="16" />
+      <LineId Id="697" Count="0" />
+      <LineId Id="702" Count="3" />
+      <LineId Id="707" Count="0" />
+      <LineId Id="710" Count="3" />
       <LineId Id="805" Count="1" />
       <LineId Id="804" Count="0" />
       <LineId Id="714" Count="1" />

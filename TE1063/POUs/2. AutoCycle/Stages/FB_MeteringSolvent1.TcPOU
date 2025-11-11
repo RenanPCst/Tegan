@@ -3,96 +3,130 @@
   <POU Name="FB_MeteringSolvent1" Id="{ae03a0ea-4cc6-4ba1-bf89-b7c4f161ddcb}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MeteringSolvent1
 VAR_INPUT
-	bExecute    : BOOL;
+	bExecute    : BOOL; 	// start (rising-edge)
 END_VAR
 VAR_OUTPUT
-	bDone       : BOOL;
-    bError      : BOOL;
+	bBusy       : BOOL;  	// Busy when running
+    bDone       : BOOL;		// Done flag
+    bError      : BOOL;		// Error flag
+	iErrorCode  : DINT; 	// Erro custom code
 END_VAR
 VAR
-	bMoveValveDone		 : ARRAY[1..5] OF BOOL;
-	bMovePumpDone		 : ARRAY[1..10] OF BOOL;
-	fDistance        	 : ARRAY[1..10] OF REAL;
-	
-	fbSolenoidControl : FB_SolenoidControl;
-	
-	iStepCounter : INT := 0;
-    i : USINT; //loop for index
+	iStepCounter       : INT := 0;
+    bMoveValveDone     : ARRAY[1..5] OF BOOL;
+    bMovePumpDone      : ARRAY[1..10] OF BOOL;
+    fDistance          : ARRAY[1..10] OF REAL;
+	bAllMoveDone	   : BOOL := FALSE;
+    fbTmrValves        : TON; 	// watchdog valves
+    fbTmrPumps         : TON; 	// watchdog pumps
+    bExecutePrev       : BOOL;	// Saves the previous state
+    i                  : USINT;	//loop for index
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 1'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 10;
-		iStepCounter := 1;
-	
-    1: // Initialization: Reset solenoids and set valves
-        fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
-		
-		IF fbSolenoidControl.bDone THEN
-			iStepCounter := 2;
-		END_IF
-		
-    2: // Set valves for Rinse 1 position
-	    FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1], 
-																	 	rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 	rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 	rDec := GVL_Motion.aValves[i].rDeceleration 
-																		);
-			END_IF
+      <ST><![CDATA[// 0) Disparo por borda de subida
+IF (bExecute AND NOT bExecutePrev) AND NOT bBusy AND NOT bDone THEN
+    bBusy := TRUE;
+    bError := FALSE; iErrorCode := 0;
+    iStepCounter := 0;
+
+    // Limpa arrays e timers
+    FOR i := 1 TO 5 DO bMoveValveDone[i] := FALSE; END_FOR
+    FOR i := 1 TO 10 DO bMovePumpDone[i] := FALSE; END_FOR
+END_IF
+bExecutePrev := bExecute;
+
+// 1) Máquina de estados só roda quando ocupado
+IF bBusy THEN
+    CASE iStepCounter OF
+        0: // Banner HMI
+            GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 1';
+            iStepCounter := 1;
+
+        1: // Solenoides em IDLE
+            IF GVL_IO.gSetSolenoidControl.Idle() THEN
+                // start watchdog de válvulas
+                fbTmrValves(IN:=TRUE, PT:=T#10S);
+                iStepCounter := 2;
+            END_IF
+
+        2: // Setar válvulas p/ solvente 1
+            FOR i := 1 TO 5 DO
+                IF NOT bMoveValveDone[i] THEN
+                    bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                        iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1],
+                        rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                        rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                        rDec      := GVL_Motion.aValves[i].rDeceleration
+                    );
+                END_IF
+            END_FOR
+
+            IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
+                fbTmrValves(IN:=FALSE);
+                FOR i := 1 TO 5 DO bMoveValveDone[i] := FALSE; END_FOR
+                iStepCounter := 3;
+            ELSIF fbTmrValves.Q THEN
+                bError := TRUE; iErrorCode := 1001; // timeout válvulas
+                iStepCounter := 6;
+            END_IF
+
+        3: // Distâncias por bomba
+            // ... seus cálculos F_VolumeToSteps + dead volume ...
+            fbTmrPumps(IN:=TRUE, PT:=T#30S);
+            iStepCounter := 4;
+
+        4: // Movimentos das bombas
+            FOR i := 1 TO 10 DO
+                IF NOT bMovePumpDone[i] THEN
+                    bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                        Distance := fDistance[i],
+                        Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                        Acc      := GVL_SETTINGS.stPumpParameters.iMeterVelocity * 6,
+                        Dec      := GVL_SETTINGS.stPumpParameters.iMeterVelocity
+                    );
+                END_IF
+            END_FOR
 			
-        END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 3;
-		END_IF
-        
-	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
-		
-		iStepCounter := 4;
-		
-    4: // Performs rotary movement (positive movement)
-        FOR i := 1 TO 10 DO
-            IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity :=  GVL_Settings.stPumpParameters.iMeterVelocity * 6, // GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity  // Slow deceleration to ensure smoothness on metering
-																			);
-			END_IF
-        END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step to monitor completion
-		END_IF
-	
-	5: // Sets the movement done flag
-		bMovementComplete := TRUE;
-         
-END_CASE
-]]></ST>
+			bAllMoveDone := bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND 
+						   bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND 
+						   bMovePumpDone[9] AND bMovePumpDone[10];
+			
+            IF bAllMoveDone THEN // helper p/ AND dos 10 itens
+                fbTmrPumps(IN:=FALSE);
+                FOR i := 1 TO 10 DO bMovePumpDone[i] := FALSE; END_FOR
+                iStepCounter := 5;
+            ELSIF fbTmrPumps.Q THEN
+                bError := TRUE; iErrorCode := 1002; // timeout bombas
+                iStepCounter := 6;
+            END_IF
+
+        5: // Done
+            bBusy := FALSE;
+            bDone := TRUE;
+            // NÃO limpar aqui; espere bExecute cair para limpar bDone
+            // iStepCounter pode permanecer 5 até o chamador reconhecer
+
+        6: // Error
+            bBusy := FALSE;
+            // bError TRUE e iErrorCode já setados
+            // Aguarde reset do chamador
+    END_CASE
+END_IF
+
+// 2) Limpeza quando o chamador derruba bExecute (ack)
+IF NOT bExecute AND NOT bBusy THEN
+    // Libera done (acknowledged) para um próximo ciclo
+    bDone := FALSE;
+    // (Opcional) zere iStepCounter := 0;
+END_IF]]></ST>
     </Implementation>
     <LineIds Name="FB_MeteringSolvent1">
-      <LineId Id="13" Count="67" />
+      <LineId Id="115" Count="63" />
+      <LineId Id="209" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="179" Count="26" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

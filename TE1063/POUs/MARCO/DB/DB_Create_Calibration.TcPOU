@@ -31,7 +31,7 @@ CASE state OF
 		GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber 		:= GVL_DB.lastCalibID[0];	
 		GVL_DB.stParameter_PCR.userID									:= 'DEV';
 		GVL_DB.stParameter_PCR.allowableFail							:= USINT_TO_STRING(GVL_Settings.stCalibParameters.iAllowableFailures);
-		GVL_DB.stParameter_PCR.CalibrationNo							:= GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber+1;
+		GVL_DB.stParameter_PCR.CalibrationNo							:= UDINT_TO_INT(GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber+1);
 		GVL_DB.stParameter_PCR.callInterval								:= UINT_TO_STRING(GVL_Settings.stCalibParameters.iCalIntervalDays);
 		GVL_DB.stParameter_PCR.density									:= REAL_TO_STRING(GVL_Calibration.stPumpCalibrationInfo.rSolventDensity);
 		GVL_DB.stParameter_PCR.replicates								:= INT_TO_STRING(GVL_Calibration.stPumpCalibrationInfo.iReplicates);

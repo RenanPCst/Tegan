@@ -642,26 +642,24 @@ CASE ePState OF
 
     E_PState.OpenValves:
         // Pressuriza o sistema: A/B abertas, C fechada
-        GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
-        GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
-        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
-
-        ePState := E_PState.Done;
+        IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
+			ePState := E_PState.Done;
+		END_IF
 
     E_PState.Done:
 		eLeakTestState := E_LeakTestState.PRESSURE_UP;
         bMoveIssued := FALSE;
         tonSealTimeout(IN := FALSE);
 		PressureUp := TRUE;          // pulso de sucesso nesta chamada
-        ePState := E_PState.Init;             // pronto para próximo ciclo
+        ePState := E_PState.Init;    // pronto para próximo ciclo
         RETURN;                      // encerra o método neste ciclo
 
     E_PState.Fault:
         // Falha: garanta estado seguro (não pressuriza)
-        GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+        (*GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
         GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
-        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
-
+        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;*)
+		GVL_IO.gSetSolenoidControl.Idle();
         bMoveIssued := FALSE;
         tonSealTimeout(IN := FALSE);
         PressureUp := FALSE;
@@ -1115,11 +1113,17 @@ END_IF*)
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.PressureUp">
-      <LineId Id="160" Count="55" />
+      <LineId Id="160" Count="48" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="246" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="215" Count="0" />
       <LineId Id="237" Count="0" />
       <LineId Id="217" Count="1" />
       <LineId Id="238" Count="0" />
-      <LineId Id="219" Count="17" />
+      <LineId Id="219" Count="7" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="228" Count="8" />
       <LineId Id="106" Count="0" />
       <LineId Id="118" Count="41" />
       <LineId Id="6" Count="0" />
