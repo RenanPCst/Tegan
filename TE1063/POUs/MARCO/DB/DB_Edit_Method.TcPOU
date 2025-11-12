@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="DB_Edit_Method" Id="{6540634d-9045-4b20-96b6-847ba6028d8e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM DB_Edit_Method
+VAR
+	state: INT;
+	timer: ton;
+	timer2: ton;
+END_VAR
+
+VAR_INPUT
+	start: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timer();
+timer2();
+
+CASE state OF
+	
+0:
+	IF start THEN
+		DB_Query.state:= E_DB_QUERY_STATE.INSERT_NEW_METHOD;
+		timer(in:=TRUE, pt:=T#2S);
+		state:= 5;
+	ELSE
+		state:= 0;
+	END_IF
+
+5:
+	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
+		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_METHOD_ID;
+		timer(in:=FALSE);
+		timer2(in:= TRUE, pt:= T#2S);
+		state:= 10; 
+	ELSE
+		state:= 5;
+	END_IF
+
+10:
+
+	IF NOT DB_Query.FB_SelectArray.bBusy AND timer2.Q THEN
+		timer2(in:=FALSE);
+		
+		GVL_DB.astVolData[1].pump := '1';
+		GVL_DB.astVolData[1].stage := 'T/IC';
+		GVL_DB.astVolData[1].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[1]);
+		GVL_DB.astVolData[1].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[2]);
+		GVL_DB.astVolData[1].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[3]);
+		GVL_DB.astVolData[1].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aT_IC_Volume[4]);
+		GVL_DB.astVolData[2].pump := '2';
+		GVL_DB.astVolData[2].stage := 'S0';
+		GVL_DB.astVolData[2].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[1]);
+		GVL_DB.astVolData[2].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[2]);
+		GVL_DB.astVolData[2].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[3]);
+		GVL_DB.astVolData[2].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume[4]);
+		GVL_DB.astVolData[3].pump := '3';
+		GVL_DB.astVolData[3].stage := 'S1';
+		GVL_DB.astVolData[3].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[1]);
+		GVL_DB.astVolData[3].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[2]);
+		GVL_DB.astVolData[3].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[3]);
+		GVL_DB.astVolData[3].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS1_Volume[4]);
+		GVL_DB.astVolData[4].pump := '4';
+		GVL_DB.astVolData[4].stage := 'S2';
+		GVL_DB.astVolData[4].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[1]);
+		GVL_DB.astVolData[4].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[2]);
+		GVL_DB.astVolData[4].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[3]);
+		GVL_DB.astVolData[4].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS2_Volume[4]);
+		GVL_DB.astVolData[5].pump := '5';
+		GVL_DB.astVolData[5].stage := 'S3';
+		GVL_DB.astVolData[5].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[1]);
+		GVL_DB.astVolData[5].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[2]);
+		GVL_DB.astVolData[5].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[3]);
+		GVL_DB.astVolData[5].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS3_Volume[4]);
+		GVL_DB.astVolData[6].pump := '6';
+		GVL_DB.astVolData[6].stage := 'S4';
+		GVL_DB.astVolData[6].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[1]);
+		GVL_DB.astVolData[6].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[2]);
+		GVL_DB.astVolData[6].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[3]);
+		GVL_DB.astVolData[6].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS4_Volume[4]);
+		GVL_DB.astVolData[7].pump := '7';
+		GVL_DB.astVolData[7].stage := 'S5';
+		GVL_DB.astVolData[7].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[1]);
+		GVL_DB.astVolData[7].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[2]);
+		GVL_DB.astVolData[7].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[3]);
+		GVL_DB.astVolData[7].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS5_Volume[4]);
+		GVL_DB.astVolData[8].pump := '8';
+		GVL_DB.astVolData[8].stage := 'S6';
+		GVL_DB.astVolData[8].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[1]);
+		GVL_DB.astVolData[8].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[2]);
+		GVL_DB.astVolData[8].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[3]);
+		GVL_DB.astVolData[8].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS6_Volume[4]);
+		GVL_DB.astVolData[9].pump := '9';
+		GVL_DB.astVolData[9].stage := 'S7';
+		GVL_DB.astVolData[9].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[1]);
+		GVL_DB.astVolData[9].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[2]);
+		GVL_DB.astVolData[9].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[3]);
+		GVL_DB.astVolData[9].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aS7_Volume[4]);
+		GVL_DB.astVolData[10].pump := '10';
+		GVL_DB.astVolData[10].stage := 'F';
+		GVL_DB.astVolData[10].rinse1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[1]);
+		GVL_DB.astVolData[10].rinse2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[2]);
+		GVL_DB.astVolData[10].wash1 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[3]);
+		GVL_DB.astVolData[10].wash2 := REAL_TO_STRING(GVL_Recipe.stCurrentRecipe.stVolumes.aF_Volume[4]);
+		
+		DB_Query.j := 1;
+		state:= 20;
+	ELSE
+		state:= 10;
+	END_IF
+	
+20:
+
+	IF DB_Query.j <= 10 THEN
+		DB_Query.state := E_DB_QUERY_STATE.INSERT_VOLUME_DATA;
+		timer(in:=TRUE, pt:=T#5S);
+		state:= 30;
+	ELSIF DB_Query.j >10 THEN
+		state:= 40;
+	ELSE
+		state:= 20;
+	END_IF	
+
+30:
+
+	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
+		timer(in:=FALSE);
+		DB_Query.j := DB_Query.j + 1;
+		state:= 20;
+	ELSE
+		state:= 30;
+	END_IF
+	
+40:
+
+	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
+		timer(in:=FALSE);
+		DB_Query.state := E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD;
+		start:= FALSE;
+		PRG_RecipeManager.bDatagridToRecipeDone := TRUE;
+		state:= 0;
+	ELSE
+		state:= 40;
+	END_IF
+	
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="DB_Edit_Method">
+      <LineId Id="6" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="80" Count="2" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="258" Count="1" />
+      <LineId Id="252" Count="3" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="160" Count="2" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="164" Count="2" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="173" Count="4" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="179" Count="2" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="185" Count="4" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="191" Count="4" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="197" Count="4" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="203" Count="2" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="209" Count="4" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="215" Count="2" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="108" Count="1" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="231" Count="1" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="235" Count="1" />
+      <LineId Id="238" Count="2" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="243" Count="2" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
