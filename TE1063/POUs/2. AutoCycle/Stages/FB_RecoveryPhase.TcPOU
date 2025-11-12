@@ -15,7 +15,8 @@ END_VAR
 VAR
 	eRecoveryState : E_RecoveryState := E_RecoveryState.Idle;
 
-    fbSolenoidControl : FB_SolenoidControl;
+    fbSolenoidControl 	: FB_SolenoidControl;
+	fbMeteringSolvent1 	: FB_MeteringSolvent1;
 	
 	//Error Handle
 	bErrorDetected   : BOOL := FALSE;
@@ -87,13 +88,18 @@ CASE eRecoveryState OF
 
     E_RecoveryState.Metering_Solvent1: //Change for external FB to run in paralell if needed 
 
-        MeteringSolvent1(); 
+		IF GVL_Settings.bGeneralSealAndPump AND GVL_Settings.bMeteringSolvent1Done THEN
+			bMovementComplete := TRUE;
+		ELSE
+			MeteringSolvent1();
+		END_IF
+        
         IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Recirculate_Solvent1;
 			iStepCounter := 0;
+			GVL_Settings.bMeteringSolvent1Done := FALSE;
             bMovementComplete := FALSE;
         END_IF
-
 
     E_RecoveryState.Recirculate_Solvent1:
 
@@ -1474,7 +1480,16 @@ END_CASE]]></ST>
       <LineId Id="1287" Count="0" />
       <LineId Id="1292" Count="0" />
       <LineId Id="870" Count="0" />
-      <LineId Id="872" Count="102" />
+      <LineId Id="872" Count="2" />
+      <LineId Id="1350" Count="0" />
+      <LineId Id="875" Count="0" />
+      <LineId Id="1351" Count="0" />
+      <LineId Id="1353" Count="1" />
+      <LineId Id="1352" Count="0" />
+      <LineId Id="876" Count="3" />
+      <LineId Id="1357" Count="0" />
+      <LineId Id="880" Count="1" />
+      <LineId Id="883" Count="91" />
       <LineId Id="1008" Count="11" />
       <LineId Id="981" Count="0" />
       <LineId Id="1020" Count="0" />

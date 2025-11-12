@@ -38,6 +38,7 @@ VAR
 	
 	//Seal Stages Instance
 	fbSealStages 		: FB_SealStages;	//FB instance
+		fbMeteringSolvent1 	: FB_MeteringSolvent1;
 		bSealStages		: BOOL := FALSE;
 		bSealSuccess	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
 		bSealError		: BOOL := FALSE; 	//seal error flag FB_SealStages
@@ -170,18 +171,24 @@ CASE CurrentState OF
 			END_IF
 			
 			fbSealStages( bExecute := bSealStages );
+			
+			IF GVL_Settings.bGeneralSealAndPump THEN
+				fbMeteringSolvent1(bExecute := TRUE);
+			END_IF
 				
 			//error check
-			IF fbSealStages.bSealError THEN
+			IF fbSealStages.bSealError OR fbMeteringSolvent1.bError THEN
 				//error dealing logic
 				CurrentState := E_MachineStates.ERROR_STATE;
-			END_IF;
+			END_IF
 	
 			//step forward to step ahead
-			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
-				CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:
-				
-			END_IF;
+			IF fbSealStages.bSealSuccess AND fbMeteringSolvent1.bDone AND NOT fbSealStages.bSealError AND NOT fbMeteringSolvent1.bError THEN
+				GVL_Settings.bMeteringSolvent1Done := TRUE;
+ 				IF fbMeteringSolvent1.Reset() THEN
+					CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:				
+				END_IF
+			END_IF
 	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
 	IF bStatePass1 THEN
@@ -339,9 +346,12 @@ END_IF;]]></ST>
       <LineId Id="1902" Count="44" />
       <LineId Id="1948" Count="0" />
       <LineId Id="1961" Count="0" />
-      <LineId Id="1963" Count="8" />
-      <LineId Id="2002" Count="8" />
-      <LineId Id="2213" Count="0" />
+      <LineId Id="1963" Count="7" />
+      <LineId Id="2382" Count="4" />
+      <LineId Id="2002" Count="7" />
+      <LineId Id="2388" Count="1" />
+      <LineId Id="2392" Count="0" />
+      <LineId Id="2391" Count="0" />
       <LineId Id="2011" Count="27" />
       <LineId Id="2044" Count="7" />
       <LineId Id="2053" Count="2" />

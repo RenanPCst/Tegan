@@ -50,6 +50,7 @@ VAR
 	bLinearPumpsOldPosDone	: BOOL := FALSE;
 	bLinearPumpsMove		: BOOL := FALSE;
 	aLinearPumpsEnable 		: ARRAY[1..10] OF BOOL;
+	aLinearPumpsDisable		: ARRAY[1..10] OF BOOL;
 	aLinearPumpsHoming 		: ARRAY[1..10] OF BOOL;
 	bLinearPumpsOldPosMove	: ARRAY[1..10] OF BOOL;
 	aLinearPumpsMoveDone 	: ARRAY[1..10] OF BOOL; // Tracks per-axis move completion
@@ -182,7 +183,8 @@ IF GVL_HMI.bCalLinearPumpsEnableBt THEN
 
     IF EnableLinearPumps() THEN
         // Operation finished successfully
-        GVL_HMI.bCalLinearPumpsEnableBt := FALSE;
+        GVL_HMI.bCalLinearPumpsEnableBt := FALSE; // Set Dirty flag that does not allow closing the popup
+		GVL_HMI.bCalLinearPumpsDirty := TRUE;
     END_IF
 END_IF
 
@@ -193,6 +195,7 @@ IF GVL_HMI.bCalLinearPumpsHomeBt THEN
 
     IF HomeLinearPumps() THEN
         GVL_HMI.bCalLinearPumpsHomeBt := FALSE;
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; // Set Dirty flag that does not allow closing the popup
     END_IF
 END_IF
 
@@ -203,6 +206,7 @@ IF GVL_HMI.bCalLinearPumpsMoveBt THEN
 
     IF MoveLinearPumps() THEN
         GVL_HMI.bCalLinearPumpsMoveBt := FALSE;
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; // Set Dirty flag that does not allow closing the popup
     END_IF
 END_IF
 
@@ -218,6 +222,39 @@ IF GVL_HMI.bCalLinearPumpsStopBt THEN
     END_FOR
     // Reset trigger
     GVL_HMI.bCalLinearPumpsStopBt := FALSE;
+END_IF
+
+(* Linear Pumps Save - Gets all new motors position and saves on old position | Disable all pumps that are enabled *)
+IF GVL_HMI.bCalLinearPumpsSaveBt THEN
+	FOR i := 1 TO 10 DO
+		IF GVL_Motion.aPumps[i].Linear.iOperational AND GVL_Motion.aPumps[i].Linear.iHomed THEN // if axis enabled then disables it
+			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Old Position changed - DB insert
+			GVL_Retain.rLinearPumpOldPosition[i] := GVL_Motion.aPumps[i].Linear.rActualPos; // Save the old axis position
+			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Motion.aPumps[i].Linear.rActualPos); // New Position changed - DB insert
+			IF NOT aLinearPumpsDisable[i] THEN
+				aLinearPumpsDisable[i] := GVL_Motion.aPumpsLinear[i].Disable(); // Disable the axis
+			END_IF
+		ELSE
+			aLinearPumpsDisable[i] := TRUE; // Fallback if motor is no operational
+			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
+			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
+		END_IF
+		GVL_Calibration.stLinearCalibrationData[i].sPumpNumber 	 := TO_STRING(i); // Pump Number - DB insert
+		GVL_Calibration.stLinearCalibrationData[i].sUserName 	 := GVL_HMI.sUserNameEventTriggered; // HMI User name when button pressed - DB insert
+		GVL_Calibration.stLinearCalibrationData[i].sDateOfChange := GVL_HMI.sDateAndTimeEventTriggered; // HMI Date and time when button pressed  - DB insert
+	END_FOR
+	IF 	aLinearPumpsDisable[1] AND aLinearPumpsDisable[2] AND aLinearPumpsDisable[3] AND aLinearPumpsDisable[4] AND aLinearPumpsDisable[5] AND 
+		aLinearPumpsDisable[6] AND aLinearPumpsDisable[7] AND aLinearPumpsDisable[8] AND aLinearPumpsDisable[9] AND aLinearPumpsDisable[10] THEN
+		
+		FOR i := 1 TO 10 DO
+			aLinearPumpsDisable[i] := FALSE; // Resets the disable motors flag
+		END_FOR
+		
+		GVL_HMI.bCalLinearPumpsSaveBt := FALSE;  // Resets the button trigger 
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; 	 // Resets the Dirty flag that allow the popup closes
+		GVL_HMI.sUserNameEventTriggered := '';	 // Resets Username triggered from HMI
+		GVL_HMI.sDateAndTimeEventTriggered := '';// Resets Date and Time trigerred from HMI
+	END_IF
 END_IF
 
 (* Valves Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -997,20 +1034,48 @@ END_IF*)
       <LineId Id="376" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />
-      <LineId Id="295" Count="7" />
+      <LineId Id="295" Count="6" />
+      <LineId Id="928" Count="0" />
+      <LineId Id="302" Count="0" />
       <LineId Id="199" Count="0" />
       <LineId Id="194" Count="0" />
       <LineId Id="192" Count="0" />
-      <LineId Id="303" Count="6" />
+      <LineId Id="303" Count="5" />
+      <LineId Id="929" Count="0" />
+      <LineId Id="309" Count="0" />
       <LineId Id="197" Count="0" />
       <LineId Id="196" Count="0" />
       <LineId Id="195" Count="0" />
-      <LineId Id="310" Count="6" />
+      <LineId Id="310" Count="5" />
+      <LineId Id="930" Count="0" />
+      <LineId Id="316" Count="0" />
       <LineId Id="253" Count="0" />
       <LineId Id="263" Count="1" />
       <LineId Id="282" Count="8" />
       <LineId Id="292" Count="1" />
       <LineId Id="262" Count="0" />
+      <LineId Id="833" Count="2" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="844" Count="0" />
+      <LineId Id="868" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="864" Count="0" />
+      <LineId Id="848" Count="4" />
+      <LineId Id="867" Count="0" />
+      <LineId Id="865" Count="0" />
+      <LineId Id="842" Count="0" />
+      <LineId Id="934" Count="2" />
+      <LineId Id="843" Count="0" />
+      <LineId Id="853" Count="0" />
+      <LineId Id="857" Count="0" />
+      <LineId Id="854" Count="0" />
+      <LineId Id="860" Count="3" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="931" Count="0" />
+      <LineId Id="937" Count="0" />
+      <LineId Id="858" Count="0" />
+      <LineId Id="855" Count="0" />
+      <LineId Id="838" Count="0" />
       <LineId Id="611" Count="0" />
       <LineId Id="610" Count="0" />
       <LineId Id="614" Count="0" />
