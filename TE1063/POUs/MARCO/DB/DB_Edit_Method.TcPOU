@@ -20,7 +20,7 @@ CASE state OF
 0:
 	IF start THEN
 		DB_Query.state:= E_DB_QUERY_STATE.INSERT_NEW_METHOD;
-		timer(in:=TRUE, pt:=T#2S);
+		timer(in:=TRUE, pt:=T#1S);
 		state:= 5;
 	ELSE
 		state:= 0;
@@ -30,7 +30,7 @@ CASE state OF
 	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
 		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_METHOD_ID;
 		timer(in:=FALSE);
-		timer2(in:= TRUE, pt:= T#2S);
+		timer2(in:= TRUE, pt:= T#1S);
 		state:= 10; 
 	ELSE
 		state:= 5;
@@ -112,9 +112,10 @@ CASE state OF
 
 	IF DB_Query.j <= 10 THEN
 		DB_Query.state := E_DB_QUERY_STATE.INSERT_VOLUME_DATA;
-		timer(in:=TRUE, pt:=T#5S);
+		timer(in:=TRUE, pt:=T#2S);
 		state:= 30;
 	ELSIF DB_Query.j >10 THEN
+		timer(in:=TRUE, pt:=T#1S);
 		state:= 40;
 	ELSE
 		state:= 20;
@@ -207,7 +208,9 @@ END_CASE]]></ST>
       <LineId Id="110" Count="0" />
       <LineId Id="120" Count="1" />
       <LineId Id="116" Count="0" />
-      <LineId Id="231" Count="1" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="232" Count="0" />
       <LineId Id="117" Count="0" />
       <LineId Id="119" Count="0" />
       <LineId Id="118" Count="0" />
