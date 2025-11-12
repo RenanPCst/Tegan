@@ -24,6 +24,8 @@ GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
 GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
 GVL_IO.gDigOutputs.bSolenoidValveC := TRUE;
 
+GVL_Calibration.eLeakTestState := E_LeakTestState.IDLE;
+
 AirDry := TRUE;
 RETURN;]]></ST>
       </Implementation>
@@ -39,6 +41,8 @@ END_VAR
 GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
 GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
 GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
+
+GVL_Calibration.eLeakTestState := E_LeakTestState.HOLD_PRESSURE;
 
 HoldPressure := TRUE;
 RETURN;]]></ST>
@@ -56,6 +60,8 @@ GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
 GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
 GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
 
+GVL_Calibration.eLeakTestState := E_LeakTestState.IDLE;
+
 Idle := TRUE;
 RETURN;]]></ST>
       </Implementation>
@@ -72,6 +78,8 @@ GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
 GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
 GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
 
+GVL_Calibration.eLeakTestState := E_LeakTestState.PRESSURE_UP;
+
 PressureUp := TRUE;
 RETURN;]]></ST>
       </Implementation>
@@ -82,14 +90,20 @@ RETURN;]]></ST>
     <LineIds Name="FB_SetSolenoid.AirDry">
       <LineId Id="6" Count="1" />
       <LineId Id="12" Count="1" />
-      <LineId Id="10" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="11" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="14" Count="0" />
     </LineIds>
     <LineIds Name="FB_SetSolenoid.HoldPressure">
       <LineId Id="6" Count="1" />
       <LineId Id="12" Count="1" />
-      <LineId Id="10" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="11" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="14" Count="0" />
     </LineIds>
@@ -97,6 +111,7 @@ RETURN;]]></ST>
       <LineId Id="6" Count="0" />
       <LineId Id="11" Count="0" />
       <LineId Id="7" Count="2" />
+      <LineId Id="16" Count="1" />
       <LineId Id="12" Count="0" />
       <LineId Id="10" Count="0" />
       <LineId Id="5" Count="0" />
@@ -104,7 +119,9 @@ RETURN;]]></ST>
     <LineIds Name="FB_SetSolenoid.PressureUp">
       <LineId Id="6" Count="1" />
       <LineId Id="12" Count="1" />
-      <LineId Id="10" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="11" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="14" Count="0" />
     </LineIds>

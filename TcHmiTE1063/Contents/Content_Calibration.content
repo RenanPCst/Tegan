@@ -286,7 +286,7 @@
     "actions": [
       {
         "objectType": "WriteToSymbol",
-        "active": true,
+        "active": false,
         "symbolExpression": "%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%",
         "value": {
           "objectType": "StaticValue",
@@ -294,6 +294,57 @@
           "value": true
         },
         "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// =========================",
+          "// Pressurize System Button",
+          "// =========================",
+          "",
+          "const SEAL_POS_TOLERANCE = 2.0; // Position reading tolerance",
+          "",
+          "(async () => {",
+          "    try {",
+          "        const readSymbol = (symbol) => new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.readEx2(symbol, (data) => {",
+          "                if (data.error === TcHmi.Enums.ErrorCode.OK) resolve(data.value);",
+          "                else reject(data);",
+          "            });",
+          "        });",
+          "",
+          "        const writeSymbol = (symbol, value) => new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.writeEx(symbol, value, (data) => {",
+          "                if (data.error === TcHmi.Enums.ErrorCode.OK) resolve(true);",
+          "                else reject(data);",
+          "            });",
+          "        });",
+          "",
+          "        const [m1ActualPos, m1SealPos] = await Promise.all([",
+          "            readSymbol('%s%PLC1.GVL_Motion.M1Motor::rActualPos%/s%'),",
+          "            readSymbol('%s%PLC1.GVL_Settings.stMachineParam.aM1Position[1]%/s%')",
+          "        ]);",
+          "",
+          "        const delta = Math.abs(Number(m1ActualPos) - Number(m1SealPos));",
+          "",
+          "        if (delta > SEAL_POS_TOLERANCE) {",
+          "            alert('M1 não está em Seal Position. Mova o eixo para SEAL e tente novamente.');",
+          "            return;",
+          "        }",
+          "",
+          "        await writeSymbol('%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%', true);",
+          "        console.log('✅ Pressurize System liberado e flag enviada ao PLC.');",
+          "    } catch (err) {",
+          "        console.error('Erro ao executar Pressurize System:', err);",
+          "        alert('Erro ao comunicar com o PLC.');",
+          "    }",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
@@ -309,7 +360,7 @@
     "actions": [
       {
         "objectType": "WriteToSymbol",
-        "active": true,
+        "active": false,
         "symbolExpression": "%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%",
         "value": {
           "objectType": "StaticValue",
@@ -317,6 +368,52 @@
           "value": true
         },
         "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// =========================",
+          "// Hold System Pressure Button",
+          "// =========================",
+          "",
+          "const MIN_PRESSURE_THRESHOLD = 0.1; // Minimum value needed to accept having a pressure",
+          "",
+          "(async () => {",
+          "    try {",
+          "        const readSymbol = (symbol) => new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.readEx2(symbol, (data) => {",
+          "                if (data.error === TcHmi.Enums.ErrorCode.OK) resolve(data.value);",
+          "                else reject(data);",
+          "            });",
+          "        });",
+          "",
+          "        const writeSymbol = (symbol, value) => new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.writeEx(symbol, value, (data) => {",
+          "                if (data.error === TcHmi.Enums.ErrorCode.OK) resolve(true);",
+          "                else reject(data);",
+          "            });",
+          "        });",
+          "",
+          "        const pressure = await readSymbol('%s%PLC1.GVL_HMI.rCalLeakTestPressure%/s%');",
+          "",
+          "        if (Number(pressure) <= MIN_PRESSURE_THRESHOLD) {",
+          "            alert('Não há pressão no sistema. Pressurize antes de segurar a pressão.');",
+          "            return;",
+          "        }",
+          "",
+          "        await writeSymbol('%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%', true);",
+          "        console.log('✅ Hold System Pressure liberado e flag enviada ao PLC.');",
+          "    } catch (err) {",
+          "        console.error('Erro ao executar Hold System Pressure:', err);",
+          "        alert('Erro ao comunicar com o PLC.');",
+          "    }",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }

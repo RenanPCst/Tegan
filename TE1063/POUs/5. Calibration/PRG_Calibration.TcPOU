@@ -22,7 +22,6 @@ VAR
 	fbSolenoidControl	: FB_SolenoidControl;
 	eStopState 			: E_StopState 		:= E_StopState.Init;
 	ePState 			: E_PState 			:= E_PState.Init;	
-	eLeakTestState 		: E_LeakTestState	:= E_LeakTestState.IDLE;
 	
 	bPressureUpExecute 		: BOOL := FALSE;
     bPressureUpRequested 	: BOOL := FALSE;
@@ -59,6 +58,8 @@ VAR
 	
 	//Valves movement
 	bMoveValves	: ARRAY[1..5] OF BOOL;
+	bMoveM1Fast	: BOOL := FALSE;
+	bMoveM1Slow	: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -95,22 +96,32 @@ END_IF
 
 // HMI Button responsible for pressurize the system
 IF GVL_HMI.bCalPressureUpSystemBt THEN
-	GVL_HMI.bCalPressureUpSystemBt := NOT PressureUp();
+	IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos - 5) THEN
+		GVL_HMI.bCalPressureUpSystemBt := NOT GVL_IO.gSetSolenoidControl.PressureUp(); //PressureUp();
+	ELSE
+		//Raise interlock alarm
+		GVL_HMI.bCalPressureUpSystemBt := FALSE;
+	END_IF
 END_IF
 
 // HMI Button responsible for hold the air in the system after the system pressure up
 IF GVL_HMI.bCalHoldSysPressureBt THEN
-	GVL_HMI.bCalHoldSysPressureBt := NOT HoldSystemPressure();
+	IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos - 5) THEN
+		GVL_HMI.bCalHoldSysPressureBt := NOT GVL_IO.gSetSolenoidControl.HoldPressure(); //PressureUp();
+	ELSE
+		//Raise interlock alarm
+		GVL_HMI.bCalHoldSysPressureBt := FALSE;
+	END_IF
 END_IF
 
 // HMI Button responsible for stopping the leak test
 IF GVL_HMI.bCalStopLeakTestBt THEN
-	GVL_HMI.bCalStopLeakTestBt := NOT StopLeakTest();
+	GVL_HMI.bCalStopLeakTestBt := NOT GVL_IO.gSetSolenoidControl.Idle();
 END_IF
 
 // Leak test stage Analog input pressure HMI shown
-IF eLeakTestState <> E_LeakTestState.IDLE THEN
-	GVL_HMI.rCalLeakTestPressure := GVL_IO.gAnalogInputs.rLeakTestPressureSensor;
+IF GVL_Calibration.eLeakTestState <> E_LeakTestState.IDLE THEN
+	GVL_HMI.rCalLeakTestPressure := (GVL_IO.gAnalogInputs.rLeakTestPressureSensor - 220.0) * (3.698 / (6100.0 - 220.0)); // Pressure scaling to PSI
 ELSE
 	GVL_HMI.rCalLeakTestPressure := 0.00;
 END_IF
@@ -275,11 +286,24 @@ END_IF
 
 (* M1 Motor Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
 IF GVL_HMI.bCalMoveM1Motor AND GVL_IO.gDigInputs.bThroatJigPresent THEN
-	GVL_HMI.bCalMoveM1Motor := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition],
-                        														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-                        														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-                       															rDec := GVL_Settings.stMachineParam.rM1Deceleration
-																				);
+	IF NOT bMoveM1Fast THEN
+		bMoveM1Fast := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition] + GVL_Settings.stMachineParam.fM1PositionDeceleration,
+														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+														rDec := GVL_Settings.stMachineParam.rM1Deceleration
+														);
+	END_IF
+	
+	IF bMoveM1Fast AND NOT bMoveM1Slow THEN
+		bMoveM1Slow := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition],
+														rVelocity := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+														rAcc := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+														rDec := GVL_Settings.stMachineParam.rM1PrecisionVelocity
+														);
+	END_IF
+	
+	GVL_HMI.bCalMoveM1Motor := NOT ( bMoveM1Fast AND bMoveM1Slow );											
+
 END_IF
 
 ]]></ST>
@@ -376,7 +400,7 @@ IF bNeedsSet THEN
     bPressureUpSolenoids := FALSE;
     bPressureUpExecute   := FALSE;
 	
-	eLeakTestState := E_LeakTestState.HOLD_PRESSURE;
+	GVL_Calibration.eLeakTestState := E_LeakTestState.HOLD_PRESSURE;
 
     HoldSystemPressure := TRUE;   // retornamos TRUE somente quando houve mudança
 ELSE
@@ -684,7 +708,7 @@ CASE ePState OF
 		END_IF
 
     E_PState.Done:
-		eLeakTestState := E_LeakTestState.PRESSURE_UP;
+		GVL_Calibration.eLeakTestState := E_LeakTestState.PRESSURE_UP;
         bMoveIssued := FALSE;
         tonSealTimeout(IN := FALSE);
 		PressureUp := TRUE;          // pulso de sucesso nesta chamada
@@ -771,7 +795,7 @@ bLinearPumpsOldPosDone	 := FALSE;
 
 eStopState 	 	:= E_StopState.Init;
 ePState 		:= E_PState.Init;	
-eLeakTestState 	:= E_LeakTestState.IDLE;
+GVL_Calibration.eLeakTestState 	:= E_LeakTestState.IDLE;
 
 bPressureUpExecute 		 := FALSE;
 bPressureUpRequested 	 := FALSE;
@@ -887,7 +911,7 @@ END_VAR
         END_IF
 
     E_StopState.Done:
-		eLeakTestState := E_LeakTestState.IDLE;
+		GVL_Calibration.eLeakTestState := E_LeakTestState.IDLE;
 		bStopLeakTestRequested := FALSE;
         StopLeakTest         := TRUE;
         eStopState := E_StopState.Init; // ou manter em Done até novo comando
@@ -984,10 +1008,14 @@ END_IF*)
       <LineId Id="26" Count="0" />
       <LineId Id="534" Count="0" />
       <LineId Id="527" Count="1" />
-      <LineId Id="532" Count="1" />
+      <LineId Id="939" Count="1" />
+      <LineId Id="942" Count="2" />
+      <LineId Id="941" Count="0" />
+      <LineId Id="533" Count="0" />
       <LineId Id="546" Count="0" />
       <LineId Id="535" Count="0" />
       <LineId Id="555" Count="0" />
+      <LineId Id="945" Count="4" />
       <LineId Id="538" Count="0" />
       <LineId Id="536" Count="0" />
       <LineId Id="547" Count="0" />
@@ -1091,7 +1119,16 @@ END_IF*)
       <LineId Id="636" Count="0" />
       <LineId Id="631" Count="0" />
       <LineId Id="656" Count="0" />
-      <LineId Id="649" Count="6" />
+      <LineId Id="649" Count="2" />
+      <LineId Id="960" Count="3" />
+      <LineId Id="958" Count="1" />
+      <LineId Id="971" Count="0" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="967" Count="3" />
+      <LineId Id="965" Count="1" />
+      <LineId Id="964" Count="0" />
+      <LineId Id="953" Count="0" />
+      <LineId Id="956" Count="0" />
       <LineId Id="648" Count="0" />
       <LineId Id="617" Count="0" />
       <LineId Id="616" Count="0" />
