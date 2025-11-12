@@ -122,6 +122,15 @@
             "minItems": 100,
             "type": "array"
         },
+        "PLC1.ARRAY_1..100_OF-ST_Data_PCR": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Data_PCR"
+            },
+            "maxItems": 100,
+            "minItems": 100,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..10_OF-BOOL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/BOOL"
@@ -516,6 +525,124 @@
                 {
                     "label": "UNKNOWN",
                     "value": 6
+                }
+            ],
+            "type": "integer"
+        },
+        "PLC1.E_DB_QUERY_STATE": {
+            "attributes": {
+                "generate_implicit_init_function": "",
+                "qualified_only": "",
+                "strict": "",
+                "textlistenumeration": ""
+            },
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20
+            ],
+            "options": [
+                {
+                    "label": "IDLE_STATE",
+                    "value": 0
+                },
+                {
+                    "label": "SELECT_POST_LAST_RUN",
+                    "value": 1
+                },
+                {
+                    "label": "INSERT_RUN",
+                    "value": 2
+                },
+                {
+                    "label": "SELECT_LAST_CALIBRATION_ID",
+                    "value": 3
+                },
+                {
+                    "label": "INSERT_CALIBRATION_VALUES",
+                    "value": 4
+                },
+                {
+                    "label": "INSERT_CALIBRATION",
+                    "value": 5
+                },
+                {
+                    "label": "SELECT_LAST_SYSTEM_ID",
+                    "value": 6
+                },
+                {
+                    "label": "SELECT_ALL_SYSTEM",
+                    "value": 7
+                },
+                {
+                    "label": "INSERT_SYS_PARAMETERS",
+                    "value": 8
+                },
+                {
+                    "label": "SELECT_ALL_METHODS",
+                    "value": 9
+                },
+                {
+                    "label": "SELECT_ALL_ACTV_METHODS",
+                    "value": 10
+                },
+                {
+                    "label": "SELECT_WHOLE_METHODS",
+                    "value": 11
+                },
+                {
+                    "label": "INSERT_NEW_METHOD",
+                    "value": 12
+                },
+                {
+                    "label": "UPDATE_DEACTV_METHOD",
+                    "value": 13
+                },
+                {
+                    "label": "SELECT_LAST_METHOD_ID",
+                    "value": 14
+                },
+                {
+                    "label": "SELECT_VOLUME_DATA",
+                    "value": 15
+                },
+                {
+                    "label": "INSERT_VOLUME_DATA",
+                    "value": 16
+                },
+                {
+                    "label": "INSERT_USER",
+                    "value": 17
+                },
+                {
+                    "label": "SELECT_ALL_CURRENT_USERS",
+                    "value": 18
+                },
+                {
+                    "label": "SELECT_ALL_USERS",
+                    "value": 19
+                },
+                {
+                    "label": "ERROR_STATE",
+                    "value": 20
                 }
             ],
             "type": "integer"
@@ -1225,6 +1352,131 @@
                         },
                         {
                             "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_Data_PCR": {
+            "properties": {
+                "CalibrationNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 12
+                        }
+                    ]
+                },
+                "criteria": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 10
+                        }
+                    ]
+                },
+                "dateTime": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "differencePercent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "grossWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "netVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "netWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "pumpNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                },
+                "pumpRevs": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 11
+                        }
+                    ]
+                },
+                "step": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "tareWt": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "targetVolume": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 8
                         }
                     ]
                 }
@@ -2574,6 +2826,101 @@
                         },
                         {
                             "propertyOrder": 3
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_Parameters_PCR": {
+            "properties": {
+                "CalibrationNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "allowableFail": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "callInterval": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                },
+                "density": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "replicates": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "solventNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "solventRevision": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "sysRevisionNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "userID": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/STRING%2880%29"
+                        },
+                        {
+                            "propertyOrder": 2
                         }
                     ]
                 }
@@ -6279,6 +6626,16 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.DB_Query.state": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::DB_Query::state",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.E_DB_QUERY_STATE"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Alarms.arrActiveEvents": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6308,6 +6665,23 @@
                     },
                     {
                         "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..300_OF-Tc2_System.T_MaxString"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Calibration.bStartCreationCalJson": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Calibration::bStartCreationCalJson",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Flag to start the Json creation\t\t\t\t\t\t\t\t\t\t\t\t\t\t|"
                     }
                 ]
             },
@@ -6370,6 +6744,16 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_DB.astData_PCR": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::astData_PCR",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..100_OF-ST_Data_PCR"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_DB.listAllSystem": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -6407,6 +6791,54 @@
             "MAPPING": "PLC1::GVL_DB::listOfSyst",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ARRAY_0..1000_OF-ST_SysParameters"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.methodName": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::methodName",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.methodRevision": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::methodRevision",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/STRING%2880%29"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.slctLastCalibID": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::slctLastCalibID",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "CALIBRATION CMD",
+                        "maxLength": 255
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.stParameter_PCR": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::stParameter_PCR",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_Parameters_PCR"
             },
             "USEMAPPING": true
         },
@@ -13515,18 +13947,25 @@
                 "LocalizeText": 3,
                 "Login": 3,
                 "Logout": 3,
+                "PLC1.DB_Query.state": 3,
                 "PLC1.GVL_Alarms.arrActiveEvents": 3,
                 "PLC1.GVL_Alarms.arrEventFlag": 3,
                 "PLC1.GVL_Alarms.arrEventLogs": 3,
+                "PLC1.GVL_Calibration.bStartCreationCalJson": 3,
                 "PLC1.GVL_Calibration.sGlobalStatus": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_Constant.aSolventsAvailable": 3,
                 "PLC1.GVL_DB.astData_CUL": 3,
+                "PLC1.GVL_DB.astData_PCR": 3,
                 "PLC1.GVL_DB.listAllSystem": 3,
                 "PLC1.GVL_DB.listOfMethod": 3,
                 "PLC1.GVL_DB.listOfSys": 3,
                 "PLC1.GVL_DB.listOfSyst": 3,
+                "PLC1.GVL_DB.methodName": 3,
+                "PLC1.GVL_DB.methodRevision": 3,
+                "PLC1.GVL_DB.slctLastCalibID": 3,
+                "PLC1.GVL_DB.stParameter_PCR": 3,
                 "PLC1.GVL_DB.stSysParameters": 3,
                 "PLC1.GVL_HMI.HMIAnimation": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aSolventLevel": 3,
