@@ -514,7 +514,7 @@ CASE eStep OF
 			
 			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := CONCAT('Check ', TO_STRING(iReplicate));
 			
-			DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
+			//DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
 			
 			IF iReplicate >= GVL_Settings.stCalibParameters.iReplicatesSetpoint THEN
@@ -552,50 +552,57 @@ CASE eStep OF
 		END_IF
 		
 	E_CalibStep.PUMPFACTOR_ADJUST: // Calculate the new factor
-		// Mirror the pump status to HMI
-		GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgNetVolume := rPumpAverageVolume;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgTareWeight := rPumpAvgTareWeigth;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgGrossWeight := rPumpAvgGrossWeigth;
-		
-		// new factor := target / Trunc((target / (Average / revs) ) + 0.5)  
-		GVL_Retain.aCalibrationPumpFactor[iPumpindex] := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex - 1].iPumpRevs))+ 0.5));
-		
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillJars   := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFromCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		
-		// Populate the adjustment row	
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := 'Adjustment';
-
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := 0.00;
-
-		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rGrossWeigth := 0.00;
-
-		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetWeigth := 0.00;
-		
-
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume := 0.00;
-
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTargetVolume := 0.00;
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferencePercent := 0.00;
-		
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rCriteria := 0.00;
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpRevs := TO_UINT(aPumpSettings[iPumpIndex].rTargetVolume / GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox);	
-		
-		// final transition
-		rPumpAverageVolume := 0.00;
-		rPumpAvgTareWeigth := 0.00;
-		rPumpAvgGrossWeigth := 0.00;
-		rPumpVolumeSum := 0.00;
-		rTareWeightSum := 0.00;
-		rGrossWeightSum := 0.00;
-		iReplicate := 0;
-		
+	
 		DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
-		GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
-		eStep := E_CalibStep.RETURN_FORWARD;
+		
+		IF NOT DB_Query.FB_Insert.bBusy THEN
+			
+			// Mirror the pump status to HMI
+			GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgNetVolume := rPumpAverageVolume;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgTareWeight := rPumpAvgTareWeigth;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgGrossWeight := rPumpAvgGrossWeigth;
+			
+			// new factor := target / Trunc((target / (Average / revs) ) + 0.5)  
+			GVL_Retain.aCalibrationPumpFactor[iPumpindex] := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex - 1].iPumpRevs))+ 0.5));
+			
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillJars   := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFromCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			
+			// Populate the adjustment row	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := 'Adjustment';
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].dDateTime := sStamp;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := 0.00;
+	
+			GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rGrossWeigth := 0.00;
+	
+			GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetWeigth := 0.00;
+			
+	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume := 0.00;
+	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTargetVolume := 0.00;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferencePercent := 0.00;
+			
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rCriteria := 0.00;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpRevs := TO_UINT(aPumpSettings[iPumpIndex].rTargetVolume / GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox);	
+			
+			// final transition
+			rPumpAverageVolume := 0.00;
+			rPumpAvgTareWeigth := 0.00;
+			rPumpAvgGrossWeigth := 0.00;
+			rPumpVolumeSum := 0.00;
+			rTareWeightSum := 0.00;
+			rGrossWeightSum := 0.00;
+			iReplicate := 0;
+			
+			DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
+			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
+			eStep := E_CalibStep.RETURN_FORWARD;
+		END_IF
+		
 		
 	E_CalibStep.PUMPFACTOR_FAILED:
 		// Update the HMI pump status
@@ -648,6 +655,7 @@ CASE eStep OF
 				eStep := E_CalibStep.WEIGH_BEFORE; // Starts next replication
 			END_IF
 		END_IF
+		DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 		
 	E_CalibStep.EMPTYJAR_BACKWARDS:
 
@@ -680,6 +688,7 @@ CASE eStep OF
 			bMovePump := FALSE;
 			eStep := E_CalibStep.NEXT_PUMP;
 		END_IF
+		DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 	
     E_CalibStep.NEXT_PUMP:
 		// Reset sum and avg values	
@@ -780,7 +789,7 @@ CASE eStep OF
 		
 		//Calibration Info
 		GVL_Retain.iCalibrationNumber := GVL_Retain.iCalibrationNumber + 1;
-		GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber := TO_UINT(GVL_Retain.iCalibrationNumber);
+		//GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber := TO_UINT(GVL_Retain.iCalibrationNumber);
 		GVL_Calibration.stPumpCalibrationInfo.iAllowableFailures := GVL_Calibration.iAllowableFailures;
 		GVL_Calibration.stPumpCalibrationInfo.iCalIntervalDays := 0;
 		GVL_Calibration.stPumpCalibrationInfo.iReplicates := GVL_Calibration.iReplicatesSetpoint;
@@ -1099,7 +1108,19 @@ Reset := TRUE;]]></ST>
       <LineId Id="4468" Count="21" />
       <LineId Id="4501" Count="145" />
       <LineId Id="5184" Count="0" />
-      <LineId Id="4647" Count="442" />
+      <LineId Id="4647" Count="271" />
+      <LineId Id="5438" Count="0" />
+      <LineId Id="5440" Count="0" />
+      <LineId Id="5442" Count="0" />
+      <LineId Id="5441" Count="0" />
+      <LineId Id="5447" Count="0" />
+      <LineId Id="4919" Count="44" />
+      <LineId Id="5443" Count="1" />
+      <LineId Id="4964" Count="50" />
+      <LineId Id="5445" Count="0" />
+      <LineId Id="5015" Count="31" />
+      <LineId Id="5446" Count="0" />
+      <LineId Id="5047" Count="42" />
       <LineId Id="5325" Count="1" />
       <LineId Id="5328" Count="1" />
       <LineId Id="5327" Count="0" />

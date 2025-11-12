@@ -63,7 +63,9 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF GVL_HMI.bCalLeakTestButton THEN
+      <ST><![CDATA[DB_Create_Calibration();	//Create a new calibration inside the DB.
+
+IF GVL_HMI.bCalLeakTestButton THEN
 	bLeakTestReset := FALSE;
 END_IF
 
@@ -138,7 +140,7 @@ IF GVL_HMI.bStartCalibrationBt THEN
 	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
 	GVL_HMI.bStartCalibrationBt := FALSE;
 	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
-	DB_Create_Calibration();	//Create a new calibration inside the DB.
+	DB_Create_Calibration.start:= TRUE;	//Create a new calibration inside the DB.
 END_IF
 
 //calibration procedure calling
@@ -981,6 +983,7 @@ END_IF*)
       </Implementation>
     </Method>
     <LineIds Name="PRG_Calibration">
+      <LineId Id="972" Count="1" />
       <LineId Id="44" Count="2" />
       <LineId Id="186" Count="0" />
       <LineId Id="127" Count="0" />
