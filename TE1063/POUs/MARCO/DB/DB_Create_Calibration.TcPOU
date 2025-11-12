@@ -16,7 +16,7 @@ END_VAR]]></Declaration>
 CASE state OF
 	
 0:
-	IF TRUE THEN
+	IF start THEN
 		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID;
 		timer(in:=TRUE, pt:=T#10S);
 		state:= 10;
@@ -34,7 +34,7 @@ CASE state OF
 		GVL_DB.stParameter_PCR.CalibrationNo							:= UDINT_TO_INT(GVL_Calibration.stPumpCalibrationInfo.iCalibrationNumber+1);
 		GVL_DB.stParameter_PCR.callInterval								:= UINT_TO_STRING(GVL_Settings.stCalibParameters.iCalIntervalDays);
 		GVL_DB.stParameter_PCR.density									:= REAL_TO_STRING(GVL_Calibration.stPumpCalibrationInfo.rSolventDensity);
-		GVL_DB.stParameter_PCR.replicates								:= INT_TO_STRING(GVL_Calibration.stPumpCalibrationInfo.iReplicates);
+		GVL_DB.stParameter_PCR.replicates								:= INT_TO_STRING(GVL_Settings.stCalibParameters.iReplicatesSetpoint);
 		GVL_DB.stParameter_PCR.solventNo								:= GVL_Calibration.stPumpCalibrationInfo.iSolventID;
 		GVL_DB.stParameter_PCR.solventRevision							:= INT_TO_STRING(GVL_Calibration.stPumpCalibrationInfo.iSolventRevision);
 		GVL_DB.stParameter_PCR.sysRevisionNo							:= GVL_Settings.sysRevNumber;	
@@ -57,6 +57,7 @@ CASE state OF
 
 	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
 		timer(in:=FALSE);
+		start:= FALSE;
 		state:= 0;
 	ELSE
 		state:= 30;
@@ -95,6 +96,7 @@ END_CASE]]></ST>
       <LineId Id="16" Count="0" />
       <LineId Id="15" Count="0" />
       <LineId Id="21" Count="0" />
+      <LineId Id="139" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="19" Count="1" />
       <LineId Id="18" Count="0" />

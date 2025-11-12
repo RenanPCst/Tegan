@@ -66,18 +66,21 @@ VAR
 	
 	fbPumpsController : FB_AllPumpsController; 
 	
+	timerOnInit: ton;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
+      <ST><![CDATA[timerOnInit(in:=TRUE, pt:= T#10S);
 DB_Query();//Has to stay here!
 
  //Call State Machine and peripheral programs
 PRG_MasterControl(); 
 PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();
-DB_Load_SysParameters();
 
+IF timerOnInit.Q THEN
+DB_Load_SysParameters();
+END_IF
 
 //Can be put into Low task event
 PRG_HMIControl();
@@ -278,6 +281,8 @@ END_IF
       <LineId Id="7498" Count="0" />
       <LineId Id="7362" Count="1" />
       <LineId Id="6870" Count="3" />
+      <LineId Id="7567" Count="0" />
+      <LineId Id="7565" Count="0" />
       <LineId Id="7497" Count="0" />
       <LineId Id="7289" Count="0" />
       <LineId Id="6874" Count="9" />

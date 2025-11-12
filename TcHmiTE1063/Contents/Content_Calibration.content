@@ -8731,4 +8731,91 @@ Weight (g)" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="80" d
     ]
 </script>
 </div>
+<div id="btnDownloadPDF_14" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="25" data-tchmi-height-unit="px" data-tchmi-left="1038" data-tchmi-left-unit="px" data-tchmi-text="Current System" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="41" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57" data-tchmi-state-symbol="%s%PLC1.GVL_Calibration.bStartCreationCalJson%/s%" data-tchmi-creator-visibility="Visible" data-tchmi-visibility="Hidden">
+
+
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "btnDownloadPDF_14.onStateChanged",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": false,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.Beckhoff.TcHmiCheckbox.StateSymbol",
+                  "symbolExpression": "%ctrl%TcHmiCheckbox_PrintWhenComplete::StateSymbol%/ctrl%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.Beckhoff.TcHmiCheckbox.StateSymbol",
+                  "value": "true"
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": []
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Call the PDF generator function",
+          "          function showMessageFromPLC(message) {",
+          "          \t\talert(\"Mensagem do PLC: \" + message);",
+          "          }",
+          "          // Wrinting the PLC variable",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_PCR%/s%', function (data1) {",
+          "              if (data1.error === TcHmi.Errors.NONE) {",
+          "                        TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stParameter_PCR%/s%', function (data2) {",
+          "              \t\t\tif (data2.error === TcHmi.Errors.NONE) {",
+          "                        let sysHeadArray = data2.value;",
+          "                  \t\tlet sysDataArray = data1.value; // value from PLC (array)",
+          "                  \t\t// Function Call",
+          "                 \t\t genPumpCalibrationReport(sysDataArray, sysHeadArray, 'Pump Calibration Report');                  ",
+          "              \t\t} else {",
+          "                 \t\t console.error(\"Erro ao ler variável do PLC: \", data2.error);",
+          "              \t\t}",
+          "          \t\t});                  ",
+          "              } else {",
+          "                  console.error(\"Erro ao ler variável do PLC: \", data1.error);",
+          "              }",
+          "          });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+</div>
 </div>
