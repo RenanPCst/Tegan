@@ -562,7 +562,11 @@ VAR
 	vialsToFill: STRING;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[iRevision := INT_TO_STRING(GVL_HMI.stRecipeInfo.iRevision+1);
+        <ST><![CDATA[IF GVL_HMI.bNewRecipeButton THEN
+	iRevision := '1';
+ELSE
+	iRevision := INT_TO_STRING(GVL_HMI.stRecipeInfo.iRevision+1);	
+END_IF
 dCreationDate := DATE_TO_STRING(GVL_HMI.stRecipeInfo.dCreationDate);
 Rinse1 := INT_TO_STRING(GVL_HMI.aSolventAndTimesRows[1].Rinse1);
 Rinse2 := INT_TO_STRING(GVL_HMI.aSolventAndTimesRows[1].Rinse2);
@@ -961,7 +965,10 @@ END_IF]]></ST>
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertMethod">
-      <LineId Id="108" Count="1" />
+      <LineId Id="179" Count="1" />
+      <LineId Id="182" Count="1" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="109" Count="0" />
       <LineId Id="57" Count="0" />
       <LineId Id="115" Count="0" />
       <LineId Id="118" Count="0" />

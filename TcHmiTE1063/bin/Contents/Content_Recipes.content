@@ -731,7 +731,7 @@
     "actions": [
       {
         "objectType": "WriteToSymbol",
-        "active": true,
+        "active": false,
         "symbolExpression": "%ctrl%TcHmiTextbox_MethodName::IsEnabled%/ctrl%",
         "value": {
           "objectType": "StaticValue",
@@ -1153,7 +1153,7 @@
           "                                        alert('Error saving the recipe!');",
           "                                        TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bRecipeSaveError%/s%', false);",
           "                                        // Optional: Close any popup if needed",
-          "                                    } else if (++pollCount > 40) { // ~4s timeout",
+          "                                    } else if (++pollCount > 300) { // ~30s timeout",
           "                                        clearInterval(pollInterval);",
           "                                        alert('Timeout: No response from PLC!');",
           "                                    }",
@@ -1167,9 +1167,7 @@
           "            });",
           "        });",
           "    });",
-          "});",
-          "",
-          ""
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,
