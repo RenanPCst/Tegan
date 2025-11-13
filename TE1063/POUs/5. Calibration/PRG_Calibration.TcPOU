@@ -304,7 +304,11 @@ IF GVL_HMI.bCalMoveM1Motor AND GVL_IO.gDigInputs.bThroatJigPresent THEN
 														);
 	END_IF
 	
-	GVL_HMI.bCalMoveM1Motor := NOT ( bMoveM1Fast AND bMoveM1Slow );											
+	IF bMoveM1Fast AND bMoveM1Slow THEN
+		bMoveM1Fast := FALSE;
+		bMoveM1Slow := FALSE;
+		GVL_HMI.bCalMoveM1Motor := FALSE;
+	END_IF									
 
 END_IF
 
@@ -1130,7 +1134,9 @@ END_IF*)
       <LineId Id="967" Count="3" />
       <LineId Id="965" Count="1" />
       <LineId Id="964" Count="0" />
-      <LineId Id="953" Count="0" />
+      <LineId Id="1034" Count="0" />
+      <LineId Id="1038" Count="1" />
+      <LineId Id="1036" Count="1" />
       <LineId Id="956" Count="0" />
       <LineId Id="648" Count="0" />
       <LineId Id="617" Count="0" />

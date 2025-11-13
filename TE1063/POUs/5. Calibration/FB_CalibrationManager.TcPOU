@@ -863,7 +863,9 @@ CASE eStep OF
         sStatus := 'Calibration aborted due to error.';
         // Remains here till external reset
 
-END_CASE]]></ST>
+END_CASE
+
+ACT_ProgressUI_Real();]]></ST>
     </Implementation>
     <Action Name="ACT_CleanStart" Id="{aab31dd9-654e-418d-bd8f-64f5f4ef8ac0}">
       <Implementation>
@@ -897,8 +899,8 @@ IF sStatus <> sPrev THEN
 
     // POSITION_MOTORS  (usa |alvo - atual| / vel e pega o mais lento + 200ms)
     IF FIND(sStatus, 'Positioning motors M2 and M3') = 1 THEN
-        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[4] - GVL_Motion.aMotors[2].rActualPos);
-        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[4] - GVL_Motion.aMotors[3].rActualPos);
+        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[4] - GVL_Motion.M2Motor.rActualPos);
+        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[4] - GVL_Motion.M3Motor.rActualPos); 
         rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
         rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
         rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
@@ -945,8 +947,8 @@ IF sStatus <> sPrev THEN
 
     // HOMING_MOTORS (volta M2/M3 para home + 200ms)
     ELSIF FIND(sStatus, 'Returning M2 and M3 to home') = 1 THEN
-        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[1] - GVL_Motion.aMotors[2].rActualPos);
-        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[1] - GVL_Motion.aMotors[3].rActualPos);
+        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[1] - GVL_Motion.M2Motor.rActualPos);
+        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[1] - GVL_Motion.M3Motor.rActualPos);
         rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
         rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
         rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
@@ -961,7 +963,6 @@ IF sStatus <> sPrev THEN
     // Espera real de estabilização de peso (usa TON real)
     ELSIF FIND(sStatus, 'Waiting for weight stabilization') = 1 THEN
         tPT := tonWeigthStabilization.PT;
-        // Você já arma esse TON ao finalizar movimento. :contentReference[oaicite:10]{index=10}
     END_IF
 
     // (re)arma o TON e atualiza HMI
@@ -1153,6 +1154,8 @@ Reset := TRUE;]]></ST>
       <LineId Id="5280" Count="0" />
       <LineId Id="5093" Count="90" />
       <LineId Id="9" Count="0" />
+      <LineId Id="5557" Count="0" />
+      <LineId Id="5556" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.ACT_CleanStart">
       <LineId Id="2" Count="10" />
@@ -1164,7 +1167,8 @@ Reset := TRUE;]]></ST>
       <LineId Id="13" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.ACT_ProgressUI_Real">
-      <LineId Id="2" Count="98" />
+      <LineId Id="2" Count="69" />
+      <LineId Id="73" Count="27" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
