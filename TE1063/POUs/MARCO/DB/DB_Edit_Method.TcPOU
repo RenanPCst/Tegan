@@ -116,6 +116,7 @@ CASE state OF
 		state:= 30;
 	ELSIF DB_Query.j >10 THEN
 		timer(in:=TRUE, pt:=T#1S);
+		GVL_HMI.bRecipeSaveDone := TRUE;
 		state:= 40;
 	ELSE
 		state:= 20;
@@ -134,10 +135,13 @@ CASE state OF
 40:
 
 	IF NOT DB_Query.FB_Insert.bBusy AND timer.Q THEN
+		IF NOT GVL_HMI.bNewRecipeButton THEN
+			DB_Query.state := E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD;
+		END_IF
 		timer(in:=FALSE);
-		DB_Query.state := E_DB_QUERY_STATE.UPDATE_DEACTV_METHOD;
 		start:= FALSE;
 		PRG_RecipeManager.bDatagridToRecipeDone := TRUE;
+		GVL_HMI.bRecipeSaveDone := FALSE;
 		state:= 0;
 	ELSE
 		state:= 40;
@@ -210,6 +214,7 @@ END_CASE]]></ST>
       <LineId Id="116" Count="0" />
       <LineId Id="231" Count="0" />
       <LineId Id="270" Count="0" />
+      <LineId Id="284" Count="0" />
       <LineId Id="232" Count="0" />
       <LineId Id="117" Count="0" />
       <LineId Id="119" Count="0" />
@@ -224,10 +229,11 @@ END_CASE]]></ST>
       <LineId Id="19" Count="1" />
       <LineId Id="18" Count="0" />
       <LineId Id="235" Count="1" />
-      <LineId Id="238" Count="2" />
-      <LineId Id="247" Count="0" />
-      <LineId Id="241" Count="0" />
+      <LineId Id="238" Count="1" />
+      <LineId Id="280" Count="2" />
+      <LineId Id="240" Count="1" />
       <LineId Id="248" Count="0" />
+      <LineId Id="283" Count="0" />
       <LineId Id="243" Count="2" />
       <LineId Id="237" Count="0" />
       <LineId Id="246" Count="0" />

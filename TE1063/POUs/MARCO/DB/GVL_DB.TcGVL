@@ -41,7 +41,10 @@ isrtSys: STRING(5000) := 'INSERT INTO [dbo].[SYSTEM] ( [gen_SealAndPump], [cal_A
 isrtUser: STRING(5000) := 'INSERT INTO [dbo].[USERS] ( [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$') ';
 slctCurrentUser: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy] FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY [userID] ORDER BY TRY_CONVERT(datetime, [transactionDate], 113) DESC, [ID_user] DESC) AS rn FROM [dbo].[USERS] WHERE [transactionType] = $'Added$') t WHERE rn = 1 AND NOT EXISTS (SELECT 1 FROM [dbo].[USERS] r WHERE r.[userID] = t.[userID] AND r.[transactionType] = $'Removed$' AND TRY_CONVERT(datetime, r.[transactionDate], 113) > TRY_CONVERT(datetime, t.[transactionDate], 113));';
 slctAllUsers: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy] FROM [dbo].[USERS] ';
-
+//SOLVENTS
+isrtSolvent: STRING(1000) := 'INSERT INTO [dbo].[SOLVENTS] ( [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$') ';
+slctSolvent: STRING(1000) := 'SELECT TOP 1 [Solvent_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ORDER BY [Solvent_ID] DESC; ';
+slctAllSolvents: STRING(1000) := 'SELECT [Solvent_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ';
 
 (******************************************************************************************************)
 
@@ -79,13 +82,14 @@ astData_CUL	   : ARRAY[0..1000] OF ST_Data_CUL;
 
 (***** Method Report Variables ************************************************************************)
 
-bBuildMR		: BOOL;
-stParameter_MR	: ST_Parameters_MR;
-astVolData		: ARRAY[1..10] OF ST_VolumeData;
-listOfMethod	: ARRAY[1..500] OF ST_ListMethod;
-methodName		: STRING;
-methodRevision	: STRING;
-lastMethodID	: INT;
+bBuildMR			: BOOL;
+stParameter_MR		: ST_Parameters_MR;
+astVolData			: ARRAY[1..10] OF ST_VolumeData;
+listOfMethod		: ARRAY[1..500] OF ST_ListMethod;
+methodName			: STRING;
+methodRevision		: STRING;
+lastMethodID		: INT;
+arrCompleteMethod	: ARRAY[1..100] OF ST_CompleteMethod;
 
 (******************************************************************************************************)
 
@@ -93,6 +97,13 @@ lastMethodID	: INT;
 
 stSysParameters	: ST_SysParameters;
 listAllSystem	: ARRAY[0..500] OF ST_SysParameters;
+
+(******************************************************************************************************)
+
+(***** Solvents Variables ***************************************************************)
+
+stSolvents		: ST_Solvents;
+listSolvents	: ARRAY[0..500] OF ST_Solvents;
 
 (******************************************************************************************************)
 

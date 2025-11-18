@@ -223,6 +223,8 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         doc.text(`Completed`, xPosition, yPosicao+57.5, { align: "left" });
 
         // 8. Save PDF File
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
         const container = document.createElement('div');
         container.style.width = "100%";
         container.style.height = "100vh";
@@ -405,6 +407,8 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         xPosition += 45;
         
         // 7. Save PDF File
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
         const container = document.createElement('div');
         container.style.width = "100%";
         container.style.height = "100vh";
@@ -681,6 +685,8 @@ async function genCurrentUserList(userDataArray, reportName) {
         }
 
         // 6. Save PDF File
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
         const container = document.createElement('div');
         container.style.width = "100%";
         container.style.height = "100vh";
@@ -699,7 +705,7 @@ async function genCurrentUserList(userDataArray, reportName) {
       align-self: flex-start;
     `;
         backButton.onclick = () => {
-            window.location.reload();
+            window.location.reload(); // volta à tela inicial
         };
 
         const iframe = document.createElement('iframe');
@@ -796,6 +802,8 @@ async function genUserHistoryReport(userDataArray, reportName) {
         }
 
         // 6. Save PDF File
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
         const container = document.createElement('div');
         container.style.width = "100%";
         container.style.height = "100vh";
@@ -814,7 +822,7 @@ async function genUserHistoryReport(userDataArray, reportName) {
       align-self: flex-start;
     `;
         backButton.onclick = () => {
-            window.location.reload();
+            window.location.reload(); // volta à tela inicial
         };
 
         const iframe = document.createElement('iframe');
