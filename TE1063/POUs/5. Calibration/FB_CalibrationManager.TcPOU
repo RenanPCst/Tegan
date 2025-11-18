@@ -4,7 +4,6 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CalibrationManager
 VAR_INPUT
     bExecute         : BOOL; // Trigger to start calibration
-    bAbort           : BOOL; // Trigger to abort trigger
     eSolvent         : E_SolventType; // Selected solvent type
 	rSolventDensity  : LREAL; //Solvent Density
     aPumpSettings    : ARRAY[1..10] OF ST_CalibrationPump; // Pump input settings
@@ -120,7 +119,7 @@ IF bExecutePulse.Q AND eStep = E_CalibStep.IDLE THEN
 END_IF
 
 // Abort logic
-IF bAbort THEN
+IF GVL_Calibration.bAbortCalibration THEN
     eStep := E_CalibStep.ERROR;
 END_IF
 
@@ -822,7 +821,7 @@ CASE eStep OF
         // Return exactly where we paused (CHECKING_WEIGH)
         eStep := eStepResume;
 
-		ELSIF bAbort THEN
+		ELSIF GVL_Calibration.bAbortCalibration THEN
 			sStatus := 'Calibration aborted during calibration box attention.';
 			eStep   := E_CalibStep.ERROR;
 		END_IF	
@@ -843,7 +842,7 @@ CASE eStep OF
 			// Resume exactly where we were
 			eStep := eStepResume;
 	
-		ELSIF bAbort THEN
+		ELSIF GVL_Calibration.bAbortCalibration THEN
 			sStatus := 'Calibration aborted during scale attention.';
 			eStep := E_CalibStep.ERROR;
 		END_IF
@@ -860,7 +859,7 @@ CASE eStep OF
     E_CalibStep.ERROR:
         bBusy := FALSE;
         bDone := FALSE;
-        sStatus := 'Calibration aborted due to error.';
+        sStatus := 'Calibration aborted due to error. Press Stop button to start over';
         // Remains here till external reset
 
 END_CASE

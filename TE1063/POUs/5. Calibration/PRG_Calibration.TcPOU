@@ -75,7 +75,11 @@ GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePor
 
 (* Leak Test *) //--------------------------------------------------------------------------------------------------------------------------------------------------------
 // Leak Test request from HMI
-fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime);
+fbLeakTest(	bExecute := GVL_HMI.bCalLeakTestButton, 
+			eSolenoidPosition := E_SolenoidSet.LEAKTEST, 
+			tMonitorTime := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime, 
+			tPressureUpTime := GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime 
+			);
 
 // Leak Test post treatment
 IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
@@ -146,7 +150,6 @@ END_IF
 //calibration procedure calling
 fbCalibrationManager(
     bExecute := GVL_Calibration.bStartCalibration,
-    bAbort := GVL_Calibration.bAbortCalibration,
 	rSolventDensity := GVL_Calibration.stPumpCalibrationInfo.rSolventDensity,
     eSolvent := GVL_Calibration.eCalibSolvent, 
     aPumpSettings := GVL_HMI.aCalibPumps, //Temp GVL_Calibration.aCalibPumps
@@ -997,6 +1000,7 @@ END_IF*)
       <LineId Id="43" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="5" Count="0" />
+      <LineId Id="1100" Count="3" />
       <LineId Id="28" Count="0" />
       <LineId Id="19" Count="0" />
       <LineId Id="18" Count="0" />
@@ -1048,7 +1052,7 @@ END_IF*)
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
       <LineId Id="131" Count="0" />
-      <LineId Id="70" Count="1" />
+      <LineId Id="70" Count="0" />
       <LineId Id="434" Count="0" />
       <LineId Id="72" Count="7" />
       <LineId Id="401" Count="0" />

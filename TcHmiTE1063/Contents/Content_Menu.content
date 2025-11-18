@@ -43,7 +43,7 @@
         "value": {
           "objectType": "StaticValue",
           "valueType": "tchmi:framework#/definitions/ContentPath",
-          "value": "Contents/Content_Alarms.content"
+          "value": "Contents/AlarmLogTab.content"
         },
         "asyncWait": true
       }
@@ -195,6 +195,181 @@
         "asyncWait": true
       }
     ]
+  },
+  {
+    "event": "TcHmiButton_MenuManual.onAttached",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "(function (TcHmi) {",
+          "",
+          "    // Retrieve the control instance",
+          "    var button = TcHmi.Controls.get('TcHmiButton_MenuManual');",
+          "    if (!button) {",
+          "        console.error('TcHmiButton_MenuManual not found.');",
+          "        return;",
+          "    }",
+          "",
+          "    // 1) Get currently logged-in user (username string or null)",
+          "    var currentUser = TcHmi.Server.getCurrentUser();",
+          "    if (!currentUser) {",
+          "        // No logged-in user (guest mode or unexpected state)",
+          "        // → fall back to operator-like behavior controlled by PLC flag",
+          "        TcHmi.Symbol.readEx2('%s%PLC1.GVL_Settings.bDisplayManualControl%/s%', function (resFlag) {",
+          "            if (resFlag.error !== TcHmi.Errors.NONE) {",
+          "                console.error('Error reading GVL_Settings.bDisplayManualControl (no user):', resFlag.error);",
+          "                button.setIsEnabled(false);   // fail-safe disable",
+          "                return;",
+          "            }",
+          "            var allow = !!resFlag.value;",
+          "            button.setIsEnabled(allow);",
+          "        });",
+          "        return;",
+          "    }",
+          "",
+          "    // 2) Retrieve full user list to extract group information",
+          "    TcHmi.Server.UserManagement.listUsers(function (data) {",
+          "        if (data.error !== TcHmi.Errors.NONE) {",
+          "            console.error('Error calling listUsers:', data.error);",
+          "",
+          "            // If we cannot retrieve group information, behave like operator",
+          "            TcHmi.Symbol.readEx2('%s%PLC1.GVL_Settings.bDisplayManualControl%/s%', function (resFlag) {",
+          "                if (resFlag.error !== TcHmi.Errors.NONE) {",
+          "                    console.error('Error reading GVL_Settings.bDisplayManualControl (fallback):', resFlag.error);",
+          "                    button.setIsEnabled(false);",
+          "                    return;",
+          "                }",
+          "                var allow = !!resFlag.value;",
+          "                button.setIsEnabled(allow);",
+          "            });",
+          "            return;",
+          "        }",
+          "",
+          "        // userDetails contains a dictionary of usernames → { groups: [...] }",
+          "        var detailsMap = data.userDetails || {};",
+          "        var userDetails = detailsMap[currentUser];",
+          "",
+          "        // If user not found in the map, fall back to operator behavior",
+          "        if (!userDetails) {",
+          "            console.warn('User not found in userDetails:', currentUser);",
+          "            TcHmi.Symbol.readEx2('%s%PLC1.GVL_Settings.bDisplayManualControl%/s%', function (resFlag) {",
+          "                if (resFlag.error !== TcHmi.Errors.NONE) {",
+          "                    console.error('Error reading GVL_Settings.bDisplayManualControl (unknown user):', resFlag.error);",
+          "                    button.setIsEnabled(false);",
+          "                    return;",
+          "                }",
+          "                var allow = !!resFlag.value;",
+          "                button.setIsEnabled(allow);",
+          "            });",
+          "            return;",
+          "        }",
+          "",
+          "        // Extract list of groups the current user belongs to",
+          "        var groups = userDetails.groups || [];",
+          "",
+          "        var isManagement = groups.indexOf('MANAGEMENT') >= 0;",
+          "        var isOperator  = groups.indexOf('OPERATORS')  >= 0;",
+          "",
+          "        // 3) MANAGEMENT users always have the right to operate the button",
+          "        if (isManagement) {",
+          "            button.setIsEnabled(true);",
+          "            return;",
+          "        }",
+          "",
+          "        // 4) OPERATOR users depend on the PLC setting bDisplayManualControl",
+          "        if (isOperator) {",
+          "            TcHmi.Symbol.readEx2('%s%PLC1.GVL_Settings.bDisplayManualControl%/s%', function (resFlag) {",
+          "                if (resFlag.error !== TcHmi.Errors.NONE) {",
+          "                    console.error('Error reading GVL_Settings.bDisplayManualControl for OPERATORS:', resFlag.error);",
+          "                    button.setIsEnabled(false);",
+          "                    return;",
+          "                }",
+          "                var allow = !!resFlag.value;",
+          "                button.setIsEnabled(allow);",
+          "            });",
+          "            return;",
+          "        }",
+          "",
+          "        // 5) Any other groups (Maintenance, Engineers, etc.)",
+          "        // You can customize this behavior. Default: always enabled.",
+          "        button.setIsEnabled(true);",
+          "    });",
+          "",
+          "})(TcHmi);",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-access-config" type="application/json">
+[
+  {
+    "accessright": "operate",
+    "group": "MANAGEMENT",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "operate",
+    "group": "OPERATORS",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "operate",
+    "group": "TEGAN",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "MANAGEMENT",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "OPERATORS",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "TEGAN",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemGuests",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemMaintenanceUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemMaintenanceUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemGuests",
+    "permission": "Deny"
   }
 ]
 </script>
@@ -254,6 +429,56 @@
     "accessright": "observe",
     "group": "TEGAN",
     "permission": "Deny"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemUsers",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "MANAGEMENT",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "MANAGEMENT",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "operate",
+    "group": "OPERATORS",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "observe",
+    "group": "OPERATORS",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemMaintenanceUsers",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "observe",
+    "group": "__SystemGuests",
+    "permission": "Deny"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemMaintenanceUsers",
+    "permission": "Allow"
+  },
+  {
+    "accessright": "operate",
+    "group": "__SystemGuests",
+    "permission": "Deny"
   }
 ]
 </script>
@@ -288,6 +513,29 @@
 <div id="TcHmiButton_MenuReminders" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="760" data-tchmi-left-unit="px" data-tchmi-text="Reminders" data-tchmi-top="260" data-tchmi-top-unit="px" data-tchmi-width="220" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25" data-tchmi-text-font-weight="Bold">
 </div>
 <div id="TcHmiButton_MenuLogout" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="760" data-tchmi-left-unit="px" data-tchmi-text="Logout" data-tchmi-top="375" data-tchmi-top-unit="px" data-tchmi-width="220" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25" data-tchmi-text-font-weight="Bold">
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_MenuLogout.onPressed",
+    "actions": [
+      {
+        "objectType": "Function",
+        "active": true,
+        "fn": "TcHmi.Functions.Beckhoff.Logout",
+        "fnParams": [
+          {
+            "objectType": "StaticValue",
+            "valueType": "tchmi:general#/definitions/Boolean",
+            "value": true
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
 </div>
 <div id="TcHmi_Controls_Beckhoff_TcHmiImage_ExitBt" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiImage" data-tchmi-height="70" data-tchmi-height-unit="px" data-tchmi-left="980" data-tchmi-left-unit="px" data-tchmi-src="Resources/Custom/Images/Buttons/turnoffBtIdle.svg" data-tchmi-top="1264" data-tchmi-top-unit="px" data-tchmi-width="70" data-tchmi-width-unit="px">
 
