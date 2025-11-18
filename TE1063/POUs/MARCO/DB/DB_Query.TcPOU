@@ -28,6 +28,7 @@ VAR
 	
 	tempCmd: STRING(5000);
 	timerVD: ton;
+	start: BOOL;
 END_VAR
 
 VAR_INPUT
@@ -40,6 +41,7 @@ END_VAR]]></Declaration>
 timerVD();
 Fill_Calibration_Data();
 Fill_Method_Data();
+DB_Load_CompleteMethod(start:= start);
 
 IF timerVD.Q THEN
 	state:= E_DB_QUERY_STATE.SELECT_VOLUME_DATA;
@@ -274,7 +276,7 @@ E_DB_QUERY_STATE.SELECT_VOLUME_DATA:
 	IF NOT FB_SelectArray.bBusy AND timerVD.Q THEN
 		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
-		
+		timerVD(in:= FALSE);
 	ELSIF FB_SelectArray.bError THEN	
 		state:= E_DB_QUERY_STATE.ERROR_STATE;
 	ELSE
@@ -343,6 +345,51 @@ E_DB_QUERY_STATE.SELECT_ALL_USERS:
 		state:= E_DB_QUERY_STATE.SELECT_ALL_USERS;
 		bExecute:= FALSE;
 	END_IF
+	
+E_DB_QUERY_STATE.SELECT_LAST_SOLVENT:
+	
+	cmdSlc:= GVL_DB.slctSolvent;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.stSolvents), pDestAddr:= ADR(GVL_DB.stSolvents), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
+	ELSE
+		state:= E_DB_QUERY_STATE.SELECT_LAST_SOLVENT;
+		bExecute:= FALSE;
+	END_IF
+	
+E_DB_QUERY_STATE.SELECT_ALL_SOLVENT:
+	
+	cmdSlc:= GVL_DB.slctAllSolvents;
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.listSolvents), pDestAddr:= ADR(GVL_DB.listSolvents), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	
+	IF NOT FB_SelectArray.bBusy THEN
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
+		bExecute:= FALSE;
+	ELSIF FB_SelectArray.bError THEN	
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
+	ELSE
+		state:= E_DB_QUERY_STATE.SELECT_ALL_SOLVENT;
+		bExecute:= FALSE;
+	END_IF
+	
+E_DB_QUERY_STATE.INSERT_SOLVENT:
+
+	cmdIn:= GVL_DB.isrtSolvent;
+	insertSolvent(start:=TRUE);
+	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
+	
+	IF NOT FB_Insert.bBusy THEN
+		state:= E_DB_QUERY_STATE.IDLE_STATE;
+		bExecuteIn:= FALSE;
+	ELSIF FB_Insert.bError THEN	
+		state:= E_DB_QUERY_STATE.ERROR_STATE;
+	ELSE
+		state:= E_DB_QUERY_STATE.INSERT_SOLVENT;
+	END_IF	
 	
 E_DB_QUERY_STATE.ERROR_STATE:
 
@@ -562,7 +609,11 @@ VAR
 	vialsToFill: STRING;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[iRevision := INT_TO_STRING(GVL_HMI.stRecipeInfo.iRevision+1);
+        <ST><![CDATA[IF GVL_HMI.bNewRecipeButton THEN
+	iRevision := '1';
+ELSE
+	iRevision := INT_TO_STRING(GVL_HMI.stRecipeInfo.iRevision+1);	
+END_IF
 dCreationDate := DATE_TO_STRING(GVL_HMI.stRecipeInfo.dCreationDate);
 Rinse1 := INT_TO_STRING(GVL_HMI.aSolventAndTimesRows[1].Rinse1);
 Rinse2 := INT_TO_STRING(GVL_HMI.aSolventAndTimesRows[1].Rinse2);
@@ -648,6 +699,33 @@ FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#14#'), pInsertStri
 FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#15#'), pInsertString:= ADR(GVL_DB.stPostRunReport[0].timeEventCompleted), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#16#'), pInsertString:= ADR(methodID), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#17#'), pInsertString:= ADR(CalibrationNo), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="insertSolvent" Id="{72d5efef-5f2e-4a79-85ba-b7b766cc3cd9}">
+      <Declaration><![CDATA[METHOD insertSolvent : BOOL
+VAR_INPUT
+	start: BOOL;
+END_VAR
+
+
+VAR
+
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+IF start THEN
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#1#'), pInsertString:= ADR(GVL_DB.stSolvents.solventName1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#2#'), pInsertString:= ADR(GVL_DB.stSolvents.solventName2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#3#'), pInsertString:= ADR(GVL_DB.stSolvents.solventName3), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#4#'), pInsertString:= ADR(GVL_DB.stSolvents.solventName4), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#5#'), pInsertString:= ADR(GVL_DB.stSolvents.density1), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#6#'), pInsertString:= ADR(GVL_DB.stSolvents.density2), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#7#'), pInsertString:= ADR(GVL_DB.stSolvents.density3), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#8#'), pInsertString:= ADR(GVL_DB.stSolvents.density4), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#9#'), pInsertString:= ADR(GVL_DB.stSolvents.addedBy), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
+	FindAndReplace(pSrcString:= ADR(cmdIn), pDeleteString:= ADR('#10#'), pInsertString:= ADR(GVL_DB.stSolvents.addedDate), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -814,6 +892,7 @@ END_IF]]></ST>
       <LineId Id="837" Count="0" />
       <LineId Id="805" Count="0" />
       <LineId Id="836" Count="0" />
+      <LineId Id="1011" Count="0" />
       <LineId Id="846" Count="3" />
       <LineId Id="804" Count="0" />
       <LineId Id="96" Count="0" />
@@ -902,6 +981,15 @@ END_IF]]></ST>
       <LineId Id="719" Count="12" />
       <LineId Id="718" Count="0" />
       <LineId Id="716" Count="0" />
+      <LineId Id="933" Count="12" />
+      <LineId Id="932" Count="0" />
+      <LineId Id="947" Count="0" />
+      <LineId Id="949" Count="12" />
+      <LineId Id="948" Count="0" />
+      <LineId Id="946" Count="0" />
+      <LineId Id="963" Count="12" />
+      <LineId Id="962" Count="0" />
+      <LineId Id="977" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
       <LineId Id="137" Count="1" />
@@ -961,7 +1049,10 @@ END_IF]]></ST>
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertMethod">
-      <LineId Id="108" Count="1" />
+      <LineId Id="179" Count="1" />
+      <LineId Id="182" Count="1" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="109" Count="0" />
       <LineId Id="57" Count="0" />
       <LineId Id="115" Count="0" />
       <LineId Id="118" Count="0" />
@@ -990,6 +1081,14 @@ END_IF]]></ST>
       <LineId Id="53" Count="0" />
       <LineId Id="47" Count="0" />
       <LineId Id="5" Count="16" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertSolvent">
+      <LineId Id="53" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="78" Count="6" />
+      <LineId Id="105" Count="2" />
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertSys">
