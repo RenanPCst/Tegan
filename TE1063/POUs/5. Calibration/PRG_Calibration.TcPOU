@@ -22,7 +22,6 @@ VAR
 	fbSolenoidControl	: FB_SolenoidControl;
 	eStopState 			: E_StopState 		:= E_StopState.Init;
 	ePState 			: E_PState 			:= E_PState.Init;	
-	eLeakTestState 		: E_LeakTestState	:= E_LeakTestState.IDLE;
 	
 	bPressureUpExecute 		: BOOL := FALSE;
     bPressureUpRequested 	: BOOL := FALSE;
@@ -50,6 +49,7 @@ VAR
 	bLinearPumpsOldPosDone	: BOOL := FALSE;
 	bLinearPumpsMove		: BOOL := FALSE;
 	aLinearPumpsEnable 		: ARRAY[1..10] OF BOOL;
+	aLinearPumpsDisable		: ARRAY[1..10] OF BOOL;
 	aLinearPumpsHoming 		: ARRAY[1..10] OF BOOL;
 	bLinearPumpsOldPosMove	: ARRAY[1..10] OF BOOL;
 	aLinearPumpsMoveDone 	: ARRAY[1..10] OF BOOL; // Tracks per-axis move completion
@@ -58,6 +58,8 @@ VAR
 	
 	//Valves movement
 	bMoveValves	: ARRAY[1..5] OF BOOL;
+	bMoveM1Fast	: BOOL := FALSE;
+	bMoveM1Slow	: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -73,7 +75,11 @@ GVL_Calibration.fbScaleDevice(sRemoteHost := GVL_Settings.aBalanceIP, nRemotePor
 
 (* Leak Test *) //--------------------------------------------------------------------------------------------------------------------------------------------------------
 // Leak Test request from HMI
-fbLeakTest(bExecute := GVL_HMI.bCalLeakTestButton, eSolenoidPosition := E_SolenoidSet.LEAKTEST, tMonitorTime := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime);
+fbLeakTest(	bExecute := GVL_HMI.bCalLeakTestButton, 
+			eSolenoidPosition := E_SolenoidSet.LEAKTEST, 
+			tMonitorTime := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime, 
+			tPressureUpTime := GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime 
+			);
 
 // Leak Test post treatment
 IF fbLeakTest.bLeakTestDone AND NOT fbLeakTest.bLeakTestError THEN
@@ -96,22 +102,32 @@ END_IF
 
 // HMI Button responsible for pressurize the system
 IF GVL_HMI.bCalPressureUpSystemBt THEN
-	GVL_HMI.bCalPressureUpSystemBt := NOT PressureUp();
+	IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos - 5) THEN
+		GVL_HMI.bCalPressureUpSystemBt := NOT GVL_IO.gSetSolenoidControl.PressureUp(); //PressureUp();
+	ELSE
+		//Raise interlock alarm
+		GVL_HMI.bCalPressureUpSystemBt := FALSE;
+	END_IF
 END_IF
 
 // HMI Button responsible for hold the air in the system after the system pressure up
 IF GVL_HMI.bCalHoldSysPressureBt THEN
-	GVL_HMI.bCalHoldSysPressureBt := NOT HoldSystemPressure();
+	IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos - 5) THEN
+		GVL_HMI.bCalHoldSysPressureBt := NOT GVL_IO.gSetSolenoidControl.HoldPressure(); //PressureUp();
+	ELSE
+		//Raise interlock alarm
+		GVL_HMI.bCalHoldSysPressureBt := FALSE;
+	END_IF
 END_IF
 
 // HMI Button responsible for stopping the leak test
 IF GVL_HMI.bCalStopLeakTestBt THEN
-	GVL_HMI.bCalStopLeakTestBt := NOT StopLeakTest();
+	GVL_HMI.bCalStopLeakTestBt := NOT GVL_IO.gSetSolenoidControl.Idle();
 END_IF
 
 // Leak test stage Analog input pressure HMI shown
-IF eLeakTestState <> E_LeakTestState.IDLE THEN
-	GVL_HMI.rCalLeakTestPressure := GVL_IO.gAnalogInputs.rLeakTestPressureSensor;
+IF GVL_Calibration.eLeakTestState <> E_LeakTestState.IDLE THEN
+	GVL_HMI.rCalLeakTestPressure := (GVL_IO.gAnalogInputs.rLeakTestPressureSensor - 220.0) * (3.698 / (6100.0 - 220.0)); // Pressure scaling to PSI
 ELSE
 	GVL_HMI.rCalLeakTestPressure := 0.00;
 END_IF
@@ -134,7 +150,6 @@ END_IF
 //calibration procedure calling
 fbCalibrationManager(
     bExecute := GVL_Calibration.bStartCalibration,
-    bAbort := GVL_Calibration.bAbortCalibration,
 	rSolventDensity := GVL_Calibration.stPumpCalibrationInfo.rSolventDensity,
     eSolvent := GVL_Calibration.eCalibSolvent, 
     aPumpSettings := GVL_HMI.aCalibPumps, //Temp GVL_Calibration.aCalibPumps
@@ -184,7 +199,8 @@ IF GVL_HMI.bCalLinearPumpsEnableBt THEN
 
     IF EnableLinearPumps() THEN
         // Operation finished successfully
-        GVL_HMI.bCalLinearPumpsEnableBt := FALSE;
+        GVL_HMI.bCalLinearPumpsEnableBt := FALSE; // Set Dirty flag that does not allow closing the popup
+		GVL_HMI.bCalLinearPumpsDirty := TRUE;
     END_IF
 END_IF
 
@@ -195,6 +211,7 @@ IF GVL_HMI.bCalLinearPumpsHomeBt THEN
 
     IF HomeLinearPumps() THEN
         GVL_HMI.bCalLinearPumpsHomeBt := FALSE;
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; // Set Dirty flag that does not allow closing the popup
     END_IF
 END_IF
 
@@ -205,6 +222,7 @@ IF GVL_HMI.bCalLinearPumpsMoveBt THEN
 
     IF MoveLinearPumps() THEN
         GVL_HMI.bCalLinearPumpsMoveBt := FALSE;
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; // Set Dirty flag that does not allow closing the popup
     END_IF
 END_IF
 
@@ -220,6 +238,39 @@ IF GVL_HMI.bCalLinearPumpsStopBt THEN
     END_FOR
     // Reset trigger
     GVL_HMI.bCalLinearPumpsStopBt := FALSE;
+END_IF
+
+(* Linear Pumps Save - Gets all new motors position and saves on old position | Disable all pumps that are enabled *)
+IF GVL_HMI.bCalLinearPumpsSaveBt THEN
+	FOR i := 1 TO 10 DO
+		IF GVL_Motion.aPumps[i].Linear.iOperational AND GVL_Motion.aPumps[i].Linear.iHomed THEN // if axis enabled then disables it
+			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Old Position changed - DB insert
+			GVL_Retain.rLinearPumpOldPosition[i] := GVL_Motion.aPumps[i].Linear.rActualPos; // Save the old axis position
+			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Motion.aPumps[i].Linear.rActualPos); // New Position changed - DB insert
+			IF NOT aLinearPumpsDisable[i] THEN
+				aLinearPumpsDisable[i] := GVL_Motion.aPumpsLinear[i].Disable(); // Disable the axis
+			END_IF
+		ELSE
+			aLinearPumpsDisable[i] := TRUE; // Fallback if motor is no operational
+			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
+			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
+		END_IF
+		GVL_Calibration.stLinearCalibrationData[i].sPumpNumber 	 := TO_STRING(i); // Pump Number - DB insert
+		GVL_Calibration.stLinearCalibrationData[i].sUserName 	 := GVL_HMI.sUserNameEventTriggered; // HMI User name when button pressed - DB insert
+		GVL_Calibration.stLinearCalibrationData[i].sDateOfChange := GVL_HMI.sDateAndTimeEventTriggered; // HMI Date and time when button pressed  - DB insert
+	END_FOR
+	IF 	aLinearPumpsDisable[1] AND aLinearPumpsDisable[2] AND aLinearPumpsDisable[3] AND aLinearPumpsDisable[4] AND aLinearPumpsDisable[5] AND 
+		aLinearPumpsDisable[6] AND aLinearPumpsDisable[7] AND aLinearPumpsDisable[8] AND aLinearPumpsDisable[9] AND aLinearPumpsDisable[10] THEN
+		
+		FOR i := 1 TO 10 DO
+			aLinearPumpsDisable[i] := FALSE; // Resets the disable motors flag
+		END_FOR
+		
+		GVL_HMI.bCalLinearPumpsSaveBt := FALSE;  // Resets the button trigger 
+		GVL_HMI.bCalLinearPumpsDirty := TRUE; 	 // Resets the Dirty flag that allow the popup closes
+		GVL_HMI.sUserNameEventTriggered := '';	 // Resets Username triggered from HMI
+		GVL_HMI.sDateAndTimeEventTriggered := '';// Resets Date and Time trigerred from HMI
+	END_IF
 END_IF
 
 (* Valves Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -240,11 +291,28 @@ END_IF
 
 (* M1 Motor Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
 IF GVL_HMI.bCalMoveM1Motor AND GVL_IO.gDigInputs.bThroatJigPresent THEN
-	GVL_HMI.bCalMoveM1Motor := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition],
-                        														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-                        														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-                       															rDec := GVL_Settings.stMachineParam.rM1Deceleration
-																				);
+	IF NOT bMoveM1Fast THEN
+		bMoveM1Fast := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition] + GVL_Settings.stMachineParam.fM1PositionDeceleration,
+														rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+														rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+														rDec := GVL_Settings.stMachineParam.rM1Deceleration
+														);
+	END_IF
+	
+	IF bMoveM1Fast AND NOT bMoveM1Slow THEN
+		bMoveM1Slow := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[GVL_HMI.iCalMoveM1MotorPosition],
+														rVelocity := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+														rAcc := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+														rDec := GVL_Settings.stMachineParam.rM1PrecisionVelocity
+														);
+	END_IF
+	
+	IF bMoveM1Fast AND bMoveM1Slow THEN
+		bMoveM1Fast := FALSE;
+		bMoveM1Slow := FALSE;
+		GVL_HMI.bCalMoveM1Motor := FALSE;
+	END_IF									
+
 END_IF
 
 ]]></ST>
@@ -341,7 +409,7 @@ IF bNeedsSet THEN
     bPressureUpSolenoids := FALSE;
     bPressureUpExecute   := FALSE;
 	
-	eLeakTestState := E_LeakTestState.HOLD_PRESSURE;
+	GVL_Calibration.eLeakTestState := E_LeakTestState.HOLD_PRESSURE;
 
     HoldSystemPressure := TRUE;   // retornamos TRUE somente quando houve mudança
 ELSE
@@ -644,26 +712,24 @@ CASE ePState OF
 
     E_PState.OpenValves:
         // Pressuriza o sistema: A/B abertas, C fechada
-        GVL_IO.gDigOutputs.bSolenoidValveA := TRUE;
-        GVL_IO.gDigOutputs.bSolenoidValveB := TRUE;
-        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
-
-        ePState := E_PState.Done;
+        IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
+			ePState := E_PState.Done;
+		END_IF
 
     E_PState.Done:
-		eLeakTestState := E_LeakTestState.PRESSURE_UP;
+		GVL_Calibration.eLeakTestState := E_LeakTestState.PRESSURE_UP;
         bMoveIssued := FALSE;
         tonSealTimeout(IN := FALSE);
 		PressureUp := TRUE;          // pulso de sucesso nesta chamada
-        ePState := E_PState.Init;             // pronto para próximo ciclo
+        ePState := E_PState.Init;    // pronto para próximo ciclo
         RETURN;                      // encerra o método neste ciclo
 
     E_PState.Fault:
         // Falha: garanta estado seguro (não pressuriza)
-        GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
+        (*GVL_IO.gDigOutputs.bSolenoidValveA := FALSE;
         GVL_IO.gDigOutputs.bSolenoidValveB := FALSE;
-        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;
-
+        GVL_IO.gDigOutputs.bSolenoidValveC := FALSE;*)
+		GVL_IO.gSetSolenoidControl.Idle();
         bMoveIssued := FALSE;
         tonSealTimeout(IN := FALSE);
         PressureUp := FALSE;
@@ -738,7 +804,7 @@ bLinearPumpsOldPosDone	 := FALSE;
 
 eStopState 	 	:= E_StopState.Init;
 ePState 		:= E_PState.Init;	
-eLeakTestState 	:= E_LeakTestState.IDLE;
+GVL_Calibration.eLeakTestState 	:= E_LeakTestState.IDLE;
 
 bPressureUpExecute 		 := FALSE;
 bPressureUpRequested 	 := FALSE;
@@ -854,7 +920,7 @@ END_VAR
         END_IF
 
     E_StopState.Done:
-		eLeakTestState := E_LeakTestState.IDLE;
+		GVL_Calibration.eLeakTestState := E_LeakTestState.IDLE;
 		bStopLeakTestRequested := FALSE;
         StopLeakTest         := TRUE;
         eStopState := E_StopState.Init; // ou manter em Done até novo comando
@@ -924,7 +990,7 @@ END_IF*)
       </Implementation>
     </Method>
     <LineIds Name="PRG_Calibration">
-      <LineId Id="834" Count="1" />
+      <LineId Id="972" Count="1" />
       <LineId Id="44" Count="2" />
       <LineId Id="186" Count="0" />
       <LineId Id="127" Count="0" />
@@ -934,6 +1000,7 @@ END_IF*)
       <LineId Id="43" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="5" Count="0" />
+      <LineId Id="1100" Count="3" />
       <LineId Id="28" Count="0" />
       <LineId Id="19" Count="0" />
       <LineId Id="18" Count="0" />
@@ -952,10 +1019,14 @@ END_IF*)
       <LineId Id="26" Count="0" />
       <LineId Id="534" Count="0" />
       <LineId Id="527" Count="1" />
-      <LineId Id="532" Count="1" />
+      <LineId Id="939" Count="1" />
+      <LineId Id="942" Count="2" />
+      <LineId Id="941" Count="0" />
+      <LineId Id="533" Count="0" />
       <LineId Id="546" Count="0" />
       <LineId Id="535" Count="0" />
       <LineId Id="555" Count="0" />
+      <LineId Id="945" Count="4" />
       <LineId Id="538" Count="0" />
       <LineId Id="536" Count="0" />
       <LineId Id="547" Count="0" />
@@ -981,7 +1052,7 @@ END_IF*)
       <LineId Id="82" Count="0" />
       <LineId Id="81" Count="0" />
       <LineId Id="131" Count="0" />
-      <LineId Id="70" Count="1" />
+      <LineId Id="70" Count="0" />
       <LineId Id="434" Count="0" />
       <LineId Id="72" Count="7" />
       <LineId Id="401" Count="0" />
@@ -1002,20 +1073,48 @@ END_IF*)
       <LineId Id="376" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />
-      <LineId Id="295" Count="7" />
+      <LineId Id="295" Count="6" />
+      <LineId Id="928" Count="0" />
+      <LineId Id="302" Count="0" />
       <LineId Id="199" Count="0" />
       <LineId Id="194" Count="0" />
       <LineId Id="192" Count="0" />
-      <LineId Id="303" Count="6" />
+      <LineId Id="303" Count="5" />
+      <LineId Id="929" Count="0" />
+      <LineId Id="309" Count="0" />
       <LineId Id="197" Count="0" />
       <LineId Id="196" Count="0" />
       <LineId Id="195" Count="0" />
-      <LineId Id="310" Count="6" />
+      <LineId Id="310" Count="5" />
+      <LineId Id="930" Count="0" />
+      <LineId Id="316" Count="0" />
       <LineId Id="253" Count="0" />
       <LineId Id="263" Count="1" />
       <LineId Id="282" Count="8" />
       <LineId Id="292" Count="1" />
       <LineId Id="262" Count="0" />
+      <LineId Id="833" Count="2" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="844" Count="0" />
+      <LineId Id="868" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="864" Count="0" />
+      <LineId Id="848" Count="4" />
+      <LineId Id="867" Count="0" />
+      <LineId Id="865" Count="0" />
+      <LineId Id="842" Count="0" />
+      <LineId Id="934" Count="2" />
+      <LineId Id="843" Count="0" />
+      <LineId Id="853" Count="0" />
+      <LineId Id="857" Count="0" />
+      <LineId Id="854" Count="0" />
+      <LineId Id="860" Count="3" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="931" Count="0" />
+      <LineId Id="937" Count="0" />
+      <LineId Id="858" Count="0" />
+      <LineId Id="855" Count="0" />
+      <LineId Id="838" Count="0" />
       <LineId Id="611" Count="0" />
       <LineId Id="610" Count="0" />
       <LineId Id="614" Count="0" />
@@ -1031,7 +1130,18 @@ END_IF*)
       <LineId Id="636" Count="0" />
       <LineId Id="631" Count="0" />
       <LineId Id="656" Count="0" />
-      <LineId Id="649" Count="6" />
+      <LineId Id="649" Count="2" />
+      <LineId Id="960" Count="3" />
+      <LineId Id="958" Count="1" />
+      <LineId Id="971" Count="0" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="967" Count="3" />
+      <LineId Id="965" Count="1" />
+      <LineId Id="964" Count="0" />
+      <LineId Id="1034" Count="0" />
+      <LineId Id="1038" Count="1" />
+      <LineId Id="1036" Count="1" />
+      <LineId Id="956" Count="0" />
       <LineId Id="648" Count="0" />
       <LineId Id="617" Count="0" />
       <LineId Id="616" Count="0" />
@@ -1118,11 +1228,17 @@ END_IF*)
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.PressureUp">
-      <LineId Id="160" Count="55" />
+      <LineId Id="160" Count="48" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="246" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="215" Count="0" />
       <LineId Id="237" Count="0" />
       <LineId Id="217" Count="1" />
       <LineId Id="238" Count="0" />
-      <LineId Id="219" Count="17" />
+      <LineId Id="219" Count="7" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="228" Count="8" />
       <LineId Id="106" Count="0" />
       <LineId Id="118" Count="41" />
       <LineId Id="6" Count="0" />

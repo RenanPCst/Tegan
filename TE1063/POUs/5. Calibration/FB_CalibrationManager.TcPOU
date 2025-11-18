@@ -4,7 +4,6 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CalibrationManager
 VAR_INPUT
     bExecute         : BOOL; // Trigger to start calibration
-    bAbort           : BOOL; // Trigger to abort trigger
     eSolvent         : E_SolventType; // Selected solvent type
 	rSolventDensity  : LREAL; //Solvent Density
     aPumpSettings    : ARRAY[1..10] OF ST_CalibrationPump; // Pump input settings
@@ -29,7 +28,8 @@ VAR
 
     tonCalDelay      : TON; // General delay timer
     tonStepTimeout   : TON; // Timeout per step
-	tonMotorsDelay	 : ton; // Delay time after positioning the motors
+	tonMotorsDelay	 : TON; // Delay time after positioning the motors
+	tonAirDry		 : TON; // Timer to be using air if needed after calibration
 	tonWeigthStabilization : TON; //Time after the pump finish to wait for stable weigth
 	
 	bExecutePulse   : R_TRIG; // Edge detection for bExecute
@@ -53,29 +53,34 @@ VAR
     bRequestWeight   	: BOOL := FALSE; // Trigger for requesting scale
 	bWeightReady	 	: BOOL := FALSE; // Trigger when weigth is ready
 	bPumpAdjustNeed	 	: BOOL := FALSE; // Flag that indicates if the checking pump needs to be adjusted or not. 
+	bAirDryTrigger		: BOOL := FALSE; // Flag to trigger the air dry timer. 
     rScaleWeight     	: LREAL; // Latest scale result
 	rDistanceByVol	 	: LREAL; // MoveRelative distance
 	rPercentDifference 	: LREAL; // Percentual Difference between net volume and tagert volume
 	iNumberOfAdjusts	: UINT;  // Count of adjustments needed for each pump index
+	rPosTolerance		: LREAL := 5.0; // Position Tolerance in mm to make sure there is no noise in the reading
 	rFillJarTotalVol 	: LREAL;
 	rEmptyJarTotalVol	: LREAL;
 	
     rAcceptanceCrit  : REAL := 0.5; // Acceptance percentage (from HMI)
     iAllowableFail   : INT := 2; 	// Max failures from pump settings
     iMaxReplicates   : INT := 2; 	// Replicate count (from HMI)
-	//iResultIndex	 : INT;	// Array index on calibration results
+	iResultIndex	 : INT;	// Array index on calibration results
 	
 	bMovePump		 : BOOL := FALSE;
+	bMoveMotorM1     : BOOL := FALSE; // Motion trigger M1
     bMoveMotorM2     : BOOL := FALSE; // Motion trigger M2
     bMoveMotorM3     : BOOL := FALSE; // Motion trigger M3
+	bSetSolenoids	 : BOOL := FALSE; // SetSolenoids flag
     bMoveValve       : ARRAY[1..5] OF BOOL; // Valve position tracking
+	
 
     i                : USINT;// Loop index helper
     bBoxPresent      : BOOL; // True if calibration box detected
     bBoxWeightOK     : BOOL; // True if calibration box has valid weight
 
     tStepTimeout     : TIME := T#60S; // Default timeout per step;
-	tWeightStable	 : TIME := T#20S; // Default waiting time befe request weight
+	tWeightStable	 : TIME := T#10S; // Default waiting time befe request weight
 	
 	// Scale-attention handling (9999 pause)
     bScaleAttention  : BOOL := FALSE; // TRUE while waiting operator
@@ -93,7 +98,16 @@ VAR
     sDD               : STRING(2);
 	bDTReady		  : BOOL := FALSE;
 	
-	btttt: BOOL;
+	//LoadBar UI
+	tonProgress : TON;
+    sPrev       : STRING(120);
+    tPT         : TIME;
+
+    // helpers cálculo de tempo (segundos)
+    rDeltaM2, rDeltaM3, rVM2, rVM3  : LREAL;
+    rPumpVelDeg, rRunVelDeg         : LREAL;
+    rSecs  							: LREAL;
+	
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// bExecute Rising edge
@@ -105,7 +119,7 @@ IF bExecutePulse.Q AND eStep = E_CalibStep.IDLE THEN
 END_IF
 
 // Abort logic
-IF bAbort THEN
+IF GVL_Calibration.bAbortCalibration THEN
     eStep := E_CalibStep.ERROR;
 END_IF
 
@@ -118,18 +132,7 @@ CASE eStep OF
 		sStatus := 'Idle';
 		IF bStartCalibration THEN
 			bBusy := TRUE;
-			iPumpIndex := 1;
-			iReplicate := 0;
-			iNumberOfAdjusts := 0;
-			GVL_Calibration.iResultIndex := 1; // first log row
-			rPumpAverageVolume := 0.00;
-			rPumpAvgTareWeigth := 0.00;
-			rPumpAvgGrossWeigth := 0.00;
-			rPumpVolumeSum := 0.00;
-			rTareWeightSum := 0.00;
-			rGrossWeightSum := 0.00;
-			bPumpAdjustNeed := FALSE;
-			bStartCalibration := FALSE;
+			ACT_CleanStart();
 			eStep := E_CalibStep.DELAY;
 		END_IF
 
@@ -274,8 +277,9 @@ CASE eStep OF
 		END_IF
 
 	E_CalibStep.FILLJAR_FORWARD:
-
-		sStatus := CONCAT('Filling up the jar number: ', TO_STRING(iPumpIndex));
+		
+		
+		sStatus := CONCAT('Filling up the jar: ', F_JarName(iPumpIndex := iPumpIndex));
 		
 		IF aPumpSettings[iPumpIndex].bSelected THEN
 			IF iPumpIndex = 1 THEN
@@ -509,7 +513,7 @@ CASE eStep OF
 			
 			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := CONCAT('Check ', TO_STRING(iReplicate));
 			
-			
+			//DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
 			
 			IF iReplicate >= GVL_Settings.stCalibParameters.iReplicatesSetpoint THEN
@@ -549,54 +553,55 @@ CASE eStep OF
 	E_CalibStep.PUMPFACTOR_ADJUST: // Calculate the new factor
 	
 		DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
+		
 		IF NOT DB_Query.FB_Insert.bBusy THEN
 			
-		// Mirror the pump status to HMI
-		GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgNetVolume := rPumpAverageVolume;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgTareWeight := rPumpAvgTareWeigth;
-		GVL_HMI.aCalPumpResults[iPumpIndex].rAvgGrossWeight := rPumpAvgGrossWeigth;
-		
-		// new factor := target / Trunc((target / (Average / revs) ) + 0.5)  
-		GVL_Retain.aCalibrationPumpFactor[iPumpindex] := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex - 1].iPumpRevs))+ 0.5));
-		
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillJars   := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFromCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
-		
-		// Populate the adjustment row	
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := 'Adjustment';
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].dDateTime := sStamp;
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := 0.00;
-
-		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rGrossWeigth := 0.00;
-
-		GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetWeigth := 0.00;
-		
-
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume := 0.00;
-
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTargetVolume := 0.00;
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferencePercent := 0.00;
-		
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rCriteria := 0.00;
-		GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpRevs := TO_UINT(aPumpSettings[iPumpIndex].rTargetVolume / GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox);	
-		
-		// final transition
-		btttt := FALSE;
-		rPumpAverageVolume := 0.00;
-		rPumpAvgTareWeigth := 0.00;
-		rPumpAvgGrossWeigth := 0.00;
-		rPumpVolumeSum := 0.00;
-		rTareWeightSum := 0.00;
-		rGrossWeightSum := 0.00;
-		iReplicate := 0;
-		
-		GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
-		
-		eStep := E_CalibStep.RETURN_FORWARD;
+			// Mirror the pump status to HMI
+			GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgNetVolume := rPumpAverageVolume;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgTareWeight := rPumpAvgTareWeigth;
+			GVL_HMI.aCalPumpResults[iPumpIndex].rAvgGrossWeight := rPumpAvgGrossWeigth;
+			
+			// new factor := target / Trunc((target / (Average / revs) ) + 0.5)  
+			GVL_Retain.aCalibrationPumpFactor[iPumpindex] := aPumpSettings[iPumpIndex].rTargetVolume / TO_LREAL(TRUNC((aPumpSettings[iPumpIndex].rTargetVolume/(rPumpAverageVolume/GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex - 1].iPumpRevs))+ 0.5));
+			
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillJars   := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFromCalBox := GVL_Retain.aCalibrationPumpFactor[iPumpindex];
+			
+			// Populate the adjustment row	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpNumber := TO_USINT(iPumpIndex);
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].sStep := 'Adjustment';
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].dDateTime := sStamp;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTareWeigth := 0.00;
+	
+			GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rGrossWeigth := 0.00;
+	
+			GVL_calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetWeigth := 0.00;
+			
+	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rNetVolume := 0.00;
+	
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rTargetVolume := 0.00;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rDifferencePercent := 0.00;
+			
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].rCriteria := 0.00;
+			GVL_Calibration.stPumpCalibrationData[GVL_Calibration.iResultIndex].iPumpRevs := TO_UINT(aPumpSettings[iPumpIndex].rTargetVolume / GVL_Motion.aPumps[iPumpindex].Rotary.rPumpFactorFillCalBox);	
+			
+			// final transition
+			rPumpAverageVolume := 0.00;
+			rPumpAvgTareWeigth := 0.00;
+			rPumpAvgGrossWeigth := 0.00;
+			rPumpVolumeSum := 0.00;
+			rTareWeightSum := 0.00;
+			rGrossWeightSum := 0.00;
+			iReplicate := 0;
+			
+			DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
+			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
+			eStep := E_CalibStep.RETURN_FORWARD;
 		END_IF
+		
 		
 	E_CalibStep.PUMPFACTOR_FAILED:
 		// Update the HMI pump status
@@ -621,7 +626,7 @@ CASE eStep OF
 		
     E_CalibStep.RETURN_FORWARD:
 
-		sStatus := CONCAT(CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex), CONCAT(' | Check ', CONCAT(TO_STRING(iReplicate + 1), ' | ')))), CONCAT('Returning solvent back to the Jar number : ', TO_STRING(iPumpIndex)));
+		sStatus := CONCAT(CONCAT('Pump ',CONCAT(TO_STRING(iPumpIndex), CONCAT(' | Check ', CONCAT(TO_STRING(iReplicate + 1), ' | ')))), CONCAT('Returning solvent back to the Jar : ', F_JarName(iPumpIndex := iPumpIndex)));
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := (aPumpSettings[iPumpIndex].rTargetVolume + 5), iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
 		
 		//Move Motor M2 for IntoResWeight
@@ -726,9 +731,46 @@ CASE eStep OF
 		
 		IF tonMotorsDelay.Q THEN
 			tonStepTimeout(IN := FALSE);
-			eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			IF GVL_Settings.stCalibParameters.iAirDryTimeSec > 0 THEN // IF Air Dry time settings is greater than zero go to air dry step
+				eStep := E_CalibStep.AIR_DRY_TIME;
+			ELSE
+				eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			END_IF
 		END_IF
    
+		
+	E_CalibStep.AIR_DRY_TIME:
+		IF NOT bSetSolenoids THEN
+			//Check if the M1 motor is not on seal stages position
+			IF GVL_Settings.stMachineParam.aM1Position[2] >= (GVL_Motion.M1Motor.rActualPos + rPosTolerance) AND NOT bMoveMotorM1 THEN
+				IF NOT bMoveMotorM1 THEN
+					bMoveMotorM1 := NOT GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[2],
+																			rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+																			rAcc	  := GVL_Settings.stMachineParam.rM1Accleration,
+																			rDec	  := GVL_Settings.stMachineParam.rM1Deceleration);
+				END_IF
+			ELSE
+				//M1 Position ok
+				bSetSolenoids := GVL_IO.gSetSolenoidControl.AirDry(); //Open Solenoids
+				bMoveMotorM1 := TRUE;
+			END_IF
+		ELSE
+			bMoveMotorM1 := FALSE;
+			bAirDryTrigger := TRUE;
+		END_IF
+		
+		// Air Dry Timer
+		tonAirDry( IN := bAirDryTrigger, PT := UINT_TO_TIME(GVL_Settings.stCalibParameters.iAirDryTimeSec*1000));
+		
+		IF tonAirDry.Q THEN
+			//Return Solenoids to Idle state
+			IF GVL_IO.gSetSolenoidControl.Idle() THEN
+				bSetSolenoids := FALSE;
+				//Transition
+				eStep := E_CalibStep.REPORT_INFO_UPDATE;
+			END_IF
+		END_IF
+	
 	E_CalibStep.REPORT_INFO_UPDATE: //TODO: Update the variables without hardcode
 		//Reset Motors Flags
 		bMoveMotorM2 := FALSE;
@@ -779,7 +821,7 @@ CASE eStep OF
         // Return exactly where we paused (CHECKING_WEIGH)
         eStep := eStepResume;
 
-		ELSIF bAbort THEN
+		ELSIF GVL_Calibration.bAbortCalibration THEN
 			sStatus := 'Calibration aborted during calibration box attention.';
 			eStep   := E_CalibStep.ERROR;
 		END_IF	
@@ -800,7 +842,7 @@ CASE eStep OF
 			// Resume exactly where we were
 			eStep := eStepResume;
 	
-		ELSIF bAbort THEN
+		ELSIF GVL_Calibration.bAbortCalibration THEN
 			sStatus := 'Calibration aborted during scale attention.';
 			eStep := E_CalibStep.ERROR;
 		END_IF
@@ -817,11 +859,140 @@ CASE eStep OF
     E_CalibStep.ERROR:
         bBusy := FALSE;
         bDone := FALSE;
-        sStatus := 'Calibration aborted due to error.';
+        sStatus := 'Calibration aborted due to error. Press Stop button to start over';
         // Remains here till external reset
 
-END_CASE]]></ST>
+END_CASE
+
+ACT_ProgressUI_Real();]]></ST>
     </Implementation>
+    <Action Name="ACT_CleanStart" Id="{aab31dd9-654e-418d-bd8f-64f5f4ef8ac0}">
+      <Implementation>
+        <ST><![CDATA[iPumpIndex := 1;
+iReplicate := 0;
+iNumberOfAdjusts := 0;
+GVL_Calibration.iResultIndex := 1; // first log row
+rPumpAverageVolume := 0.00;
+rPumpAvgTareWeigth := 0.00;
+rPumpAvgGrossWeigth := 0.00;
+rPumpVolumeSum := 0.00;
+rTareWeightSum := 0.00;
+rGrossWeightSum := 0.00;
+bPumpAdjustNeed := FALSE;
+bStartCalibration := FALSE;
+
+FOR i := 1 TO 10 DO
+	GVL_HMI.aCalPumpResults[i].eStatus := E_CalibrationStatus.IDLE;
+	GVL_HMI.aCalPumpResults[i].rAvgNetVolume := 0.00;
+	GVL_HMI.aCalPumpResults[i].rAvgTareWeight := 0.00;
+	GVL_HMI.aCalPumpResults[i].rAvgGrossWeight := 0.00;
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_ProgressUI_Real" Id="{c46d8e09-1679-4dd6-9c09-902e98888281}">
+      <Implementation>
+        <ST><![CDATA[// --- 1) Detecta troca de sStatus e define PT com base real ---
+IF sStatus <> sPrev THEN
+    tPT := T#0MS; // default: sem barra
+
+    // POSITION_MOTORS  (usa |alvo - atual| / vel e pega o mais lento + 200ms)
+    IF FIND(sStatus, 'Positioning motors M2 and M3') = 1 THEN
+        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[4] - GVL_Motion.M2Motor.rActualPos);
+        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[4] - GVL_Motion.M3Motor.rActualPos); 
+        rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
+        rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
+        rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
+        tPT := F_sec_to_time(rSecs);                                                                 // Positioning motors
+        // sStatus vem deste step. :contentReference[oaicite:1]{index=1}
+
+    // POSITION_VALVES (sem feedback de tempo → constante curta)
+    ELSIF FIND(sStatus, 'Positioning valves to Position 6') = 1 THEN
+        tPT := T#2S;                                                                                // Positioning valves
+        // sStatus vem deste step. :contentReference[oaicite:2]{index=2}
+
+    // FILLJAR_FORWARD (rDistanceByVol / vel_deg_s)
+    ELSIF FIND(sStatus, 'Filling up the jar') = 1 THEN
+        rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;                // RPM->deg/s
+        rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
+        tPT := F_sec_to_time(rSecs);
+        // rDistanceByVol e vel usados no MoveRelative. :contentReference[oaicite:3]{index=3}
+
+    // WEIGH_BEFORE / WEIGH_AFTER (requisição de peso não tem TON -> janela curta)
+    ELSIF FIND(sStatus, 'Taring Scale') > 0 OR FIND(sStatus, 'Requesting Gross Weight') = 1 THEN
+        tPT := T#3S;                                                                                // ajuste se necessário
+        // sStatus de WEIGH_* ao solicitar peso. :contentReference[oaicite:4]{index=4}
+
+    // WITHDRAW_BACKWARDS (para a caixa de calibração)
+    ELSIF FIND(sStatus, 'Pumping to calibration box') > 0 THEN
+        rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;
+        rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
+        tPT := F_sec_to_time(rSecs);
+        // Movimento relativo com iMeterVelocity*6. :contentReference[oaicite:5]{index=5}
+
+    // RETURN_FORWARD (retorna solvente)
+    ELSIF FIND(sStatus, 'Returning solvent back to the Jar') > 0 THEN
+        rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;
+        rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
+        tPT := F_sec_to_time(rSecs);
+        // Movimento relativo + stabilize depois. :contentReference[oaicite:6]{index=6}
+
+    // EMPTYJAR_BACKWARDS (esvazia jar – usa iRunVelocity)
+    ELSIF FIND(sStatus, 'Empty the jar') = 1 THEN
+        rRunVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iRunVelocity) * 6.0;
+        rSecs := ABS(rDistanceByVol) / rRunVelDeg;
+        tPT := F_sec_to_time(rSecs);
+        // MoveRelative com iRunVelocity*6. :contentReference[oaicite:7]{index=7}
+
+    // HOMING_MOTORS (volta M2/M3 para home + 200ms)
+    ELSIF FIND(sStatus, 'Returning M2 and M3 to home') = 1 THEN
+        rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[1] - GVL_Motion.M2Motor.rActualPos);
+        rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[1] - GVL_Motion.M3Motor.rActualPos);
+        rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
+        rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
+        rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
+        tPT := F_sec_to_time(rSecs);
+        // sStatus + targets de home. :contentReference[oaicite:8]{index=8}
+
+    // AIR_DRY_TIME (usa o PT real configurado)
+    ELSIF (eStep = E_CalibStep.AIR_DRY_TIME) THEN
+        tPT := UINT_TO_TIME(GVL_Settings.stCalibParameters.iAirDryTimeSec * 1000);
+        // PT vem do setting e é aplicado ao tonAirDry. :contentReference[oaicite:9]{index=9}
+
+    // Espera real de estabilização de peso (usa TON real)
+    ELSIF FIND(sStatus, 'Waiting for weight stabilization') = 1 THEN
+        tPT := tonWeigthStabilization.PT;
+    END_IF
+
+    // (re)arma o TON e atualiza HMI
+    GVL_HMI.sCalibProgressLabel := sStatus;
+    IF tPT > T#0MS THEN
+        tonProgress(IN := FALSE);             // zera ET
+        tonProgress(IN := TRUE, PT := tPT);   // arma
+        GVL_HMI.bCalibStepLoading := TRUE;
+        GVL_HMI.rCalibStepPercent := 0.0;
+    ELSE
+        GVL_HMI.bCalibStepLoading := FALSE;
+        GVL_HMI.rCalibStepPercent := 0.0;
+        tonProgress(IN := FALSE);
+    END_IF
+END_IF
+
+// --- 2) Atualiza percentual enquanto carrega ---
+IF GVL_HMI.bCalibStepLoading AND (tPT > T#0MS) THEN
+    GVL_HMI.rCalibStepPercent := LIMIT(0.0, 100.0 * TO_REAL(tonProgress.ET) / TO_REAL(tPT), 100.0);
+    IF tonProgress.Q THEN
+        GVL_HMI.rCalibStepPercent := 100.0; // trava em 100% até o próximo sStatus
+        // Se preferir ocultar a barra ao final do tempo estimado:
+        // bCalibStepLoading := FALSE;
+        // tonProgress(IN := FALSE);
+    END_IF
+END_IF
+
+// --- 3) Memoriza para borda ---
+sPrev := sStatus;]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="Reset" Id="{c7d0a07f-1407-4f39-a43b-1c9fdbfdf587}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
@@ -882,7 +1053,7 @@ END_FOR
 // 4) Reset indexes and temporaries
 iPumpIndex    := 1;
 iReplicate    := 0;
-GVL_Calibration.iResultIndex  := 1;
+iResultIndex  := 1;
 iNumberOfAdjusts := 0;
 
 rWeightBefore 	 := 0.0;
@@ -934,204 +1105,70 @@ Reset := TRUE;]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_CalibrationManager">
-      <LineId Id="2779" Count="23" />
-      <LineId Id="4086" Count="0" />
-      <LineId Id="2803" Count="0" />
-      <LineId Id="4195" Count="4" />
-      <LineId Id="3865" Count="0" />
-      <LineId Id="3824" Count="0" />
-      <LineId Id="2804" Count="88" />
-      <LineId Id="4203" Count="0" />
-      <LineId Id="4210" Count="0" />
-      <LineId Id="4204" Count="3" />
-      <LineId Id="4202" Count="0" />
-      <LineId Id="4208" Count="0" />
-      <LineId Id="4200" Count="1" />
-      <LineId Id="4209" Count="0" />
-      <LineId Id="2893" Count="12" />
-      <LineId Id="3414" Count="0" />
-      <LineId Id="2910" Count="1" />
-      <LineId Id="3415" Count="1" />
-      <LineId Id="3418" Count="0" />
-      <LineId Id="3417" Count="0" />
-      <LineId Id="2912" Count="2" />
-      <LineId Id="3413" Count="0" />
-      <LineId Id="3412" Count="0" />
-      <LineId Id="3419" Count="0" />
-      <LineId Id="3411" Count="0" />
-      <LineId Id="2915" Count="15" />
-      <LineId Id="2932" Count="3" />
-      <LineId Id="4247" Count="0" />
-      <LineId Id="2937" Count="0" />
-      <LineId Id="3713" Count="1" />
-      <LineId Id="3716" Count="1" />
-      <LineId Id="3715" Count="0" />
-      <LineId Id="4184" Count="0" />
-      <LineId Id="4186" Count="0" />
-      <LineId Id="4248" Count="0" />
-      <LineId Id="4250" Count="2" />
-      <LineId Id="4249" Count="0" />
-      <LineId Id="4185" Count="0" />
-      <LineId Id="2938" Count="14" />
-      <LineId Id="4253" Count="0" />
-      <LineId Id="2953" Count="14" />
-      <LineId Id="4211" Count="0" />
-      <LineId Id="4256" Count="2" />
-      <LineId Id="4254" Count="1" />
-      <LineId Id="2968" Count="18" />
-      <LineId Id="2989" Count="0" />
-      <LineId Id="2991" Count="8" />
-      <LineId Id="3002" Count="0" />
-      <LineId Id="3004" Count="2" />
-      <LineId Id="4259" Count="0" />
-      <LineId Id="3007" Count="8" />
-      <LineId Id="3610" Count="0" />
-      <LineId Id="4216" Count="0" />
-      <LineId Id="4220" Count="0" />
-      <LineId Id="4218" Count="1" />
-      <LineId Id="3017" Count="0" />
-      <LineId Id="4217" Count="0" />
-      <LineId Id="3018" Count="2" />
-      <LineId Id="3516" Count="0" />
-      <LineId Id="3021" Count="0" />
-      <LineId Id="3517" Count="0" />
-      <LineId Id="3023" Count="0" />
-      <LineId Id="4139" Count="0" />
-      <LineId Id="3024" Count="8" />
-      <LineId Id="4274" Count="0" />
-      <LineId Id="3034" Count="4" />
-      <LineId Id="4221" Count="0" />
-      <LineId Id="3039" Count="12" />
-      <LineId Id="4278" Count="2" />
-      <LineId Id="4222" Count="1" />
-      <LineId Id="3052" Count="17" />
-      <LineId Id="3072" Count="2" />
-      <LineId Id="3076" Count="1" />
-      <LineId Id="3079" Count="0" />
-      <LineId Id="3081" Count="3" />
-      <LineId Id="3855" Count="0" />
-      <LineId Id="3085" Count="0" />
-      <LineId Id="4128" Count="1" />
-      <LineId Id="3857" Count="0" />
-      <LineId Id="4130" Count="1" />
-      <LineId Id="3086" Count="43" />
-      <LineId Id="4166" Count="0" />
-      <LineId Id="3133" Count="1" />
-      <LineId Id="3818" Count="0" />
-      <LineId Id="3147" Count="4" />
-      <LineId Id="4373" Count="0" />
-      <LineId Id="3152" Count="1" />
-      <LineId Id="4082" Count="0" />
-      <LineId Id="3155" Count="0" />
-      <LineId Id="3858" Count="0" />
-      <LineId Id="4133" Count="0" />
-      <LineId Id="4124" Count="0" />
-      <LineId Id="4122" Count="0" />
-      <LineId Id="4132" Count="0" />
-      <LineId Id="4263" Count="0" />
-      <LineId Id="4265" Count="0" />
-      <LineId Id="4261" Count="1" />
-      <LineId Id="4260" Count="0" />
-      <LineId Id="4123" Count="0" />
-      <LineId Id="3834" Count="0" />
-      <LineId Id="4090" Count="0" />
-      <LineId Id="4087" Count="0" />
-      <LineId Id="4092" Count="2" />
-      <LineId Id="4088" Count="0" />
-      <LineId Id="4095" Count="1" />
-      <LineId Id="4089" Count="0" />
-      <LineId Id="3838" Count="1" />
-      <LineId Id="4264" Count="0" />
-      <LineId Id="3840" Count="0" />
-      <LineId Id="3833" Count="0" />
-      <LineId Id="3157" Count="2" />
-      <LineId Id="3826" Count="0" />
-      <LineId Id="3160" Count="1" />
-      <LineId Id="3828" Count="1" />
-      <LineId Id="4592" Count="3" />
-      <LineId Id="3877" Count="0" />
-      <LineId Id="4138" Count="0" />
-      <LineId Id="4142" Count="2" />
-      <LineId Id="4137" Count="0" />
-      <LineId Id="3843" Count="0" />
-      <LineId Id="3992" Count="0" />
-      <LineId Id="3994" Count="0" />
-      <LineId Id="3993" Count="0" />
-      <LineId Id="3848" Count="0" />
-      <LineId Id="3990" Count="1" />
-      <LineId Id="3888" Count="0" />
-      <LineId Id="3891" Count="3" />
-      <LineId Id="3882" Count="3" />
-      <LineId Id="3895" Count="1" />
-      <LineId Id="3899" Count="0" />
-      <LineId Id="3897" Count="0" />
-      <LineId Id="3900" Count="0" />
-      <LineId Id="3898" Count="0" />
-      <LineId Id="3901" Count="1" />
-      <LineId Id="3889" Count="0" />
-      <LineId Id="3869" Count="0" />
-      <LineId Id="4487" Count="7" />
-      <LineId Id="4486" Count="0" />
-      <LineId Id="4495" Count="0" />
-      <LineId Id="4481" Count="0" />
-      <LineId Id="4470" Count="0" />
-      <LineId Id="3846" Count="0" />
-      <LineId Id="4469" Count="0" />
-      <LineId Id="3830" Count="0" />
-      <LineId Id="3162" Count="0" />
-      <LineId Id="4140" Count="1" />
-      <LineId Id="4153" Count="1" />
-      <LineId Id="4150" Count="0" />
-      <LineId Id="4100" Count="0" />
-      <LineId Id="4107" Count="0" />
-      <LineId Id="4102" Count="0" />
-      <LineId Id="4109" Count="0" />
-      <LineId Id="4111" Count="0" />
-      <LineId Id="4116" Count="0" />
-      <LineId Id="4155" Count="4" />
-      <LineId Id="4112" Count="0" />
-      <LineId Id="4114" Count="0" />
-      <LineId Id="4110" Count="0" />
-      <LineId Id="4106" Count="0" />
-      <LineId Id="3163" Count="1" />
-      <LineId Id="3629" Count="0" />
-      <LineId Id="3166" Count="0" />
-      <LineId Id="4234" Count="0" />
-      <LineId Id="4236" Count="2" />
-      <LineId Id="4235" Count="0" />
-      <LineId Id="3167" Count="13" />
-      <LineId Id="4239" Count="0" />
-      <LineId Id="3181" Count="5" />
-      <LineId Id="4497" Count="0" />
-      <LineId Id="4118" Count="0" />
-      <LineId Id="3189" Count="2" />
-      <LineId Id="3724" Count="0" />
-      <LineId Id="4240" Count="0" />
-      <LineId Id="4242" Count="2" />
-      <LineId Id="4241" Count="0" />
-      <LineId Id="3719" Count="0" />
-      <LineId Id="3729" Count="3" />
-      <LineId Id="3727" Count="1" />
-      <LineId Id="3193" Count="10" />
-      <LineId Id="4245" Count="0" />
-      <LineId Id="3204" Count="2" />
-      <LineId Id="4498" Count="0" />
-      <LineId Id="3207" Count="1" />
-      <LineId Id="4183" Count="0" />
-      <LineId Id="3209" Count="1" />
-      <LineId Id="4182" Count="0" />
-      <LineId Id="4177" Count="4" />
-      <LineId Id="3861" Count="0" />
-      <LineId Id="3211" Count="24" />
-      <LineId Id="3422" Count="6" />
-      <LineId Id="3421" Count="0" />
-      <LineId Id="3242" Count="1" />
-      <LineId Id="3431" Count="2" />
-      <LineId Id="3430" Count="0" />
-      <LineId Id="3244" Count="76" />
-      <LineId Id="3524" Count="0" />
-      <LineId Id="3321" Count="7" />
+      <LineId Id="4468" Count="21" />
+      <LineId Id="4501" Count="145" />
+      <LineId Id="5184" Count="0" />
+      <LineId Id="4647" Count="271" />
+      <LineId Id="5438" Count="0" />
+      <LineId Id="5440" Count="0" />
+      <LineId Id="5442" Count="0" />
+      <LineId Id="5441" Count="0" />
+      <LineId Id="5447" Count="0" />
+      <LineId Id="4919" Count="44" />
+      <LineId Id="5443" Count="1" />
+      <LineId Id="4964" Count="50" />
+      <LineId Id="5445" Count="0" />
+      <LineId Id="5015" Count="31" />
+      <LineId Id="5446" Count="0" />
+      <LineId Id="5047" Count="42" />
+      <LineId Id="5325" Count="1" />
+      <LineId Id="5328" Count="1" />
+      <LineId Id="5327" Count="0" />
+      <LineId Id="5091" Count="1" />
+      <LineId Id="5277" Count="1" />
+      <LineId Id="5301" Count="0" />
+      <LineId Id="5279" Count="0" />
+      <LineId Id="5285" Count="1" />
+      <LineId Id="5292" Count="0" />
+      <LineId Id="5294" Count="2" />
+      <LineId Id="5293" Count="0" />
+      <LineId Id="5289" Count="1" />
+      <LineId Id="5298" Count="0" />
+      <LineId Id="5300" Count="0" />
+      <LineId Id="5287" Count="0" />
+      <LineId Id="5312" Count="0" />
+      <LineId Id="5317" Count="0" />
+      <LineId Id="5313" Count="0" />
+      <LineId Id="5302" Count="0" />
+      <LineId Id="5314" Count="0" />
+      <LineId Id="5307" Count="1" />
+      <LineId Id="5281" Count="0" />
+      <LineId Id="5316" Count="0" />
+      <LineId Id="5322" Count="0" />
+      <LineId Id="5318" Count="0" />
+      <LineId Id="5320" Count="0" />
+      <LineId Id="5323" Count="1" />
+      <LineId Id="5321" Count="0" />
+      <LineId Id="5319" Count="0" />
+      <LineId Id="5280" Count="0" />
+      <LineId Id="5093" Count="90" />
       <LineId Id="9" Count="0" />
+      <LineId Id="5557" Count="0" />
+      <LineId Id="5556" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CalibrationManager.ACT_CleanStart">
+      <LineId Id="2" Count="10" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="22" Count="2" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CalibrationManager.ACT_ProgressUI_Real">
+      <LineId Id="2" Count="69" />
+      <LineId Id="73" Count="27" />
+      <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
       <LineId Id="189" Count="3" />

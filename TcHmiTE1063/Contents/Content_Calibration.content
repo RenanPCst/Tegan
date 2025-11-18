@@ -286,7 +286,7 @@
     "actions": [
       {
         "objectType": "WriteToSymbol",
-        "active": true,
+        "active": false,
         "symbolExpression": "%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%",
         "value": {
           "objectType": "StaticValue",
@@ -294,6 +294,61 @@
           "value": true
         },
         "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// =========================",
+          "// Botão: Pressurize System",
+          "// =========================",
+          "const SEAL_POS_TOLERANCE = 0.5; // ajuste conforme sua unidade",
+          "",
+          "(async () => {",
+          "    const isOk = (data) => data && (data.error === TcHmi.Errors.NONE || data.error === 0);",
+          "",
+          "    const readSymbol = (symbol) => new Promise((resolve, reject) => {",
+          "        TcHmi.Symbol.readEx2(symbol, (data) => {",
+          "            if (isOk(data)) resolve(data.value);",
+          "            else reject(data);",
+          "        });",
+          "    });",
+          "",
+          "    const writeSymbol = (symbol, value) => new Promise((resolve, reject) => {",
+          "        TcHmi.Symbol.writeEx(symbol, value, (data) => {",
+          "            if (isOk(data)) resolve(true);",
+          "            else reject(data);",
+          "        });",
+          "    });",
+          "",
+          "    try {",
+          "        const m1ActualPos = Number(await readSymbol('%s%PLC1.GVL_Motion.M1Motor.rActualPos%/s%'));",
+          "        const m1SealPos   = Number(await readSymbol('%s%PLC1.GVL_Settings.stMachineParam.aM1Position[1]%/s%'));",
+          "        const delta       = Math.abs(m1ActualPos - m1SealPos);",
+          "",
+          "        console.log(`[Pressurize] actual=${m1ActualPos}, seal=${m1SealPos}, delta=${delta}`);",
+          "",
+          "        if (delta > SEAL_POS_TOLERANCE) {",
+          "            alert('M1 is not in Seal Position. Move the axis to SEAL and try again.');",
+          "            return;",
+          "        }",
+          "",
+          "        // Pulso TRUE -> FALSE para borda no PLC",
+          "        await writeSymbol('%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%', true);",
+          "        setTimeout(() => {",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%', false, () => {});",
+          "        }, 80);",
+          "",
+          "        console.log('Pressurize: pulse sent (TRUE → FALSE).');",
+          "    } catch (err) {",
+          "        console.error('Error running Pressurize System:', err);",
+          "        alert('Error communicating with the PLC (Pressurize). Check the symbols and the connection.');",
+          "    }",
+          "})();"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
@@ -309,7 +364,7 @@
     "actions": [
       {
         "objectType": "WriteToSymbol",
-        "active": true,
+        "active": false,
         "symbolExpression": "%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%",
         "value": {
           "objectType": "StaticValue",
@@ -317,6 +372,58 @@
           "value": true
         },
         "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// =========================",
+          "// Hold System Pressure Button",
+          "// =========================",
+          "const MIN_PRESSURE_THRESHOLD = 0.1; // 0.1 tolerance (psi/kPa)",
+          "",
+          "(async () => {",
+          "    const isOk = (data) => data && (data.error === TcHmi.Errors.NONE || data.error === 0);",
+          "",
+          "    const readSymbol = (symbol) => new Promise((resolve, reject) => {",
+          "        TcHmi.Symbol.readEx2(symbol, (data) => {",
+          "            if (isOk(data)) resolve(data.value);",
+          "            else reject(data);",
+          "        });",
+          "    });",
+          "",
+          "    const writeSymbol = (symbol, value) => new Promise((resolve, reject) => {",
+          "        TcHmi.Symbol.writeEx(symbol, value, (data) => {",
+          "            if (isOk(data)) resolve(true);",
+          "            else reject(data);",
+          "        });",
+          "    });",
+          "",
+          "    try {",
+          "        const pressure = Number(await readSymbol('%s%PLC1.GVL_HMI.rCalLeakTestPressure%/s%'));",
+          "        console.log(`[Hold] pressure=${pressure}`);",
+          "",
+          "        if (pressure <= MIN_PRESSURE_THRESHOLD) {",
+          "            alert('There is no pressure in the system. Pressurize before holding the pressure.');",
+          "            return;",
+          "        }",
+          "",
+          "        await writeSymbol('%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%', true);",
+          "        setTimeout(() => {",
+          "            TcHmi.Symbol.writeEx('%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%', false, () => {});",
+          "        }, 80);",
+          "",
+          "        console.log('Hold: pulse Sent (TRUE → FALSE).');",
+          "    } catch (err) {",
+          "        console.error('Error executing Hold System Pressure:', err);",
+          "        alert('Error communicating with the PLC (Hold). Check the symbols and the connection.');",
+          "    }",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
@@ -1288,7 +1395,7 @@ Revolutions" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="90" 
 <div id="TcHmiTextblock_230" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="385" data-tchmi-left-unit="px" data-tchmi-text="Status" data-tchmi-top="802" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-size="18" data-tchmi-text-font-weight="Bold" data-tchmi-zindex="1">
 
 </div>
-<div id="TcHmiRectangle_47" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="509" data-tchmi-left-unit="px" data-tchmi-top="849" data-tchmi-top-unit="px" data-tchmi-width="525" data-tchmi-width-unit="px" data-tchmi-zindex="1">
+<div id="TcHmiRectangle_47" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="509" data-tchmi-left-unit="px" data-tchmi-top="849" data-tchmi-top-unit="px" data-tchmi-width="525" data-tchmi-width-unit="px" data-tchmi-zindex="59">
 
 <script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
 {
@@ -8715,6 +8822,82 @@ Weight (g)" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="80" d
         "injectContextObject": false,
         "asyncWait": true,
         "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiRectangle_CalibrationLoadBar" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="509" data-tchmi-left-unit="px" data-tchmi-top="849" data-tchmi-top-unit="px" data-tchmi-width="%f%%s%PLC1.GVL_HMI.rCalibStepPercent%/s%*5.25%/f%" data-tchmi-width-unit="px" data-tchmi-zindex="58">
+
+<script data-tchmi-target-attribute="data-tchmi-fill-color" type="application/json">
+{
+  "color": "rgba(12, 187, 5, 1)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-stroke-color" type="application/json">
+{
+  "color": "rgba(12, 187, 5, 0)"
+}
+</script>
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "%s%PLC1.GVL_HMI.bCalibStepLoading%/s%",
+    "actions": [
+      {
+        "objectType": "SwitchCase",
+        "active": true,
+        "compare": {
+          "objectType": "Symbol",
+          "valueType": "tchmi:general#/definitions/BOOL",
+          "symbolExpression": "%s%PLC1.GVL_HMI.bCalibStepLoading%/s%"
+        },
+        "cases": [
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/BOOL",
+              "value": false
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRectangle_CalibrationLoadBar::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Hidden"
+                },
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "caseValue": {
+              "objectType": "StaticValue",
+              "valueType": "tchmi:general#/definitions/BOOL",
+              "value": true
+            },
+            "actions": [
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiRectangle_CalibrationLoadBar::Visibility%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/Visibility",
+                  "value": "Visible"
+                },
+                "asyncWait": true
+              }
+            ]
+          }
+        ],
+        "asyncWait": true
       }
     ]
   }

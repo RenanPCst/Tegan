@@ -13,6 +13,7 @@ VAR_GLOBAL
     tDelayStart         : TIME;
     bPrintWhenComplete  : BOOL;
     sGlobalStatus       : STRING[100];
+	iPercentLoadBar     : UINT;
 	iReplicatesSetpoint : UINT := 1; 
 	rAcceptanceCriteria	: LREAL;
 	iAllowableFailures	: UINT := 2;
@@ -20,6 +21,7 @@ VAR_GLOBAL
 	iResultIndex	 	: INT;		 	// Array index on calibration results
 	
 	aCalibLinearPumps	: ARRAY[1..10] OF ST_LinearPumpCalibration;
+	eLeakTestState 		: E_LeakTestState	:= E_LeakTestState.IDLE;
 	
 	//aCalibCheckResult	: ARRAY[1..100] OF ST_CalibrationPumpResult;
 	
@@ -27,7 +29,9 @@ VAR_GLOBAL
 	//																													 	|
 	stPumpCalReportInfo 	: ST_ReportInfo;	  	//																	  	|
 	stPumpCalibrationInfo 	: ST_CalibrationInfo;	//																		|
-	stPumpCalibrationData 	: ARRAY[1..100] OF ST_CalibrationData;	//														|
+	stPumpCalibrationData 	: ARRAY[1..100] OF ST_CalibrationData;	//
+	//																	
+	stLinearCalibrationData : ARRAY[1..10] OF ST_LinearPumpControllDB; // Linear Calibration changing position data from HMI
 	//																														|		
 	bStartCreationCalJson	: BOOL; // Flag to start the Json creation														|
 	bCreationCalJsonDone	: BOOL; // Flag to indicate Json was created Correctly											|

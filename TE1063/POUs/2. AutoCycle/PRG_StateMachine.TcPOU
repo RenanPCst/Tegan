@@ -38,6 +38,7 @@ VAR
 	
 	//Seal Stages Instance
 	fbSealStages 		: FB_SealStages;	//FB instance
+		fbMeteringSolvent1 	: FB_MeteringSolvent1;
 		bSealStages		: BOOL := FALSE;
 		bSealSuccess	: BOOL := FALSE; 	//seal sucess flag FB_SealStages
 		bSealError		: BOOL := FALSE; 	//seal error flag FB_SealStages
@@ -170,18 +171,24 @@ CASE CurrentState OF
 			END_IF
 			
 			fbSealStages( bExecute := bSealStages );
+			
+			IF GVL_Settings.bGeneralSealAndPump THEN
+				fbMeteringSolvent1(bExecute := TRUE);
+			END_IF
 				
 			//error check
-			IF fbSealStages.bSealError THEN
+			IF fbSealStages.bSealError OR fbMeteringSolvent1.bError THEN
 				//error dealing logic
 				CurrentState := E_MachineStates.ERROR_STATE;
-			END_IF;
+			END_IF
 	
 			//step forward to step ahead
-			IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
-				CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:
-				
-			END_IF;
+			IF fbSealStages.bSealSuccess AND fbMeteringSolvent1.bDone AND NOT fbSealStages.bSealError AND NOT fbMeteringSolvent1.bError THEN
+				GVL_Settings.bMeteringSolvent1Done := TRUE;
+ 				IF fbMeteringSolvent1.Reset() THEN
+					CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:				
+				END_IF
+			END_IF
 	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
 	IF bStatePass1 THEN
@@ -190,6 +197,7 @@ CASE CurrentState OF
             bExecute 			:= TRUE,
             eSolenoidPosition 	:= E_SolenoidSet.LEAKTEST, // Set solenoids to leak test position
             tMonitorTime 		:= GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime, // Configurable monitoring time
+			tPressureUpTime 	:= GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime, // Configurable Build Up Pressure time
             bLeakTestDone 		=> bTestCompleted,
             bLeakTestError 		=> bTestFailed,
             sLTMessageError 	=> sTestErrorMessage
@@ -312,8 +320,9 @@ bExecuteEvent := FALSE;
 bEventDone := FALSE;
 
 // FB's Reset
-IF fbSealStages.Reset() AND fbRecoveryPhase.Reset() AND fbLeakTest.Reset() THEN
+IF fbSealStages.Reset() AND fbRecoveryPhase.Reset() AND fbLeakTest.Reset() AND fbMeteringSolvent1.Reset() THEN
 	Reset := TRUE;
+	RETURN;
 ELSE
 	Reset := FALSE;
 END_IF
@@ -339,10 +348,15 @@ END_IF;]]></ST>
       <LineId Id="1902" Count="44" />
       <LineId Id="1948" Count="0" />
       <LineId Id="1961" Count="0" />
-      <LineId Id="1963" Count="8" />
-      <LineId Id="2002" Count="8" />
-      <LineId Id="2213" Count="0" />
-      <LineId Id="2011" Count="27" />
+      <LineId Id="1963" Count="7" />
+      <LineId Id="2382" Count="4" />
+      <LineId Id="2002" Count="7" />
+      <LineId Id="2388" Count="1" />
+      <LineId Id="2392" Count="0" />
+      <LineId Id="2391" Count="0" />
+      <LineId Id="2011" Count="8" />
+      <LineId Id="2461" Count="0" />
+      <LineId Id="2020" Count="18" />
       <LineId Id="2044" Count="7" />
       <LineId Id="2053" Count="2" />
       <LineId Id="2151" Count="0" />
@@ -363,7 +377,9 @@ END_IF;]]></ST>
       <LineId Id="82" Count="3" />
       <LineId Id="88" Count="4" />
       <LineId Id="86" Count="0" />
-      <LineId Id="57" Count="21" />
+      <LineId Id="57" Count="19" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="77" Count="1" />
       <LineId Id="19" Count="0" />
       <LineId Id="21" Count="0" />
       <LineId Id="20" Count="0" />
