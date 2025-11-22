@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_AirFlowCheck" Id="{a48de8b8-7051-4c87-a9e3-464f1e624d2c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_AirFlowCheck
 VAR_INPUT
@@ -17,16 +17,20 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-    iState              : INT := 0;  // State machine variable
-    TON_Stabilization   : TON;       // Stabilization timer
-    fbSensorScaling     : FB_SensorScaling; // Sensor scaling function block
-    rConvertedPressure  : REAL;      // Scaled pressure value
-    bTimerActive        : BOOL;      // Internal flag to keep the timer running
+    iState               : INT := 0;  // State machine variable
+    TON_Stabilization    : TON;       // Stabilization timer
+    fbSensorScaling      : FB_SensorScaling; // Sensor scaling function block
+    rConvertedPressure   : REAL;      // Scaled pressure value
+    bTimerActive         : BOOL;      // Internal flag to keep the timer running
+	bProgressBarComplete : BOOL := FALSE;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE iState OF
-    // State 0: Reset all variables
-    0:
+      <ST><![CDATA[// HMI Progress Bar Animation
+ACT_HMIProgressBar();
+
+CASE iState OF
+   
+    0: // State 0: Reset all variables
         bAirFlowOK     := FALSE;
         bAirFlowError  := FALSE;
         TON_Stabilization(IN := FALSE);
@@ -36,9 +40,7 @@ END_VAR]]></Declaration>
 			iState := 1; // Proceed to airflow verification
 		END_IF
         
-
-    // State 1: Start verification
-    1:
+    1: // State 1: Start verification
         IF bReset THEN
             iState := 0; // Ensure reset if requested
         ELSIF bExecute THEN
@@ -52,8 +54,7 @@ END_VAR]]></Declaration>
             iState := 2; // Proceed to pressure check
         END_IF;
 
-    // State 2: Check if airflow meets the threshold
-    2:
+    2: // State 2: Check if airflow meets the threshold
         IF bReset THEN
             iState := 0; // Ensure reset if requested
         ELSIF rConvertedPressure >= rPressureThreshold THEN
@@ -70,8 +71,7 @@ END_VAR]]></Declaration>
             iState := 99; // Move to error state
         END_IF;
 
-    // State 3: Wait for stabilization time
-    3:
+    3: // State 3: Wait for stabilization time
         IF bReset THEN
             iState := 0; // Ensure reset if requested
         ELSIF TON_Stabilization.Q THEN
@@ -81,22 +81,19 @@ END_VAR]]></Declaration>
             bAirFlowOK     := TRUE;
             bAirFlowError  := FALSE;
 			
-			//Provide HMI animation details
-			GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Completed;
+			bProgressBarComplete := FALSE;
             
             iState := 4; // Proceed to final state
         ELSE
             TON_Stabilization(IN := bTimerActive, PT := tStabilizationTime); // Keep the timer running
         END_IF;
 
-    // State 4: Airflow verification completed
-    4:
+    4: // State 4: Airflow verification completed
         IF bReset THEN
             iState := 0; // Ensure reset from final state
         END_IF;
 
-    // State 99: Error state
-    99:
+    99:	// State 99: Error state
         IF bReset THEN
             iState := 0; // Ensure reset from error state
         ELSE
@@ -105,15 +102,102 @@ END_VAR]]></Declaration>
 
 END_CASE;]]></ST>
     </Implementation>
+    <Action Name="ACT_HMIProgressBar" Id="{dfe2b571-d80f-4ac9-b57c-018f58b38b5d}">
+      <Implementation>
+        <ST><![CDATA[// ------------------------------------------------------
+// HMI animation and progress bar for Init Sequence
+// ------------------------------------------------------
+
+// Static text and default icon for this FB
+IF NOT bProgressBarComplete THEN
+	GVL_HMI.HMIAnimation.sLoadTextAirFlow := 'Init Checks';
+	GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.InProgress;
+END_IF
+
+// Map state machine to a simple 0–100% progress value
+CASE iState OF
+    0:  // Idle / reset
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow := 0.0;
+
+    1:  // State 1: Start verification
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow := 25.0;
+
+    2:  // State 2: Check if airflow meets the threshold
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow := 50.0;
+
+    3:  // State 3: Wait for stabilization time
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow := 75.0;
+
+    4:  // State 4: Airflow verification completed
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow := 100.0;
+        // Mark icon as completed when initialization is OK
+        GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Completed;
+		bProgressBarComplete := TRUE;
+
+    99: // State 99: Error state
+        GVL_HMI.HMIAnimation.rLoadBarHardware := 0.0;
+END_CASE;]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="Reset" Id="{30baa270-ea8d-4f12-9a2e-2e8589f294cb}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Reset := FALSE;
+
+bAirFlowOK      := FALSE;
+bAirFlowError   := FALSE;
+
+iState          := 0;  
+
+rConvertedPressure   := 0.0;      
+bTimerActive         := FALSE;      
+bProgressBarComplete := FALSE;
+
+TON_Stabilization(IN := FALSE);
+
+GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Waiting;
+
+Reset := TRUE;
+RETURN;]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="FB_AirFlowCheck">
+      <LineId Id="435" Count="0" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="434" Count="0" />
       <LineId Id="279" Count="8" />
-      <LineId Id="373" Count="1" />
-      <LineId Id="288" Count="44" />
-      <LineId Id="396" Count="0" />
-      <LineId Id="398" Count="0" />
-      <LineId Id="397" Count="0" />
-      <LineId Id="333" Count="19" />
+      <LineId Id="420" Count="0" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="291" Count="12" />
+      <LineId Id="305" Count="16" />
+      <LineId Id="323" Count="9" />
+      <LineId Id="396" Count="1" />
+      <LineId Id="333" Count="4" />
+      <LineId Id="339" Count="4" />
+      <LineId Id="345" Count="7" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AirFlowCheck.ACT_HMIProgressBar">
+      <LineId Id="2" Count="22" />
+      <LineId Id="28" Count="8" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AirFlowCheck.Reset">
+      <LineId Id="19" Count="0" />
+      <LineId Id="6" Count="2" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="14" Count="2" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="17" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

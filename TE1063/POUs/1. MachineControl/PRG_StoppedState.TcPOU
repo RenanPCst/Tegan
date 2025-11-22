@@ -28,12 +28,18 @@ VAR
 	aResetValves		: ARRAY[1..5] OF BOOL;
 	aResetLinearPumps	: ARRAY[1..10] OF BOOL;
 	aResetRotaryPumps	: ARRAY[1..10] OF BOOL;
+	
+	bAllMotorsReset		: BOOL := FALSE;
+	bAllMotorsStop		: BOOL := FALSE;
+	bAutoCycleReset		: BOOL := FALSE;
+	bCalibrationReset	: BOOL := FALSE;
+	bAllResetsDone		: BOOL := FALSE;
 
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Start Button Blink ------------------------------------------------
-IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone THEN 
+IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone THEN 
 	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
 ELSE
 	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
@@ -42,16 +48,32 @@ END_IF
 GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
 
 //Action to check if is there any motors with erros and reset them  
-ACT_ResetErrorMotors();
+IF bAllMotorsStop THEN
+	ACT_ResetErrorMotors();
+END_IF
 
 //Action to stop all motors 
 ACT_StopAllMotors();
 
+IF bStopAllMotorsDone THEN
+	bAllMotorsStop := TRUE;
+END_IF
+
 //State Machine Reset
-PRG_StateMachine.Reset();
+IF NOT bAutoCycleReset THEN
+	bAutoCycleReset := PRG_StateMachine.Reset();
+END_IF
 
 //Calibration PRG Reset
-PRG_Calibration.Reset();
+IF NOT bCalibrationReset THEN
+	bCalibrationReset := PRG_Calibration.Reset();
+END_IF
+
+bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset;
+
+
+
+
 
 
 
@@ -247,8 +269,14 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Reset Flags
-bStopAllMotorsRequest := FALSE;
-bStopAllMotorsDone := FALSE;
+bStopAllMotorsRequest 	:= FALSE;
+bStopAllMotorsDone 		:= FALSE;
+
+bAllMotorsReset		 	:= FALSE;
+bAllMotorsStop			:= FALSE;
+bAutoCycleReset			:= FALSE;
+bCalibrationReset		:= FALSE;
+bAllResetsDone			:= FALSE;
 
 //Motors Reset flags
 FOR i := 1 TO 3 DO
@@ -282,12 +310,24 @@ END_IF]]></ST>
       <LineId Id="25" Count="0" />
       <LineId Id="106" Count="0" />
       <LineId Id="131" Count="0" />
-      <LineId Id="130" Count="0" />
+      <LineId Id="201" Count="2" />
       <LineId Id="76" Count="0" />
       <LineId Id="26" Count="0" />
+      <LineId Id="215" Count="1" />
       <LineId Id="75" Count="0" />
+      <LineId Id="199" Count="1" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="211" Count="0" />
       <LineId Id="28" Count="0" />
-      <LineId Id="23" Count="1" />
+      <LineId Id="209" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="24" Count="0" />
       <LineId Id="162" Count="0" />
       <LineId Id="161" Count="0" />
       <LineId Id="163" Count="0" />
@@ -379,6 +419,8 @@ END_IF]]></ST>
     <LineIds Name="PRG_StoppedState.Reset">
       <LineId Id="14" Count="0" />
       <LineId Id="5" Count="1" />
+      <LineId Id="58" Count="4" />
+      <LineId Id="57" Count="0" />
       <LineId Id="40" Count="0" />
       <LineId Id="19" Count="3" />
       <LineId Id="46" Count="1" />

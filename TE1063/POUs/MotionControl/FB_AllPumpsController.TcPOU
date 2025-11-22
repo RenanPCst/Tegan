@@ -327,9 +327,81 @@ END_VAR
       <Declaration><![CDATA[METHOD StopAllPumps : BOOL
 VAR_INPUT
 END_VAR
+VAR
+    i        : INT;
+    bAllDone : BOOL;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bRequestStopAllPumps THEN
+        <ST><![CDATA[// Default output
+StopAllPumps := FALSE;
+
+// ======================================================================
+// 1) First trigger: prepare Stop request for ALL pumps
+// ======================================================================
+IF NOT bRequestStopAllPumps THEN
+    StopAllPumps := FALSE;
+
+    // Cancel any pending movement requests coming from this FB
+    bRequestMoveBySpeed     := FALSE;
+    bRequestMoveByVol       := FALSE;
+    bRequestMoveByDistance  := FALSE;
+    bRequestMoveLinearPumps := FALSE;
+
+    // Clear internal movement arrays (to avoid Move + Stop clash)
+    FOR i := 1 TO 10 DO
+        bMoveVelocityPumps[i] := FALSE;
+        bMoveDistancePumps[i] := FALSE;
+        bMoveRelativePumps[i] := FALSE;
+        bMoveLinearPumps[i]   := FALSE;
+
+        // Set stop request for all rotary pumps
+        bStopRotaryPump[i] := TRUE;
+
+        // If linear pumps also have a stop method, prepare here:
+        // bStopLinearPump[i] := TRUE;
+    END_FOR
+
+    bRequestStopAllPumps := TRUE;
+END_IF
+
+// ======================================================================
+// 2) Execute Stop() for each pump that still requires stopping
+// ======================================================================
+FOR i := 1 TO 10 DO
+    IF bStopRotaryPump[i] THEN
+        // Call the Stop() method of the rotary pump i
+        IF GVL_Motion.aPumpsRotary[i].Stop() THEN
+            // When Stop() returns TRUE once, it means the pump has fully stopped
+            bStopRotaryPump[i] := FALSE;
+        END_IF
+    END_IF
+END_FOR
+
+// ======================================================================
+// 3) Check if ALL pumps have finished their Stop()
+// ======================================================================
+bAllDone := TRUE;
+
+FOR i := 1 TO 10 DO
+    IF bStopRotaryPump[i] THEN
+        bAllDone := FALSE;
+    END_IF
+END_FOR
+
+// ======================================================================
+// 4) If all pumps are done, return TRUE once and reset internal flags
+// ======================================================================
+IF bAllDone THEN
+    bRequestStopAllPumps := FALSE;
+    StopAllPumps := TRUE;   // one pulse when everything is stopped
+ELSE
+    StopAllPumps := FALSE;
+END_IF
+
+
+(* Before Nov21 2025 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+IF NOT bRequestStopAllPumps THEN
 	StopAllPumps := FALSE;
 	bStopRotaryPump[1] := TRUE;
 	bStopRotaryPump[2] := TRUE;
@@ -375,13 +447,14 @@ IF bStopRotaryPump[10] THEN
 	bStopRotaryPump[10] := NOT GVL_Motion.aPumpsRotary[10].Stop();
 END_IF
 
-IF NOT bStopRotaryPump[1] AND NOT bStopRotaryPump[2] AND (*NOT bStopRotaryPump[3] AND*) NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
+IF NOT bStopRotaryPump[1] AND NOT bStopRotaryPump[2] AND NOT bStopRotaryPump[3] AND NOT bStopRotaryPump[4] AND NOT bStopRotaryPump[5] AND NOT bStopRotaryPump[6] AND NOT bStopRotaryPump[7] AND NOT bStopRotaryPump[8] AND NOT bStopRotaryPump[9] AND NOT bStopRotaryPump[10] THEN
 	bRequestStopAllPumps := FALSE;
 	StopAllPumps := TRUE;
 	RETURN;
 ELSE
 	StopAllPumps := FALSE;
-END_IF]]></ST>
+END_IF
+*)]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_AllPumpsController">
@@ -447,7 +520,12 @@ END_IF]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_AllPumpsController.StopAllPumps">
+      <LineId Id="70" Count="42" />
+      <LineId Id="122" Count="10" />
+      <LineId Id="140" Count="9" />
+      <LineId Id="67" Count="2" />
       <LineId Id="35" Count="0" />
+      <LineId Id="65" Count="0" />
       <LineId Id="49" Count="0" />
       <LineId Id="39" Count="8" />
       <LineId Id="37" Count="0" />
@@ -458,6 +536,7 @@ END_IF]]></ST>
       <LineId Id="5" Count="0" />
       <LineId Id="51" Count="6" />
       <LineId Id="50" Count="0" />
+      <LineId Id="66" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

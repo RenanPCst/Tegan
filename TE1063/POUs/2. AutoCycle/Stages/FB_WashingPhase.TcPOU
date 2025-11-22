@@ -24,8 +24,9 @@ VAR
 	bMovePumpDone	: ARRAY[1..10] OF BOOL; // Pumps movement flags
 	fDistance       : ARRAY[1..10] OF REAL; // Distance for pumps movement based on volume
 	
-	fAgitationTime   : REAL := 0; // Recipe Recirculate time
-	fCalcDistance	 : ARRAY[1..10] OF REAL; //Pump distance based on time
+	fAgitationTime   	: REAL := 0; // Recipe Agitation time
+	fRecirculationTime  : REAL := 0; // Recipe Recirculate time
+	fCalcDistance	 	: ARRAY[1..10] OF REAL; //Pump distance based on time
 
 	i : UINT;
 	
@@ -82,7 +83,7 @@ CASE eWashingState OF
         END_IF
 	
 	E_WashingState.Recirculate_Wash1:
-        MeteringWash1(); 
+        RecirculateWash1(); 
         IF bMovementComplete THEN
             eWashingState := E_WashingState.Cleaning_Lines_W1;
 			iStepCounter := 0;
@@ -98,7 +99,7 @@ CASE eWashingState OF
         END_IF
 	
 	E_WashingState.Waste_Wash1:
-        CleaningLinesWash1(); 
+        WasteWash1(); 
         IF bMovementComplete THEN
 			iStepCounter := 0;
             bMovementComplete := FALSE;
@@ -118,7 +119,7 @@ CASE eWashingState OF
         END_IF
 		
 	E_WashingState.Recirculate_Wash2:
-        MeteringWash2(); 
+        RecirculateWash2(); 
         IF bMovementComplete THEN
             eWashingState := E_WashingState.Cleaning_Lines_W2;
 			iStepCounter := 0;
@@ -134,7 +135,7 @@ CASE eWashingState OF
         END_IF
 		
 	E_WashingState.Waste_Wash2:
-        CleaningLinesWash2(); 
+        WasteWash2(); 
         IF bMovementComplete THEN
 			iStepCounter := 0;
             bMovementComplete := FALSE;
@@ -162,7 +163,7 @@ END_CASE
 CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines W1'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Cleaning Lines W1'; 
 		iStepCounter := 1;
 		
 		FOR i := 1 TO 5 DO
@@ -189,9 +190,9 @@ CASE iStepCounter OF
 
     2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 1
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
 		END_FOR
 		
 		IF fAgitationTime > 0 THEN
@@ -206,9 +207,9 @@ CASE iStepCounter OF
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -233,7 +234,7 @@ END_CASE
 CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines W2'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Cleaning Lines W2'; 
 		iStepCounter := 1;
 		
 		FOR i := 1 TO 5 DO
@@ -260,9 +261,9 @@ CASE iStepCounter OF
 
     2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 2
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
 		END_FOR
 		
 		IF fAgitationTime > 0 THEN
@@ -277,9 +278,9 @@ CASE iStepCounter OF
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -312,8 +313,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// --- Valve movements ---
-// Estimated 0.8s per group of 5 valves per change (6 changes)
-rTotalTime := rTotalTime + 0.8 * 6;
+// Estimated 1s per group of 5 valves per change (6 changes)
+rTotalTime := rTotalTime + 1 * 6;
 
 // --- Motor M2 movements --- (used in WasteWash1 and WasteWash2)
 rM2Travel :=  ABS(GVL_Settings.stMachineParam.aM2Position[2] - GVL_Settings.stMachineParam.aM2Position[1]) / GVL_Settings.stMachineParam.rM2Velocity  //Waste Position Move
@@ -404,7 +405,7 @@ EstimateTotalTime := rTotalTime;]]></ST>
 			bMoveValveDone[i] := FALSE;
 		END_FOR
 		
-    1: // Set valves for Rinse 1 position
+    1: // Set valves for Wash 1 position
 	    FOR i := 1 TO 5 DO
 			IF NOT bMoveValveDone[i] THEN
 				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3], //Wash 1 solvent position
@@ -445,9 +446,9 @@ EstimateTotalTime := rTotalTime;]]></ST>
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[3] * 6,
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -517,9 +518,9 @@ END_CASE
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[4] * 6,
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -542,7 +543,7 @@ END_CASE
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Recirculate Wash 1'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Recirculate Wash 1'; 
 		FOR i := 1 TO 5 DO
 			bMoveValveDone[i] := FALSE;
 		END_FOR
@@ -568,9 +569,9 @@ END_CASE
 
     2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 1
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
+		fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[3] * 6);
+			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[3] * 6);
 		END_FOR
 		
 		FOR i := 1 TO 10 DO
@@ -611,7 +612,7 @@ END_CASE
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Recirculate Wash 2'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Recirculate Wash 2'; 
 		FOR i := 1 TO 5 DO
 			bMoveValveDone[i] := FALSE;
 		END_FOR
@@ -637,9 +638,9 @@ END_CASE
 
     2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 1
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[4] * 6);
+			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[4] * 6);
 		END_FOR
 		
 		FOR i := 1 TO 10 DO
@@ -694,7 +695,8 @@ bStart := FALSE;
 bMovementComplete := FALSE;
 
 //Numbers variables
-fAgitationTime    	:= 0;
+fAgitationTime    	:= 0.0;
+fRecirculationTime	:= 0.0;
 FOR i := 1 TO 10 DO
 	fCalcDistance[i] := 0;
 	fDistance[i] := 0;
@@ -732,7 +734,7 @@ END_IF
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Waste Wash 1'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Waste Wash 1'; 
 		
 		FOR i := 1 TO 5 DO
 			bMoveValveDone[i] := FALSE; // reset flags
@@ -796,9 +798,9 @@ END_IF
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 6 
 																			);
 			END_IF
         END_FOR
@@ -837,7 +839,7 @@ END_CASE]]></ST>
         <ST><![CDATA[CASE iStepCounter OF
 	
 	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Waste Wash 2'; 
+		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Waste Wash 2'; 
 		
 		FOR i := 1 TO 5 DO
 			bMoveValveDone[i] := FALSE; // reset flags
@@ -901,9 +903,9 @@ END_CASE]]></ST>
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 6 
 																			);
 			END_IF
         END_FOR
@@ -997,7 +999,9 @@ END_CASE]]></ST>
       <LineId Id="62" Count="0" />
       <LineId Id="64" Count="1" />
       <LineId Id="63" Count="0" />
-      <LineId Id="9" Count="25" />
+      <LineId Id="9" Count="20" />
+      <LineId Id="70" Count="2" />
+      <LineId Id="33" Count="1" />
       <LineId Id="36" Count="2" />
       <LineId Id="69" Count="0" />
       <LineId Id="67" Count="1" />
@@ -1006,7 +1010,9 @@ END_CASE]]></ST>
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.CleaningLinesWash2">
-      <LineId Id="2" Count="65" />
+      <LineId Id="2" Count="30" />
+      <LineId Id="68" Count="2" />
+      <LineId Id="36" Count="31" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.EstimateTotalTime">
@@ -1063,7 +1069,10 @@ END_CASE]]></ST>
       <LineId Id="2" Count="3" />
       <LineId Id="61" Count="1" />
       <LineId Id="60" Count="0" />
-      <LineId Id="7" Count="26" />
+      <LineId Id="7" Count="20" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="30" Count="3" />
       <LineId Id="65" Count="1" />
       <LineId Id="64" Count="0" />
       <LineId Id="67" Count="0" />
@@ -1073,7 +1082,9 @@ END_CASE]]></ST>
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.RecirculateWash2">
-      <LineId Id="2" Count="62" />
+      <LineId Id="2" Count="28" />
+      <LineId Id="65" Count="2" />
+      <LineId Id="34" Count="30" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.Reset">
@@ -1083,6 +1094,7 @@ END_CASE]]></ST>
       <LineId Id="14" Count="5" />
       <LineId Id="77" Count="0" />
       <LineId Id="20" Count="4" />
+      <LineId Id="92" Count="0" />
       <LineId Id="26" Count="3" />
       <LineId Id="78" Count="2" />
       <LineId Id="83" Count="0" />

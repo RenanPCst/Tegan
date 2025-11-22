@@ -21,9 +21,11 @@ ELSE
 END_IF
 
 // Mapping bellow doors signals as they are not in safety DI
+(*
 GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= NOT GVL_Safety.bTopDoorsClosedFeedback;
 GVL_IO.gRelayOutputs.bStageCollectionRightLight := NOT GVL_Safety.bTopDoorsClosedFeedback;
+*)
 
 // Vial Rack position check
 IF GVL_IO.gProfinetInput.iCurrentValue > 120000 THEN
@@ -35,9 +37,9 @@ END_IF
 // Valves Settings Assignment
 IF NOT bValvesSettingsAssignment THEN
 	FOR i := 1 TO 5 DO
-		GVL_Motion.aValves[i].rTargetVel := 1500;
-		GVL_Motion.aValves[i].rAcceleration := 1000;
-		GVL_Motion.aValves[i].rDeceleration := 1000;
+		GVL_Motion.aValves[i].rTargetVel := 3000;
+		GVL_Motion.aValves[i].rAcceleration := 2000;
+		GVL_Motion.aValves[i].rDeceleration := 2000;
 	END_FOR
 	bValvesSettingsAssignment := TRUE;
 END_IF
@@ -56,16 +58,16 @@ END_IF
 
 //Pumps line dead Volume pipes/tubing Assignment [ml]
 IF NOT bPumpsDeadVolumeAssignment THEN
-	GVL_Motion.aPumps[1].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[2].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[3].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[4].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[5].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[6].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[7].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[8].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[9].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[10].Rotary.rDeadVolume := 10.0;
+	GVL_Motion.aPumps[1].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[2].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[3].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[4].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[5].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[6].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[7].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[8].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[9].Rotary.rDeadVolume := 1.0;
+	GVL_Motion.aPumps[10].Rotary.rDeadVolume := 1.0;
 END_IF
 
 //Pumps Settings Assignment
@@ -137,9 +139,13 @@ END_IF
     <LineIds Name="PRG_UpdateVariablesMoving">
       <LineId Id="39" Count="4" />
       <LineId Id="94" Count="0" />
-      <LineId Id="67" Count="1" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="68" Count="0" />
       <LineId Id="70" Count="1" />
-      <LineId Id="456" Count="3" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="504" Count="0" />
+      <LineId Id="457" Count="2" />
       <LineId Id="461" Count="1" />
       <LineId Id="460" Count="0" />
       <LineId Id="336" Count="3" />
