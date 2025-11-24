@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
 
@@ -28,33 +28,49 @@ VAR
 	tonStartMove2	: ton;
 	stStatus		: ST_ActuatorStatus;
 		
-	//EventLogger Variables
-	fbEventHandler : FB_EventHandler;
-    bExecuteEvent  : BOOL := FALSE;
-    bEventDone     : BOOL := FALSE;
+	// HMI Icon Progress bar Variables
+	rElapsedTimeSec : REAL := 0.0;
+	tStartTime 		: TIME := T#0S;
+	bLoadBarUpdate 	: BOOL := FALSE;
 
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Get the M1 Motor actual position
-rActualPosition := GVL_Motion.aMotors[1].GetPosition();
+rActualPosition := GVL_Motion.M1Motor.rActualPos;
 rTargetPosition := GVL_Settings.stMachineParam.aM1Position[2];
 bInPosition := ABS(rActualPosition - rTargetPosition) <= rTolerance;
 
 //Provide HMI animation details
 GVL_HMI.HMIAnimation.sLoadTextHardware := 'Sealing'; 
-GVL_HMI.HMIAnimation.rLoadBarHardware  := 0;
 GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.InProgress;
+
+// Update progress bar only while executing and not yet in position
+IF bExecuting AND NOT bInPosition THEN
+    // Elapsed time in seconds since FB start
+    rElapsedTimeSec := TIME_TO_REAL(TIME() - tStartTime) / 1000.0; 
+
+    // Protect against division by zero
+    IF EstimateTotalTime() > 0.0 THEN
+        GVL_HMI.HMIAnimation.rLoadBarHardware :=
+            LIMIT(0.0, (rElapsedTimeSec / EstimateTotalTime()) * 100.0, 100.0);
+    ELSE
+        GVL_HMI.HMIAnimation.rLoadBarHardware := 0.0;
+    END_IF
+END_IF
 
 IF bExecute THEN
 
 	// Reset flags on first entry
 	IF NOT bExecuting THEN
 		bExecuting := TRUE;
+		bLoadBarUpdate := TRUE;
 		bMoveM1Pos1 := FALSE;
 		bMoveM1Pos2 := FALSE;
 		bStartMove2 := FALSE;
+		tStartTime := TIME();
 		tonStartMove2(IN := FALSE);
+		GVL_HMI.HMIAnimation.rLoadBarHardware := 0.0; // Reset bar only once
 	END_IF
 
 	IF NOT bInPosition OR NOT bMotionSequenceDone THEN
@@ -98,39 +114,72 @@ IF bExecute THEN
 	IF stStatus.bError THEN
 		bSealError := TRUE;
 		bSealSuccess := FALSE;
-		bExecuteEvent := TRUE;
-
-		fbEventHandler(
-			bExecute := bExecuteEvent,
-			eEventName := E_Events.ERROR,
-			sSystem := 'Seal Stage State',
-			sMessage := CONCAT('Error: ', stStatus.sMessage),
-			bDone => bEventDone
-		);
-		ResetEventTrigger();
-
 	ELSE
 		bSealError := FALSE;
 		IF bInPosition THEN
 			bSealSuccess := TRUE;
-			bExecuteEvent := TRUE;
+			bLoadBarUpdate := FALSE;
+			GVL_HMI.HMIAnimation.rLoadBarHardware := 100.0;
 			GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.Completed;
-
-			fbEventHandler(
-				bExecute := bExecuteEvent,
-				eEventName := E_Events.INFO,
-				sSystem := 'Seal Stage',
-				sMessage := 'Completed!',
-				bDone => bEventDone
-			);
-			ResetEventTrigger();
-
 		ELSE
 			bSealSuccess := FALSE;
 		END_IF
 	END_IF
 END_IF]]></ST>
     </Implementation>
+    <Method Name="EstimateTotalTime" Id="{ac2174a7-358e-4bee-bb09-a75921d7c1bc}">
+      <Declaration><![CDATA[METHOD EstimateTotalTime : REAL
+VAR
+	rDist1      : LREAL;   // Distance for Move 1 (pre-position with deceleration offset)
+    rDist2      : LREAL;   // Distance for Move 2 (final precision move)
+    rVel1       : LREAL;   // Velocity for Move 1
+    rVel2       : LREAL;   // Velocity for Move 2
+    rTimeMove1  : REAL;    // Estimated time for Move 1
+    rTimeMove2  : REAL;    // Estimated time for Move 2
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Move 1: from actual position → target + decel offset
+rDist1 := ABS(
+    (GVL_Settings.stMachineParam.aM1Position[2] +
+     GVL_Settings.stMachineParam.fM1PositionDeceleration)
+    - GVL_Motion.M1Motor.rActualPos
+);
+
+// Move 2: from pre-position → final target
+rDist2 := ABS(
+    GVL_Settings.stMachineParam.aM1Position[2] -
+    (GVL_Settings.stMachineParam.aM1Position[2] +
+     GVL_Settings.stMachineParam.fM1PositionDeceleration)
+);
+
+// ----------------------------------------------------------
+// READ VELOCITIES FOR EACH MOVEMENT
+// ----------------------------------------------------------
+rVel1 := GVL_Settings.stMachineParam.rM1Velocity;           // Fast move
+rVel2 := GVL_Settings.stMachineParam.rM1PrecisionVelocity;  // Precision move
+
+// ----------------------------------------------------------
+// ESTIMATE DURATIONS (simple distance / velocity)
+// ----------------------------------------------------------
+
+// Estimated time for Move 1
+IF rVel1 > 0 THEN
+    rTimeMove1 := rDist1 / rVel1 * 1.5;
+END_IF
+
+// Estimated time for Move 2
+IF rVel2 > 0 THEN
+    rTimeMove2 := rDist2 / rVel2 * 1.5;
+END_IF
+
+// ----------------------------------------------------------
+// FINAL CALCULATION
+// Total time = Move 1 + 500 ms delay + Move 2
+// ----------------------------------------------------------
+EstimateTotalTime := rTimeMove1 + 0.5 + rTimeMove2;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Reset" Id="{f9795723-8eae-40ab-a345-51877b5d2bb9}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
@@ -141,9 +190,20 @@ END_VAR
 bSealSuccess	:= FALSE;
 bSealError  	:= FALSE;
 bInPosition		:= FALSE;
-bMoveM1Pos1		:= FALSE; 	
-bMoveM1Pos2		:= FALSE;	
 bMotionSequenceDone	:= FALSE;	
+
+
+bExecuting		:= FALSE;
+rActualPosition	:= 0.0;
+rTargetPosition := 0.0;
+bMoveM1Pos1	 	:= FALSE;
+bMoveM1Pos2	 	:= FALSE;
+bStartMove2		:= FALSE;
+tonStartMove2( IN := FALSE);
+
+rElapsedTimeSec := 0.0;
+tStartTime 		:= T#0S;
+bLoadBarUpdate 	:= FALSE;
 
 // Send Reset Return
 IF NOT bSealSuccess AND NOT bSealError THEN
@@ -154,32 +214,43 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Action Name="ResetEventTrigger" Id="{5e95a092-8b7d-48cb-95c9-b5f7292655e9}">
-      <Implementation>
-        <ST><![CDATA[IF bEventDone THEN
-        bExecuteEvent := FALSE;
-        bEventDone := FALSE;
-END_IF;]]></ST>
-      </Implementation>
-    </Action>
     <LineIds Name="FB_SealStages">
       <LineId Id="316" Count="3" />
       <LineId Id="443" Count="0" />
-      <LineId Id="445" Count="2" />
+      <LineId Id="445" Count="1" />
       <LineId Id="444" Count="0" />
-      <LineId Id="326" Count="68" />
+      <LineId Id="485" Count="0" />
+      <LineId Id="501" Count="11" />
+      <LineId Id="486" Count="0" />
+      <LineId Id="326" Count="5" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="332" Count="2" />
+      <LineId Id="493" Count="0" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="519" Count="0" />
+      <LineId Id="336" Count="42" />
+      <LineId Id="390" Count="3" />
+      <LineId Id="495" Count="0" />
+      <LineId Id="520" Count="0" />
       <LineId Id="448" Count="0" />
-      <LineId Id="395" Count="8" />
-      <LineId Id="405" Count="4" />
+      <LineId Id="406" Count="3" />
       <LineId Id="181" Count="0" />
     </LineIds>
-    <LineIds Name="FB_SealStages.Reset">
-      <LineId Id="6" Count="13" />
+    <LineIds Name="FB_SealStages.EstimateTotalTime">
+      <LineId Id="12" Count="37" />
       <LineId Id="5" Count="0" />
     </LineIds>
-    <LineIds Name="FB_SealStages.ResetEventTrigger">
-      <LineId Id="2" Count="2" />
-      <LineId Id="1" Count="0" />
+    <LineIds Name="FB_SealStages.Reset">
+      <LineId Id="6" Count="3" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="28" Count="2" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="65" Count="2" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="13" Count="6" />
+      <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

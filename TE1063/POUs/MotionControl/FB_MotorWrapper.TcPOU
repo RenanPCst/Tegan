@@ -157,8 +157,8 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[//Get Actual Position of the motor
-fbReadPos(Axis := Axis, Enable := TRUE);
-GetPosition := fbReadPos.Position;]]></ST>
+//fbReadPos(Axis := Axis, Enable := TRUE);
+GetPosition := Axis.NcToPlc.ActPos;]]></ST>
       </Implementation>
     </Method>
     <Method Name="GetStatus" Id="{a9f2bdab-8820-4977-9409-a8793adba31f}">
@@ -689,6 +689,9 @@ bMoveVelExecute := FALSE;
 bHomeExecute    := FALSE;
 bStopExecute    := FALSE;
 
+bStopRequested  := FALSE;
+bStopDone       := FALSE;
+
 // =================================================================================================
 // 3) Reset exposed status (optional, for clean diagnostics after reset)
 // =================================================================================================
@@ -798,7 +801,85 @@ END_VAR
 
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bStopRequested THEN
+        <ST><![CDATA[// Default output value
+Stop := FALSE;
+
+// ============================================================================
+// 1) First Stop trigger: set the request flag and generate the rising edge
+//    on Execute for MC_Stop
+// ============================================================================
+IF NOT bStopRequested THEN
+    bStopExecute  := TRUE;   // rising edge on MC_Stop.Execute
+    bStopRequested := TRUE;
+    bStopDone     := FALSE;
+END_IF
+
+// ============================================================================
+// 2) Safety-net: if Stop was requested but the MC_Stop FB is idle,
+//    without Done/Error, and Execute is FALSE (e.g., after a Reset),
+//    then re-arm Execute to avoid getting stuck.
+// ============================================================================
+IF bStopRequested
+   AND NOT fbStop.Busy
+   AND NOT fbStop.Done
+   AND NOT fbStop.Error
+   AND NOT bStopExecute THEN
+    bStopExecute := TRUE;
+END_IF
+
+// ============================================================================
+// 3) Call the MC_Stop function block
+// ============================================================================
+fbStop(Axis := Axis, Execute := bStopExecute);
+
+// ============================================================================
+// 4) Internal Stop completion logic (Done / Requested)
+// ============================================================================
+IF fbStop.Done THEN
+    bStopExecute := FALSE;      // release Execute after Done
+    bStopDone    := TRUE;
+END_IF
+
+IF bStopDone AND NOT fbStop.Busy THEN
+    bStopRequested := FALSE;    // stop procedure fully completed
+END_IF
+
+// ============================================================================
+// 5) Error handling
+// ============================================================================
+stStatus.bError     := fbStop.Error;
+stStatus.iErrorCode := fbStop.ErrorID;
+
+IF fbStop.Error THEN
+    stStatus.eState   := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in Stop';
+    // Stop remains FALSE; caller must handle Reset() afterwards
+    RETURN;
+END_IF
+
+// ============================================================================
+// 6) Successful completion: update status and return TRUE once
+// ============================================================================
+IF bStopDone AND NOT fbStop.Busy AND NOT bStopRequested THEN
+    stStatus.bError     := FALSE;
+    stStatus.iErrorCode := 0;
+    stStatus.eState     := E_ActuatorState.eIdle;
+    stStatus.sMessage   := 'Axis Stopped';
+
+    // Prepare flags for the next Stop command
+    bStopDone := FALSE;
+
+    Stop := TRUE;   // Return TRUE for one cycle
+    RETURN;
+END_IF
+
+// If execution reaches here, the Stop process is still ongoing
+Stop := FALSE;
+
+
+// Before - changed on Nov 20 2025
+(* 
+IF NOT bStopRequested THEN
 	bStopExecute := TRUE;
 	bStopRequested := TRUE;
 END_IF
@@ -836,7 +917,7 @@ IF bStopDone AND NOT fbStop.Busy AND NOT bStopRequested THEN
 ELSE
 	Stop := FALSE;
 END_IF
-]]></ST>
+*)]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_MotorWrapper">
@@ -1016,7 +1097,10 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
-      <LineId Id="88" Count="76" />
+      <LineId Id="88" Count="21" />
+      <LineId Id="169" Count="1" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="110" Count="54" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.SetPosition">
       <LineId Id="6" Count="4" />
@@ -1030,6 +1114,11 @@ END_IF
       <LineId Id="54" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Stop">
+      <LineId Id="288" Count="72" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="209" Count="1" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="135" Count="0" />
       <LineId Id="85" Count="3" />
       <LineId Id="118" Count="0" />
       <LineId Id="89" Count="0" />

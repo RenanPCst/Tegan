@@ -40,11 +40,13 @@ VAR
 	i	: USINT := 0;
 	
 	//EventLogger Variables
-	fbEventHandler : FB_EventHandler;
-    bExecuteEvent  : BOOL := FALSE;
-    bEventDone     : BOOL := FALSE;
-	rTargetPosition: INT;
-	bIconAnimation: BOOL;
+	fbEventHandler 		: FB_EventHandler;
+    bExecuteEvent  		: BOOL := FALSE;
+    bEventDone     		: BOOL := FALSE;
+	rTargetPosition		: INT;
+	bIconAnimation		: BOOL;
+	
+	bDebug : ARRAY [1..10] OF BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Icon animation and time estimation
@@ -58,12 +60,13 @@ CASE eState OF
 			GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Starting'; 
 			GVL_HMI.HMIAnimation.rLoadBarLeakTest  := 0;
 			GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.InProgress;
+			bLoadTimeTaken := FALSE;
 			tonMonitoring(in := FALSE);
 			tonPressuring(IN := FALSE);
             eState := POSITION_VALVES;
         END_IF;
 
-    POSITION_VALVES:
+    POSITION_VALVES:	
 		// Icon text update
 		GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Positioning Valves';
 		bMoveValves := bExecute;
@@ -112,7 +115,7 @@ CASE eState OF
 			//moving to error state
             eState := ERROR;
         END_IF;
-    	
+	
 	SEAL_STAGES:	
 		// Delay timer between movements
 		tonM1MoveDelay( IN := bM1MoveStartDelay, PT := T#500MS);
@@ -144,10 +147,6 @@ CASE eState OF
 			bMoveM1MotorSlow := FALSE;
 			bMoveM1MotorFast := FALSE;
 		END_IF
-		
-		
-		
-	
 	
     SET_SOLENOIDS:
 		// Set Solenoids to pressure up state
@@ -156,7 +155,7 @@ CASE eState OF
 			//moving to next state
             eState := PRESSURIZE;
 		END_IF
-
+	
     PRESSURIZE:
 		// Icon text update
 		GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Pressurizing';
@@ -166,7 +165,7 @@ CASE eState OF
 				bPressureTime := FALSE;
                 eState := CLOSE_AIR;
         END_IF;
-		
+	
 	CLOSE_AIR:
 		// Sets the solenoids to LEAKTEST configuration
         IF GVL_IO.gSetSolenoidControl.HoldPressure() THEN
@@ -183,6 +182,7 @@ CASE eState OF
 		IF NOT	bPressureTaken THEN
 			rClosedSystemPressure := GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit; //LeakTest threshold from settings
 			bPressureTaken := TRUE;
+			bPressureInput := TRUE;
 		ELSE
 
 			tonMonitoring(in := bPressureInput, PT := UDINT_TO_TIME(tMonitorTime*1000));
@@ -195,38 +195,39 @@ CASE eState OF
 				bPressureTaken := FALSE;
 				//Moving to error state
 				eState := ERROR;
-			END_IF;
+			END_IF
 		END_IF
 		//Pressure output for monitoring
 		GVL_HMI.rCalLeakTestPressure := rScaledPressure;
 		rSystemPressure := rScaledPressure;
-
+	
     DONE:
 		//Provide HMI animation details
-		GVL_HMI.HMIAnimation.rLoadBarLeakTest  := 100;
-		GVL_HMI.HMIAnimation.sLoadTextLeakTest := 'Completed';
-		GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Completed;
+		GVL_HMI.HMIAnimation.rLoadBarLeakTest   := 100;
+		GVL_HMI.HMIAnimation.sLoadTextLeakTest  := 'Completed';
+		GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Completed;
 		
 		bLeakTestDone := TRUE;
         // Successfully completed the leak test
 		IF NOT bExecute THEN
             eState := IDLE;
             bLeakTestDone 	:= FALSE;
-        END_IF;
-
+        END_IF
+		
     ERROR:
 		bLeakTestError := TRUE;
         // Test encountered an error, execution halted
 		IF NOT bExecute THEN
             eState := IDLE;
             bLeakTestDone 	:= FALSE;
-        END_IF;
+        END_IF
 
 END_CASE;]]></ST>
     </Implementation>
     <Action Name="ACT_LoadingIcon" Id="{962ba985-7ef5-422c-a6af-d14d915a472d}">
       <Implementation>
-        <ST><![CDATA[// Calculates the total estimated time when in auto cycle
+        <ST><![CDATA[(*
+// Calculates the total estimated time when in auto cycle
 IF GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE THEN
 	bIconAnimation := TRUE;
 ELSE
@@ -243,7 +244,48 @@ IF bIconAnimation THEN
 	tonIconLoading( in := bIconAnimation, PT := tLoadingTotalTime);
 	GVL_HMI.HMIAnimation.rLoadBarLeakTest := TIME_TO_REAL(tonIconLoading.ET) * (TIME_TO_REAL(tLoadingTotalTime) / 100);
 
-END_IF]]></ST>
+END_IF
+*)
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Calculates the total estimated time used in auto cycle
+IF GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE THEN
+    bIconAnimation := TRUE;
+ELSE
+    bIconAnimation := FALSE;
+END_IF
+
+IF bIconAnimation THEN
+
+    // Calculate only once per leak-test run
+    IF NOT bLoadTimeTaken THEN
+        tLoadingTotalTime := UINT_TO_TIME((tPressureUpTime * 1000) + (tMonitorTime * 1000) + 500);
+        bLoadTimeTaken := TRUE;
+    END_IF
+
+    // Run TON for animation
+    tonIconLoading(
+        IN := bIconAnimation,
+        PT := tLoadingTotalTime
+    );
+
+    // Progress bar = (ET / TotalTime) * 100
+    IF tLoadingTotalTime > T#0MS THEN
+        GVL_HMI.HMIAnimation.rLoadBarLeakTest := (TIME_TO_REAL(tonIconLoading.ET) * 100.0) / TIME_TO_REAL(tLoadingTotalTime);
+    ELSE
+        GVL_HMI.HMIAnimation.rLoadBarLeakTest := 0.0;
+    END_IF
+
+ELSE
+    // Reset everything when animation is disabled
+    tonIconLoading(IN := FALSE);
+
+    bLoadTimeTaken := FALSE;
+
+    GVL_HMI.HMIAnimation.rLoadBarLeakTest := 0.0;
+END_IF
+]]></ST>
       </Implementation>
     </Action>
     <Method Name="Reset" Id="{d191ae56-dc2e-4383-9575-cd2115c094a7}">
@@ -260,17 +302,33 @@ FOR i :=1 TO 5 DO
 	aValveMoveDone[i] := FALSE;
 END_FOR
 
-bPressureInput := FALSE;
-bMoveValves := FALSE;
-bPressureTime := FALSE;
-bPressureTaken := FALSE;
-bExecuteEvent := FALSE;
-bEventDone := FALSE;
-bLeakTestError := FALSE;
-bLeakTestDone := FALSE;
-
+bPressureInput 		:= FALSE;
+bPressureTime 		:= FALSE;
+bPressureTaken 		:= FALSE;
+bExecuteEvent 		:= FALSE;
+bEventDone 			:= FALSE;
+bLeakTestError 		:= FALSE;
+bLoadTimeTaken 		:= FALSE;
+bLeakTestDone  		:= FALSE;	
+rSystemPressure		:= 0.0;
+sLTMessageError		:= '';  	
+rScaledPressure 	:= 0.0;
+eState          	:= IDLE;
+bMoveValves	   		:= FALSE;
+bMoveM1MotorFast	:= FALSE;
+bMoveM1MotorSlow	:= FALSE;
+bM1MoveStartDelay		:= FALSE;
+rClosedSystemPressure	:= 0.0;
 tonPressuring(in := FALSE);
 tonMonitoring(in := FALSE);
+tonM1MoveDelay(in := FALSE);
+tonIconLoading(in := FALSE);
+tLoadingTotalTime	:= T#0S;
+rTargetPosition 	:= 1;
+bIconAnimation  	:= FALSE;
+i	:= 0;
+
+GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
 
 // Send Reset Return
 IF NOT bLeakTestDone AND NOT bLeakTestError THEN
@@ -288,6 +346,7 @@ END_IF
       <LineId Id="596" Count="3" />
       <LineId Id="842" Count="2" />
       <LineId Id="841" Count="0" />
+      <LineId Id="1227" Count="0" />
       <LineId Id="920" Count="1" />
       <LineId Id="600" Count="3" />
       <LineId Id="1103" Count="0" />
@@ -306,7 +365,8 @@ END_IF
       <LineId Id="633" Count="0" />
       <LineId Id="1045" Count="0" />
       <LineId Id="634" Count="3" />
-      <LineId Id="647" Count="3" />
+      <LineId Id="647" Count="2" />
+      <LineId Id="1164" Count="0" />
       <LineId Id="1035" Count="0" />
       <LineId Id="1053" Count="0" />
       <LineId Id="1067" Count="0" />
@@ -327,29 +387,32 @@ END_IF
       <LineId Id="1086" Count="2" />
       <LineId Id="1090" Count="3" />
       <LineId Id="1089" Count="0" />
-      <LineId Id="1078" Count="0" />
-      <LineId Id="1064" Count="1" />
-      <LineId Id="1037" Count="0" />
       <LineId Id="1036" Count="0" />
       <LineId Id="651" Count="0" />
       <LineId Id="659" Count="0" />
       <LineId Id="991" Count="1" />
       <LineId Id="994" Count="1" />
       <LineId Id="993" Count="0" />
-      <LineId Id="660" Count="1" />
+      <LineId Id="1174" Count="0" />
+      <LineId Id="661" Count="0" />
       <LineId Id="1100" Count="1" />
       <LineId Id="662" Count="2" />
       <LineId Id="668" Count="1" />
-      <LineId Id="671" Count="4" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="1175" Count="0" />
+      <LineId Id="673" Count="2" />
       <LineId Id="997" Count="0" />
       <LineId Id="999" Count="0" />
       <LineId Id="998" Count="0" />
-      <LineId Id="683" Count="1" />
+      <LineId Id="1176" Count="0" />
+      <LineId Id="684" Count="0" />
       <LineId Id="1099" Count="0" />
       <LineId Id="1097" Count="0" />
       <LineId Id="685" Count="0" />
       <LineId Id="688" Count="0" />
-      <LineId Id="690" Count="4" />
+      <LineId Id="690" Count="3" />
+      <LineId Id="1180" Count="0" />
+      <LineId Id="694" Count="0" />
       <LineId Id="957" Count="0" />
       <LineId Id="695" Count="0" />
       <LineId Id="956" Count="0" />
@@ -359,7 +422,8 @@ END_IF
       <LineId Id="710" Count="3" />
       <LineId Id="805" Count="1" />
       <LineId Id="804" Count="0" />
-      <LineId Id="714" Count="1" />
+      <LineId Id="1177" Count="0" />
+      <LineId Id="715" Count="0" />
       <LineId Id="846" Count="0" />
       <LineId Id="1095" Count="1" />
       <LineId Id="845" Count="0" />
@@ -368,6 +432,7 @@ END_IF
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.ACT_LoadingIcon">
+      <LineId Id="80" Count="0" />
       <LineId Id="4" Count="0" />
       <LineId Id="1" Count="1" />
       <LineId Id="7" Count="1" />
@@ -383,18 +448,32 @@ END_IF
       <LineId Id="20" Count="0" />
       <LineId Id="23" Count="0" />
       <LineId Id="22" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="38" Count="12" />
+      <LineId Id="52" Count="11" />
+      <LineId Id="66" Count="11" />
+      <LineId Id="37" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.Reset">
       <LineId Id="6" Count="0" />
       <LineId Id="44" Count="3" />
       <LineId Id="12" Count="0" />
-      <LineId Id="48" Count="1" />
+      <LineId Id="49" Count="0" />
       <LineId Id="13" Count="0" />
       <LineId Id="55" Count="1" />
-      <LineId Id="66" Count="1" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="63" Count="0" />
-      <LineId Id="65" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="91" Count="2" />
+      <LineId Id="96" Count="8" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="122" Count="0" />
       <LineId Id="51" Count="0" />
       <LineId Id="14" Count="5" />
       <LineId Id="5" Count="0" />

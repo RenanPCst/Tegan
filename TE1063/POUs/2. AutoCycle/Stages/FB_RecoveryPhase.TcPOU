@@ -32,20 +32,24 @@ VAR
 	bMoveM3		: BOOL := FALSE;
     bMovementComplete : BOOL := FALSE;
 	
-	
-	//Metering Rinse 1
+	//Metering Rinse 1 n 2
 	bMoveValveDone		 : ARRAY[1..5] OF BOOL;
 	bMovePumpDone		 : ARRAY[1..10] OF BOOL;
 	fDistance        	 : ARRAY[1..10] OF REAL;
 	
-	//Recirculate Solvent 1
-    fAgitationTime   : REAL := 0;
-	fCalcDistance	 : ARRAY[1..10] OF REAL;
+	//Recirculate Solvent 1 n 2
+    fAgitationTime   	: REAL := 0.0;
+	fRecirculationTime	: REAL := 0.0;
+	fCalcDistance	 	: ARRAY[1..10] OF REAL;
 	
 	//Solvent Soak
 	timerSoak       : TON;
     bTimerStarted   : BOOL := FALSE;
 	bSoakTimerDone  : BOOL := FALSE;
+	
+	//Agitate Time 1 n 2
+	tonAgitateTime1	: TON;
+	tonAgitateTime2	: TON;
 	
 	// Progress Bar Timing
 	rTotalEstimatedTimeSec : REAL := 0.0;
@@ -142,11 +146,19 @@ CASE eRecoveryState OF
 
         MeteringSolvent2(); 
         IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.AgitateTime1;
+			iStepCounter := 0;
+            bMovementComplete := FALSE;
+        END_IF
+		
+	E_RecoveryState.AgitateTime1:
+	
+		AgitateTime1(); 
+        IF bMovementComplete THEN
             eRecoveryState := E_RecoveryState.Mix_Solvent1_2;
 			iStepCounter := 0;
             bMovementComplete := FALSE;
         END_IF
-
 
     E_RecoveryState.Mix_Solvent1_2:
 
@@ -162,11 +174,19 @@ CASE eRecoveryState OF
 	
         CleaningLinesSolvent1and2(); 
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Prime_Needles;
+            eRecoveryState := E_RecoveryState.AgitateTime2;
 			iStepCounter := 0;
             bMovementComplete := FALSE;
         END_IF
 	
+	E_RecoveryState.AgitateTime2:
+	
+		AgitateTime2(); 
+        IF bMovementComplete THEN
+            eRecoveryState := E_RecoveryState.Prime_Needles;
+			iStepCounter := 0;
+            bMovementComplete := FALSE;
+        END_IF
 
     E_RecoveryState.Prime_Needles:
 	
@@ -249,6 +269,68 @@ CASE eRecoveryState OF
 END_CASE;
 ]]></ST>
     </Implementation>
+    <Action Name="AgitateTime1" Id="{486e1b85-765d-4f63-abbb-6682219dd42d}">
+      <Implementation>
+        <ST><![CDATA[CASE iStepCounter OF
+	
+	0: //Check if Agitate Time 1 is greater than zero
+		IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time/1000) > 0 THEN
+			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 1';  //Provide HMI animation details
+			iStepCounter := 1;
+		ELSE
+			iStepCounter := 3;
+		END_IF
+		
+		
+    1: // Agitate Timer 1 Set
+    	tonAgitateTime1(IN := TRUE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time);
+		
+		IF tonAgitateTime1.Q THEN
+			iStepCounter := 2;
+		END_IF
+		
+    2: // Resets Agitate Timer 1
+
+    	tonAgitateTime1(IN := FALSE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time);
+		iStepCounter := 3;
+
+    3: // Sets the movement done flag
+		bMovementComplete := TRUE;
+        
+END_CASE]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AgitateTime2" Id="{f3aecc98-087b-41df-a160-45a2ae26b296}">
+      <Implementation>
+        <ST><![CDATA[CASE iStepCounter OF
+	
+	0: //Check if Agitate Time 2 is greater than zero
+		IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time/1000) > 0 THEN
+			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 2';  //Provide HMI animation details
+			iStepCounter := 1;
+		ELSE
+			iStepCounter := 3;
+		END_IF
+		
+		
+    1: // Agitate Timer 2 Set
+    	tonAgitateTime2(IN := TRUE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time);
+		
+		IF tonAgitateTime2.Q THEN
+			iStepCounter := 2;
+		END_IF
+		
+    2: // Resets Agitate Timer 1
+
+    	tonAgitateTime2(IN := FALSE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time);
+		iStepCounter := 3;
+
+    3: // Sets the movement done flag
+		bMovementComplete := TRUE;
+        
+END_CASE]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="CleaningLinesSolvent1" Id="{9273111f-dd95-4702-809f-ba9c490b1159}">
       <Implementation>
         <ST><![CDATA[//Exactly the oppisite of Recirculate Solvent 1
@@ -279,13 +361,12 @@ CASE iStepCounter OF
 
     2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 1
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
 		END_FOR
 		
-		
-		IF fAgitationTime > 0 THEN
+		IF fRecirculationTime > 0 THEN
 			iStepCounter := 3;
 		END_IF
 		
@@ -293,9 +374,9 @@ CASE iStepCounter OF
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -343,12 +424,12 @@ END_CASE
 
     2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 2
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * GVL_Motion.aPumps[i].Rotary.rSpeed;
+			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
 		END_FOR
 		
-		IF fAgitationTime > 0 THEN
+		IF fRecirculationTime > 0 THEN
 			iStepCounter := 3;
 		END_IF
 		
@@ -356,9 +437,9 @@ END_CASE
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -948,20 +1029,20 @@ GetPumpVolume := volume;]]></ST>
 		iStepCounter := 1;
 	
     1: // Initialization: Reset solenoids and set valves
-        fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
+        //fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
 		
-		IF fbSolenoidControl.bDone THEN
+		IF GVL_IO.gSetSolenoidControl.Idle() THEN (*fbSolenoidControl.bDone*) 
 			iStepCounter := 2;
 		END_IF
 		
     2: // Set valves for Rinse 1 position
 	    FOR i := 1 TO 5 DO
 			IF NOT bMoveValveDone[i] THEN
-				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1], 
-																	 	rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 	rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 	rDec := GVL_Motion.aValves[i].rDeceleration 
-																		);
+				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1], 
+																	 	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
+																	 	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
+																	 	 rDec := GVL_Motion.aValves[i].rDeceleration 
+																		 );
 			END_IF
 			
         END_FOR
@@ -1021,9 +1102,9 @@ END_CASE
 		iStepCounter := 1;
 	
     1: // Initialization: Reset solenoids and set valves
-        fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
+        //fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
 		
-		IF fbSolenoidControl.bDone THEN
+		IF GVL_IO.gSetSolenoidControl.Idle() THEN  (*fbSolenoidControl.bDone*) 
 			iStepCounter := 2;
 		END_IF
 		
@@ -1031,10 +1112,10 @@ END_CASE
 	    FOR i := 1 TO 5 DO
 			IF NOT bMoveValveDone[i] THEN
 				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2], 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
+																		 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
+																		 rAcc := GVL_Motion.aValves[i].rAcceleration, 
+																		 rDec := GVL_Motion.aValves[i].rDeceleration 
+																		 );
 			END_IF
 			
         END_FOR
@@ -1111,14 +1192,14 @@ END_CASE
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 2
+    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo de recirculacao do rinse 2
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate2Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6);
+			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6);
 		END_FOR
 		
-		IF fAgitationTime > 0 THEN
+		IF fRecirculationTime > 0 THEN
 			iStepCounter := 3;
 		END_IF
 		
@@ -1127,8 +1208,8 @@ END_CASE
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
 																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, 
-																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, 
-																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6 
+																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3, 
+																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3 
 																			);
 			END_IF
         END_FOR
@@ -1192,9 +1273,9 @@ END_CASE]]></ST>
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3
 																			);
 			END_IF
         END_FOR
@@ -1239,14 +1320,14 @@ END_CASE
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 1
+    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo de recirculacao do rinse 1
 
-    	fAgitationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stOtherParams.tAgitate1Time)/1000);
+    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1])/1000);
 		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fAgitationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6);
+			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6);
 		END_FOR
 		
-		IF fAgitationTime > 0 THEN
+		IF fRecirculationTime >= 0 THEN
 			iStepCounter := 3;
 		END_IF
 		
@@ -1255,8 +1336,8 @@ END_CASE
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
 																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6,
-																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, 
-																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6 
+																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3, 
+																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3 
 																			);
 			END_IF
         END_FOR
@@ -1295,8 +1376,9 @@ bError := FALSE;
 bStart := FALSE;
 bMovementComplete := FALSE;
 
-//Recirculate Solvent 1
-fAgitationTime    	:= 0;
+//Recirculate Solvent
+fAgitationTime    	:= 0.0;
+fRecirculationTime  := 0.0;
 
 FOR i := 1 TO 10 DO
 	fCalcDistance[i] := 0;
@@ -1307,8 +1389,11 @@ END_FOR
 bTimerStarted   := FALSE;
 bSoakTimerDone  := FALSE;
 
+//Agitate Time
+tonAgitateTime1(IN := FALSE);
+tonAgitateTime2(IN := FALSE);
+
 //Icon progress reset
-GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.rLoadBarLeakTest := 0;
 GVL_HMI.HMIAnimation.rLoadBarRecovery := 0;
@@ -1427,9 +1512,9 @@ END_IF
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
 				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Motion.aPumps[i].Rotary.rAcceleration, 
-																			 Dec := GVL_Motion.aPumps[i].Rotary.rDeceleration 
+																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
+																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
+																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
 																			);
 			END_IF
         END_FOR
@@ -1489,7 +1574,14 @@ END_CASE]]></ST>
       <LineId Id="876" Count="3" />
       <LineId Id="1357" Count="0" />
       <LineId Id="880" Count="1" />
-      <LineId Id="883" Count="91" />
+      <LineId Id="883" Count="45" />
+      <LineId Id="1416" Count="1" />
+      <LineId Id="1423" Count="0" />
+      <LineId Id="1418" Count="4" />
+      <LineId Id="929" Count="20" />
+      <LineId Id="1425" Count="6" />
+      <LineId Id="1424" Count="0" />
+      <LineId Id="950" Count="24" />
       <LineId Id="1008" Count="11" />
       <LineId Id="981" Count="0" />
       <LineId Id="1020" Count="0" />
@@ -1512,18 +1604,43 @@ END_CASE]]></ST>
       <LineId Id="1006" Count="1" />
       <LineId Id="9" Count="0" />
     </LineIds>
+    <LineIds Name="FB_RecoveryPhase.AgitateTime1">
+      <LineId Id="2" Count="2" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="68" Count="2" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="61" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="54" Count="2" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RecoveryPhase.AgitateTime2">
+      <LineId Id="23" Count="25" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1">
       <LineId Id="207" Count="0" />
       <LineId Id="151" Count="0" />
       <LineId Id="206" Count="0" />
       <LineId Id="153" Count="25" />
       <LineId Id="208" Count="2" />
-      <LineId Id="179" Count="26" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="181" Count="24" />
       <LineId Id="150" Count="0" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1and2">
-      <LineId Id="2" Count="56" />
+      <LineId Id="2" Count="26" />
+      <LineId Id="59" Count="2" />
+      <LineId Id="32" Count="26" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.EstimateTotalTime">
@@ -1697,15 +1814,18 @@ END_CASE]]></ST>
       <LineId Id="29" Count="0" />
       <LineId Id="38" Count="1" />
       <LineId Id="42" Count="0" />
+      <LineId Id="108" Count="0" />
       <LineId Id="69" Count="0" />
       <LineId Id="66" Count="1" />
       <LineId Id="77" Count="0" />
       <LineId Id="68" Count="0" />
       <LineId Id="55" Count="0" />
       <LineId Id="46" Count="2" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="109" Count="1" />
       <LineId Id="83" Count="0" />
+      <LineId Id="111" Count="0" />
       <LineId Id="82" Count="0" />
-      <LineId Id="96" Count="0" />
       <LineId Id="81" Count="0" />
       <LineId Id="84" Count="0" />
       <LineId Id="97" Count="0" />

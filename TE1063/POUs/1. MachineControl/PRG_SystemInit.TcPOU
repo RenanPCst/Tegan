@@ -15,11 +15,11 @@ VAR
 	bLinearMotorsHomingDone	: BOOL := FALSE; 
 	bValvesHomingDone 		: BOOL := FALSE;
 	bLinearPumpsDone		: BOOL := FALSE;
-	bPerformHoming		: BOOL := FALSE;
+	bPerformHoming			: BOOL := FALSE;
 	
-	bAllResetDone	: BOOL := FALSE;
-	bEnableDone		: BOOL := FALSE;
-	bResetCheck		: ARRAY[1..28] OF BOOL;
+	bAllResetDone		: BOOL := FALSE;
+	bEnableDone			: BOOL := FALSE;
+	bResetCheck			: ARRAY[1..28] OF BOOL;
 	
 	aMotorsEnabled 	: ARRAY[1..3] OF BOOL;
 	aValvesEnabled 	: ARRAY[1..5] OF BOOL;
@@ -75,7 +75,7 @@ IF NOT bEnableDone AND bAllResetDone THEN
 		
 		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3]; 
 		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
-		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND (*aRotaryPumpsEnabled[3] AND*) aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
+		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
 		
 		//Reset Timeout Monitoring and trigger 
 		tonEnableTimeOut(IN := TRUE, PT := T#10S);
@@ -176,10 +176,9 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
 	IF NOT bResetCheck[20] THEN
 			bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
 	END_IF
-	(*
 	IF NOT bResetCheck[21] THEN
 			bResetCheck[21] := GVL_Motion.aPumpsRotary[3].Reset();
-	END_IF*)
+	END_IF
 	IF NOT bResetCheck[22] THEN
 			bResetCheck[22] := GVL_Motion.aPumpsRotary[4].Reset();
 	END_IF
@@ -208,7 +207,7 @@ IF NOT bAllResetDone AND tonResetDelay.Q THEN
        bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
        bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
        bResetCheck[17] AND bResetCheck[18] AND bResetCheck[19] AND bResetCheck[20] AND
-	   (*bResetCheck[21] AND*) bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
+	   bResetCheck[21] AND bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
 	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28] THEN
 		bAllResetDone := TRUE;
 	ELSE
@@ -586,9 +585,7 @@ END_IF
       <LineId Id="1692" Count="2" />
       <LineId Id="1698" Count="58" />
       <LineId Id="2036" Count="0" />
-      <LineId Id="1758" Count="4" />
-      <LineId Id="2037" Count="0" />
-      <LineId Id="1763" Count="37" />
+      <LineId Id="1758" Count="42" />
       <LineId Id="2129" Count="0" />
       <LineId Id="2096" Count="0" />
       <LineId Id="2098" Count="0" />

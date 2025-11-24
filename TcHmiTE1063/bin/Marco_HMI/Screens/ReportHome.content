@@ -20,7 +20,7 @@
 }
 </script>
 </div>
-<div id="TcHmiRectangle_216" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="546" data-tchmi-height-unit="px" data-tchmi-left="59" data-tchmi-left-unit="px" data-tchmi-top="5" data-tchmi-top-unit="px" data-tchmi-width="950" data-tchmi-width-unit="px" data-tchmi-zindex="0">
+<div id="TcHmiRectangle_216" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="546" data-tchmi-height-unit="px" data-tchmi-left="45" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="950" data-tchmi-width-unit="px" data-tchmi-zindex="0">
 
 <script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
 {
@@ -82,7 +82,7 @@
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let plcArrayData = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genCurrentUserList(plcArrayData,'Current Users List');                  ",
+          "                  genCurrentUserList(plcArrayData,'401 - Current Users List');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
@@ -131,7 +131,7 @@
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let sysDataArray = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genSysHistoryReport(sysDataArray, 'System Settings Report History');                  ",
+          "                  genSysHistoryReport(sysDataArray, '502 - System Settings Report History');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
@@ -180,7 +180,7 @@
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let plcArrayData = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genUserHistoryReport(plcArrayData,'User History Repor');                  ",
+          "                  genUserHistoryReport(plcArrayData,'402 - User History Repor');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
@@ -229,7 +229,7 @@
           "              if (data.error === TcHmi.Errors.NONE) {",
           "                  let sysDataArray = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genCurrentSysReport(sysDataArray, 'System Settings Report');                  ",
+          "                  genCurrentSysReport(sysDataArray, '501 - System Settings Report');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
@@ -281,7 +281,7 @@
           "\t            let methodDataArray = data2.value;",
           "           \t\tlet volumeDataArray = data1.value; // value from PLC (array)",
           "           \t\t// Function Call",
-          "\t\t   \t\tgenPumpCalibrationReport(methodDataArray, volumeDataArray, 'Pump Calibration Report');                  ",
+          "\t\t   \t\tgenMethodReport(methodDataArray, volumeDataArray, '201 - Method Report');                  ",
           "       \t\t} else {",
           "\t\t   \t\t console.error(\"Erro ao ler variável do PLC: \", data2.error);",
           "       \t\t}",
@@ -315,7 +315,7 @@
 
 
 </div>
-<div id="btnDownloadPDF_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="482" data-tchmi-left-unit="px" data-tchmi-text="Method Report History" data-tchmi-top="154" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
+<div id="btnDownloadPDF_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="482" data-tchmi-left-unit="px" data-tchmi-text="Complete Method Report" data-tchmi-top="154" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -330,11 +330,11 @@
           "          \t\talert(\"Mensagem do PLC: \" + message);",
           "          }",
           "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.listAllSystem%/s%', function (data) {",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.arrCompleteMethod%/s%', function (data) {",
           "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let sysDataArray = data.value; // value from PLC (array)",
+          "                  let allRevisions = data.value; // value from PLC (array)",
           "                  // Function Call",
-          "                  genSysHistoryReport(sysDataArray, 'System Settings Report History');                  ",
+          "                  genCompleteMethodReport(allRevisions, '203 - Complete Method Report');                  ",
           "              } else {",
           "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
           "              }",
@@ -363,5 +363,90 @@
 </script>
 
 
+</div>
+<div id="btnDownloadPDF_17" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="50" data-tchmi-height-unit="px" data-tchmi-left="97" data-tchmi-left-unit="px" data-tchmi-text="Pump Calibration" data-tchmi-top="267" data-tchmi-top-unit="px" data-tchmi-width="100" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="57" data-tchmi-state-symbol="%s%PLC1.GVL_Calibration.bStartCreationCalJson%/s%" data-tchmi-creator-visibility="Visible" data-tchmi-visibility="Visible">
+<script data-tchmi-target-attribute="data-tchmi-border-radius" type="application/json">
+{
+  "topLeft": 5.0,
+  "topRight": 5.0,
+  "bottomLeft": 5.0,
+  "bottomRight": 5.0,
+  "topLeftUnit": "px",
+  "topRightUnit": "px",
+  "bottomLeftUnit": "px",
+  "bottomRightUnit": "px"
+}
+</script>
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "btnDownloadPDF_17.onStateChanged",
+    "actions": [
+      {
+        "objectType": "Condition",
+        "active": false,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.Beckhoff.TcHmiCheckbox.StateSymbol",
+                  "symbolExpression": "%ctrl%TcHmiCheckbox_PrintWhenComplete::StateSymbol%/ctrl%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.Beckhoff.TcHmiCheckbox.StateSymbol",
+                  "value": "true"
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": []
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "// Call the PDF generator function",
+          "          function showMessageFromPLC(message) {",
+          "          \t\talert(\"Mensagem do PLC: \" + message);",
+          "          }",
+          "          // Wrinting the PLC variable",
+          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_PCR%/s%', function (data1) {",
+          "              if (data1.error === TcHmi.Errors.NONE) {",
+          "                        TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stParameter_PCR%/s%', function (data2) {",
+          "              \t\t\tif (data2.error === TcHmi.Errors.NONE) {",
+          "                        let sysHeadArray = data2.value;",
+          "                  \t\tlet sysDataArray = data1.value; // value from PLC (array)",
+          "                  \t\t// Function Call",
+          "                 \t\t genPumpCalibrationReport(sysDataArray, sysHeadArray, 'Pump Calibration Report');                  ",
+          "              \t\t} else {",
+          "                 \t\t console.error(\"Erro ao ler variável do PLC: \", data2.error);",
+          "              \t\t}",
+          "          \t\t});                  ",
+          "              } else {",
+          "                  console.error(\"Erro ao ler variável do PLC: \", data1.error);",
+          "              }",
+          "          });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      }
+    ]
+  }
+]
+</script>
 </div>
 </div>

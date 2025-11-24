@@ -134,6 +134,11 @@ GVL_HMI.bMachineModeBlinking := tpChangePulse.Q OR (bBlinkMode AND fbBlinkMachin
 // 5) Update previous machine mode
 ePrevMode := GVL_HMI.eMachineMode;
 
+(* HMI Lights Control *) //-----------------------------------------------------------------------------------------------
+GVL_IO.gRelayOutputs.bSampleRecoveryLight 		:= GVL_HMI.bLightsToggleButton;
+GVL_IO.gRelayOutputs.bStageCollectionLeftLight 	:= GVL_HMI.bLightsToggleButton;
+GVL_IO.gRelayOutputs.bStageCollectionRightLight := GVL_HMI.bLightsToggleButton;
+
 (* <Linear Pumps Old Position> ----------------------------------------------------------------------------------------- *)
 // display linear pumps old position saved on persistent memory when in Calibration Mode
 IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
@@ -988,10 +993,10 @@ IF GVL_Motion.bInitialHomingDone THEN
 	cM1MaxPosition := GVL_Settings.stMachineParam.aM1Position[2];	
 
 	// Read motor Position
-	rM1MotorPosition := GVL_Motion.aMotors[1].GetPosition();
+	rM1MotorPosition := GVL_Motion.M1Motor.rActualPos;
 	
 	//Check if cM1MaxPosition has a number different from 0
-	IF cM1MaxPosition > 0 THEN
+	IF cM1MaxPosition < 0 THEN
 		// Scaling the motor position (0 = 0%, -320 = 100%)
 		rM1MotorPositionPerc := ((rM1MotorPosition - cM1MinPosition) / (cM1MaxPosition - cM1MinPosition)) * 100.0; //Error 06/10/25
 	ELSE
@@ -1005,7 +1010,7 @@ IF GVL_Motion.bInitialHomingDone THEN
 		rM1MotorPositionPerc := 100;
 	END_IF
 	
-	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 0 + (TO_REAL(rM1MotorPositionPerc)*1.35); //Adding y pixel home and sending the scaled value throug GVL_HMI
+	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 0 + (TO_REAL(rM1MotorPositionPerc)*1.55); //Adding y pixel home and sending the scaled value throug GVL_HMI
 ELSE
 	GVL_HMI.HMIAnimation.rM1VerticalAnimation := 0; //Default Value
 END_IF]]></ST>
@@ -1020,10 +1025,10 @@ IF GVL_Motion.bInitialHomingDone THEN
 	cM2MaxPosition := GVL_Settings.stMachineParam.aM2Position[4]; //Calibration Position witch is the most away position the motor will reach	
 
 	// Read motor Position
-	rM2MotorPosition := GVL_Motion.aMotors[2].GetPosition();
+	rM2MotorPosition := GVL_Motion.M2Motor.rActualPos;
 	
 	//Check if cM2MaxPosition has a number different from 0
-	IF cM2MaxPosition > 0 THEN
+	IF cM2MaxPosition < 0 THEN
 		// Scaling the motor position (0 = 0%, -320 = 100%)
 		rM2MotorPositionPerc := ((rM2MotorPosition - cM2MinPosition) / (cM2MaxPosition - cM2MinPosition)) * 100.0; //Error 06/10/25
 	ELSE
@@ -1037,7 +1042,7 @@ IF GVL_Motion.bInitialHomingDone THEN
 		rM2MotorPositionPerc := 100;
 	END_IF
 	
-	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 0 + TO_REAL(rM2MotorPositionPerc); //Adding y pixel home and sending the scaled value throug GVL_HMI
+	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 0 + (TO_REAL(rM2MotorPositionPerc)*0.9); //Adding y pixel home and sending the scaled value throug GVL_HMI
 ELSE
 	GVL_HMI.HMIAnimation.rM2VerticalAnimation := 0; //Default Value
 END_IF]]></ST>
@@ -1053,6 +1058,9 @@ END_IF]]></ST>
       <LineId Id="1386" Count="13" />
       <LineId Id="1402" Count="3" />
       <LineId Id="1363" Count="0" />
+      <LineId Id="1499" Count="1" />
+      <LineId Id="1502" Count="1" />
+      <LineId Id="1501" Count="0" />
       <LineId Id="817" Count="1" />
       <LineId Id="825" Count="0" />
       <LineId Id="820" Count="1" />

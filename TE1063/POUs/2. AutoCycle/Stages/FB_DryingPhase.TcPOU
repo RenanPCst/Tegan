@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_DryingPhase" Id="{3fed5c2e-00c0-41f9-b86a-23cb950cee48}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_DryingPhase
 
@@ -11,13 +11,14 @@ VAR_OUTPUT
 	bDryingError : BOOL := FALSE;
 END_VAR
 VAR
-	eDryState	: (IDLE, POSITION_M1, OPEN_AIR, WAITING_TIME, CLOSE_AIR, DONE, ERROR); //Drying Phase internal States
+	eDryState	: (IDLE, POSITION_M1, OPEN_AIR, WAITING_TIME, CLOSE_AIR, HOME_M1, DONE, ERROR); //Drying Phase internal States
 	
 	fbSolenoidControl : FB_SolenoidControl; //Solenoid control fb instance
 	tonAirDryTime : ton; //Timer to run air trought stages
 	
 	bStart 	: BOOL := FALSE; //Start Flag	
-	bMoveM1	: BOOL := FALSE; // M2 Vertical Motor Movement Flag
+	bMoveM1	: BOOL := FALSE; // M1 Vertical Motor Movement Flag
+	bM1RightPosition	: BOOL := FALSE; // Make sure M1 is in the right position
 	
 	//HMI progress bar animation variables
 	tStartTime : TIME := T#0S; // Drying start timestamp
@@ -60,27 +61,42 @@ CASE eDryState OF
         END_IF
 	
 	POSITION_M1:
+		// Updating the HMI icon text
+		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Moving Motor';
+		
 		IF NOT bMoveM1 THEN // M1 Movement to dry position
-			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(
-				rPosition := GVL_Settings.stMachineParam.aM1Position[3],
-				rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-				rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-				rDec := GVL_Settings.stMachineParam.rM1Deceleration
-			);
+			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[3],
+															rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+															rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+															rDec := GVL_Settings.stMachineParam.rM1Deceleration
+															);
 		END_IF
+		
+		
+		
 		IF bMoveM1 THEN
 			bMoveM1 := FALSE; // Reset Movement flag
 			eDryState := OPEN_AIR; // Next step
 		END_IF
 	
 	OPEN_AIR:
-		fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.AIRDRY); //Set air by solenoid position
-		IF fbSolenoidControl.bDone THEN
-			eDryState := WAITING_TIME;
+		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[3]) <= 2.0;
+		// Check if the motor M1 is in the correct position
+		IF bM1RightPosition THEN
+			// Set air by solenoid position
+			IF GVL_IO.gSetSolenoidControl.AirDry() THEN
+				eDryState := WAITING_TIME; // Move to next step
+			END_IF
+		ELSE
+			bMoveM1 := FALSE; // Reset Movement flag
+			eDryState := POSITION_M1;
 		END_IF
 	
 	WAITING_TIME:
-		fbSolenoidControl(bExecute := FALSE); //Resets solenoid position
+		// Updating the HMI icon text
+		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Drying';
+		
+		//fbSolenoidControl(bExecute := FALSE); //Resets solenoid position
 		tonAirDryTime(in := TRUE, pt := GVL_Recipe.stActiveRecipe.stOtherParams.tAirDryTime); //Start timer
 		IF tonAirDryTime.Q THEN
 			eDryState := CLOSE_AIR;
@@ -88,20 +104,47 @@ CASE eDryState OF
 		
 	CLOSE_AIR:
 		tonAirDryTime(in := FALSE); //Timer resets
-		fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE); //Set air by solenoid position
-		IF fbSolenoidControl.bDone THEN
-			fbSolenoidControl(bExecute := FALSE); //Resets solenoid position
-			eDryState := DONE; //moving to Done Step
+		//fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE); //Set air by solenoid position
+		IF GVL_IO.gSetSolenoidControl.Idle() THEN //IF fbSolenoidControl.bDone THEN
+			bMoveM1 := FALSE;
+			eDryState := HOME_M1; //moving to Done Step
 		END_IF
 		
-	DONE:
-		fbSolenoidControl(bExecute := FALSE); //Resets solenoid position
-		//HMI Icon animation
-		GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Completed;
-		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Completed'; 
-		GVL_HMI.HMIAnimation.rLoadBarDry   := 100;
+	HOME_M1:
+		// Updating the HMI icon text
+		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Homing Motor';
 		
-		bDryingDone := TRUE; //Sucess flag
+		IF NOT bMoveM1 THEN // M1 Movement to dry position
+			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[1],
+															rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+															rAcc := GVL_Settings.stMachineParam.rM1Accleration,
+															rDec := GVL_Settings.stMachineParam.rM1Deceleration
+															);
+		END_IF
+		
+		
+		
+		IF bMoveM1 THEN
+			bMoveM1 := FALSE; // Reset Movement flag
+			eDryState := DONE; // Next step
+		END_IF
+		
+		
+	DONE:
+		// Check if M1 was homed 
+		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[1]) <= 2.0;
+		IF bM1RightPosition THEN
+			//HMI Icon animation
+			GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Completed;
+			GVL_HMI.HMIAnimation.sLoadTextDry  := 'Completed'; 
+			GVL_HMI.HMIAnimation.rLoadBarDry   := 100;
+			
+			bDryingDone := TRUE; //Sucess flag
+		ELSE
+			bMoveM1 := FALSE; // Reset Movement flag
+			eDryState := HOME_M1; // step back
+		END_IF
+		
 			
 	ERROR:
 		//HMI Icon animation
@@ -152,7 +195,7 @@ bDryingError  := FALSE;
 eDryState	:= IDLE;
 
 //fb's and timers
-fbSolenoidControl(bExecute := FALSE);
+//fbSolenoidControl(bExecute := FALSE);
 tonAirDryTime(In := FALSE);
 
 //initiation flags
@@ -199,18 +242,29 @@ END_IF
       <LineId Id="76" Count="0" />
       <LineId Id="46" Count="1" />
       <LineId Id="44" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="169" Count="0" />
       <LineId Id="80" Count="0" />
-      <LineId Id="83" Count="4" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="85" Count="2" />
       <LineId Id="81" Count="1" />
+      <LineId Id="198" Count="2" />
       <LineId Id="48" Count="0" />
       <LineId Id="90" Count="0" />
       <LineId Id="88" Count="1" />
       <LineId Id="58" Count="0" />
       <LineId Id="49" Count="0" />
-      <LineId Id="93" Count="0" />
-      <LineId Id="95" Count="2" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="213" Count="2" />
+      <LineId Id="210" Count="2" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="207" Count="0" />
       <LineId Id="59" Count="0" />
       <LineId Id="51" Count="0" />
+      <LineId Id="170" Count="2" />
       <LineId Id="98" Count="0" />
       <LineId Id="60" Count="0" />
       <LineId Id="45" Count="0" />
@@ -222,12 +276,19 @@ END_IF
       <LineId Id="62" Count="0" />
       <LineId Id="109" Count="0" />
       <LineId Id="106" Count="2" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="223" Count="15" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="220" Count="0" />
       <LineId Id="55" Count="0" />
+      <LineId Id="239" Count="0" />
       <LineId Id="110" Count="0" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="114" Count="0" />
-      <LineId Id="112" Count="1" />
-      <LineId Id="116" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="243" Count="4" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="248" Count="2" />
+      <LineId Id="242" Count="0" />
       <LineId Id="118" Count="0" />
       <LineId Id="117" Count="0" />
       <LineId Id="57" Count="0" />

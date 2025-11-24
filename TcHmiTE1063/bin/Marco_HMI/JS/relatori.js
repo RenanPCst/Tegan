@@ -275,8 +275,6 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         // 2. Criar a instância jsPDF
         const doc = new jspdf.jsPDF();
         
-        
-     
             // 3. Add the Head Information (reportInfo)
             doc.setFontSize(16);
             doc.setFont("helvetica", "bold");
@@ -447,6 +445,194 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         alert("An Error Occured! Verify the console for more details.");
     }
 };
+
+async function genCompleteMethodReport(allRevisions, reportName) {
+    try {
+        const doc = new jspdf.jsPDF();
+
+        const validMethods = allRevisions.filter(m => 
+            m.methodName && m.methodName.trim() !== ""
+            );
+
+        validMethods.forEach((methodData, index) => {
+
+            if (index > 0) doc.addPage();
+
+            let x = 10;
+            let y = 80;
+
+            // Cabeçalho
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("TEGAN 1063 - Automated Sample Recovery System", 10, 15);
+            doc.text(`${reportName} - Revision ${methodData.methodRevision}`, 10, 25);
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 10, 35);
+            doc.text(`System ID: ${methodData.methodID}`, 100, 35);
+            doc.text(`Printed by: operator`, 100, 45);
+
+            doc.line(10, 50, 200, 50);
+
+            // Dados do método
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Method Name:", 35, 55, { align: "right" });
+            doc.text("Revision:", 35, 60, { align: "right" });
+            doc.text("Created By:", 35, 65, { align: "right" });
+            doc.text("On:", 35, 70, { align: "right" });
+
+            doc.setFont("helvetica", "normal");
+            doc.text(methodData.methodName, 35, 55);
+            doc.text(methodData.methodRevision, 35, 60);
+            doc.text(methodData.methodCreatedBy, 35, 65);
+            doc.text(methodData.methodCreatedOn, 35, 70);
+
+            // Step Parameters
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("Step Parameters", x, y);
+
+            doc.text("Rinse 1", x+60, y);
+            doc.text("Rinse 2", x+80, y);
+            doc.text("Wash 1",  x+100, y);
+            doc.text("Wash 2",  x+120, y);
+
+            doc.setFontSize(8);
+            doc.text("Solvent #", x+35, y+10, { align:"right" });
+            doc.text("Time (sec)", x+35, y+15, { align:"right" });
+            doc.text("Velocity (RPM)", x+35, y+20, { align:"right" });
+
+            y += 15;
+            doc.line(x, y, 145, y);
+            y += 5;
+
+            doc.setFont("helvetica", "normal");
+
+            // Solvents
+            doc.text(methodData.solvent_R1, x+60, y);
+            doc.text(methodData.solvent_R2, x+80, y);
+            doc.text(methodData.solvent_W1, x+100, y);
+            doc.text(methodData.solvent_W2, x+120, y);
+
+            y += 5;
+
+            // Times
+            doc.text(methodData.time_R1, x+60, y);
+            doc.text(methodData.time_R2, x+80, y);
+            doc.text(methodData.time_W1, x+100, y);
+            doc.text(methodData.time_W2, x+120, y);
+
+            y += 5;
+
+            // Velocity
+            doc.text(methodData.velocity_R1, x+60, y);
+            doc.text(methodData.velocity_R2, x+80, y);
+            doc.text(methodData.velocity_W1, x+100, y);
+            doc.text(methodData.velocity_W2, x+120, y);
+
+            // Misc
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("Misc. Parameters", 150, 55);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.text(`Soak Time: ${methodData.soakTime}`, 150, 85);
+            doc.text(`Agitate 1 Time: ${methodData.agitate_1_Time}`, 150, 90);
+            doc.text(`Agitate 2 Time: ${methodData.agitate_2_Time}`, 150, 95);
+            doc.text(`Vials to Fill: ${methodData.vialsToFill}`, 150, 100);
+            doc.text(`Vial Prime Vol: ${methodData.vialPrimeVol}`, 150, 105);
+            doc.text(`Vial 1 Fill Vol: ${methodData.vial_1_FillVol}`, 150, 110);
+            doc.text(`Vial 2-4 Fill Vol: ${methodData.vial_2_4_FillVol}`, 150, 115);
+            doc.text(`Air Dry Time: ${methodData.airDryTime}`, 150, 120);
+
+            // Volume Data
+            y += 25;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text("Volume Data", x+15, y);
+
+            y += 5;
+            doc.setFontSize(8);
+
+            doc.text("Pump", x+15, y);
+            doc.text("Stage", x+35, y);
+            doc.text("Rinse 1", x+47, y);
+            doc.text("Rinse 2", x+67, y);
+            doc.text("Wash 1", x+83, y);
+            doc.text("Wash 2", x+99, y);
+
+            y += 5;
+            doc.line(x, y, 200, y);
+            y += 5;
+
+            methodData.volumeData.forEach(v => {
+                if (!v.pump.trim()) return;
+
+                doc.text(v.pump, x+15, y);
+                doc.text(v.stage, x+35, y);
+                doc.text(v.rinse1, x+47, y);
+                doc.text(v.rinse2, x+67, y);
+                doc.text(v.wash1, x+83, y);
+                doc.text(v.wash2, x+99, y);
+
+                y += 5;
+            });
+
+            doc.line(x, y, 200, y);
+        });
+
+        // Numeração das páginas
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let p=1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setFontSize(8);
+            doc.text(`Page ${p} of ${totalPages}`, 200, 5, { align:"center" });
+        }
+
+        // Exibir PDF
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Voltar";
+        backButton.style = `
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+    `;
+        backButton.onclick = () => {
+            window.location.reload(); // volta à tela inicial
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+    }};
+
+        
+
 
 async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportName) {
     try {
@@ -1180,6 +1366,7 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         alert("An Error Occured! Verify the console for more details.");
     }
 };
+
 async function genCurrentSysReport(sysDataArray, reportName) {
     try {
 

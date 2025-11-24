@@ -110,12 +110,7 @@ CASE CurrentState OF
 			CurrentState := E_MachineStates.CHECK_AIR_FLOW;
 		END_IF;
 
-	E_MachineStates.CHECK_AIR_FLOW: //Checking is the air supply is higher than the air supply threshold
-			//Provide HMI animation details
-			GVL_HMI.HMIAnimation.sLoadTextAirFlow := 'Checking'; 
-			GVL_HMI.HMIAnimation.rLoadBarAirFlow  := 0;
-			GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.InProgress;		
-	
+	E_MachineStates.CHECK_AIR_FLOW: //Checking is the air supply is higher than the air supply threshold	
 			// 1. Check if the pressure sensor reports an error
 			IF GVL_IO.gAnalogInputs.bPressureRegulatorError THEN
 				//Trigger Error Event
@@ -149,16 +144,7 @@ CASE CurrentState OF
 					CurrentState := E_MachineStates.ERROR_STATE;
 					GVL_IO.gDigOutputs.bTowerRedLight := TRUE; // Activate alarm
 				ELSIF bAirSupplyStable THEN
-					//Trigger info Event
-					fbEventHandler(
-						bExecute  	:= bExecuteEvent,
-						eEventName 	:= E_Events.INFO,
-						sSystem    	:= 'Air Supply Check',
-						sMessage   	:= 'Air Supply OK!',
-						bDone      	=> bEventDone
-					);
-					ResetEventTrigger(); //Reset the Error Event
-					CurrentState := E_MachineStates.RECOVERY_PHASE; //E_MachineStates.SEAL_STAGES; //TEMP: Motor 1 Out 
+					CurrentState := E_MachineStates.SEAL_STAGES; // next step
 				END_IF;
 			END_IF;	
 
@@ -183,15 +169,20 @@ CASE CurrentState OF
 			END_IF
 	
 			//step forward to step ahead
-			IF fbSealStages.bSealSuccess AND fbMeteringSolvent1.bDone AND NOT fbSealStages.bSealError AND NOT fbMeteringSolvent1.bError THEN
-				GVL_Settings.bMeteringSolvent1Done := TRUE;
- 				IF fbMeteringSolvent1.Reset() THEN
-					CurrentState := E_MachineStates.RECOVERY_PHASE; //step forward to step ahead TEMP:				
+			IF NOT GVL_Settings.bGeneralSealAndPump THEN
+				IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
+					CurrentState := E_MachineStates.LEAK_TEST; //step forward to step ahead (* ################ TESTING ################# *)
+				END_IF
+			ELSE
+				IF fbSealStages.bSealSuccess AND fbMeteringSolvent1.bDone AND NOT fbSealStages.bSealError AND NOT fbMeteringSolvent1.bError THEN
+					GVL_Settings.bMeteringSolvent1Done := TRUE;
+					IF fbMeteringSolvent1.Reset() THEN
+						CurrentState := E_MachineStates.LEAK_TEST;  //step forward to step ahead			
+					END_IF
 				END_IF
 			END_IF
 	
 	E_MachineStates.LEAK_TEST: //Leaking test on 10 loops
-	IF bStatePass1 THEN
 		// Call the Leak Test function block
         fbLeakTest(
             bExecute 			:= TRUE,
@@ -205,13 +196,12 @@ CASE CurrentState OF
 
         // Transition to the next state if the test is completed successfully
         IF bTestCompleted THEN
-            CurrentState := E_MachineStates.RECOVERY_PHASE;
+            CurrentState := E_MachineStates.RECOVERY_PHASE; 
         
         // If the test fails, log the error and transition to ERROR state
         ELSIF bTestFailed THEN
             CurrentState := E_MachineStates.ERROR_STATE;
         END_IF;
-	END_IF
 	
     E_MachineStates.RECOVERY_PHASE:
       
@@ -267,10 +257,12 @@ CASE CurrentState OF
         GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //red light
 		
 		//Event Trigger Info State - Error State
-		sSystem := 'StateMachine.Error'; sMessage := 'Error State!';
-		fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.ERROR, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
-		ResetEventTrigger();
-		GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT; 
+		
+		
+		// Set Solenoids back to idle position
+		GVL_IO.gSetSolenoidControl.Idle();
+		
+		GVL_HMI.eMachineMode := E_MachineMode.STOPPED; 
 		
         IF GVL_IO.gDigInputs.bStopButton THEN
             bErrorFlag := FALSE;
@@ -296,31 +288,39 @@ fbEventHandler(bExecute := FALSE);
 CurrentState := E_MachineStates.INIT;
 
 //Reset the HMI Icons animation
-GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateAirFlow 	:= E_IconState.Waiting;
 GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
 GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
-GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Waiting;
-GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateWashing 	:= E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateDry 		:= E_IconState.Waiting;
 
 // Reset State flags
-bInitCheckDone := FALSE;
-bInitError := FALSE;
-bAirSupplyStable := FALSE;
-bAirSupplyError := FALSE;
-bSealSuccess := FALSE;
-bSealError := FALSE;
-bTestCompleted := FALSE;
-bTestFailed := FALSE;
-sTestErrorMessage := '';
-bRecoverySuccess := FALSE;
-bRecoveryError := FALSE;
-bErrorFlag := FALSE;
-bExecuteEvent := FALSE;
-bEventDone := FALSE;
+bInitCheckDone 		:= FALSE;
+bInitError 			:= FALSE;
+bAirSupplyStable 	:= FALSE;
+bAirSupplyError 	:= FALSE;
+bSealSuccess 		:= FALSE;
+bSealError 			:= FALSE;
+bTestCompleted 		:= FALSE;
+bTestFailed 		:= FALSE;
+sTestErrorMessage 	:= '';
+bRecoverySuccess 	:= FALSE;
+bRecoveryError 		:= FALSE;
+bErrorFlag 			:= FALSE;
+bExecuteEvent 		:= FALSE;
+bEventDone 			:= FALSE;
 
-// FB's Reset
-IF fbSealStages.Reset() AND fbRecoveryPhase.Reset() AND fbLeakTest.Reset() AND fbMeteringSolvent1.Reset() THEN
+// Auto Cycle FB's Reset
+IF 	fbSealStages.Reset() 
+	AND fbRecoveryPhase.Reset() 
+	AND fbLeakTest.Reset() 
+	AND fbMeteringSolvent1.Reset() 
+	AND fbAirFlowCheck.Reset() 
+	AND fbInitChecks.Reset()
+	AND fbWashingPhase.Reset()
+	AND fbDryingPhase.Reset() THEN
+
 	Reset := TRUE;
 	RETURN;
 ELSE
@@ -342,21 +342,27 @@ END_IF;]]></ST>
       <LineId Id="1831" Count="4" />
       <LineId Id="1838" Count="32" />
       <LineId Id="1898" Count="1" />
-      <LineId Id="2210" Count="2" />
-      <LineId Id="1900" Count="0" />
-      <LineId Id="2209" Count="0" />
-      <LineId Id="1902" Count="44" />
+      <LineId Id="1902" Count="32" />
+      <LineId Id="1944" Count="2" />
       <LineId Id="1948" Count="0" />
       <LineId Id="1961" Count="0" />
       <LineId Id="1963" Count="7" />
       <LineId Id="2382" Count="4" />
-      <LineId Id="2002" Count="7" />
+      <LineId Id="2002" Count="6" />
+      <LineId Id="2530" Count="1" />
+      <LineId Id="2533" Count="1" />
+      <LineId Id="2532" Count="0" />
+      <LineId Id="2009" Count="0" />
       <LineId Id="2388" Count="1" />
       <LineId Id="2392" Count="0" />
       <LineId Id="2391" Count="0" />
-      <LineId Id="2011" Count="8" />
+      <LineId Id="2011" Count="0" />
+      <LineId Id="2536" Count="0" />
+      <LineId Id="2012" Count="1" />
+      <LineId Id="2015" Count="4" />
       <LineId Id="2461" Count="0" />
-      <LineId Id="2020" Count="18" />
+      <LineId Id="2020" Count="12" />
+      <LineId Id="2034" Count="4" />
       <LineId Id="2044" Count="7" />
       <LineId Id="2053" Count="2" />
       <LineId Id="2151" Count="0" />
@@ -368,7 +374,13 @@ END_IF;]]></ST>
       <LineId Id="2294" Count="11" />
       <LineId Id="2071" Count="3" />
       <LineId Id="2312" Count="0" />
-      <LineId Id="2080" Count="13" />
+      <LineId Id="2080" Count="4" />
+      <LineId Id="2087" Count="0" />
+      <LineId Id="2606" Count="0" />
+      <LineId Id="2609" Count="0" />
+      <LineId Id="2608" Count="0" />
+      <LineId Id="2605" Count="0" />
+      <LineId Id="2088" Count="5" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StateMachine.Reset">
@@ -377,7 +389,11 @@ END_IF;]]></ST>
       <LineId Id="82" Count="3" />
       <LineId Id="88" Count="4" />
       <LineId Id="86" Count="0" />
-      <LineId Id="57" Count="19" />
+      <LineId Id="57" Count="18" />
+      <LineId Id="100" Count="4" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="76" Count="0" />
       <LineId Id="96" Count="0" />
       <LineId Id="77" Count="1" />
       <LineId Id="19" Count="0" />
