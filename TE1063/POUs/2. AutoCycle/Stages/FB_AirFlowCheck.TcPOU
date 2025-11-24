@@ -76,13 +76,7 @@ CASE iState OF
             iState := 0; // Ensure reset if requested
         ELSIF TON_Stabilization.Q THEN
             bTimerActive := FALSE;
-            TON_Stabilization(IN := FALSE); // Stop the timer
-            
-            bAirFlowOK     := TRUE;
-            bAirFlowError  := FALSE;
-			
-			bProgressBarComplete := FALSE;
-            
+            TON_Stabilization(IN := FALSE); // Stop the timer       
             iState := 4; // Proceed to final state
         ELSE
             TON_Stabilization(IN := bTimerActive, PT := tStabilizationTime); // Keep the timer running
@@ -92,6 +86,10 @@ CASE iState OF
         IF bReset THEN
             iState := 0; // Ensure reset from final state
         END_IF;
+		
+		bProgressBarComplete := FALSE;
+		bAirFlowOK     := TRUE;
+        bAirFlowError  := FALSE;
 
     99:	// State 99: Error state
         IF bReset THEN
@@ -110,7 +108,8 @@ END_CASE;]]></ST>
 
 // Static text and default icon for this FB
 IF NOT bProgressBarComplete THEN
-	GVL_HMI.HMIAnimation.sLoadTextAirFlow := 'Init Checks';
+	GVL_HMI.HMIAnimation.sLoadTextAirFlow  := 'Init Checks';
+	GVL_HMI.HMIAnimation.rLoadBarAirFlow   := 0.0;
 	GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.InProgress;
 END_IF
 
@@ -174,15 +173,19 @@ RETURN;]]></ST>
       <LineId Id="288" Count="0" />
       <LineId Id="291" Count="12" />
       <LineId Id="305" Count="16" />
-      <LineId Id="323" Count="9" />
-      <LineId Id="396" Count="1" />
-      <LineId Id="333" Count="4" />
+      <LineId Id="323" Count="6" />
+      <LineId Id="334" Count="3" />
       <LineId Id="339" Count="4" />
+      <LineId Id="458" Count="0" />
+      <LineId Id="460" Count="1" />
+      <LineId Id="459" Count="0" />
       <LineId Id="345" Count="7" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_AirFlowCheck.ACT_HMIProgressBar">
-      <LineId Id="2" Count="22" />
+      <LineId Id="2" Count="6" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="9" Count="15" />
       <LineId Id="28" Count="8" />
       <LineId Id="1" Count="0" />
     </LineIds>
