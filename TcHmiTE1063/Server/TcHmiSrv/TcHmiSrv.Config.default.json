@@ -1,6 +1,6 @@
 {
     "AUTHCLIENTCERTIFICATE": false,
-    "AUTO_LOGINUSER": "",
+    "AUTO_LOGINUSER": "__SystemAdministrator",
     "AUTO_LOGOFF": "P30D",
     "CACHEENABLED": true,
     "CACHEMAXAGE": "P30D",
@@ -26,7 +26,7 @@
     "DEFAULTLOCALE": "client",
     "DEFAULTTIMEFORMATLOCALE": "client",
     "DEFAULTTIMEZONE": "client",
-    "DEFAULTUSERGROUP": "__SystemUsers",
+    "DEFAULTUSERGROUP": "__SystemAdministrators",
     "DEFINITIONS": {
         "PLC1.ARRAY_0..1000_OF-ST_Data_CUL": {
             "items": {
@@ -9234,6 +9234,40 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bShowAutoCyclePopup": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bShowAutoCyclePopup",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Controls Auto Cycle popup visibility on HMI"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bStartAutoCycleButton": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bStartAutoCycleButton",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Start AUto Cycle Button from Auto Cycle popup"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bStartCalibrationBt": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -9258,6 +9292,23 @@
             "MAPPING": "PLC1::GVL_HMI::bStopPumpsBt",
             "SCHEMA": {
                 "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bSystemReady_ReqAutoCycle": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bSystemReady_ReqAutoCycle",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "One-shot request to go to AUTO_CYCLE from SystemReady"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -9456,6 +9507,24 @@
             "SCHEMA": {
                 "allOf": [
                     {
+                        "maxLength": 256
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.sAutoCycleComment": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::sAutoCycleComment",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Comment inserted by user before going to autocycle",
                         "maxLength": 256
                     },
                     {
@@ -14722,8 +14791,11 @@
                 "PLC1.GVL_HMI.bScaleFixed": 3,
                 "PLC1.GVL_HMI.bScaleNeedsAtention": 3,
                 "PLC1.GVL_HMI.bSettingsCorrectLoaded": 3,
+                "PLC1.GVL_HMI.bShowAutoCyclePopup": 3,
+                "PLC1.GVL_HMI.bStartAutoCycleButton": 3,
                 "PLC1.GVL_HMI.bStartCalibrationBt": 3,
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
+                "PLC1.GVL_HMI.bSystemReady_ReqAutoCycle": 3,
                 "PLC1.GVL_HMI.eMachineMode": 3,
                 "PLC1.GVL_HMI.iCalMoveM1MotorPosition": 3,
                 "PLC1.GVL_HMI.iCalMoveValvesPosition": 3,
@@ -14745,6 +14817,7 @@
                 "PLC1.GVL_HMI.rTimeCountingDown": 3,
                 "PLC1.GVL_HMI.sActivatedRecipeHomeNaming": 3,
                 "PLC1.GVL_HMI.sActualUserName": 3,
+                "PLC1.GVL_HMI.sAutoCycleComment": 3,
                 "PLC1.GVL_HMI.sCalibProgressLabel": 3,
                 "PLC1.GVL_HMI.sCountdownText": 3,
                 "PLC1.GVL_HMI.sDateAndTimeEventTriggered": 3,
