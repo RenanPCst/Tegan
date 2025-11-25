@@ -1,0 +1,209 @@
+<div id="Content1_3" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="480" data-tchmi-height="350">
+
+<div id="TcHmiRectangle_popUpBackground_244" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiRectangle" data-tchmi-height="350" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width="480" data-tchmi-width-unit="px">
+<script data-tchmi-target-attribute="data-tchmi-background-color" type="application/json">
+{
+  "angle": 0.0,
+  "stopPoints": [
+    {
+      "color": "rgba(17, 57, 91, 1)",
+      "stop": "25%"
+    },
+    {
+      "color": "rgba(42, 93, 139, 1)",
+      "stop": "75%"
+    }
+  ]
+}
+</script>
+</div>
+<div id="TcHmiTextblock_1043" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="86" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-text="Please, insert the Full Cycle
+comment below:" data-tchmi-top="38" data-tchmi-top-unit="px" data-tchmi-width="450" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="26" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center">
+<script data-tchmi-target-attribute="data-tchmi-text-color" type="application/json">
+{
+  "color": "rgba(255, 255, 255, 1)"
+}
+</script>
+</div>
+<div id="TcHmiButton_ScaleAttentionContinue_20" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="65" data-tchmi-left-unit="px" data-tchmi-text="Continue" data-tchmi-top="249" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ScaleAttentionContinue_20.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "(function () {",
+          "",
+          "    // 1) Get textbox control",
+          "    var textbox = TcHmi.Controls.get('TcHmiTextbox_AutoCycleComment');",
+          "    if (!textbox) {",
+          "        TcHmi.Log.error('TcHmiTextbox_AutoCycleComment not found.');",
+          "        return;",
+          "    }",
+          "",
+          "    // 2) Read current text",
+          "    var text = textbox.getText() || '';",
+          "    var defaultText = 'Type here...';",
+          "",
+          "    // 3) Validation:",
+          "    //    - Must be different from default placeholder text",
+          "    //    - Must have more than 10 characters",
+          "    if (text === defaultText || text.trim().length <= 10) {",
+          "        TcHmi.Dialog.alert('Please write a meaningful comment (more than 10 characters).');",
+          "        return;",
+          "    }",
+          "",
+          "    // 4) First: write comment text into PLC1.GVL_HMI.sAutoCycleComment",
+          "    TcHmi.Symbol.writeEx(",
+          "        '%s%PLC1.GVL_HMI.sAutoCycleComment%/s%',",
+          "        text,",
+          "        function (data1) {",
+          "            if (data1.error !== TcHmi.Errors.NONE) {",
+          "                TcHmi.Log.error('Error writing sAutoCycleComment: ' + data1.error);",
+          "                TcHmi.Dialog.alert('Error sending comment to PLC.');",
+          "                return;",
+          "            }",
+          "",
+          "            // 5) If comment write was successful, arm the StartAutoCycle button flag",
+          "            TcHmi.Symbol.writeEx(",
+          "                '%s%PLC1.GVL_HMI.bStartAutoCycleButton%/s%',",
+          "                true,",
+          "                function (data2) {",
+          "                    if (data2.error !== TcHmi.Errors.NONE) {",
+          "                        TcHmi.Log.error('Error writing bStartAutoCycleButton: ' + data2.error);",
+          "                        TcHmi.Dialog.alert('Error sending Start request to PLC.');",
+          "                    }",
+          "                }",
+          "            );",
+          "        }",
+          "    );",
+          "",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.bStartAutoCycleButton%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "ControlApiFunction",
+                "active": true,
+                "control": "TcHmiPopup_DialogPopup",
+                "fn": "close",
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiButton_ScaleAttentionClose_20" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="265" data-tchmi-left-unit="px" data-tchmi-text="Abort" data-tchmi-top="249" data-tchmi-top-unit="px" data-tchmi-width="150" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="25">
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "TcHmiButton_ScaleAttentionClose_20.onPressed",
+    "actions": [
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "(function () {",
+          "",
+          "    // 1) Reset textbox on HMI",
+          "    var textbox = TcHmi.Controls.get('TcHmiTextbox_AutoCycleComment');",
+          "    if (textbox) {",
+          "        textbox.setText('Type here...');",
+          "    } else {",
+          "        TcHmi.Log.warn('TcHmiTextbox_AutoCycleComment not found (Abort).');",
+          "    }",
+          "",
+          "    // 2) Helper to write a single symbol and log errors",
+          "    function writeSymbol(symbol, value) {",
+          "        TcHmi.Symbol.writeEx(symbol, value, function (data) {",
+          "            if (data.error !== TcHmi.Errors.NONE) {",
+          "                TcHmi.Log.error('Error writing ' + symbol + ': ' + data.error);",
+          "            }",
+          "        });",
+          "    }",
+          "",
+          "    // 3) Clear comment string in PLC",
+          "    writeSymbol('%s%PLC1.GVL_HMI.sAutoCycleComment%/s%', '');",
+          "",
+          "    // 4) Reset popup start button flag",
+          "    writeSymbol('%s%PLC1.GVL_HMI.bStartAutoCycleButton%/s%', false);",
+          "",
+          "    // 5) Close popup",
+          "    writeSymbol('%s%PLC1.GVL_HMI.bShowAutoCyclePopup%/s%', false);",
+          "",
+          "})();",
+          ""
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_DialogPopup",
+        "fn": "close",
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiTextbox_AutoCycleComment" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextbox" data-tchmi-height="89" data-tchmi-height-unit="px" data-tchmi-left="10" data-tchmi-left-unit="px" data-tchmi-text="Type here..." data-tchmi-top="136" data-tchmi-top-unit="px" data-tchmi-width="450" data-tchmi-width-unit="px" data-tchmi-multiline="true" data-tchmi-text-horizontal-alignment="Left" data-tchmi-text-font-family="" data-tchmi-text-font-size="18">
+<script data-tchmi-target-attribute="data-tchmi-content-padding" type="application/json">
+{
+  "top": 3,
+  "right": 3,
+  "bottom": 3,
+  "left": 3
+}
+</script>
+
+</div>
+</div>
