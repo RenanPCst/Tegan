@@ -3535,6 +3535,206 @@
             },
             "type": "object"
         },
+        "PLC1.ST_PostRunReport": {
+            "properties": {
+                "CalibrationNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 18
+                        }
+                    ]
+                },
+                "analyst": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "comment": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "emptyTubesFactor": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 9
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "fillTubesFactor": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 10
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "meterVelocity": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "methodID": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 17
+                        }
+                    ]
+                },
+                "runNo": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "runVelocity": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "softwareVersion": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "solvent1NameRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 11
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "solvent2NameRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 12
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "solvent3NameRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 13
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "solvent4NameRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 14
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sysMasterRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sysSettingsRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "timeEventCompleted": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 16
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "timeEventStarted": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 15
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "PLC1.ST_PumpCommand": {
             "properties": {
                 "bActive": {
@@ -7568,6 +7768,16 @@
             "MAPPING": "PLC1::GVL_DB::stParameter_PCR",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ST_Parameters_PCR"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_DB.stPostRunInfo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_DB::stPostRunInfo",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_PostRunReport"
             },
             "USEMAPPING": true
         },
@@ -14658,6 +14868,7 @@
                 "PLC1.GVL_DB.slctLastCalibID": 3,
                 "PLC1.GVL_DB.stParameter_MR": 3,
                 "PLC1.GVL_DB.stParameter_PCR": 3,
+                "PLC1.GVL_DB.stPostRunInfo": 3,
                 "PLC1.GVL_DB.stSysParameters": 3,
                 "PLC1.GVL_HMI.HMIAnimation": 3,
                 "PLC1.GVL_HMI.HMIAnimation.aSolventLevel": 3,

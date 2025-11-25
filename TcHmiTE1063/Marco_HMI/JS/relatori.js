@@ -99,7 +99,7 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         
         // Add Parameter Table Data
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.text(methodData.solvent_R1, xPosition+60, yPosicao, { align: "center" });
         doc.text(methodData.solvent_R2, xPosition+80, yPosicao, { align: "center" });
         doc.text(methodData.solvent_W1, xPosition+100, yPosicao, { align: "center" });
@@ -117,18 +117,26 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         yPosicao += 5; 
         //---------------------
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Misc. Parameters", 150, yPosicao-25, { align: "left" });
+        doc.setFontSize(10);
+        doc.text("Misc. Parameters", 170, yPosicao-25, { align: "center" });
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(`Soak Time: ${methodData.soakTime}`, 150, 85);
-        doc.text(`Agitate 1 Time: ${methodData.agitate_1_Time}`, 150, 90);
-        doc.text(`Agitate 2 Time: ${methodData.agitate_2_Time}`, 150, 95);
-        doc.text(`Vials to Fill: ${methodData.vialsToFill}`, 150, 100);
-        doc.text(`Vial Prime Vol: ${methodData.vialPrimeVol}`, 150, 105);
-        doc.text(`Vial 1 Fill Vol: ${methodData.vial_1_FillVol}`, 150, 110);
-        doc.text(`Vial 2-4 Fill Vol: ${methodData.vial_2_4_FillVol}`, 150, 115);
-        doc.text(`Air Dry Time: ${methodData.airDryTime}`, 150, 120);
+        doc.setFontSize(10);
+        doc.text(`Soak Time: `, 180, 85, { align: "right" });
+        doc.text(` ${methodData.soakTime} sec`, 180, 85, { align: "left" });
+        doc.text(`Agitate 1 Time: `, 180, 90, { align: "right" });
+        doc.text(` ${methodData.agitate_1_Time} sec`, 180, 90, { align: "left" });
+        doc.text(`Agitate 2 Time: `, 180, 95, { align: "right" });
+        doc.text(` ${methodData.agitate_2_Time} sec`, 180, 95, { align: "left" });
+        doc.text(`Vials to Fill: `, 180, 100, { align: "right" });
+        doc.text(` ${methodData.vialsToFill}`, 180, 100, { align: "left" });
+        doc.text(`Vial Prime Vol: `, 180, 105, { align: "right" });
+        doc.text(` ${methodData.vialPrimeVol} ml`, 180, 105, { align: "left" });
+        doc.text(`Vial 1 Fill Vol: `, 180, 110, { align: "right" });
+        doc.text(` ${methodData.vial_1_FillVol} ml`, 180, 110, { align: "left" });
+        doc.text(`Vial 2-4 Fill Vol: `, 180, 115, { align: "right" });
+        doc.text(` ${methodData.vial_2_4_FillVol} ml`, 180, 115, { align: "left" });
+        doc.text(`Air Dry Time: `, 180, 120, { align: "right" });
+        doc.text(` ${methodData.airDryTime} sec`, 180, 120, { align: "left" });
 
         yPosicao += 20;
 
@@ -136,7 +144,7 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("Volume Data", xPosition+15, yPosicao, { align: "center" });
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.text("Pump", xPosition+15, yPosicao+5, { align: "center" });
         doc.text("Stage", xPosition+35, yPosicao+5, { align: "center" });
         doc.text("Rinse 1", xPosition+47, yPosicao+5, { align: "center" });
@@ -150,7 +158,7 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         
         // 6. Add Data into the Table (volumeData)
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+        doc.setFontSize(9);
 
         // Filter out empty or invalid items before the loop
         const filteredData = volumeData.filter(item => 
@@ -180,47 +188,47 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
 
         // 7. Add Run Events data
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.text("Run Events", xPosition, yPosicao, { align: "center" });
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         yPosicao += 2.5;
-        doc.text(`Analyst:  `, xPosition, yPosicao+2.5, { align: "right" });
-        doc.text(runData.analyst, xPosition, yPosicao+2.5, { align: "left" });
-        doc.text(`Run No:  `, xPosition, yPosicao+5, { align: "right" });
-        doc.text(runData.runNo.toString(), xPosition, yPosicao+5, { align: "left" });
-        doc.text(`Calibration No:  `, xPosition, yPosicao+7.5, { align: "right" });
-        doc.text(runData.CalibrationNo.toString(), xPosition, yPosicao+7.5, { align: "left" });
-        doc.text(`Comment:  `, xPosition, yPosicao+10, { align: "right" });
-        doc.text(runData.comment, xPosition, yPosicao+10, { align: "left" });
-        doc.text(`--------------   `, xPosition, yPosicao+12.5, { align: "right" });
-        doc.text(`Software Version:  `, xPosition, yPosicao+15, { align: "right" });
-        doc.text(runData.softwareVersion, xPosition, yPosicao+15, { align: "left" });
-        doc.text(`System Master Revision:  `, xPosition, yPosicao+17.5, { align: "right" });
-        doc.text(runData.sysMasterRevision, xPosition, yPosicao+17.5, { align: "left" });
-        doc.text(`Meter Velocity:  `, xPosition, yPosicao+20, { align: "right" });
-        doc.text(runData.meterVelocity, xPosition, yPosicao+20, { align: "left" });
-        doc.text(`Run Velocity:  `, xPosition, yPosicao+22.5, { align: "right" });
-        doc.text(runData.runVelocity, xPosition, yPosicao+22.5, { align: "left" });
-        doc.text(`Empty Tubes Factor:  `, xPosition, yPosicao+25, { align: "right" });
-        doc.text(runData.emptyTubesFactor, xPosition, yPosicao+25, { align: "left" });
-        doc.text(`Fill Tubes Factor:  `, xPosition, yPosicao+27.5, { align: "right" });
-        doc.text(runData.fillTubesFactor, xPosition, yPosicao+27.5, { align: "left" });
-        doc.text(`--------------   `, xPosition, yPosicao+30, { align: "right" });
-        doc.text(`Solvent#1 Name & Revision:  `, xPosition, yPosicao+32.5, { align: "right" });
-        doc.text(runData.solvent1NameRevision, xPosition, yPosicao+32.5, { align: "left" });
-        doc.text(`Solvent#2 Name & Revision:  `, xPosition, yPosicao+35, { align: "right" });
-        doc.text(runData.solvent2NameRevision, xPosition, yPosicao+35, { align: "left" });
-        doc.text(`Solvent#3 Name & Revision:  `, xPosition, yPosicao+37.5, { align: "right" });
-        doc.text(runData.solvent3NameRevision, xPosition, yPosicao+37.5, { align: "left" });
-        doc.text(`Solvent#4 Name & Revision:  `, xPosition, yPosicao+40, { align: "right" });
-        doc.text(runData.solvent4NameRevision, xPosition, yPosicao+40, { align: "left" });
-        doc.text(`Time  Event`, xPosition, yPosicao+45, { align: "center" });
-        doc.text(`----  -----`, xPosition, yPosicao+47.5, { align: "center" });
-        doc.text(runData.timeEventStarted, xPosition, yPosicao+50, { align: "right" });
-        doc.text(runData.timeEventCompleted, xPosition, yPosicao+57.5, { align: "right" });
-        doc.text(`Started`, xPosition, yPosicao+50, { align: "left" });
-        doc.text(`Completed`, xPosition, yPosicao+57.5, { align: "left" });
+        doc.text(`Analyst:  `, xPosition, yPosicao+3, { align: "right" });
+        doc.text(runData.analyst, xPosition, yPosicao+3, { align: "left" });
+        doc.text(`Run No:  `, xPosition, yPosicao+6, { align: "right" });
+        doc.text(runData.runNo.toString(), xPosition, yPosicao+6, { align: "left" });
+        doc.text(`Calibration No:  `, xPosition, yPosicao+9, { align: "right" });
+        doc.text(runData.CalibrationNo.toString(), xPosition, yPosicao+9, { align: "left" });
+        doc.text(`Comment:  `, xPosition, yPosicao+12, { align: "right" });
+        doc.text(runData.comment, xPosition, yPosicao+12, { align: "left" });
+        doc.text(`--------------   `, xPosition, yPosicao+15, { align: "right" });
+        doc.text(`Software Version:  `, xPosition, yPosicao+18, { align: "right" });
+        doc.text(runData.softwareVersion, xPosition, yPosicao+18, { align: "left" });
+        doc.text(`System Master Revision:  `, xPosition, yPosicao+21, { align: "right" });
+        doc.text(runData.sysMasterRevision, xPosition, yPosicao+21, { align: "left" });
+        doc.text(`Meter Velocity:  `, xPosition, yPosicao+24, { align: "right" });
+        doc.text(runData.meterVelocity, xPosition, yPosicao+24, { align: "left" });
+        doc.text(`Run Velocity:  `, xPosition, yPosicao+27, { align: "right" });
+        doc.text(runData.runVelocity, xPosition, yPosicao+27, { align: "left" });
+        doc.text(`Empty Tubes Factor:  `, xPosition, yPosicao+30, { align: "right" });
+        doc.text(runData.emptyTubesFactor, xPosition, yPosicao+30, { align: "left" });
+        doc.text(`Fill Tubes Factor:  `, xPosition, yPosicao+33, { align: "right" });
+        doc.text(runData.fillTubesFactor, xPosition, yPosicao+33, { align: "left" });
+        doc.text(`--------------   `, xPosition, yPosicao+36, { align: "right" });
+        doc.text(`Solvent#1 Name & Revision:  `, xPosition, yPosicao+39, { align: "right" });
+        doc.text(runData.solvent1NameRevision, xPosition, yPosicao+39, { align: "left" });
+        doc.text(`Solvent#2 Name & Revision:  `, xPosition, yPosicao+42, { align: "right" });
+        doc.text(runData.solvent2NameRevision, xPosition, yPosicao+42, { align: "left" });
+        doc.text(`Solvent#3 Name & Revision:  `, xPosition, yPosicao+45, { align: "right" });
+        doc.text(runData.solvent3NameRevision, xPosition, yPosicao+45, { align: "left" });
+        doc.text(`Solvent#4 Name & Revision:  `, xPosition, yPosicao+48, { align: "right" });
+        doc.text(runData.solvent4NameRevision, xPosition, yPosicao+48, { align: "left" });
+        doc.text(`Time  Event`, xPosition, yPosicao+54, { align: "center" });
+        doc.text(`----  -----`, xPosition, yPosicao+57, { align: "center" });
+        doc.text(runData.timeEventStarted, xPosition, yPosicao+60, { align: "right" });
+        doc.text(runData.timeEventCompleted, xPosition, yPosicao+63, { align: "right" });
+        doc.text(`Started`, xPosition, yPosicao+60, { align: "left" });
+        doc.text(`Completed`, xPosition, yPosicao+63, { align: "left" });
 
         // 8. Save PDF File
         const pdfBlob = doc.output('blob');
@@ -343,18 +351,26 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         yPosicao += 5; 
         //---------------------
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(12);
-        doc.text("Misc. Parameters", 150, yPosicao-25, { align: "left" });
+        doc.setFontSize(10);
+        doc.text("Misc. Parameters", 170, yPosicao-25, { align: "center" });
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(`Soak Time: ${methodData.soakTime}`, 150, 85);
-        doc.text(`Agitate 1 Time: ${methodData.agitate_1_Time}`, 150, 90);
-        doc.text(`Agitate 2 Time: ${methodData.agitate_2_Time}`, 150, 95);
-        doc.text(`Vials to Fill: ${methodData.vialsToFill}`, 150, 100);
-        doc.text(`Vial Prime Vol: ${methodData.vialPrimeVol}`, 150, 105);
-        doc.text(`Vial 1 Fill Vol: ${methodData.vial_1_FillVol}`, 150, 110);
-        doc.text(`Vial 2-4 Fill Vol: ${methodData.vial_2_4_FillVol}`, 150, 115);
-        doc.text(`Air Dry Time: ${methodData.airDryTime}`, 150, 120);
+        doc.setFontSize(10);
+        doc.text(`Soak Time: `, 180, 85, { align: "right" });
+        doc.text(` ${methodData.soakTime} sec`, 180, 85, { align: "left" });
+        doc.text(`Agitate 1 Time: `, 180, 90, { align: "right" });
+        doc.text(` ${methodData.agitate_1_Time} sec`, 180, 90, { align: "left" });
+        doc.text(`Agitate 2 Time: `, 180, 95, { align: "right" });
+        doc.text(` ${methodData.agitate_2_Time} sec`, 180, 95, { align: "left" });
+        doc.text(`Vials to Fill: `, 180, 100, { align: "right" });
+        doc.text(` ${methodData.vialsToFill}`, 180, 100, { align: "left" });
+        doc.text(`Vial Prime Vol: `, 180, 105, { align: "right" });
+        doc.text(` ${methodData.vialPrimeVol} ml`, 180, 105, { align: "left" });
+        doc.text(`Vial 1 Fill Vol: `, 180, 110, { align: "right" });
+        doc.text(` ${methodData.vial_1_FillVol} ml`, 180, 110, { align: "left" });
+        doc.text(`Vial 2-4 Fill Vol: `, 180, 115, { align: "right" });
+        doc.text(` ${methodData.vial_2_4_FillVol} ml`, 180, 115, { align: "left" });
+        doc.text(`Air Dry Time: `, 180, 120, { align: "right" });
+        doc.text(` ${methodData.airDryTime} sec`, 180, 120, { align: "left" });
 
         yPosicao += 20;
 
@@ -534,19 +550,26 @@ async function genCompleteMethodReport(allRevisions, reportName) {
 
             // Misc
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.text("Misc. Parameters", 150, 55);
-
+            doc.setFontSize(10);
+            doc.text("Misc. Parameters", 170, yPosicao-25, { align: "center" });
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.text(`Soak Time: ${methodData.soakTime}`, 150, 85);
-            doc.text(`Agitate 1 Time: ${methodData.agitate_1_Time}`, 150, 90);
-            doc.text(`Agitate 2 Time: ${methodData.agitate_2_Time}`, 150, 95);
-            doc.text(`Vials to Fill: ${methodData.vialsToFill}`, 150, 100);
-            doc.text(`Vial Prime Vol: ${methodData.vialPrimeVol}`, 150, 105);
-            doc.text(`Vial 1 Fill Vol: ${methodData.vial_1_FillVol}`, 150, 110);
-            doc.text(`Vial 2-4 Fill Vol: ${methodData.vial_2_4_FillVol}`, 150, 115);
-            doc.text(`Air Dry Time: ${methodData.airDryTime}`, 150, 120);
+            doc.setFontSize(10);
+            doc.text(`Soak Time: `, 180, 85, { align: "right" });
+            doc.text(` ${methodData.soakTime} sec`, 180, 85, { align: "left" });
+            doc.text(`Agitate 1 Time: `, 180, 90, { align: "right" });
+            doc.text(` ${methodData.agitate_1_Time} sec`, 180, 90, { align: "left" });
+            doc.text(`Agitate 2 Time: `, 180, 95, { align: "right" });
+            doc.text(` ${methodData.agitate_2_Time} sec`, 180, 95, { align: "left" });
+            doc.text(`Vials to Fill: `, 180, 100, { align: "right" });
+            doc.text(` ${methodData.vialsToFill}`, 180, 100, { align: "left" });
+            doc.text(`Vial Prime Vol: `, 180, 105, { align: "right" });
+            doc.text(` ${methodData.vialPrimeVol} ml`, 180, 105, { align: "left" });
+            doc.text(`Vial 1 Fill Vol: `, 180, 110, { align: "right" });
+            doc.text(` ${methodData.vial_1_FillVol} ml`, 180, 110, { align: "left" });
+            doc.text(`Vial 2-4 Fill Vol: `, 180, 115, { align: "right" });
+            doc.text(` ${methodData.vial_2_4_FillVol} ml`, 180, 115, { align: "left" });
+            doc.text(`Air Dry Time: `, 180, 120, { align: "right" });
+            doc.text(` ${methodData.airDryTime} sec`, 180, 120, { align: "left" });
 
             // Volume Data
             y += 25;
