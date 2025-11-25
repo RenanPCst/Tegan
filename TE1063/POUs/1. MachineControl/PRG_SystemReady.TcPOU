@@ -3,38 +3,116 @@
   <POU Name="PRG_SystemReady" Id="{cef8cb42-e9dd-485d-b555-b87acc65ca60}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_SystemReady
 VAR_OUTPUT
-	bSystemReadyToStart : BOOL;
+	bSystemReadyToStart : BOOL;      // TRUE when machine is ready to accept Start 	 	
 END_VAR
 VAR
-	fbBlinkStartButton		: FB_Blink;
-	fbBlinkMachineModeName 	: FB_Blink;
-	
-	bRecipeCorrectLoaded	: BOOL := FALSE;
-	bSettingsCorrectLoaded	: BOOL := FALSE;
+	fbBlinkStartButton      : FB_Blink;
+    fbBlinkMachineModeName  : FB_Blink;
+
+    bRecipeCorrectLoaded    : BOOL := FALSE;
+    bSettingsCorrectLoaded  : BOOL := FALSE;
+
+    rTrigStartButton        : R_TRIG;    // Rising edge for main Start button
+    rTrigPopupStartBtn      : R_TRIG;    // Rising edge for popup "Start Auto Cycle" button
 	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Start Button Blinking if everything is set. 
-IF GVL_Safety.bSafetyEnable AND NOT GVL_HMI.bIncoherenceDetected THEN //Incoherence would be a state where there is no recipe activated or no parameters set on the HMI, needs to be implemented
-	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
+      <ST><![CDATA[// ============================================================================
+// 0) Default: no request to Auto Cycle unless logic sets it here
+// ============================================================================
+GVL_HMI.bSystemReady_ReqAutoCycle := FALSE;
+
+// ============================================================================
+// 1) Basic "System Ready" condition & Start button blinking
+//    - Only blink Start when safety is OK, no incoherence and data loaded
+// ============================================================================
+
+// Conditions for "ready to start" as you prefer
+IF GVL_Safety.bSafetyEnable
+   AND NOT GVL_HMI.bIncoherenceDetected THEN
+    bSystemReadyToStart := TRUE;
 ELSE
-	fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
+    bSystemReadyToStart := FALSE;
 END_IF
+
+// Start button blinking only when system is ready
+fbBlinkStartButton(
+    bEnable := bSystemReadyToStart,
+    tPeriod := T#1S
+);
 GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
 
-//Check if the settings were correctly loaded from settings json file - if not loaded correctly, should pop up a warning reminder on HMI
-IF bRecipeCorrectLoaded AND bSettingsCorrectLoaded THEN
-	bSystemReadyToStart := TRUE;
-ELSE
-	bSystemReadyToStart := FALSE;
+// ============================================================================
+// 2) Handle main Start button on System Ready
+//    - Rising edge on Start button
+//    - If "ready to start" -> open popup for comment
+//    - If not ready / incoherence -> raise alert (same behavior as before)
+// ============================================================================
+
+rTrigStartButton(CLK := GVL_IO.gDigInputs.bStartButton);
+
+IF rTrigStartButton.Q THEN
+    IF bSystemReadyToStart THEN
+        // No incoherence and everything loaded: request popup for comment
+        GVL_HMI.bShowAutoCyclePopup   := TRUE;
+        GVL_HMI.bIncoherenceAlert     := FALSE;
+
+        // Optionally clear previous comment and reset popup button
+        GVL_HMI.sAutoCycleComment     := '';
+        GVL_HMI.bStartAutoCycleButton := FALSE;
+    ELSE
+        // Not ready: keep the "old behavior": show incoherence / warning
+        GVL_HMI.bIncoherenceAlert := TRUE;
+    END_IF
+END_IF
+
+// ============================================================================
+// 3) Handle popup "Start Auto Cycle" button
+//    - Rising edge on bStartAutoCycleButton
+//    - Double-check safety, incoherence and comment length
+//    - If OK -> raise bSystemReady_ReqAutoCycle (one-shot)
+// ============================================================================
+
+rTrigPopupStartBtn(CLK := GVL_HMI.bStartAutoCycleButton);
+
+IF rTrigPopupStartBtn.Q THEN
+
+    // Extra safety: conditions may have changed since popup was opened
+    IF GVL_Safety.bSafetyEnable
+       AND NOT GVL_HMI.bIncoherenceDetected
+       AND (LEN(GVL_HMI.sAutoCycleComment) > 0) THEN
+
+        // All good: request transition to AUTO_CYCLE
+        GVL_HMI.bSystemReady_ReqAutoCycle := TRUE;
+
+        // Close popup
+        GVL_HMI.bShowAutoCyclePopup := FALSE;
+
+        // Optionally keep comment for logging
+
+    ELSE
+        // Something is wrong:
+        // - Safety disabled
+        // - Incoherence detected
+        // - Or empty comment
+        IF GVL_HMI.bIncoherenceDetected THEN
+            GVL_HMI.bIncoherenceAlert := TRUE;
+        END_IF
+
+        // Reset popup start button, keep popup open so the user can fix it
+        GVL_HMI.bStartAutoCycleButton := FALSE;
+    END_IF
+
 END_IF]]></ST>
     </Implementation>
     <LineIds Name="PRG_SystemReady">
-      <LineId Id="52" Count="6" />
-      <LineId Id="86" Count="0" />
-      <LineId Id="65" Count="0" />
-      <LineId Id="69" Count="3" />
+      <LineId Id="106" Count="8" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="121" Count="10" />
+      <LineId Id="134" Count="61" />
       <LineId Id="32" Count="0" />
     </LineIds>
   </POU>

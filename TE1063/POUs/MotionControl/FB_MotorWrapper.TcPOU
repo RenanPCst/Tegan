@@ -664,9 +664,185 @@ END_IF]]></ST>
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT
 END_VAR
+VAR
+    (* Local helper to clear flags only on very first call of this reset cycle *)
+    bFirstCall : BOOL := FALSE;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// =================================================================================================
+        <ST><![CDATA[// ============================================================================
+// 0) Default return
+// ============================================================================
+Reset := FALSE;
+
+// ============================================================================
+// 1) First call of Reset() in this cycle: clear ALL internal flags and MC executes
+// ============================================================================
+
+// If neither a reset request nor a reset execution is active, this is a NEW reset cycle
+IF NOT bResetRequested AND NOT bResetExecute AND NOT bResetDone THEN
+    bFirstCall := TRUE;
+    bResetRequested := TRUE;
+END_IF
+
+IF bFirstCall THEN
+    // ------------------------------------------------------------
+    // 1.1) Clear all MC function block Execute flags
+    // ------------------------------------------------------------
+    fbPower(Axis := Axis, Enable := FALSE, Enable_Positive := FALSE, Enable_Positive := FALSE);   // Optionally remove power - adapt to your logic
+    fbMoveAbs(Axis := Axis, Execute := FALSE);
+    fbMoveRel(Axis := Axis, Execute := FALSE);
+    fbMoveVel(Axis := Axis, Execute := FALSE);
+    fbHome(Axis := Axis, Execute := FALSE);
+    fbSetPos(Axis := Axis, Execute := FALSE);
+    fbStop(Axis := Axis, Execute := FALSE);
+    fbHalt(Axis := Axis, Execute := FALSE);
+    fbReadStatus(Axis := Axis, Enable := FALSE);
+    fbReadPos(Axis := Axis, Enable := FALSE);
+
+    // ------------------------------------------------------------
+    // 1.2) Clear general request / state flags (adapt / extend as needed)
+    // ------------------------------------------------------------
+    bPowerRequest         := FALSE;
+    bDisableReq           := FALSE;
+
+    bAbsRequest           := FALSE;
+    bRelRequest           := FALSE;
+
+    bReadStatusRequested  := FALSE;
+    bReadStatusExecute    := FALSE;
+
+    // Move Absolute
+    bMoveAbsRequested     := FALSE;
+    bMoveAbsExecute       := FALSE;
+    bMoveAbsDone          := FALSE;
+    bMoveAbsStarted       := FALSE;
+
+    // Move Relative
+    bMoveRelRequested     := FALSE;
+    bMoveRelExecute       := FALSE;
+    bMoveRelDone          := FALSE;
+
+    // Move Valve / indexing moves
+    bMoveValveRequested   := FALSE;
+    bMoveValveExecute     := FALSE;
+
+    // Move Velocity
+    bMoveVelRequested     := FALSE;
+    bMoveVelExecute       := FALSE;
+    bMoveVelDone          := FALSE;
+
+    // Set Position
+    bSetPosRequested      := FALSE;
+    bSetPosExecute        := FALSE;
+    bSetPosDone           := FALSE;
+
+    // Stop / Halt / Jog
+    bStopRequested        := FALSE;
+    bStopExecute          := FALSE;
+    bStopDone             := FALSE;
+
+    // Home-related flags
+    bStartHoming          := FALSE;
+    bHomeInProgress       := FALSE;
+    bHomeRequest          := FALSE;
+    bStartMoveVel         := FALSE;
+    bWaitingForSensorOff  := FALSE;
+    bWaitingForStop       := FALSE;
+
+    // Reset request flags themselves
+    bResetRequest         := FALSE;   // if you use this one
+    bResetRequested       := TRUE;    // mark that we are inside a reset cycle
+    bResetDone            := FALSE;
+
+    // ------------------------------------------------------------
+    // 1.3) Clear timers / edge detectors (only inputs; they reset themselves)
+    // ------------------------------------------------------------
+    tonMoveAbs(IN := FALSE);
+    tonAbsInWin(IN := FALSE);
+    tonHoming(IN := FALSE);
+    tonVelStill(IN := FALSE);
+	tonAbsTimeout(IN := FALSE);       
+
+	rtMoveAbsDone(CLK := FALSE);
+    rTrigStop(CLK := FALSE);
+
+    // ------------------------------------------------------------
+    // 1.4) Clear public status structure
+    // ------------------------------------------------------------
+    stStatus.bBusy        := FALSE;
+    stStatus.bError       := FALSE;
+    stStatus.iErrorCode   := 0;
+    stStatus.sMessage     := '';
+    stStatus.eState       := E_ActuatorState.eIdle; // Back to idle after a successful reset
+
+    // First call handled
+    bFirstCall := FALSE;
+END_IF
+
+// ============================================================================
+// 2) Trigger MC_Reset once per reset cycle
+// ============================================================================
+
+// If we still did not start fbReset in this cycle, raise Execute edge
+IF bResetRequested AND NOT bResetExecute AND NOT bResetDone THEN
+    bResetExecute := TRUE;
+END_IF;
+
+// Call MC_Reset
+fbReset(
+    Axis    := Axis,
+    Execute := bResetExecute
+);
+
+// ============================================================================
+// 3) Handle fbReset state: Busy / Done / Error
+// ============================================================================
+
+// 3.1) Error handling
+IF fbReset.Error THEN
+    stStatus.bError       := TRUE;
+    stStatus.iErrorCode   := fbReset.ErrorID;
+    stStatus.sMessage     := 'Error in MC_Reset';
+    stStatus.eState       := E_ActuatorState.eError;
+
+    // Cancel reset cycle on error
+    bResetExecute         := FALSE;
+    bResetRequested       := FALSE;
+    bResetDone            := FALSE;
+
+    // Return FALSE (reset failed)
+    Reset := FALSE;
+    RETURN;
+END_IF
+
+// 3.2) Normal completion
+IF fbReset.Done THEN
+    // Drop Execute after Done
+    bResetExecute := FALSE;
+    bResetDone    := TRUE;
+END_IF
+
+// ============================================================================
+// 4) Finalization and single-pulse TRUE on function return
+// ============================================================================
+
+// When reset is marked as done and fbReset is no longer busy, close the cycle
+IF bResetDone AND NOT fbReset.Busy THEN
+    // Clear internal reset state for next time
+    bResetRequested   := FALSE;
+    bResetDone        := FALSE;
+
+    // Optionally ensure axis is not in error and not moving here (if needed)
+
+    // Return TRUE exactly once to the caller
+    Reset := TRUE;
+	RETURN;
+END_IF
+
+
+(* Old Reset procedure before 2025's Nov24th
+// =================================================================================================
 // 1) Clear all MC_* Execute flags
 // =================================================================================================
 fbMoveAbs.Execute := FALSE;
@@ -745,7 +921,8 @@ IF bResetRequested THEN
 END_IF
 
 // Default Return
-Reset := FALSE;]]></ST>
+Reset := FALSE;
+*)]]></ST>
       </Implementation>
     </Method>
     <Method Name="SetPosition" Id="{a529999b-02b0-40ec-9986-934333a30507}">
@@ -1097,10 +1274,19 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
+      <LineId Id="183" Count="26" />
+      <LineId Id="211" Count="43" />
+      <LineId Id="257" Count="20" />
+      <LineId Id="361" Count="1" />
+      <LineId Id="281" Count="72" />
+      <LineId Id="363" Count="0" />
+      <LineId Id="180" Count="2" />
+      <LineId Id="178" Count="0" />
       <LineId Id="88" Count="21" />
       <LineId Id="169" Count="1" />
       <LineId Id="168" Count="0" />
       <LineId Id="110" Count="54" />
+      <LineId Id="179" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.SetPosition">
       <LineId Id="6" Count="4" />

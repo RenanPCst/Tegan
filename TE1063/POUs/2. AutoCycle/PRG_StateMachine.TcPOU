@@ -106,6 +106,7 @@ CASE CurrentState OF
 			sSystem := 'StateMachine.INIT'; sMessage := 'Initialization Successful!';
 			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
 			ResetEventTrigger();
+			GVL_DB.stPostRunInfo.timeEventStarted := TO_STRING(TIME());
 			//State Trasition to CHECK_AIR_FLOW
 			CurrentState := E_MachineStates.CHECK_AIR_FLOW;
 		END_IF;
@@ -251,6 +252,11 @@ CASE CurrentState OF
 
     E_MachineStates.POST_EXECUTION: //TODO
         //Gathering info for reports
+		GVL_DB.stPostRunInfo.timeEventCompleted := TO_STRING(TIME());
+		//Comment from user on full cycle start
+		GVL_DB.stPostRunInfo.comment := GVL_HMI.sAutoCycleComment;
+		
+		
 		//Create post execution json files 
 
     E_MachineStates.ERROR_STATE: //TODO
@@ -340,7 +346,9 @@ END_IF;]]></ST>
     </Action>
     <LineIds Name="PRG_StateMachine">
       <LineId Id="1831" Count="4" />
-      <LineId Id="1838" Count="32" />
+      <LineId Id="1838" Count="29" />
+      <LineId Id="2679" Count="0" />
+      <LineId Id="1868" Count="2" />
       <LineId Id="1898" Count="1" />
       <LineId Id="1902" Count="32" />
       <LineId Id="1944" Count="2" />
@@ -373,6 +381,8 @@ END_IF;]]></ST>
       <LineId Id="2063" Count="2" />
       <LineId Id="2294" Count="11" />
       <LineId Id="2071" Count="3" />
+      <LineId Id="2678" Count="0" />
+      <LineId Id="2680" Count="3" />
       <LineId Id="2312" Count="0" />
       <LineId Id="2080" Count="4" />
       <LineId Id="2087" Count="0" />
