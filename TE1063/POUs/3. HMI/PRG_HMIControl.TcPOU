@@ -143,7 +143,7 @@ GVL_IO.gRelayOutputs.bStageCollectionRightLight := GVL_HMI.bLightsToggleButton;
 // display linear pumps old position saved on persistent memory when in Calibration Mode
 IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
 	FOR i := 1 TO 10 DO
-		GVL_HMI.aCalibLinearPumps[i].rOldPosition := GVL_Retain.rLinearPumpOldPosition[i];
+		//GVL_HMI.aCalibLinearPumps[i].rOldPosition := GVL_Retain.rLinearPumpOldPosition[i];
 		//pump factor
 		GVL_HMI.aCalibLinearPumps[i].rPumpFactor := GVL_Motion.aPumps[1].Rotary.rActualPos;
 	END_FOR
@@ -727,32 +727,32 @@ GVL_HMI.stIOTerm30.nErrorCode[2] 		:= GVL_Motion.aPumps[8].Rotary.nErrorCode;
 
 (* <EL7062 Terminal 31> -------------------------------------------------------------------------------------------------------------*)
 GVL_HMI.stIOTerm31.bAxisOperational[1] 	:= GVL_Motion.aPumps[9].Linear.iOperational;
-GVL_HMI.stIOTerm31.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualPos*1000)) /1000;
-GVL_HMI.stIOTerm31.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualVel*1000)) /1000;
-GVL_HMI.stIOTerm31.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualPosition[1] 	:= GVL_Motion.aPumps[9].Linear.rActualPos;
+GVL_HMI.stIOTerm31.rActualVelocity[1] 	:= GVL_Motion.aPumps[9].Linear.rActualVel;
+GVL_HMI.stIOTerm31.rActualTorque[1] 	:= GVL_Motion.aPumps[9].Linear.rActualTorque;
 GVL_HMI.stIOTerm31.bAxisHomed[1] 		:= GVL_Motion.aPumps[9].Linear.iHomed;
 GVL_HMI.stIOTerm31.bAxisError[1] 		:= GVL_Motion.aPumps[9].Linear.iError;
 GVL_HMI.stIOTerm31.nErrorCode[1] 		:= GVL_Motion.aPumps[9].Linear.nErrorCode;
 GVL_HMI.stIOTerm31.bAxisOperational[2] 	:= GVL_Motion.aPumps[9].Rotary.iOperational;
-GVL_HMI.stIOTerm31.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualPos*1000)) /1000;
-GVL_HMI.stIOTerm31.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualVel*1000)) /1000;
-GVL_HMI.stIOTerm31.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[9].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm31.rActualPosition[2] 	:= GVL_Motion.aPumps[9].Rotary.rActualPos;
+GVL_HMI.stIOTerm31.rActualVelocity[2] 	:= GVL_Motion.aPumps[9].Rotary.rActualVel;
+GVL_HMI.stIOTerm31.rActualTorque[2] 	:= GVL_Motion.aPumps[9].Rotary.rActualTorque;
 GVL_HMI.stIOTerm31.bAxisHomed[2] 		:= GVL_Motion.aPumps[9].Rotary.iHomed;
 GVL_HMI.stIOTerm31.bAxisError[2] 		:= GVL_Motion.aPumps[9].Rotary.iError;
 GVL_HMI.stIOTerm31.nErrorCode[2] 		:= GVL_Motion.aPumps[9].Rotary.nErrorCode;
 
 (* <EL7062 Terminal 32> -------------------------------------------------------------------------------------------------------------*)
 GVL_HMI.stIOTerm32.bAxisOperational[1] 	:= GVL_Motion.aPumps[10].Linear.iOperational;
-GVL_HMI.stIOTerm32.rActualPosition[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualPos*1000)) /1000;
-GVL_HMI.stIOTerm32.rActualVelocity[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualVel*1000)) /1000;
-GVL_HMI.stIOTerm32.rActualTorque[1] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Linear.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualPosition[1] 	:= GVL_Motion.aPumps[10].Linear.rActualPos;
+GVL_HMI.stIOTerm32.rActualVelocity[1] 	:= GVL_Motion.aPumps[10].Linear.rActualVel;
+GVL_HMI.stIOTerm32.rActualTorque[1] 	:= GVL_Motion.aPumps[10].Linear.rActualTorque;
 GVL_HMI.stIOTerm32.bAxisHomed[1] 		:= GVL_Motion.aPumps[10].Linear.iHomed;
 GVL_HMI.stIOTerm32.bAxisError[1] 		:= GVL_Motion.aPumps[10].Linear.iError;
 GVL_HMI.stIOTerm32.nErrorCode[1] 		:= GVL_Motion.aPumps[10].Linear.nErrorCode;
 GVL_HMI.stIOTerm32.bAxisOperational[2] 	:= GVL_Motion.aPumps[10].Rotary.iOperational;
-GVL_HMI.stIOTerm32.rActualPosition[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualPos*1000)) /1000;
-GVL_HMI.stIOTerm32.rActualVelocity[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualVel*1000)) /1000;
-GVL_HMI.stIOTerm32.rActualTorque[2] 	:= LINT_TO_LREAL(TRUNC(GVL_Motion.aPumps[10].Rotary.rActualTorque*1000)) /1000;
+GVL_HMI.stIOTerm32.rActualPosition[2] 	:= GVL_Motion.aPumps[10].Rotary.rActualPos;
+GVL_HMI.stIOTerm32.rActualVelocity[2] 	:= GVL_Motion.aPumps[10].Rotary.rActualVel;
+GVL_HMI.stIOTerm32.rActualTorque[2] 	:= GVL_Motion.aPumps[10].Rotary.rActualTorque;
 GVL_HMI.stIOTerm32.bAxisHomed[2] 		:= GVL_Motion.aPumps[10].Rotary.iHomed;
 GVL_HMI.stIOTerm32.bAxisError[2] 		:= GVL_Motion.aPumps[10].Rotary.iError;
 GVL_HMI.stIOTerm32.nErrorCode[2] 		:= GVL_Motion.aPumps[10].Rotary.nErrorCode;
