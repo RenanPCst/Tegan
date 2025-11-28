@@ -31,7 +31,6 @@ isrtVD: string(5000) := 'INSERT INTO [dbo].[VOLUME_DATA] ( [pump], [stage], [rin
 updtDactvMethod: STRING(5000) := 'UPDATE [dbo].[METHODS] SET [methodStatus] = $'deactivated$' WHERE [methodName] = $'#1#$' AND [methodRevision] = $'#2#$'';
 //CALIBRATION CMD
 slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBRATION_HEAD] ORDER BY [calibrationNo] DESC;';
-slctLastCalib: STRING(5000) := 'SELECT TOP 1 [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo] FROM [dbo].[CALIBRATION] ORDER BY [calibrationNo] DESC; ';
 isrtCalib: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION_HEAD] ( [userID], [density], [solventNo], [solventRevision], [allowableFail], [replicates], [callInterval], [sysRevisionNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', #8#) ';
 isrtCalibValues: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION] ( [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', #12#) ';
 //SYSTEM CMD
@@ -44,11 +43,8 @@ slctCurrentUser: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [tra
 slctAllUsers: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy] FROM [dbo].[USERS] ';
 //SOLVENTS
 isrtSolvent: STRING(1000) := 'INSERT INTO [dbo].[SOLVENTS] ( [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$') ';
-slctSolvent: STRING(1000) := 'SELECT TOP 1 [SOLVENT_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ORDER BY [SOLVENT_ID] DESC; ';
-slctAllSolvents: STRING(1000) := 'SELECT [SOLVENT_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ';
-//LINEAR MOTORS
-isrtLinear: STRING(1000) := 'INSERT INTO [dbo].[LINEAR] ( [pump1], [pump2], [pump3], [pump4], [pump5], [pump6], [pump7], [pump8], [pump9], [pump10]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$') ';
-slctLinear: STRING(1000) := 'SELECT TOP 1 [ID_Linear], [pump1], [pump2], [pump3], [pump4], [pump5], [pump6], [pump7], [pump8], [pump9], [pump10] FROM [dbo].[LINEAR] ORDER BY [ID_Linear] DESC; ';
+slctSolvent: STRING(1000) := 'SELECT TOP 1 [Solvent_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ORDER BY [Solvent_ID] DESC; ';
+slctAllSolvents: STRING(1000) := 'SELECT [Solvent_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ';
 
 (******************************************************************************************************)
 
@@ -58,7 +54,6 @@ bBuildPCR			: BOOL;
 stParameter_PCR		: ST_Parameters_PCR;
 astData_PCR	  		: ARRAY[1..100] OF ST_Data_PCR;
 lastCalibID			: ARRAY[0..1] OF INT;
-lastCalibData		: array[1..100] of ST_Data_PCR;
 
 
 (******************************************************************************************************)
@@ -69,7 +64,6 @@ bBuildPRRW		: BOOL;
 stPostRunReport	: ARRAY[0..5] OF ST_PostRunReport;
 lastRunID		: ARRAY[0..1] OF INT;
 stPostRunInfo	: ST_PostRunReport;
-runIsDone		: BOOL;
 
 (******************************************************************************************************)
 
@@ -100,23 +94,17 @@ arrCompleteMethod	: ARRAY[1..100] OF ST_CompleteMethod;
 
 (******************************************************************************************************)
 
-(***** System Parameters Variables ********************************************************************)
+(***** System Parameters Variables ***************************************************************)
 
 stSysParameters	: ST_SysParameters;
 listAllSystem	: ARRAY[0..500] OF ST_SysParameters;
 
 (******************************************************************************************************)
 
-(***** Solvents Variables *****************************************************************************)
+(***** Solvents Variables ***************************************************************)
 
 stSolvents		: ST_Solvents;
 listSolvents	: ARRAY[0..500] OF ST_Solvents;
-
-(******************************************************************************************************)
-
-(***** Linear Motors Variables *****************************************************************************)
-
-stLinearMotors	: ST_LinearMotors;
 
 (******************************************************************************************************)
 

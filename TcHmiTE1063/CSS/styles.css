@@ -1,3 +1,18 @@
 .tc-selected-row {
     background-color: rgba(0, 200, 0, 0.25); /* verde claro translúcido */
 }
+
+/* 1) Destacar a linha selecionada (todas as células) */
+#TcHmiDatagrid_RecipeList.TcHmi_Controls_Beckhoff_TcHmiDatagrid
+tr.recipe-row-selected
+td.TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-cell {
+    background-color: #2e7d32 !important; /* verde */
+    color: #ffffff !important; /* texto branco */
+}
+
+/* 2) Remover/neutralizar o cinza padrão da célula focada */
+#TcHmiDatagrid_RecipeList.TcHmi_Controls_Beckhoff_TcHmiDatagrid
+td.TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-cell.focused::before {
+    background: transparent !important;
+    opacity: 0 !important;
+}

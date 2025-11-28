@@ -534,7 +534,6 @@ CASE eStep OF
 						iReplicate := 0;
 						iNumberOfAdjusts := iNumberOfAdjusts + 1;
 						bPumpAdjustNeed := FALSE;
-						DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 						eStep := E_CalibStep.PUMPFACTOR_ADJUST;
 					ELSE
 						eStep := E_CalibStep.PUMPFACTOR_FAILED;
@@ -553,6 +552,7 @@ CASE eStep OF
 		
 	E_CalibStep.PUMPFACTOR_ADJUST: // Calculate the new factor
 	
+		DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
 		
 		IF NOT DB_Query.FB_Insert.bBusy THEN
 			
@@ -1108,10 +1108,9 @@ Reset := TRUE;]]></ST>
       <LineId Id="4468" Count="21" />
       <LineId Id="4501" Count="145" />
       <LineId Id="5184" Count="0" />
-      <LineId Id="4647" Count="254" />
-      <LineId Id="5665" Count="0" />
-      <LineId Id="4902" Count="16" />
+      <LineId Id="4647" Count="271" />
       <LineId Id="5438" Count="0" />
+      <LineId Id="5440" Count="0" />
       <LineId Id="5442" Count="0" />
       <LineId Id="5441" Count="0" />
       <LineId Id="5447" Count="0" />

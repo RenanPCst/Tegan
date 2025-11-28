@@ -107,7 +107,6 @@ CASE CurrentState OF
 			fbEventHandler( bExecute := bExecuteEvent, eEventName := E_Events.INFO, sSystem := sSystem, sMessage := sMessage, bDone => bEventDone);
 			ResetEventTrigger();
 			GVL_DB.stPostRunInfo.timeEventStarted := TO_STRING(TIME());
-			DB_Query.state := E_DB_QUERY_STATE.SELECT_POST_LAST_RUN;
 			//State Trasition to CHECK_AIR_FLOW
 			CurrentState := E_MachineStates.CHECK_AIR_FLOW;
 		END_IF;
@@ -255,24 +254,9 @@ CASE CurrentState OF
         //Gathering info for reports
 		GVL_DB.stPostRunInfo.timeEventCompleted := TO_STRING(TIME());
 		//Comment from user on full cycle start
-		GVL_DB.stPostRunInfo.runNo := GVL_DB.stPostRunReport[0].runNo + 1;
 		GVL_DB.stPostRunInfo.comment := GVL_HMI.sAutoCycleComment;
-		GVL_DB.stPostRunInfo.analyst := '';
-		GVL_DB.stPostRunInfo.CalibrationNo := 0;
-		GVL_DB.stPostRunInfo.emptyTubesFactor := TO_STRING(GVL_Settings.stPumpParameters.iEmptyFactor);
-		GVL_DB.stPostRunInfo.fillTubesFactor := TO_STRING(GVL_Settings.stPumpParameters.iFillolventTubesFactor);
-		GVL_DB.stPostRunInfo.meterVelocity := TO_STRING(GVL_Settings.stPumpParameters.iMeterVelocity);
-		GVL_DB.stPostRunInfo.methodID := GVL_HMI.stRecipeInfo.iRevision;
-		GVL_DB.stPostRunInfo.runVelocity := TO_STRING(GVL_Settings.stPumpParameters.iRunVelocity);
-		GVL_DB.stPostRunInfo.softwareVersion := '';
-		GVL_DB.stPostRunInfo.solvent1NameRevision := '';
-		GVL_DB.stPostRunInfo.solvent2NameRevision := '';
-		GVL_DB.stPostRunInfo.solvent3NameRevision := '';
-		GVL_DB.stPostRunInfo.solvent4NameRevision := '';
-		GVL_DB.stPostRunInfo.sysMasterRevision := '';
-		GVL_DB.stPostRunInfo.sysSettingsRevision := '';
 		
-		DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN;
+		
 		//Create post execution json files 
 
     E_MachineStates.ERROR_STATE: //TODO
@@ -364,7 +348,6 @@ END_IF;]]></ST>
       <LineId Id="1831" Count="4" />
       <LineId Id="1838" Count="29" />
       <LineId Id="2679" Count="0" />
-      <LineId Id="2767" Count="0" />
       <LineId Id="1868" Count="2" />
       <LineId Id="1898" Count="1" />
       <LineId Id="1902" Count="32" />
@@ -399,13 +382,7 @@ END_IF;]]></ST>
       <LineId Id="2294" Count="11" />
       <LineId Id="2071" Count="3" />
       <LineId Id="2678" Count="0" />
-      <LineId Id="2680" Count="0" />
-      <LineId Id="2768" Count="0" />
-      <LineId Id="2681" Count="1" />
-      <LineId Id="2752" Count="5" />
-      <LineId Id="2759" Count="6" />
-      <LineId Id="2758" Count="0" />
-      <LineId Id="2683" Count="0" />
+      <LineId Id="2680" Count="3" />
       <LineId Id="2312" Count="0" />
       <LineId Id="2080" Count="4" />
       <LineId Id="2087" Count="0" />
