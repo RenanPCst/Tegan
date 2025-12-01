@@ -10,6 +10,7 @@ VAR
 	j				: INT;
     bAllDone        : BOOL := FALSE;
     bStartedAction  : BOOL := FALSE;
+	bMoveZeroDone	: BOOL := FALSE;
     bInitComplete   : BOOL := FALSE;
 	bVerticalMotorsDone		: BOOL := FALSE;   
 	bLinearMotorsHomingDone	: BOOL := FALSE; 
@@ -58,616 +59,920 @@ VAR
 	
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Step 2: Enable all motors and valves ****************************************************************************************************
-IF NOT bEnableDone AND bAllResetDone THEN
+      <ST><![CDATA[// ============================================================================
+// PRG_SystemInit
+// Handles full system initialization sequence:
+//  1) Reset all axes (motors, valves, pumps)
+//  2) Enable all required axes
+//  3) Perform homing on first startup OR move axes to zero on subsequent inits
+//  4) Check completion and errors
+//  5) Set bDone when initialization is complete
+// ============================================================================
 
-		FOR i := 1 TO 3 DO 
-			aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
-		END_FOR
-	
-		FOR i := 1 TO 5 DO
-			aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
-		END_FOR
-		
-		FOR i := 1 TO 10 DO 
-			aRotaryPumpsEnabled[i] := GVL_Motion.aPumpsRotary[i].Enable();
-		END_FOR
-		
-		bAllMotorsEnabled := aMotorsEnabled[1] AND aMotorsEnabled[2] AND aMotorsEnabled[3]; 
-		bAllValvesEnabled := aValvesEnabled[1] AND aValvesEnabled[2] AND aValvesEnabled[3] AND aValvesEnabled[4] AND aValvesEnabled[5];
-		bAllRotaryPumpsEnabled  := aRotaryPumpsEnabled[1] AND aRotaryPumpsEnabled[2] AND aRotaryPumpsEnabled[3] AND aRotaryPumpsEnabled[4] AND aRotaryPumpsEnabled[5] AND aRotaryPumpsEnabled[6] AND aRotaryPumpsEnabled[7] AND aRotaryPumpsEnabled[8] AND aRotaryPumpsEnabled[9] AND aRotaryPumpsEnabled[10]; 
-		
-		//Reset Timeout Monitoring and trigger 
-		tonEnableTimeOut(IN := TRUE, PT := T#10S);
-		IF tonEnableTimeOut.Q THEN
-			FOR j := 1 TO 3 DO // M1 - M3 | Create the string with the axis that were no enabled during the timeot time. 
-				IF NOT aMotorsEnabled[j] THEN
-					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if enabled not worked
-				END_IF
-			END_FOR 
-			FOR j := 1 TO 5 DO // V1 - V5 | Create the string with the axis that were no enabled during the timeot time. 
-				IF NOT aValvesEnabled[j] THEN
-					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j+3]); // Add axis to the string if enabled not worked
-				END_IF
-			END_FOR 
-			FOR j := 1 TO 10 DO // RP1 - RP10 | Create the string with the axis that were no enabled during the timeot time. 
-				IF NOT aRotaryPumpsEnabled[j] THEN
-					IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionEnableTimeoutAxis := CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, GVL_Constant.sMotionText[j+18]); // Add axis to the string if enabled not worked
-				END_IF
-			END_FOR 
-			GVL_Alarms.bMotionEnableTimeout := TRUE; // Alarm Trigger flag
-		END_IF
-		
-		//Transition Logig to the next step
-		IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllRotaryPumpsEnabled THEN
-			bEnableDone := TRUE;
-		END_IF
-END_IF
+// ---------------------------------------------------------------------------
+// 0) Basic delays between phases
+// ---------------------------------------------------------------------------
 
-// Step 1: Reset all motors and valves ******************************************************************************************************
+// Delay before starting Reset
+tonResetDelay(
+    IN := NOT bAllResetDone,
+    PT := T#1S
+);
+
+// Delay before starting Enable (only after Reset is fully done)
+tonEnableDelay(
+    IN := bAllResetDone AND NOT bEnableDone,
+    PT := T#1S
+);
+
+// ---------------------------------------------------------------------------
+// 1) Step 1 - Reset all axes (motors, valves, linear and rotary pumps)
+// ---------------------------------------------------------------------------
 IF NOT bAllResetDone AND tonResetDelay.Q THEN
-	
-	IF NOT bResetCheck[1] THEN
-		bResetCheck[1] := GVL_Motion.aMotors[1].Reset(); 
-	END_IF
-	IF NOT bResetCheck[2] THEN
-			bResetCheck[2] := GVL_Motion.aMotors[2].Reset();
-	END_IF
-	IF NOT bResetCheck[3] THEN
-			bResetCheck[3] := GVL_Motion.aMotors[3].Reset();
-	END_IF
-	IF NOT bResetCheck[4] THEN
-			bResetCheck[4] := GVL_Motion.aValvesObj[1].Reset();
-	END_IF
-	IF NOT bResetCheck[5] THEN
-			bResetCheck[5] := GVL_Motion.aValvesObj[2].Reset();
-	END_IF
-	IF NOT bResetCheck[6] THEN
-			bResetCheck[6] := GVL_Motion.aValvesObj[3].Reset();
-	END_IF
-	IF NOT bResetCheck[7] THEN
-			bResetCheck[7] := GVL_Motion.aValvesObj[4].Reset();
-	END_IF
-	IF NOT bResetCheck[8] THEN
-			bResetCheck[8] := GVL_Motion.aValvesObj[5].Reset();
-	END_IF
-	IF NOT bResetCheck[9] THEN
-			bResetCheck[9] := GVL_Motion.aPumpsLinear[1].Reset();
-	END_IF
-	IF NOT bResetCheck[10] THEN
-			bResetCheck[10] := GVL_Motion.aPumpsLinear[2].Reset();
-	END_IF
-	IF NOT bResetCheck[11] THEN
-			bResetCheck[11] := GVL_Motion.aPumpsLinear[3].Reset();
-	END_IF
-	IF NOT bResetCheck[12] THEN
-			bResetCheck[12] := GVL_Motion.aPumpsLinear[4].Reset();
-	END_IF
-	IF NOT bResetCheck[13] THEN
-			bResetCheck[13] := GVL_Motion.aPumpsLinear[5].Reset();
-	END_IF
-	IF NOT bResetCheck[14] THEN
-			bResetCheck[14] := GVL_Motion.aPumpsLinear[6].Reset();
-	END_IF
-	IF NOT bResetCheck[15] THEN
-			bResetCheck[15] := GVL_Motion.aPumpsLinear[7].Reset();
-	END_IF
-	IF NOT bResetCheck[16] THEN
-			bResetCheck[16] := GVL_Motion.aPumpsLinear[8].Reset();
-	END_IF
-	IF NOT bResetCheck[17] THEN
-			bResetCheck[17] := GVL_Motion.aPumpsLinear[9].Reset();
-	END_IF
-	IF NOT bResetCheck[18] THEN
-			bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
-	END_IF
-	IF NOT bResetCheck[19] THEN
-			bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
-	END_IF
-	IF NOT bResetCheck[20] THEN
-			bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
-	END_IF
-	IF NOT bResetCheck[21] THEN
-			bResetCheck[21] := GVL_Motion.aPumpsRotary[3].Reset();
-	END_IF
-	IF NOT bResetCheck[22] THEN
-			bResetCheck[22] := GVL_Motion.aPumpsRotary[4].Reset();
-	END_IF
-	IF NOT bResetCheck[23] THEN
-			bResetCheck[23] := GVL_Motion.aPumpsRotary[5].Reset();
-	END_IF
-	IF NOT bResetCheck[24] THEN
-			bResetCheck[24] := GVL_Motion.aPumpsRotary[6].Reset();
-	END_IF
-	IF NOT bResetCheck[25] THEN
-			bResetCheck[25] := GVL_Motion.aPumpsRotary[7].Reset();
-	END_IF
-	IF NOT bResetCheck[26] THEN
-			bResetCheck[26] := GVL_Motion.aPumpsRotary[8].Reset();
-	END_IF
-	IF NOT bResetCheck[27] THEN
-			bResetCheck[27] := GVL_Motion.aPumpsRotary[9].Reset();
-	END_IF
-	IF NOT bResetCheck[28] THEN
-			bResetCheck[28] := GVL_Motion.aPumpsRotary[10].Reset();
-	END_IF
-	
-	//Check if all motors reset was done
-	IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND bResetCheck[4] AND
-       bResetCheck[5] AND bResetCheck[6] AND bResetCheck[7] AND bResetCheck[8] AND
-       bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND bResetCheck[12] AND
-       bResetCheck[13] AND bResetCheck[14] AND bResetCheck[15] AND bResetCheck[16] AND 
-       bResetCheck[17] AND bResetCheck[18] AND bResetCheck[19] AND bResetCheck[20] AND
-	   bResetCheck[21] AND bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
-	   bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND bResetCheck[28] THEN
-		bAllResetDone := TRUE;
-	ELSE
-		bAllResetDone := FALSE;
-	END_IF
-	
-	//Reset Timeout Monitoring and trigger 
-	tonResetTimeOut(IN := TRUE, PT := T#10S);
-	IF tonResetTimeOut.Q THEN // Axis 1 to 28 | Create the string with the axis that were no reseted during the timeout time. 
-		FOR j := 1 TO 28 DO
-			IF NOT bResetCheck[j] THEN
-				IF GVL_Alarms.sMotionResetTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-					GVL_Alarms.sMotionResetTimeoutAxis := CONCAT(GVL_Alarms.sMotionResetTimeoutAxis, ', ');
-				END_IF
-				GVL_Alarms.sMotionResetTimeoutAxis := CONCAT(GVL_Alarms.sMotionResetTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Reset not worked
-			END_IF
-		END_FOR 
-		GVL_Alarms.bMotionResetTimeout := TRUE; // Alarm Trigger flag
-	END_IF
-	
+    ACT_ResetMotors();   // Uses bResetCheck[1..28], tonResetTimeOut, etc.
 END_IF
 
-//Timer to delay time between reset and move command
-IF NOT bAllResetDone THEN
-	tonResetDelay(IN := TRUE, PT := T#1S);
-ELSE
-	tonResetDelay(IN := FALSE, PT := T#1S);
+// ---------------------------------------------------------------------------
+// 2) Step 2 - Enable all axes (motors, valves, rotary pumps)
+//     - Uses extra layer: checks Axis.Status.Error before/after Enable
+// ---------------------------------------------------------------------------
+IF bAllResetDone AND NOT bEnableDone AND tonEnableDelay.Q THEN
+    ACT_EnableMotors();
 END_IF
 
-//Timer to delay time between Enable and move command
-IF bAllResetDone AND bEnableDone THEN
-	tonEnableDelay(IN := TRUE, PT := T#1S);
-ELSE
-	tonEnableDelay(IN := FALSE, PT := T#1S);
-END_IF
+// ---------------------------------------------------------------------------
+// 3) Step 3 - Decide if we need Homing or only MoveToZero
+//     - First SystemInit: perform homing (bInitialHomingDone = FALSE)
+//     - Next SystemInits: only move motors/valves to zero/home position
+// ---------------------------------------------------------------------------
 
-// Step 3: If the process hasn't started yet **************************************************************************************************
-IF NOT bStartedAction AND bAllResetDone AND tonEnableDelay.Q THEN
-    // If the system hasn't performed homing yet
-    IF NOT GVL_Motion.bInitialHomingDone THEN //First time machine starts, homing the motors.
-        bPerformHoming := TRUE;
+IF NOT bStartedAction AND bAllResetDone AND bEnableDone THEN
+    bStartedAction := TRUE;
 
-        // Start homing for vertical motors (Stage Collection and Sample Recovery Vertical) 
-		IF NOT bHomeMotorDone[1] THEN
-			bHomeMotorDone[1] := GVL_Motion.aMotors[1].Home( pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home),
-															 rVelocity := GVL_Motion.M1Motor.rHomeVel,
-															 rAcc := GVL_Motion.M1Motor.rHomeAcc,
-															 rDec := GVL_Motion.M1Motor.rHomeDec
-			);
-		END_IF
-        IF NOT bHomeMotorDone[2] THEN
-			bHomeMotorDone[2] := GVL_Motion.aMotors[2].Home( pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home),
-															 rVelocity := GVL_Motion.M2Motor.rHomeVel,
-															 rAcc := GVL_Motion.M2Motor.rHomeAcc,
-															 rDec := GVL_Motion.M2Motor.rHomeDec
-			);
-		END_IF
-
-        // If both vertical motors finished homing
-        IF bHomeMotorDone[2] THEN 
-            bVerticalMotorsDone := TRUE;
-        END_IF
-
-        // Start homing for the linear horizontal motor if vertical ones are done
-        IF bVerticalMotorsDone AND NOT bHomeMotorDone[3] THEN
-            bHomeMotorDone[3] := GVL_Motion.aMotors[3].Home( pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home),
-															 rVelocity := GVL_Motion.M3Motor.rHomeVel,
-															 rAcc := GVL_Motion.M3Motor.rHomeAcc,
-															 rDec := GVL_Motion.M3Motor.rHomeDec
-            );
-        END_IF
-
-        // Confirm linear motor 3 is done
-        IF bHomeMotorDone[1] AND bHomeMotorDone[2] AND bHomeMotorDone[3] THEN
-            bLinearMotorsHomingDone := TRUE;
-        END_IF
-		
-		// Check if all valves completed their move 
-        bValvesHomingDone := bHomeValveDone[1] AND bHomeValveDone[2] AND bHomeValveDone[3] AND bHomeValveDone[4] AND bHomeValveDone[5];
-		
-		IF GVL_Motion.bValvesPositionRecovered THEN
-			// Move all valves to position 1 (home position)
-			IF NOT bHomeValveDone[1] THEN
-				bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[1].rHomeVel, rAcc := GVL_Motion.aValves[1].rHomeAcc, rDec := GVL_Motion.aValves[1].rHomeDec);
-			END_IF
-			
-			IF NOT bHomeValveDone[2] THEN
-				bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[2].rHomeVel, rAcc := GVL_Motion.aValves[2].rHomeAcc, rDec := GVL_Motion.aValves[2].rHomeDec);
-			END_IF
-	
-			IF NOT bHomeValveDone[3] THEN
-				bHomeValveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[3].rHomeVel, rAcc := GVL_Motion.aValves[3].rHomeAcc, rDec := GVL_Motion.aValves[3].rHomeDec);
-			END_IF
-			
-			IF NOT bHomeValveDone[4] THEN
-				bHomeValveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[4].rHomeVel, rAcc := GVL_Motion.aValves[4].rHomeAcc, rDec := GVL_Motion.aValves[4].rHomeDec);
-			END_IF
-	
-			IF NOT bHomeValveDone[5] THEN
-				bHomeValveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[5].rHomeVel, rAcc := GVL_Motion.aValves[5].rHomeAcc, rDec := GVL_Motion.aValves[5].rHomeDec);
-			END_IF
-		END_IF        
-		
-		// If all motors and valves completed their homing, finalize
-        IF bLinearMotorsHomingDone AND bValvesHomingDone THEN 
-            bPerformHoming := FALSE;
-            bStartedAction := TRUE;
-        END_IF	
-		
-		// Homing Timeout Monitoring and trigger ------------------------------------------
-		tonHomeTimeOut(IN := TRUE, PT := T#40S);
-		IF tonHomeTimeOut.Q THEN
-			FOR j := 1 TO 3 DO
-				IF NOT bHomeMotorDone[j] THEN // M1 - M3 | Create the string with the axis that were not homed during the timeot time. 
-					IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Homing not worked
-				END_IF
-			END_FOR 
-			FOR j := 1 TO 5 DO
-				IF NOT bHomeValveDone[j] THEN // V1 - V5 | Create the string with the axis that were not homed during the timeot time. 
-					IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionHomeTimeoutAxis := CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, GVL_Constant.sMotionText[j + 3]); // Add axis to the string if Homing not worked
-				END_IF
-			END_FOR 
-			GVL_Alarms.bMotionHomeTimeout := TRUE; // Alarm Trigger flag
-		END_IF
-		
-    ELSE //If the machine already did the home before, just move to zero position
-		// Confirm linear motor 3 is done
-		bLinearMotorsHomingDone := bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3];
-		
-        // If homing has already been done, move motors and valves to zero/default position
-        IF NOT bMoveMotorDone[1] THEN //Move Motor 1 
-			bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 10, rDec := 10);
-        END_IF
-		
-		IF NOT bMoveMotorDone[2] THEN //Move Motor 2
-			bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 10, rDec := 10);
-        END_IF
-		
-		
-		IF NOT bMoveMotorDone[3] AND bMoveMotorDone[2] THEN //Move Motor 3 after motor 2 is done
-			bMoveMotorDone[3] := GVL_Motion.aMotors[3].MoveAbsolute(rPosition := 0, rVelocity := 15, rAcc := 10, rDec := 10);
-        END_IF
-		
-		// Check if all valves completed their move
-        bValvesHomingDone := bHomeValveDone[1] AND bHomeValveDone[2] AND bHomeValveDone[3] AND bHomeValveDone[4] AND bHomeValveDone[5];
-		
-		IF GVL_Motion.bValvesPositionRecovered THEN
-			// Move all valves to position 1 (home position)
-			IF NOT bHomeValveDone[1] THEN
-				bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[1].rHomeVel, rAcc := GVL_Motion.aValves[1].rHomeAcc, rDec := GVL_Motion.aValves[1].rHomeDec);
-			END_IF
-			IF NOT bHomeValveDone[2] THEN
-				bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[2].rHomeVel, rAcc := GVL_Motion.aValves[2].rHomeAcc, rDec := GVL_Motion.aValves[2].rHomeDec);
-			END_IF
-			IF NOT bHomeValveDone[3] THEN
-				bHomeValveDone[3] := GVL_Motion.aValvesObj[3].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[3].rHomeVel, rAcc := GVL_Motion.aValves[3].rHomeAcc, rDec := GVL_Motion.aValves[3].rHomeDec);
-			END_IF
-			IF NOT bHomeValveDone[4] THEN
-				bHomeValveDone[4] := GVL_Motion.aValvesObj[4].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[4].rHomeVel, rAcc := GVL_Motion.aValves[4].rHomeAcc, rDec := GVL_Motion.aValves[4].rHomeDec);
-			END_IF
-			IF NOT bHomeValveDone[5] THEN
-				bHomeValveDone[5] := GVL_Motion.aValvesObj[5].MoveValve( iPosition := 1, rVelocity := GVL_Motion.aValves[5].rHomeVel, rAcc := GVL_Motion.aValves[5].rHomeAcc, rDec := GVL_Motion.aValves[5].rHomeDec);
-			END_IF
-		END_IF
-		
-		// If all motors and valves completed their homing, finalize
-        IF bLinearMotorsHomingDone AND bValvesHomingDone THEN 
-            bStartedAction := TRUE;
-        END_IF
-		
-		// Move Absolute Timeout Monitoring and trigger ------------------------------------------
-		tonMoveAbsTimeOut(IN := TRUE, PT := T#40S);
-		IF tonMoveAbsTimeOut.Q THEN
-			FOR j := 1 TO 3 DO
-				IF NOT bHomeMotorDone[j] THEN // M1 - M3 | Create the string with the axis that were not Moved during the timeot time. 
-					IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, GVL_Constant.sMotionText[j]); // Add axis to the string if Homing not worked
-				END_IF
-			END_FOR 
-			FOR j := 1 TO 5 DO
-				IF NOT bHomeValveDone[j] THEN // V1 - V5 | Create the string with the axis that were not Moved during the timeot time.
-					IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN // If String not empty add a comma and space to it.
-						GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
-					END_IF
-					GVL_Alarms.sMotionMoveAbsTimeoutAxis := CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, GVL_Constant.sMotionText[j + 3]); // Add axis to the string if Homing not worked
-				END_IF
-			END_FOR 
-			GVL_Alarms.bMotionMoveAbsTimeout := TRUE; // Alarm Trigger flag
-		END_IF
-		
+    // First time the machine starts: perform initial homing
+    IF NOT GVL_Motion.bInitialHomingDone THEN
+        bPerformHoming := TRUE;   // ACT_Homing() will be called
+    ELSE
+        bPerformHoming := FALSE;  // ACT_MoveToZero() will be called
     END_IF
 END_IF
 
-// Step 4: Check if all motors completed their action
+// ---------------------------------------------------------------------------
+// 3a) Execute Homing or MoveToZero depending on bPerformHoming
+// ---------------------------------------------------------------------------
 IF bStartedAction THEN
-	bAllDone := TRUE;
-	
-	FOR i := 1 TO 3 DO 
-		stStatus := GVL_Motion.aMotors[i].GetStatus();
-	
-		// If any motor is not done yet
-		IF NOT stStatus.bDone THEN
-			bAllDone := FALSE;
-		END_IF
-	
-		// If any motor returned an error, abort with immediate fault
-		IF stStatus.bError THEN
-			GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
-			RETURN;
-		END_IF
-	END_FOR
-	
-	// Step 5: Check if all valves completed their action
-	FOR i := 1 TO 5 DO
-		stStatus := GVL_Motion.aValvesObj[i].GetStatus();
-	
-		// If any valve is not done yet
-		IF NOT stStatus.bDone THEN
-			bAllDone := FALSE;
-		END_IF
-	
-		// If any valve returned an error, abort with immediate fault
-		IF stStatus.bError THEN
-			GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
-			RETURN;
-		END_IF
-	END_FOR
-	
+    IF bPerformHoming THEN
+        ACT_Homing();
+    ELSE
+        ACT_MoveToZero();
+    END_IF
 END_IF
 
-// Step 6: Finalize the initialization process if everything is done
-IF bAllDone AND bEnableDone AND bAllResetDone AND NOT bInitComplete THEN
-    // Mark that homing has been done, so it won’t run again on next power-up
+// ---------------------------------------------------------------------------
+// 4) Step 4 + 5 - Check if all motors and valves have completed their action
+//     - Also checks for errors from wrapper (stStatus.bError)
+//       and directly from Axis.Status.Error
+// ---------------------------------------------------------------------------
+IF bStartedAction AND bMoveZeroDone THEN
+    bAllDone := TRUE;
+
+    // Check motors M1..M3
+    FOR i := 1 TO 3 DO
+        stStatus := GVL_Motion.aMotors[i].GetStatus();
+
+        // If any motor is not done yet
+        IF NOT stStatus.bDone THEN
+            bAllDone := FALSE;
+        END_IF
+
+        // If any motor returned an error (wrapper OR Axis), abort with immediate fault
+        IF stStatus.bError THEN
+            GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+            RETURN;
+        END_IF
+    END_FOR
+
+    // Check valves V1..V5
+    FOR i := 1 TO 5 DO
+        stStatus := GVL_Motion.aValvesObj[i].GetStatus();
+
+        // If any valve is not done yet
+        IF NOT stStatus.bDone THEN
+            bAllDone := FALSE;
+        END_IF
+
+        // If any valve returned an error (wrapper OR Axis), abort with immediate fault
+        IF stStatus.bError THEN
+            GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+            RETURN;
+        END_IF
+    END_FOR
+END_IF
+
+// ---------------------------------------------------------------------------
+// 5) Step 6 - Finalization of System Init
+//     - Set bDone only when Reset, Enable and Actions are all completed
+// ---------------------------------------------------------------------------
+IF bAllDone AND bAllResetDone AND bEnableDone AND NOT bInitComplete THEN
+    bInitComplete := TRUE;
+    bDone         := TRUE;
+
+    // Mark that the initial homing has been successfully completed
     IF NOT GVL_Motion.bInitialHomingDone THEN
         GVL_Motion.bInitialHomingDone := TRUE;
     END_IF
-
-    bInitComplete := TRUE;
-    bDone := TRUE;
 END_IF]]></ST>
     </Implementation>
+    <Action Name="ACT_EnableMotors" Id="{d9d400bf-ab34-4cad-bf34-4bdfcfba06a2}">
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// Step 2: Enable all motors, valves and rotary pumps
+//   - Uses aMotorsEnabled[1..3], aValvesEnabled[1..5], aRotaryPumpsEnabled[1..10]
+//   - Sets bAllMotorsEnabled, bAllValvesEnabled, bAllRotaryPumpsEnabled
+//   - Uses tonEnableTimeOut and GVL_Alarms.sMotionEnableTimeoutAxis
+//   - Extra layer: checks wrapper error (GetStatus().bError) before enabling
+// ============================================================================
+
+IF NOT bEnableDone THEN
+
+    // Assume all will be enabled, then AND with each device
+    bAllMotorsEnabled      := TRUE;
+    bAllValvesEnabled      := TRUE;
+    bAllRotaryPumpsEnabled := TRUE;
+
+    // -----------------------------
+    // 2.1 Motors (M1..M3)
+    // -----------------------------
+    FOR i := 1 TO 3 DO
+        // Read wrapper status
+        stStatus := GVL_Motion.aMotors[i].GetStatus();
+
+        // If wrapper reports error at this stage, abort System Init
+        IF stStatus.bError THEN
+            GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+            RETURN;
+        END_IF
+
+        // If axis is disabled, request Enable through wrapper
+        // (If your wrapper has a specific bEnabled flag, you can check it here.
+        // Otherwise, just call Enable() and rely on the wrapper to handle it.)
+        aMotorsEnabled[i] := GVL_Motion.aMotors[i].Enable();
+
+        bAllMotorsEnabled := bAllMotorsEnabled AND aMotorsEnabled[i];
+    END_FOR
+
+    // -----------------------------
+    // 2.2 Valves (V1..V5)
+    // -----------------------------
+    FOR i := 1 TO 5 DO
+        stStatus := GVL_Motion.aValvesObj[i].GetStatus();
+
+        IF stStatus.bError THEN
+            GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+            RETURN;
+        END_IF
+
+        aValvesEnabled[i] := GVL_Motion.aValvesObj[i].Enable();
+
+        bAllValvesEnabled := bAllValvesEnabled AND aValvesEnabled[i];
+    END_FOR
+
+    // -----------------------------
+    // 2.3 Rotary pumps (RP1..RP10)
+// -----------------------------
+    FOR i := 1 TO 10 DO
+        stStatus := GVL_Motion.aPumpsRotary[i].GetStatus();
+
+        IF stStatus.bError THEN
+            GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+            RETURN;
+        END_IF
+
+        aRotaryPumpsEnabled[i] := GVL_Motion.aPumpsRotary[i].Enable();
+
+        bAllRotaryPumpsEnabled := bAllRotaryPumpsEnabled AND aRotaryPumpsEnabled[i];
+    END_FOR
+
+    // -----------------------------
+    // 2.4 Enable timeout monitoring and alarm
+    // -----------------------------
+    tonEnableTimeOut(IN := TRUE, PT := T#10S);
+
+    IF tonEnableTimeOut.Q AND NOT (bAllMotorsEnabled AND bAllValvesEnabled AND bAllRotaryPumpsEnabled) THEN
+        // Build string with axes that were NOT enabled within timeout
+
+        // Motors M1..M3
+        FOR i := 1 TO 3 DO
+            IF NOT aMotorsEnabled[i] THEN
+                IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionEnableTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionEnableTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis,
+                           GVL_Constant.sMotionText[i]);
+            END_IF
+        END_FOR
+
+        // Valves V1..V5
+        FOR i := 1 TO 5 DO
+            IF NOT aValvesEnabled[i] THEN
+                IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionEnableTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionEnableTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis,
+                           GVL_Constant.sMotionText[i + 3]);
+            END_IF
+        END_FOR
+
+        // Rotary pumps RP1..RP10
+        FOR i := 1 TO 10 DO
+            IF NOT aRotaryPumpsEnabled[i] THEN
+                IF GVL_Alarms.sMotionEnableTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionEnableTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionEnableTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionEnableTimeoutAxis,
+                           GVL_Constant.sMotionText[i + 18]);
+            END_IF
+        END_FOR
+
+        GVL_Alarms.bMotionEnableTimeout := TRUE;
+        // Strong robustness: abort System Init on enable timeout
+        GVL_HMI.eMachineMode := E_MachineMode.IMEDIATE_FAULT;
+        RETURN;
+    END_IF
+
+    // -----------------------------
+    // 2.5 Step completion
+    // -----------------------------
+    IF bAllMotorsEnabled AND bAllValvesEnabled AND bAllRotaryPumpsEnabled THEN
+        bEnableDone := TRUE;
+        tonEnableTimeOut(IN := FALSE);
+    END_IF
+
+ELSE
+    // Already done, ensure timer is off
+    tonEnableTimeOut(IN := FALSE);
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_Homing" Id="{5b9a9a21-bf87-474a-922f-0cf75f21e89d}">
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// Step 3 (part 1): Initial homing sequence
+//   - Only used when GVL_Motion.bInitialHomingDone = FALSE
+//   - Homes vertical motors, then horizontal motor
+//   - Moves valves to home position (position 5) when positions are recovered
+//   - Monitors homing timeout and raises alarm
+// ============================================================================
+
+IF bPerformHoming THEN
+
+    // -----------------------------
+    // 3.1 Vertical motors homing (M1, M2)
+    // -----------------------------
+    IF NOT bHomeMotorDone[1] THEN
+        bHomeMotorDone[1] := GVL_Motion.aMotors[1].Home(
+            pHomeSensor := ADR(GVL_IO.gDigInputs.bStageCollection_Home),
+            rVelocity   := GVL_Motion.M1Motor.rHomeVel,
+            rAcc        := GVL_Motion.M1Motor.rHomeAcc,
+            rDec        := GVL_Motion.M1Motor.rHomeDec
+        );
+    END_IF
+
+    IF NOT bHomeMotorDone[2] THEN
+        bHomeMotorDone[2] := GVL_Motion.aMotors[2].Home(
+            pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Vertical_Home),
+            rVelocity   := GVL_Motion.M2Motor.rHomeVel,
+            rAcc        := GVL_Motion.M2Motor.rHomeAcc,
+            rDec        := GVL_Motion.M2Motor.rHomeDec
+        );
+    END_IF
+
+    // Check if vertical motors homing is done
+    IF bHomeMotorDone[1] AND bHomeMotorDone[2] THEN
+        bVerticalMotorsDone := TRUE;
+    END_IF
+
+    // -----------------------------
+    // 3.2 Horizontal motor homing (M3), only after verticals are done
+    // -----------------------------
+    IF bVerticalMotorsDone AND NOT bHomeMotorDone[3] THEN
+        bHomeMotorDone[3] := GVL_Motion.aMotors[3].Home(
+            pHomeSensor := ADR(GVL_IO.gDigInputs.bSampleRecovery_Horizontal_Home),
+            rVelocity   := GVL_Motion.M3Motor.rHomeVel,
+            rAcc        := GVL_Motion.M3Motor.rHomeAcc,
+            rDec        := GVL_Motion.M3Motor.rHomeDec
+        );
+    END_IF
+
+    // Check if all linear motors are homed
+    IF bHomeMotorDone[1] AND bHomeMotorDone[2] AND bHomeMotorDone[3] THEN
+        bLinearMotorsHomingDone := TRUE;
+    END_IF
+
+    // -----------------------------
+    // 3.3 Valves homing (move to position 5) if position is recovered
+    // -----------------------------
+    IF GVL_Motion.bValvesPositionRecovered THEN
+        // Move all valves to position 5 (home position)
+        IF NOT bHomeValveDone[1] THEN
+            bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(
+                iPosition := 5,
+                rVelocity := GVL_Motion.aValves[1].rHomeVel,
+                rAcc      := GVL_Motion.aValves[1].rHomeAcc,
+                rDec      := GVL_Motion.aValves[1].rHomeDec
+            );
+        END_IF
+
+        IF NOT bHomeValveDone[2] THEN
+            bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(
+                iPosition := 5,
+                rVelocity := GVL_Motion.aValves[2].rHomeVel,
+                rAcc      := GVL_Motion.aValves[2].rHomeAcc,
+                rDec      := GVL_Motion.aValves[2].rHomeDec
+            );
+        END_IF
+
+        IF NOT bHomeValveDone[3] THEN
+            bHomeValveDone[3] := GVL_Motion.aValvesObj[3].MoveValve(
+                iPosition := 5,
+                rVelocity := GVL_Motion.aValves[3].rHomeVel,
+                rAcc      := GVL_Motion.aValves[3].rHomeAcc,
+                rDec      := GVL_Motion.aValves[3].rHomeDec
+            );
+        END_IF
+
+        IF NOT bHomeValveDone[4] THEN
+            bHomeValveDone[4] := GVL_Motion.aValvesObj[4].MoveValve(
+                iPosition := 5,
+                rVelocity := GVL_Motion.aValves[4].rHomeVel,
+                rAcc      := GVL_Motion.aValves[4].rHomeAcc,
+                rDec      := GVL_Motion.aValves[4].rHomeDec
+            );
+        END_IF
+
+        IF NOT bHomeValveDone[5] THEN
+            bHomeValveDone[5] := GVL_Motion.aValvesObj[5].MoveValve(
+                iPosition := 5,
+                rVelocity := GVL_Motion.aValves[5].rHomeVel,
+                rAcc      := GVL_Motion.aValves[5].rHomeAcc,
+                rDec      := GVL_Motion.aValves[5].rHomeDec
+            );
+        END_IF
+    END_IF
+
+    // Check if all valves homing are done
+    bValvesHomingDone :=
+        bHomeValveDone[1] AND bHomeValveDone[2] AND bHomeValveDone[3] AND
+        bHomeValveDone[4] AND bHomeValveDone[5];
+
+	// If all motors and valves completed their homing, finalize
+	IF bLinearMotorsHomingDone AND bValvesHomingDone THEN 
+		bMoveZeroDone := TRUE;
+	END_IF	
+	
+    // -----------------------------
+    // 3.4 Homing timeout monitoring and alarm
+    // -----------------------------
+    tonHomeTimeOut(
+        IN := NOT (bLinearMotorsHomingDone AND bValvesHomingDone),
+        PT := T#40S
+    );
+
+    IF tonHomeTimeOut.Q AND NOT (bLinearMotorsHomingDone AND bValvesHomingDone) THEN
+        // Build string with axes that were NOT homed in time
+
+        // Motors M1..M3
+        FOR j := 1 TO 3 DO
+            IF NOT bHomeMotorDone[j] THEN
+                IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionHomeTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionHomeTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis,
+                           GVL_Constant.sMotionText[j]);
+            END_IF
+        END_FOR
+
+        // Valves V1..V5
+        FOR j := 1 TO 5 DO
+            IF NOT bHomeValveDone[j] THEN
+                IF GVL_Alarms.sMotionHomeTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionHomeTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionHomeTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionHomeTimeoutAxis,
+                           GVL_Constant.sMotionText[j + 3]);
+            END_IF
+        END_FOR
+
+        GVL_Alarms.bMotionHomeTimeout := TRUE;
+        GVL_HMI.eMachineMode          := E_MachineMode.IMEDIATE_FAULT;
+    END_IF
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_MoveToZero" Id="{87199ab2-9943-4068-ba24-dfc8b517e9be}">
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// Step 3 (part 2): Move motors and valves to zero / default positions
+//   - Used when GVL_Motion.bInitialHomingDone = TRUE
+//   - Moves:
+//       - M1, M2, M3 -> position 0.0
+//       - Valves V1..V5 -> position 5
+//   - Uses bMoveMotorDone[1..3] and bHomeValveDone[1..5]
+//   - Monitors move absolute timeout and raises alarm
+// ============================================================================
+
+IF NOT bPerformHoming THEN
+
+    // -----------------------------
+    // 3.5 Move linear motors to 0.0
+    // -----------------------------
+    // You can adjust these velocity/acc/dec parameters as needed
+    IF NOT bMoveMotorDone[1] THEN
+        bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(
+            rPosition := 0.0,
+            rVelocity := 15.0,
+            rAcc      := 10.0,
+            rDec      := 10.0
+        );
+    END_IF
+
+    IF NOT bMoveMotorDone[2] THEN
+        bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(
+            rPosition := 0.0,
+            rVelocity := 15.0,
+            rAcc      := 10.0,
+            rDec      := 10.0
+        );
+    END_IF
+
+    IF NOT bMoveMotorDone[3] THEN
+        bMoveMotorDone[3] := GVL_Motion.aMotors[3].MoveAbsolute(
+            rPosition := 0.0,
+            rVelocity := 15.0,
+            rAcc      := 10.0,
+            rDec      := 10.0
+        );
+    END_IF
+
+    // Linear motors move done flag
+    bLinearMotorsHomingDone :=
+        bMoveMotorDone[1] AND bMoveMotorDone[2] AND bMoveMotorDone[3];
+
+    // -----------------------------
+    // 3.6 Move valves to position 5 (default/home position)
+// -----------------------------
+    IF NOT bHomeValveDone[1] THEN
+        bHomeValveDone[1] := GVL_Motion.aValvesObj[1].MoveValve(
+            iPosition := 5,
+            rVelocity := GVL_Motion.aValves[1].rHomeVel,
+            rAcc      := GVL_Motion.aValves[1].rHomeAcc,
+            rDec      := GVL_Motion.aValves[1].rHomeDec
+        );
+    END_IF
+
+    IF NOT bHomeValveDone[2] THEN
+        bHomeValveDone[2] := GVL_Motion.aValvesObj[2].MoveValve(
+            iPosition := 5,
+            rVelocity := GVL_Motion.aValves[2].rHomeVel,
+            rAcc      := GVL_Motion.aValves[2].rHomeAcc,
+            rDec      := GVL_Motion.aValves[2].rHomeDec
+        );
+    END_IF
+
+    IF NOT bHomeValveDone[3] THEN
+        bHomeValveDone[3] := GVL_Motion.aValvesObj[3].MoveValve(
+            iPosition := 5,
+            rVelocity := GVL_Motion.aValves[3].rHomeVel,
+            rAcc      := GVL_Motion.aValves[3].rHomeAcc,
+            rDec      := GVL_Motion.aValves[3].rHomeDec
+        );
+    END_IF
+
+    IF NOT bHomeValveDone[4] THEN
+        bHomeValveDone[4] := GVL_Motion.aValvesObj[4].MoveValve(
+            iPosition := 5,
+            rVelocity := GVL_Motion.aValves[4].rHomeVel,
+            rAcc      := GVL_Motion.aValves[4].rHomeAcc,
+            rDec      := GVL_Motion.aValves[4].rHomeDec
+        );
+    END_IF
+
+    IF NOT bHomeValveDone[5] THEN
+        bHomeValveDone[5] := GVL_Motion.aValvesObj[5].MoveValve(
+            iPosition := 5,
+            rVelocity := GVL_Motion.aValves[5].rHomeVel,
+            rAcc      := GVL_Motion.aValves[5].rHomeAcc,
+            rDec      := GVL_Motion.aValves[5].rHomeDec
+        );
+    END_IF
+
+    // Valves move done flag
+    bValvesHomingDone :=
+        bHomeValveDone[1] AND bHomeValveDone[2] AND
+        bHomeValveDone[3] AND bHomeValveDone[4] AND bHomeValveDone[5];
+	
+	// If all motors and valves completed their homing, finalize
+	IF bLinearMotorsHomingDone AND bValvesHomingDone THEN 
+		bMoveZeroDone := TRUE;
+	END_IF
+	
+    // -----------------------------
+    // 3.7 MoveAbs timeout monitoring and alarm
+    //    (Note: here we correctly use bMoveMotorDone instead of bHomeMotorDone)
+// -----------------------------
+    tonMoveAbsTimeOut(
+        IN := NOT (bLinearMotorsHomingDone AND bValvesHomingDone),
+        PT := T#40S
+    );
+
+    IF tonMoveAbsTimeOut.Q AND NOT (bLinearMotorsHomingDone AND bValvesHomingDone) THEN
+        // Build string with axes that did NOT complete MoveAbsolute in time
+
+        // Motors M1..M3
+        FOR j := 1 TO 3 DO
+            IF NOT bMoveMotorDone[j] THEN
+                IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionMoveAbsTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionMoveAbsTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis,
+                           GVL_Constant.sMotionText[j]);
+            END_IF
+        END_FOR
+
+        // Valves V1..V5
+        FOR j := 1 TO 5 DO
+            IF NOT bHomeValveDone[j] THEN
+                IF GVL_Alarms.sMotionMoveAbsTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionMoveAbsTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionMoveAbsTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionMoveAbsTimeoutAxis,
+                           GVL_Constant.sMotionText[j + 3]);
+            END_IF
+        END_FOR
+
+        GVL_Alarms.bMotionMoveAbsTimeout := TRUE;
+        GVL_HMI.eMachineMode             := E_MachineMode.IMEDIATE_FAULT;
+    END_IF
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ACT_ResetMotors" Id="{827879fc-000a-4b08-b7c6-194c29783c28}">
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// Step 1: Reset all motors, valves, linear and rotary pumps
+// Uses array bResetCheck[1..28] to track each device:
+//   1..3   -> Motors      (M1..M3)
+//   4..8   -> Valves      (V1..V5)
+//   9..18  -> Linear pumps  (LP1..LP10)
+//   19..28 -> Rotary pumps  (RP1..RP10)
+// ============================================================================
+
+IF NOT bAllResetDone THEN
+
+    // -----------------------------
+    // 1.1 Motors (M1..M3)
+    // -----------------------------
+    IF NOT bResetCheck[1] THEN
+        bResetCheck[1] := GVL_Motion.aMotors[1].Reset();
+    END_IF
+
+    IF NOT bResetCheck[2] THEN
+        bResetCheck[2] := GVL_Motion.aMotors[2].Reset();
+    END_IF
+
+    IF NOT bResetCheck[3] THEN
+        bResetCheck[3] := GVL_Motion.aMotors[3].Reset();
+    END_IF
+
+    // -----------------------------
+    // 1.2 Valves (V1..V5)
+    // -----------------------------
+    IF NOT bResetCheck[4] THEN
+        bResetCheck[4] := GVL_Motion.aValvesObj[1].Reset();
+    END_IF
+
+    IF NOT bResetCheck[5] THEN
+        bResetCheck[5] := GVL_Motion.aValvesObj[2].Reset();
+    END_IF
+
+    IF NOT bResetCheck[6] THEN
+        bResetCheck[6] := GVL_Motion.aValvesObj[3].Reset();
+    END_IF
+
+    IF NOT bResetCheck[7] THEN
+        bResetCheck[7] := GVL_Motion.aValvesObj[4].Reset();
+    END_IF
+
+    IF NOT bResetCheck[8] THEN
+        bResetCheck[8] := GVL_Motion.aValvesObj[5].Reset();
+    END_IF
+
+    // -----------------------------
+    // 1.3 Linear pumps (LP1..LP10)
+    // -----------------------------
+    IF NOT bResetCheck[9] THEN
+        bResetCheck[9] := GVL_Motion.aPumpsLinear[1].Reset();
+    END_IF
+    IF NOT bResetCheck[10] THEN
+        bResetCheck[10] := GVL_Motion.aPumpsLinear[2].Reset();
+    END_IF
+    IF NOT bResetCheck[11] THEN
+        bResetCheck[11] := GVL_Motion.aPumpsLinear[3].Reset();
+    END_IF
+    IF NOT bResetCheck[12] THEN
+        bResetCheck[12] := GVL_Motion.aPumpsLinear[4].Reset();
+    END_IF
+    IF NOT bResetCheck[13] THEN
+        bResetCheck[13] := GVL_Motion.aPumpsLinear[5].Reset();
+    END_IF
+    IF NOT bResetCheck[14] THEN
+        bResetCheck[14] := GVL_Motion.aPumpsLinear[6].Reset();
+    END_IF
+    IF NOT bResetCheck[15] THEN
+        bResetCheck[15] := GVL_Motion.aPumpsLinear[7].Reset();
+    END_IF
+    IF NOT bResetCheck[16] THEN
+        bResetCheck[16] := GVL_Motion.aPumpsLinear[8].Reset();
+    END_IF
+    IF NOT bResetCheck[17] THEN
+        bResetCheck[17] := GVL_Motion.aPumpsLinear[9].Reset();
+    END_IF
+    IF NOT bResetCheck[18] THEN
+        bResetCheck[18] := GVL_Motion.aPumpsLinear[10].Reset();
+    END_IF
+
+    // -----------------------------
+    // 1.4 Rotary pumps (RP1..RP10)
+    // -----------------------------
+    IF NOT bResetCheck[19] THEN
+        bResetCheck[19] := GVL_Motion.aPumpsRotary[1].Reset();
+    END_IF
+    IF NOT bResetCheck[20] THEN
+        bResetCheck[20] := GVL_Motion.aPumpsRotary[2].Reset();
+    END_IF
+    IF NOT bResetCheck[21] THEN
+        bResetCheck[21] := GVL_Motion.aPumpsRotary[3].Reset();
+    END_IF
+    IF NOT bResetCheck[22] THEN
+        bResetCheck[22] := GVL_Motion.aPumpsRotary[4].Reset();
+    END_IF
+    IF NOT bResetCheck[23] THEN
+        bResetCheck[23] := GVL_Motion.aPumpsRotary[5].Reset();
+    END_IF
+    IF NOT bResetCheck[24] THEN
+        bResetCheck[24] := GVL_Motion.aPumpsRotary[6].Reset();
+    END_IF
+    IF NOT bResetCheck[25] THEN
+        bResetCheck[25] := GVL_Motion.aPumpsRotary[7].Reset();
+    END_IF
+    IF NOT bResetCheck[26] THEN
+        bResetCheck[26] := GVL_Motion.aPumpsRotary[8].Reset();
+    END_IF
+    IF NOT bResetCheck[27] THEN
+        bResetCheck[27] := GVL_Motion.aPumpsRotary[9].Reset();
+    END_IF
+    IF NOT bResetCheck[28] THEN
+        bResetCheck[28] := GVL_Motion.aPumpsRotary[10].Reset();
+    END_IF
+
+    // -----------------------------------------------------------------------
+    // 1.5 Check if all resets are done
+    // -----------------------------------------------------------------------
+    IF bResetCheck[1] AND bResetCheck[2] AND bResetCheck[3] AND
+       bResetCheck[4] AND bResetCheck[5] AND bResetCheck[6] AND
+       bResetCheck[7] AND bResetCheck[8] AND
+       bResetCheck[9] AND bResetCheck[10] AND bResetCheck[11] AND
+       bResetCheck[12] AND bResetCheck[13] AND bResetCheck[14] AND
+       bResetCheck[15] AND bResetCheck[16] AND bResetCheck[17] AND
+       bResetCheck[18] AND
+       bResetCheck[19] AND bResetCheck[20] AND bResetCheck[21] AND
+       bResetCheck[22] AND bResetCheck[23] AND bResetCheck[24] AND
+       bResetCheck[25] AND bResetCheck[26] AND bResetCheck[27] AND
+       bResetCheck[28] THEN
+        bAllResetDone := TRUE;
+    ELSE
+        bAllResetDone := FALSE;
+    END_IF
+
+    // -----------------------------------------------------------------------
+    // 1.6 Reset timeout monitoring and alarm trigger
+    // -----------------------------------------------------------------------
+    tonResetTimeOut(IN := TRUE, PT := T#10S);
+
+    IF tonResetTimeOut.Q THEN
+        // Build string with axes that were NOT reset within timeout
+        FOR j := 1 TO 28 DO
+            IF NOT bResetCheck[j] THEN
+                IF GVL_Alarms.sMotionResetTimeoutAxis <> '' THEN
+                    GVL_Alarms.sMotionResetTimeoutAxis :=
+                        CONCAT(GVL_Alarms.sMotionResetTimeoutAxis, ', ');
+                END_IF
+                GVL_Alarms.sMotionResetTimeoutAxis :=
+                    CONCAT(GVL_Alarms.sMotionResetTimeoutAxis,
+                           GVL_Constant.sMotionText[j]);
+            END_IF
+        END_FOR
+
+        GVL_Alarms.bMotionResetTimeout := TRUE;
+        // Optional: you could also force IMEDIATE_FAULT here if desired
+    END_IF
+
+ELSE
+    // Reset already completed, ensure timeout timer is off
+    tonResetTimeOut(IN := FALSE);
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
     <Method Name="Reset" Id="{9d292ea2-dd87-459a-a476-a8e8f5acf2de}">
       <Declaration><![CDATA[METHOD Reset : BOOL
 VAR_INPUT	
 END_VAR
 VAR
-	bResetRequest 	: BOOL := FALSE;
-	bResetExecute 	: BOOL := FALSE;
+	i : INT;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF NOT bResetRequest THEN
-    bResetExecute := TRUE;
-    bResetRequest := TRUE;
-	Reset := FALSE;
-END_IF
+        <ST><![CDATA[// ============================================================================
+// PRG_SystemInit.Reset()
+// ---------------------------------------------------------------------------
+// This method clears all internal flags, arrays and timers used by
+// PRG_SystemInit so that a new initialization sequence can start from a
+// clean state.
+//
+// Return:
+//   TRUE  - Always returns TRUE after the internal context is fully reset.
+//           (The actual System Init progress is controlled by bAllResetDone,
+//            bEnableDone, bAllDone, etc. in the main body.)
+//
+// Typical usage (in PRG_MasterControl):
+//   - When entering E_MachineMode.SYSTEM_INITIALIZING,
+//     call PRG_SystemInit.Reset() once to clear the context.
+// ============================================================================
 
-IF bResetExecute THEN
-	bDone	:= FALSE;
+Reset := FALSE; // Default return
 
-	bAllDone         		:= FALSE;
-	bStartedAction  		:= FALSE;
-	bInitComplete    		:= FALSE;
-	bVerticalMotorsDone		:= FALSE;   
-	bLinearMotorsHomingDone	:= FALSE; 
-	bValvesHomingDone 		:= FALSE;
-	bLinearPumpsDone		:= FALSE;
-	bPerformHoming		 	:= FALSE;
-	
-	bAllResetDone	 := FALSE;
-	bEnableDone		 := FALSE;
-		
-	FOR i := 1 TO 28 DO
-		bResetCheck[i] := FALSE;
-	END_FOR
-	FOR i := 1 TO 3 DO
-		aMotorsEnabled[i] := FALSE;
-	END_FOR
-	FOR i := 1 TO 5 DO
-		aValvesEnabled[i] := FALSE;
-	END_FOR
-	FOR i := 1 TO 10 DO
-		aLinearPumpsEnabled[i] := FALSE;
-	END_FOR
-	FOR i := 1 TO 10 DO
-		aRotaryPumpsEnabled[i] := FALSE;
-	END_FOR
-	
-	bAllPumpsEnabled  := FALSE;
-	bAllLinearPumpsEnabled := FALSE;
-	bAllRotaryPumpsEnabled := FALSE;
-	bAllMotorsEnabled := FALSE;
-	bAllValvesEnabled := FALSE;
+// ---------------------------------------------------------------------------
+// 1) Global step control flags
+// ---------------------------------------------------------------------------
+bAllResetDone           := FALSE;
+bEnableDone             := FALSE;
+bStartedAction          := FALSE;
+bPerformHoming          := FALSE;
+bInitComplete           := FALSE;
+bAllDone                := FALSE;
+bMoveZeroDone 			:= FALSE;
+bDone                   := FALSE;   
 
-	bHomeMotorDone[1] := FALSE;
-	bHomeMotorDone[2] := FALSE;
-	bHomeMotorDone[3] := FALSE;
-	
-	bMoveMotorDone[1] := FALSE;
-	bMoveMotorDone[2] := FALSE;
-	bMoveMotorDone[3] := FALSE;
-	
-	bHomeValveDone[1] := FALSE;
-	bHomeValveDone[2] := FALSE;
-	bHomeValveDone[3] := FALSE;
-	bHomeValveDone[4] := FALSE;
-	bHomeValveDone[5] := FALSE;
-	
-	bHomePumpDone[1]  := FALSE;
-	bHomePumpDone[2]  := FALSE;
-	bHomePumpDone[3]  := FALSE;
-	bHomePumpDone[4]  := FALSE;
-	bHomePumpDone[5]  := FALSE;
-	bHomePumpDone[6]  := FALSE;
-	bHomePumpDone[7]  := FALSE;
-	bHomePumpDone[8]  := FALSE;
-	bHomePumpDone[9]  := FALSE;
-	bHomePumpDone[10]  := FALSE;
-	
-	tonResetDelay(IN := FALSE, PT := T#1S);
-	tonEnableDelay(IN := FALSE, PT := T#1S);
-	tonResetTimeOut(IN := FALSE);
-	tonEnableTimeOut(IN := FALSE);
-	tonHomeTimeOut(IN := FALSE);
-	tonMoveAbsTimeOut(IN := FALSE);
-	
-	stStatus.bDone := FALSE;
-	stStatus.bBusy := FALSE;
-	stStatus.bError := FALSE;
-	
-	GVL_Alarms.bMotionResetTimeout		:= FALSE;
-	GVL_Alarms.bMotionEnableTimeout		:= FALSE;
-	GVL_Alarms.bMotionHomeTimeout		:= FALSE;
-	GVL_Alarms.bMotionMoveAbsTimeout	:= FALSE;
-	
-	GVL_Alarms.sMotionResetTimeoutAxis		:= '';
-	GVL_Alarms.sMotionEnableTimeoutAxis		:= '';
-	GVL_Alarms.sMotionHomeTimeoutAxis		:= '';
-	GVL_Alarms.sMotionMoveAbsTimeoutAxis	:= '';
-		
-	IF bResetRequest THEN
-		bResetExecute := FALSE;
-		bResetRequest := FALSE;
-		Reset := TRUE;
-		RETURN;
-	ELSE
-		Reset := FALSE;
-	END_IF
-END_IF
+bVerticalMotorsDone     := FALSE;
+bLinearMotorsHomingDone := FALSE;
+bValvesHomingDone       := FALSE;
 
+// ---------------------------------------------------------------------------
+// 2) Per-device reset tracking array (1..28)
+//    1..3   -> Motors       (M1..M3)
+//    4..8   -> Valves       (V1..V5)
+//    9..18  -> Linear pumps (LP1..LP10)
+//    19..28 -> Rotary pumps (RP1..RP10)
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 28 DO
+    bResetCheck[i] := FALSE;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 3) Enable state arrays
+//    Motors:        aMotorsEnabled[1..3]
+//    Valves:        aValvesEnabled[1..5]
+//    Rotary pumps:  aRotaryPumpsEnabled[1..10]
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 3 DO
+    aMotorsEnabled[i] := FALSE;
+END_FOR
+
+FOR i := 1 TO 5 DO
+    aValvesEnabled[i] := FALSE;
+END_FOR
+
+FOR i := 1 TO 10 DO
+    aRotaryPumpsEnabled[i] := FALSE;
+END_FOR
+
+bAllMotorsEnabled      := FALSE;
+bAllValvesEnabled      := FALSE;
+bAllRotaryPumpsEnabled := FALSE;
+
+// ---------------------------------------------------------------------------
+// 4) Homing / MoveToZero flags
+//    - bHomeMotorDone[1..3] : homing done flags for M1..M3
+//    - bMoveMotorDone[1..3] : move-to-zero done flags for M1..M3
+//    - bHomeValveDone[1..5] : homing/move done flags for V1..V5
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 3 DO
+    bHomeMotorDone[i] := FALSE;
+    bMoveMotorDone[i] := FALSE;
+END_FOR
+
+FOR i := 1 TO 5 DO
+    bHomeValveDone[i] := FALSE;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 5) Timers used in System Init
+// ---------------------------------------------------------------------------
+
+// Phase delays
+tonResetDelay(IN := FALSE);
+tonEnableDelay(IN := FALSE);
+
+// Timeouts
+tonResetTimeOut(IN := FALSE);
+tonEnableTimeOut(IN := FALSE);
+tonHomeTimeOut(IN := FALSE);
+tonMoveAbsTimeOut(IN := FALSE);
+
+// ---------------------------------------------------------------------------
+// 6) Alarm strings and flags used by System Init
+// ---------------------------------------------------------------------------
+
+// Reset timeout
+GVL_Alarms.sMotionResetTimeoutAxis := '';
+GVL_Alarms.bMotionResetTimeout     := FALSE;
+
+// Enable timeout
+GVL_Alarms.sMotionEnableTimeoutAxis := '';
+GVL_Alarms.bMotionEnableTimeout     := FALSE;
+
+// Homing timeout
+GVL_Alarms.sMotionHomeTimeoutAxis := '';
+GVL_Alarms.bMotionHomeTimeout     := FALSE;
+
+// Move Absolute timeout
+GVL_Alarms.sMotionMoveAbsTimeoutAxis := '';
+GVL_Alarms.bMotionMoveAbsTimeout     := FALSE;
+
+// ---------------------------------------------------------------------------
+// 7) Finalize
+// ---------------------------------------------------------------------------
+Reset := TRUE;
 ]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="PRG_SystemInit">
-      <LineId Id="1672" Count="18" />
-      <LineId Id="2133" Count="4" />
-      <LineId Id="2191" Count="1" />
-      <LineId Id="2190" Count="0" />
-      <LineId Id="2138" Count="2" />
-      <LineId Id="2200" Count="6" />
-      <LineId Id="2199" Count="0" />
-      <LineId Id="2208" Count="6" />
-      <LineId Id="2207" Count="0" />
-      <LineId Id="2141" Count="0" />
-      <LineId Id="2132" Count="0" />
-      <LineId Id="2130" Count="1" />
-      <LineId Id="1692" Count="2" />
-      <LineId Id="1698" Count="58" />
-      <LineId Id="2036" Count="0" />
-      <LineId Id="1758" Count="42" />
-      <LineId Id="2129" Count="0" />
-      <LineId Id="2096" Count="0" />
-      <LineId Id="2098" Count="0" />
-      <LineId Id="2123" Count="0" />
-      <LineId Id="2127" Count="0" />
-      <LineId Id="2187" Count="1" />
-      <LineId Id="2186" Count="0" />
-      <LineId Id="2128" Count="0" />
-      <LineId Id="2125" Count="1" />
-      <LineId Id="2099" Count="1" />
-      <LineId Id="2097" Count="0" />
-      <LineId Id="1802" Count="87" />
-      <LineId Id="2142" Count="0" />
-      <LineId Id="2144" Count="2" />
-      <LineId Id="2154" Count="1" />
-      <LineId Id="2181" Count="1" />
-      <LineId Id="2180" Count="0" />
-      <LineId Id="2156" Count="1" />
-      <LineId Id="2147" Count="0" />
-      <LineId Id="2153" Count="0" />
-      <LineId Id="2148" Count="0" />
-      <LineId Id="2184" Count="1" />
-      <LineId Id="2183" Count="0" />
-      <LineId Id="2149" Count="3" />
-      <LineId Id="2143" Count="0" />
-      <LineId Id="1890" Count="44" />
-      <LineId Id="2158" Count="0" />
-      <LineId Id="2173" Count="0" />
-      <LineId Id="2160" Count="3" />
-      <LineId Id="2175" Count="1" />
-      <LineId Id="2174" Count="0" />
-      <LineId Id="2164" Count="4" />
-      <LineId Id="2178" Count="1" />
-      <LineId Id="2177" Count="0" />
-      <LineId Id="2169" Count="3" />
-      <LineId Id="2159" Count="0" />
-      <LineId Id="1935" Count="49" />
-      <LineId Id="5" Count="0" />
+      <LineId Id="2389" Count="46" />
+      <LineId Id="2512" Count="1" />
+      <LineId Id="2436" Count="0" />
+      <LineId Id="2439" Count="72" />
+    </LineIds>
+    <LineIds Name="PRG_SystemInit.ACT_EnableMotors">
+      <LineId Id="279" Count="132" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_SystemInit.ACT_Homing">
+      <LineId Id="115" Count="107" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="269" Count="2" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="224" Count="38" />
+      <LineId Id="264" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_SystemInit.ACT_MoveToZero">
+      <LineId Id="97" Count="99" />
+      <LineId Id="243" Count="2" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="197" Count="39" />
+      <LineId Id="238" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_SystemInit.ACT_ResetMotors">
+      <LineId Id="265" Count="162" />
+      <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="PRG_SystemInit.Reset">
-      <LineId Id="65" Count="2" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="68" Count="0" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="79" Count="1" />
-      <LineId Id="41" Count="11" />
-      <LineId Id="88" Count="0" />
-      <LineId Id="93" Count="1" />
-      <LineId Id="128" Count="0" />
-      <LineId Id="133" Count="1" />
-      <LineId Id="136" Count="1" />
-      <LineId Id="135" Count="0" />
-      <LineId Id="139" Count="1" />
-      <LineId Id="138" Count="0" />
-      <LineId Id="142" Count="1" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="144" Count="0" />
-      <LineId Id="146" Count="3" />
-      <LineId Id="145" Count="0" />
-      <LineId Id="95" Count="0" />
-      <LineId Id="89" Count="0" />
-      <LineId Id="54" Count="1" />
-      <LineId Id="99" Count="3" />
-      <LineId Id="56" Count="5" />
-      <LineId Id="110" Count="10" />
-      <LineId Id="157" Count="1" />
-      <LineId Id="170" Count="0" />
-      <LineId Id="179" Count="2" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="159" Count="3" />
-      <LineId Id="182" Count="0" />
-      <LineId Id="184" Count="7" />
-      <LineId Id="183" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="74" Count="3" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="40" Count="0" />
-      <LineId Id="38" Count="0" />
+      <LineId Id="319" Count="27" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="347" Count="91" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
