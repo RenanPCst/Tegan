@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_ShutdownPLC" Id="{71ae888e-9b37-420e-9d56-8353899fcb8d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_ShutdownPLC
 VAR
@@ -7,14 +7,16 @@ VAR
     fbShutdown  : NT_Shutdown;
     fbWritePersistentData : FB_WritePersistentData;
 
-    fbR_Trig        : R_TRIG;
-    tSafeShutdown   : TON;
-    tSafeReboot     : TON;
+    fbR_Trig        	: R_TRIG;
+    tonSafeShutdown   	: TON;
+    tonSafeReboot     	: TON;
+	tonPowerSupplyDelay	: TON;
 
     bStart              : BOOL := TRUE;
     bWriteDone          : BOOL := FALSE;
     bShutdownRequest    : BOOL := FALSE;
     bRebootRequest      : BOOL := FALSE;
+	bPowerSupplyDelay	: BOOL := FALSE;
 	
 	tRebootTime		: TIME := T#10S;
 	tShutdownTime	: TIME := T#60S;
@@ -23,9 +25,11 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[// === Check if power supply is NOT OK or Shutdown is requested by HMI ===
-IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND
-        GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck) OR
-   		GVL_HMI.HMIDigInputs.bShutdownPLC THEN
+tonPowerSupplyDelay( IN := bPowerSupplyDelay, PT := T#3S);
+
+bPowerSupplyDelay := NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck);
+
+IF tonPowerSupplyDelay.Q OR GVL_HMI.HMIDigInputs.bShutdownPLC THEN
 
     // === Trigger on rising edge of START to prevent multiple writes ===
     fbR_Trig(CLK := bStart);
@@ -43,12 +47,12 @@ IF NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSuppl
     END_IF
 
     IF bWriteDone THEN
-        tSafeShutdown(IN := TRUE, PT := tShutdownTime);
-		GVL_HMI.rTimeCountingDown := (TIME_TO_DWORD(tShutdownTime)/1000) - (TIME_TO_DWORD(tSafeShutdown.ET)/1000);
+        tonSafeShutdown(IN := TRUE, PT := tShutdownTime);
+		GVL_HMI.rTimeCountingDown := (TIME_TO_DWORD(tShutdownTime)/1000) - (TIME_TO_DWORD(tonSafeShutdown.ET)/1000);
     END_IF
 ELSE
     // Reset shutdown timer and write flag if no shutdown condition
-    tSafeShutdown(IN := FALSE);
+    tonSafeShutdown(IN := FALSE);
     bWriteDone := FALSE;
 	
 END_IF
@@ -56,19 +60,19 @@ END_IF
 
 // === Check if Reboot command from HMI is active ===
 IF GVL_HMI.HMIDigInputs.bRebootPLC THEN
-    tSafeReboot(IN := TRUE, PT := T#10S);
-	GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tSafeReboot.ET)/1000;
+    tonSafeReboot(IN := TRUE, PT := T#10S);
+	GVL_HMI.rTimeCountingDown := 10 - TIME_TO_DWORD(tonSafeReboot.ET)/1000;
 ELSE
-    tSafeReboot(IN := FALSE);
+    tonSafeReboot(IN := FALSE);
 END_IF
 
 
 // === After timers expire, set action flags ===
-IF tSafeShutdown.Q THEN
+IF tonSafeShutdown.Q THEN
     bShutdownRequest := TRUE;
 END_IF
 
-IF tSafeReboot.Q THEN
+IF tonSafeReboot.Q THEN
     bRebootRequest := TRUE;
 END_IF
 
@@ -80,7 +84,11 @@ fbReboot(Start := bRebootRequest);
 fbShutdown(Start := bShutdownRequest);]]></ST>
     </Implementation>
     <LineIds Name="PRG_ShutdownPLC">
-      <LineId Id="100" Count="21" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="196" Count="1" />
+      <LineId Id="103" Count="18" />
       <LineId Id="152" Count="0" />
       <LineId Id="122" Count="4" />
       <LineId Id="171" Count="0" />

@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_ValveTest" Id="{716c37c1-4509-4111-984f-a4650bd37d39}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ValveTest
+VAR
+	eStep           : INT := 0;
+    tWait           : TON;  // Timer de 1 segundo
+    iCycleCounter   : INT := 0;
+	iValveIndex		: INT := 1;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ----- Máquina de Estados -----
+CASE eStep OF
+
+    // -------------------------------------------------
+    // 0) Início → Move para posição 1
+    // -------------------------------------------------
+    0:
+        IF GVL_Motion.aValvesObj[iValveIndex].MoveValve(
+                iPosition := 1,
+                rVelocity := 3000,
+                rAcc := 1500,
+                rDec := 1500)
+        THEN
+            tWait(IN := FALSE);    // reset do TON
+            eStep := 10;
+        END_IF
+
+    // -------------------------------------------------
+    // 10) Espera 1 segundo após chegar na posição 1
+    // -------------------------------------------------
+    10:
+        tWait(IN := TRUE, PT := T#1S);
+        IF tWait.Q THEN
+            eStep := 20;
+            tWait(IN := FALSE);
+        END_IF
+
+    // -------------------------------------------------
+    // 20) Move para posição 6
+    // -------------------------------------------------
+    20:
+        IF GVL_Motion.aValvesObj[iValveIndex].MoveValve(
+                iPosition := 6,
+                rVelocity := 3000,
+                rAcc := 1500,
+                rDec := 1500)
+        THEN
+            tWait(IN := FALSE);
+            eStep := 30;
+        END_IF
+
+    // -------------------------------------------------
+    // 30) Espera 1 segundo após chegar na posição 6
+    // -------------------------------------------------
+    30:
+        tWait(IN := TRUE, PT := T#1S);
+        IF tWait.Q THEN
+            tWait(IN := FALSE);
+            iCycleCounter := iCycleCounter + 1;
+
+            IF iCycleCounter < 300 THEN
+                eStep := 0;  // reinicia ciclo
+            ELSE
+                eStep := 100; // fim
+            END_IF
+        END_IF
+
+    // -------------------------------------------------
+    // 100) Fim do ciclo (300 ciclos)
+    // -------------------------------------------------
+    100:
+        // pode colocar algo aqui se quiser
+        // ciclo finalizado
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_ValveTest">
+      <LineId Id="10" Count="13" />
+      <LineId Id="25" Count="23" />
+      <LineId Id="50" Count="25" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

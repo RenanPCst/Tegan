@@ -28,7 +28,7 @@ VAR
 
     // Volumes (ml) para o prime
     rPrimeForwardVolume  : REAL := 30.0;   // 30 ml forward
-    rPrimeBackwardVolume : REAL := 20.0;   // 20 ml backward
+    rPrimeBackwardVolume : REAL := 50.0;   // 50 ml backward
 
     // Solvent currently being primed (1..4)
     iActiveSolventPosition : USINT := 0;
@@ -261,7 +261,7 @@ END_FOR
 IF iCount = 0 THEN
     EstimateTotalTime := 1.0;
 ELSE
-    EstimateTotalTime := rTimePerSolvent * TO_REAL(iCount);
+    EstimateTotalTime := rTimePerSolvent * TO_REAL(iCount) * 7;
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -392,9 +392,9 @@ CASE iStepCounter OF
             IF NOT bMovePumpDone[i] THEN
                 bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
                     Distance := - fDistance[i],  // negative movement
-                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
-                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
-                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                    Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iRunVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iRunVelocity * 3
                 );
             END_IF
         END_FOR
