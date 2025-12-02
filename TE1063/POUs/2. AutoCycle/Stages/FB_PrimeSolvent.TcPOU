@@ -66,7 +66,7 @@ IF bProgressInitDone
 
     rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0; // seconds
 
-    GVL_HMI.HMIAnimation.rLoadBarRecovery := 
+    GVL_HMI.HMIAnimation.rLoadBarPrime := 
         MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
@@ -87,9 +87,9 @@ CASE ePrimeState OF
         // Se nenhuma etapa usa solvente (ou tudo 0), não faz nada aqui
         IF iNumSolventsToPrime = 0 THEN
             // Nada para primar -> termina imediatamente
-            GVL_HMI.HMIAnimation.sLoadTextRecovery  := 'Prime skipped';
-            GVL_HMI.HMIAnimation.rLoadBarRecovery   := 100.0;
-            GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Completed;
+            GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime skipped';
+            GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
+            GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
 
             bDone      := TRUE;
             ePrimeState := E_PrimeSolventState.PS_Completed;
@@ -100,9 +100,9 @@ CASE ePrimeState OF
             bProgressInitDone      := TRUE;
 
             // HMI animation
-            GVL_HMI.HMIAnimation.sLoadTextRecovery   := 'Prime Solvents';
-            GVL_HMI.HMIAnimation.rLoadBarRecovery    := 0.0;
-            GVL_HMI.HMIAnimation.eIconStateRecovery  := E_IconState.InProgress;
+            GVL_HMI.HMIAnimation.sLoadTextPrime   := 'Prime Solvents';
+            GVL_HMI.HMIAnimation.rLoadBarPrime    := 0.0;
+            GVL_HMI.HMIAnimation.eIconStatePrime  := E_IconState.InProgress;
 
             // Move to first solvent state
             ePrimeState       := E_PrimeSolventState.PS_Solvent1;
@@ -188,15 +188,12 @@ CASE ePrimeState OF
     // COMPLETED
     //-------------------------------------------------------------------------
     E_PrimeSolventState.PS_Completed:
-        GVL_HMI.HMIAnimation.sLoadTextRecovery   := 'Prime Completed';
-        GVL_HMI.HMIAnimation.rLoadBarRecovery    := 100.0;
-        GVL_HMI.HMIAnimation.eIconStateRecovery  := E_IconState.Completed;
+        GVL_HMI.HMIAnimation.sLoadTextPrime   := 'Prime Completed';
+        GVL_HMI.HMIAnimation.rLoadBarPrime    := 100.0;
+        GVL_HMI.HMIAnimation.eIconStatePrime  := E_IconState.Completed;
 
         bDone  := TRUE;
         bBusy  := FALSE;
-
-        // Aqui você pode segurar em Completed até bExecute cair, 
-        // ou apenas ficar travado e deixar o chamador dar Reset()
 END_CASE;
 ]]></ST>
     </Implementation>
@@ -467,7 +464,8 @@ RETURN;
       <LineId Id="231" Count="11" />
       <LineId Id="138" Count="5" />
       <LineId Id="243" Count="11" />
-      <LineId Id="150" Count="15" />
+      <LineId Id="150" Count="11" />
+      <LineId Id="165" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_PrimeSolvent.BuildPrimeListFromRecipe">
