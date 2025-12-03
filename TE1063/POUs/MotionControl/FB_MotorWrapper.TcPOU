@@ -172,7 +172,7 @@ fbReadPos(Axis := Axis, Enable := TRUE);
 stStatus.fPosition := fbReadPos.Position;
 stStatus.bBusy := fbMoveAbs.Busy OR fbMoveRel.Busy OR fbHome.Busy OR fbMoveVel.Busy OR bDetectedMovement;
 stStatus.bDone := fbMoveAbs.Done OR fbMoveRel.Done OR fbHome.Done;
-stStatus.bError := fbPower.Error OR fbMoveAbs.Error OR fbMoveRel.Error OR fbHome.Error OR fbMoveVel.Error;
+stStatus.bError := Axis.Status.Error;
 
 // Calc the position diference
 deltaPos := fbReadPos.Position - lastPosition;
@@ -667,10 +667,198 @@ END_VAR
 VAR
     (* Local helper to clear flags only on very first call of this reset cycle *)
     bFirstCall : BOOL := FALSE;
+	stAxisStat : ST_AxisReadStatus;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// ============================================================================
+// 0) Default
+// ============================================================================
+Reset := FALSE;
+
+// Allways read the actual axis state
+Axis.ReadStatus();
+stAxisStat.Disabled   := Axis.Status.Disabled;
+stAxisStat.Error      := Axis.Status.Error;
+stAxisStat.ErrorID    := Axis.Status.ErrorID;
+stAxisStat.Homed      := Axis.Status.Homed;
+stAxisStat.Operational:= Axis.Status.Operational;
+stAxisStat.StandStill := Axis.Status.StandStill;
+
+// 0.1) If the axis is NOT in error, there is nothing to reset.
+IF NOT stAxisStat.Error THEN
+    // It guarantees a "clean" status.
+    stStatus.bError      := FALSE;
+    stStatus.iErrorCode  := 0;
+    stStatus.sMessage    := '';
+    stStatus.eState      := E_ActuatorState.eIdle;
+
+    // Clear internal reset flags
+    bResetRequested      := FALSE;
+    bResetExecute        := FALSE;
+    bResetDone           := FALSE;
+
+    Reset := TRUE;
+    RETURN;
+END_IF
+
+// ============================================================================
+// 1) Detect new Reset() cycle
+// 		- Only enters this section when there is actually an error on the axis
+// ============================================================================
+IF NOT bResetRequested AND NOT bResetExecute AND NOT bResetDone THEN
+    bFirstCall     := TRUE;
+    bResetRequested:= TRUE;
+END_IF
+
+IF bFirstCall THEN
+    // --------------------------------------------------------
+    // 1.1) Clears all MC's Executes and internal flags.
+    // --------------------------------------------------------
+    fbPower(Axis := Axis, Enable := FALSE, Enable_Positive := FALSE, Enable_Negative := FALSE);
+    fbMoveAbs(Axis := Axis, Execute := FALSE);
+    fbMoveRel(Axis := Axis, Execute := FALSE);
+    fbMoveVel(Axis := Axis, Execute := FALSE);
+    fbHome(Axis := Axis, Execute := FALSE);
+    fbSetPos(Axis := Axis, Execute := FALSE);
+    fbStop(Axis := Axis, Execute := FALSE);
+    fbHalt(Axis := Axis, Execute := FALSE);
+    fbReadStatus(Axis := Axis, Enable := FALSE);
+    fbReadPos(Axis := Axis, Enable := FALSE);
+
+    bPowerRequest         := FALSE;
+    bDisableReq           := FALSE;
+
+    bAbsRequest           := FALSE;
+    bRelRequest           := FALSE;
+
+    bReadStatusRequested  := FALSE;
+    bReadStatusExecute    := FALSE;
+
+    // Move Abs
+    bMoveAbsRequested     := FALSE;
+    bMoveAbsExecute       := FALSE;
+    bMoveAbsDone          := FALSE;
+    bMoveAbsStarted       := FALSE;
+
+    // Move Rel
+    bMoveRelRequested     := FALSE;
+    bMoveRelExecute       := FALSE;
+    bMoveRelDone          := FALSE;
+
+    // Move Valve
+    bMoveValveRequested   := FALSE;
+    bMoveValveExecute     := FALSE;
+
+    // Move Vel
+    bMoveVelRequested     := FALSE;
+    bMoveVelExecute       := FALSE;
+    bMoveVelDone          := FALSE;
+
+    // SetPos
+    bSetPosRequested      := FALSE;
+    bSetPosExecute        := FALSE;
+    bSetPosDone           := FALSE;
+
+    // Stop / Halt / Home
+    bStopRequested        := FALSE;
+    bStopExecute          := FALSE;
+    bStopDone             := FALSE;
+    bHomeRequest          := FALSE;
+    bHomeInProgress       := FALSE;
+    bStartHoming          := FALSE;
+    bStartMoveVel         := FALSE;
+    bWaitingForSensorOff  := FALSE;
+    bWaitingForStop       := FALSE;
+
+    // Flags do reset
+    bResetRequest         := FALSE;
+    bResetRequested       := TRUE;
+    bResetDone            := FALSE;
+
+    tonMoveAbs(IN := FALSE);
+    tonAbsInWin(IN := FALSE);
+    tonHoming(IN := FALSE);
+    tonVelStill(IN := FALSE);
+    tonAbsTimeout(IN := FALSE);
+
+    rtMoveAbsDone(CLK := FALSE);
+    rTrigStop(CLK := FALSE);
+
+    stStatus.bBusy        := FALSE;
+    stStatus.bError       := TRUE;             // still error
+    stStatus.iErrorCode   := stAxisStat.ErrorID;
+    stStatus.sMessage     := 'Resetting axis error...';
+    stStatus.eState       := E_ActuatorState.eError;
+
+    bFirstCall := FALSE;
+END_IF
+
+// ============================================================================
+// 2) Triggers MC_Reset 1x per reset cycle
+// ============================================================================
+IF bResetRequested AND NOT bResetExecute AND NOT bResetDone THEN
+    bResetExecute := TRUE;
+END_IF
+
+fbReset(
+    Axis    := Axis,
+    Execute := bResetExecute
+);
+
+// ============================================================================
+// 3) MC_Reset error handling
+// ============================================================================
+IF fbReset.Error THEN
+    stStatus.bError      := TRUE;
+    stStatus.iErrorCode  := fbReset.ErrorID;
+    stStatus.sMessage    := 'Error in MC_Reset';
+    stStatus.eState      := E_ActuatorState.eError;
+
+    bResetExecute        := FALSE;
+    bResetRequested      := FALSE;
+    bResetDone           := FALSE;
+
+    Reset := FALSE;
+    RETURN;
+END_IF
+
+// MC_Reset's Done
+IF fbReset.Done THEN
+    bResetExecute := FALSE;
+    bResetDone    := TRUE;
+END_IF
+
+// ============================================================================
+// 4) Finalization: only concludes if the axis really recovered from the error.
+// ============================================================================
+IF bResetDone AND NOT fbReset.Busy THEN
+    // reads the axis status again
+    Axis.ReadStatus();
+    IF NOT Axis.Status.Error THEN
+        // Success
+        stStatus.bError      := FALSE;
+        stStatus.iErrorCode  := 0;
+        stStatus.sMessage    := '';
+        stStatus.eState      := E_ActuatorState.eIdle;
+
+        bResetRequested      := FALSE;
+        bResetDone           := FALSE;
+
+        Reset := TRUE;
+        RETURN;
+    ELSE
+        // Still in error (e.g., 0x4650, 0x4260, etc.)
+		// Starts another MC_Reset cycle
+        bResetDone     := FALSE;
+        bResetExecute  := TRUE;
+        // Reset remains FALSE until the error is actually cleared.
+    END_IF
+END_IF
+
+
+(* Old Reset procedure before 2025's Nov27th
+// ============================================================================
 // 0) Default return
 // ============================================================================
 Reset := FALSE;
@@ -839,7 +1027,7 @@ IF bResetDone AND NOT fbReset.Busy THEN
     Reset := TRUE;
 	RETURN;
 END_IF
-
+*)
 
 (* Old Reset procedure before 2025's Nov24th
 // =================================================================================================
@@ -1274,6 +1462,14 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
+      <LineId Id="382" Count="32" />
+      <LineId Id="570" Count="0" />
+      <LineId Id="416" Count="142" />
+      <LineId Id="572" Count="0" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="561" Count="4" />
+      <LineId Id="372" Count="1" />
+      <LineId Id="371" Count="0" />
       <LineId Id="183" Count="26" />
       <LineId Id="211" Count="43" />
       <LineId Id="257" Count="20" />

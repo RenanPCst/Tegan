@@ -3,6 +3,8 @@
   <POU Name="POU_FaultHandler" Id="{b1ce7aec-da98-4fd1-9638-edc1a122ac6a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM POU_FaultHandler
 VAR
+	tonSF200Delay 	: TON;
+	bSF200Alarm		: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -500,7 +502,11 @@ END_IF
 //----- Related to System Faults -----------------------------------------------------------------------------------------------------
 
 (* SF-200: System Powered Off (PLC on Battery) *)
-IF NOT GVL_IO.gDigInputs.b24VPowerSupplyOK OR NOT GVL_IO.gDigInputs.b48VPowerSupplyOK THEN
+tonSF200Delay( IN := bSF200Alarm, PT := T#3S);
+
+bSF200Alarm := NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck);
+
+IF tonSF200Delay.Q THEN
 		GVL_Alarms.arrEventFlag[200]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[200]:= FALSE;	
@@ -645,7 +651,10 @@ END_IF
       <LineId Id="783" Count="1" />
       <LineId Id="654" Count="4" />
       <LineId Id="855" Count="0" />
-      <LineId Id="760" Count="4" />
+      <LineId Id="760" Count="0" />
+      <LineId Id="986" Count="3" />
+      <LineId Id="985" Count="0" />
+      <LineId Id="762" Count="2" />
       <LineId Id="659" Count="1" />
       <LineId Id="857" Count="1" />
       <LineId Id="863" Count="1" />

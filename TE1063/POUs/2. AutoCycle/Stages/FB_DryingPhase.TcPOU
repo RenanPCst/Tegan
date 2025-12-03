@@ -65,7 +65,7 @@ CASE eDryState OF
 		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Moving Motor';
 		
 		IF NOT bMoveM1 THEN // M1 Movement to dry position
-			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[3],
+			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[2],
 															rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
 															rAcc := GVL_Settings.stMachineParam.rM1Accleration,
 															rDec := GVL_Settings.stMachineParam.rM1Deceleration
@@ -80,11 +80,11 @@ CASE eDryState OF
 		END_IF
 	
 	OPEN_AIR:
-		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[3]) <= 2.0;
+		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[2]) <= 2.0;
 		// Check if the motor M1 is in the correct position
 		IF bM1RightPosition THEN
 			// Set air by solenoid position
-			IF GVL_IO.gSetSolenoidControl.AirDry() THEN
+			IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
 				eDryState := WAITING_TIME; // Move to next step
 			END_IF
 		ELSE

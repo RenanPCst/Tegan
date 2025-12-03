@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_ValveTest" Id="{716c37c1-4509-4111-984f-a4650bd37d39}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ValveTest
+VAR
+	eStep           : INT := 0;
+    tWait           : TON;      // Timer de 500 ms
+    iCycleCounter   : INT := 0; // Contador de ciclos globais (todas as válvulas)
+    iCycleThreshold : INT := 600;
+
+    i               : INT;      // Índice de loop
+    bAllDone        : BOOL;     // Flag: todas as válvulas terminaram
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ----- Máquina de Estados -----
+CASE eStep OF
+
+    // -------------------------------------------------
+    // 0) Mover TODAS as válvulas para posição 1
+    // -------------------------------------------------
+    0:
+        bAllDone := TRUE;
+
+        FOR i := 1 TO 5 DO
+            // Se alguma ainda não terminou o movimento, AllDone fica FALSE
+            IF NOT GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 1,
+                    rVelocity := 3000,
+                    rAcc      := 1500,
+                    rDec      := 1500)
+            THEN
+                bAllDone := FALSE;
+            END_IF
+        END_FOR
+
+        // Só avança quando TODAS retornarem TRUE
+        IF bAllDone THEN
+            tWait(IN := FALSE);    // reset do TON
+            eStep := 10;
+        END_IF
+
+    // -------------------------------------------------
+    // 10) Espera 500 ms após TODAS chegarem na posição 1
+    // -------------------------------------------------
+    10:
+        tWait(IN := TRUE, PT := T#500MS);
+        IF tWait.Q THEN
+            tWait(IN := FALSE);
+            eStep := 20;
+        END_IF
+
+    // -------------------------------------------------
+    // 20) Mover TODAS as válvulas para posição 6
+    // -------------------------------------------------
+    20:
+        bAllDone := TRUE;
+
+        FOR i := 1 TO 5 DO
+            IF NOT GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := 3000,
+                    rAcc      := 1500,
+                    rDec      := 1500)
+            THEN
+                bAllDone := FALSE;
+            END_IF
+        END_FOR
+
+        IF bAllDone THEN
+            tWait(IN := FALSE);
+            eStep := 30;
+        END_IF
+
+    // -------------------------------------------------
+    // 30) Espera 500 ms após TODAS chegarem na posição 6
+    //      Depois conta 1 ciclo global (todas as 5 passaram por 1→6)
+    // -------------------------------------------------
+    30:
+        tWait(IN := TRUE, PT := T#500MS);
+        IF tWait.Q THEN
+            tWait(IN := FALSE);
+
+            iCycleCounter := iCycleCounter + 1;
+
+            IF iCycleCounter < iCycleThreshold THEN
+                eStep := 0;      // novo ciclo 1→6
+            ELSE
+                eStep := 100;    // fim dos testes
+            END_IF
+        END_IF
+
+    // -------------------------------------------------
+    // 100) Fim do teste
+    // -------------------------------------------------
+    100:
+        // Aqui você pode colocar:
+        // GVL_HMI.bValveTestDone := TRUE; ou algo assim
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_ValveTest">
+      <LineId Id="90" Count="82" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

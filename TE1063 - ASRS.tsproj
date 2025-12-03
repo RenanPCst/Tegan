@@ -1927,6 +1927,31 @@ External Setpoint Generation:
 			</ArrayInfo>
 		</DataType>
 		<DataType>
+			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
+			<BitSize>24</BitSize>
+			<SubItem>
+				<Name>bStageCollectionLeftLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bSampleRecoveryLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>8</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>bStageCollectionRightLight</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
+				<BitSize>8</BitSize>
+				<BitOffs>16</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
 			<Name GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}" AutoDeleteType="true">ST_EL2809</Name>
 			<BitSize>72</BitSize>
 			<SubItem>
@@ -1991,31 +2016,6 @@ External Setpoint Generation:
 				<Comment><![CDATA[ Solenoid Valve C ]]></Comment>
 				<BitSize>8</BitSize>
 				<BitOffs>64</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}" AutoDeleteType="true">ST_EL2624</Name>
-			<BitSize>24</BitSize>
-			<SubItem>
-				<Name>bStageCollectionLeftLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 1 - Stage Collection Left Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bSampleRecoveryLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 2 - Sample Recovery LED]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>8</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>bStageCollectionRightLight</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
-				<Comment><![CDATA[Channel 3 - Stage Collection Right Side LED ]]></Comment>
-				<BitSize>8</BitSize>
-				<BitOffs>16</BitOffs>
 			</SubItem>
 		</DataType>
 		<DataType>
@@ -2691,9 +2691,9 @@ External Setpoint Generation:
 			<Licenses>
 				<Target>
 					<ManualSelect>{FDE02854-39A7-440C-9EAE-C234A16A3CED}</ManualSelect>
-					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
-					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
 					<ManualSelect>{796D380F-D49E-4C0C-A05F-500052FAC883}</ManualSelect>
+					<ManualSelect>{BCA6EE0A-9CE1-4D3F-98CA-413ABC0D94FD}</ManualSelect>
+					<ManualSelect>{92583661-35AE-45CE-BD4F-C35BFE16F07E}</ManualSelect>
 					<ManualSelect>{3EBB9639-5FF3-42B6-8847-35C70DC013C8}</ManualSelect>
 					<ManualSelect>{7AFD0713-1333-4A3B-938C-7B9BD0418C8D}</ManualSelect>
 					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
@@ -6738,7 +6738,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{35E44793-BA7E-2F32-B68D-A125D10365B3}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3F892E26-4C60-9215-FD51-C0697709F8D4}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6835,6 +6835,11 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
 							<Name>GVL_IO.gDigInputs</Name>
 							<Comment><![CDATA[Digital inputs at Terminals 21 and 30 [EL1809]]]></Comment>
 							<Type GUID="{90D72963-4B01-AF00-C2D0-117DB01E8CD5}">ST_EL1809</Type>
@@ -6850,14 +6855,19 @@ External Setpoint Generation:
 							<Type GUID="{B9FE2528-273D-A73A-3FD9-CE45AD30A1A5}">ST_EL3022</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Name>GVL_IO.nEK1100T22State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
 							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gProfinetInput</Name>
 							<Comment><![CDATA[Profinet inputs by Device 5 			[EL6631]]]></Comment>
 							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEL6070State</Name>
+							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
@@ -6900,16 +6910,6 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T22State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEL6070State</Name>
-							<Comment><![CDATA[ EL6070-0033 State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.nEL1918T04State</Name>
 							<Comment><![CDATA[ EL1918 State from IO Terminal Info Data]]></Comment>
 							<Type>UINT</Type>
@@ -6950,14 +6950,14 @@ External Setpoint Generation:
 							<Type>UINT</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.bEL9410UPStatus</Name>
-							<Comment><![CDATA[ Terminal UP Status]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.nEL9410T12State</Name>
 							<Comment><![CDATA[ State from IO Terminal Info Data	]]></Comment>
 							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.bEL9410UPStatus</Name>
+							<Comment><![CDATA[ Terminal UP Status]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.bEL9410USStatus</Name>
@@ -7073,6 +7073,11 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL_IO.stAL1333info.nQualifierIOLink</Name>
 							<Type GUID="{6AE51ED4-2F21-994D-0AF2-434ED0E81DC1}">ARRAY [1..8] OF USINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyEnable</Name>
+							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Motion.M1Motor.Axis.NcToPlc</Name>
@@ -8693,11 +8698,6 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.bSafetyEnable</Name>
-							<Comment><![CDATA[Safety All set and enabled to run the machine	]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOErrorAck</Name>
 							<Comment><![CDATA[Motors variables 
 AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
@@ -8717,13 +8717,13 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_Safety.SafetyInputs</Name>
-							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
-						</Var>
-						<Var>
 							<Name>GVL_Safety.bM1STOEnabled</Name>
 							<Comment><![CDATA[STO Monitoring M1 > M8]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.SafetyInputs</Name>
+							<Type GUID="{E4AC72A6-1C30-F453-5C9D-F522D9F169BE}">ST_SafetyInputs</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bM2STOEnabled</Name>
@@ -8772,14 +8772,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.gDigOutputs</Name>
-							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
-							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.gRelayOutputs</Name>
 							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
 							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gDigOutputs</Name>
+							<Comment><![CDATA[Digital Outputs at Terminal 22 		[EL2809]]]></Comment>
+							<Type GUID="{A0FD2C0D-50A9-718E-FE6A-FE48DBF207E2}">ST_EL2809</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.stEL6910.qSafetyRun</Name>
@@ -8799,6 +8799,11 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 						<Var>
 							<Name>GVL_IO.stEL6910.qSafetyAirPresureOK</Name>
 							<Comment><![CDATA[ Terminal 3 Safety Air Presure Check]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_Safety.bSafetyErrorAck</Name>
+							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -9063,11 +9068,6 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Motion.aPumps[10].Rotary.nControlWord</Name>
 							<Comment><![CDATA[Control Word (ControlWord send to axis)]]></Comment>
 							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_Safety.bSafetyErrorAck</Name>
-							<Comment><![CDATA[EL6910 Safety project Variables]]></Comment>
-							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL_Safety.bSafetyRun</Name>
@@ -9447,7 +9447,7 @@ M1 Motor Safety]]></Comment>
 			<PlcAuxTask Affinity="#x00000001"/>
 		</Plc>
 		<Safety>
-			<Project GUID="{80E8059B-70AF-4BCB-BB68-A04F5BA304B2}" Name="PLC_Safe" PrjFilePath="PLC_Safe\PLC_Safe.splcproj" TmcFilePath="PLC_Safe\PLC_Safe.tmc" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
+			<Project Name="PLC_Safe" GeneralArchiveSettings="#x000f" TargetArchiveSettings="#x0007" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010010" KeepUnrestoredLinks="2">
 					<Name>PLC_Safe Instance</Name>
 					<TmcDesc GUID="{72A6D5B8-E98C-4604-8B90-09D1F8AB38A9}">
@@ -18844,7 +18844,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 								<SortId>0</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
 									<ItemId>27</ItemId>
 									<ObjectId>#x0302001b</ObjectId>
@@ -18902,7 +18902,7 @@ Bit1: Value bigger/equal Limit2]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 15 (EL7211-9014)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^M2 Motor - SC Vertical</NcItemPathName>
 										</TcLink>
@@ -20760,7 +20760,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>1</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 16 (EL7211-9014)</IoItemPathName>
 									<ItemId>28</ItemId>
 									<ObjectId>#x0302001c</ObjectId>
@@ -20818,7 +20818,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 1 (EK1100)^Term 16 (EL7211-9014)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^M3 Motor - SC Horizontal</NcItemPathName>
 										</TcLink>
@@ -22380,7 +22380,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>2</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 23 (EL7062)</IoItemPathName>
 									<ItemId>35</ItemId>
 									<ObjectId>#x03020023</ObjectId>
@@ -22412,7 +22412,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 23 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 1 - Linear</NcItemPathName>
 										</TcLink>
@@ -22665,7 +22665,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 23 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 1 - Rotary</NcItemPathName>
 										</TcLink>
@@ -24286,7 +24286,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>3</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 24 (EL7062)</IoItemPathName>
 									<ItemId>36</ItemId>
 									<ObjectId>#x03020024</ObjectId>
@@ -24318,7 +24318,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 24 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 2 - Linear</NcItemPathName>
 										</TcLink>
@@ -24571,7 +24571,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 24 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 2 - Rotary</NcItemPathName>
 										</TcLink>
@@ -26192,7 +26192,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>4</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 25 (EL7062)</IoItemPathName>
 									<ItemId>37</ItemId>
 									<ObjectId>#x03020025</ObjectId>
@@ -26224,7 +26224,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 25 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 3 - Linear</NcItemPathName>
 										</TcLink>
@@ -26477,7 +26477,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 25 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 3 - Rotary</NcItemPathName>
 										</TcLink>
@@ -28100,7 +28100,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>5</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 26 (EL7062)</IoItemPathName>
 									<ItemId>38</ItemId>
 									<ObjectId>#x03020026</ObjectId>
@@ -28132,7 +28132,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 26 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 4 - Linear</NcItemPathName>
 										</TcLink>
@@ -28385,7 +28385,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 26 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 4 - Rotary</NcItemPathName>
 										</TcLink>
@@ -30006,7 +30006,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>6</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 27 (EL7062)</IoItemPathName>
 									<ItemId>39</ItemId>
 									<ObjectId>#x03020027</ObjectId>
@@ -30038,7 +30038,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 27 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 5 - Linear</NcItemPathName>
 										</TcLink>
@@ -30291,7 +30291,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 27 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 5 - Rotary</NcItemPathName>
 										</TcLink>
@@ -31912,7 +31912,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>7</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 28 (EL7062)</IoItemPathName>
 									<ItemId>40</ItemId>
 									<ObjectId>#x03020028</ObjectId>
@@ -31944,7 +31944,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 28 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 6 - Linear</NcItemPathName>
 										</TcLink>
@@ -32197,7 +32197,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 28 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 6 - Rotary</NcItemPathName>
 										</TcLink>
@@ -33818,7 +33818,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>8</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 29 (EL7062)</IoItemPathName>
 									<ItemId>41</ItemId>
 									<ObjectId>#x03020029</ObjectId>
@@ -33850,7 +33850,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 29 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 7 - Linear</NcItemPathName>
 										</TcLink>
@@ -34103,7 +34103,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 29 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 7 - Rotary</NcItemPathName>
 										</TcLink>
@@ -35724,7 +35724,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>9</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 30 (EL7062)</IoItemPathName>
 									<ItemId>42</ItemId>
 									<ObjectId>#x0302002a</ObjectId>
@@ -35756,7 +35756,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 30 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 8 - Linear</NcItemPathName>
 										</TcLink>
@@ -36009,7 +36009,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 30 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 8 - Rotary</NcItemPathName>
 										</TcLink>
@@ -37630,7 +37630,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>10</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 31 (EL7062)</IoItemPathName>
 									<ItemId>43</ItemId>
 									<ObjectId>#x0302002b</ObjectId>
@@ -37662,7 +37662,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 31 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 9 - Linear</NcItemPathName>
 										</TcLink>
@@ -37915,7 +37915,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 31 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 9 - Rotary</NcItemPathName>
 										</TcLink>
@@ -39536,7 +39536,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>11</SortId>
 								<DriveModuleType>4</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 32 (EL7062)</IoItemPathName>
 									<ItemId>44</ItemId>
 									<ObjectId>#x0302002c</ObjectId>
@@ -39568,7 +39568,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 32 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 10 - Linear</NcItemPathName>
 										</TcLink>
@@ -39821,7 +39821,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Channel>
 									<Channel ChnId="1">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 22 (EK1100)^Term 32 (EL7062)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^Pump 10 - Rotary</NcItemPathName>
 										</TcLink>
@@ -41448,7 +41448,7 @@ Bit 8 - 15 : reserved]]></Comment>
 							<SortId>12</SortId>
 							<DriveModuleType>27</DriveModuleType>
 							<TcLink>
-								<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+								<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 								<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 33 (AX8620-0000-0105)</IoItemPathName>
 								<ItemId>45</ItemId>
 								<ObjectId>#x0302002d</ObjectId>
@@ -41718,7 +41718,7 @@ Bit 8 - 15 : reserved]]></Comment>
 								<SortId>0</SortId>
 								<DriveModuleType>6</DriveModuleType>
 								<TcLink>
-									<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+									<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 									<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 33 (AX8620-0000-0105)^Drive 34 (AX8108-0100-0106)</IoItemPathName>
 									<ItemId>46</ItemId>
 									<ObjectId>#x0302002e</ObjectId>
@@ -41733,8 +41733,6 @@ Bit 8 - 15 : reserved]]></Comment>
 								<ProductRevision>AX8108-0100-0106</ProductRevision>
 								<SafetyDeviceName>AX8911 2 Axis (0001-8108)</SafetyDeviceName>
 								<SafetySoftwareVersion>05 (V01.17)     </SafetySoftwareVersion>
-								<HasDualUseInfo>true</HasDualUseInfo>
-								<OperatingFrequencyLimitation>true</OperatingFrequencyLimitation>
 								<WatchLog UpdateIntervalInMs="500">
 									<WatchLogItem>
 										<WatchLogParaCoE Index="4120" SubIndex="2"/>
@@ -41772,7 +41770,7 @@ Bit 8 - 15 : reserved]]></Comment>
 									</Device>
 									<Channel ChnId="0">
 										<TcLink>
-											<TcPrjPath>..\TE1063 - ASRS.tsproj</TcPrjPath>
+											<TcPrjPath>..\.recoveryNewTry\TE1063 - ASRS.tsproj</TcPrjPath>
 											<IoItemPathName>TIID^Device 3 (EtherCAT)^Term 33 (AX8620-0000-0105)^Drive 34 (AX8108-0100-0106)</IoItemPathName>
 											<NcItemPathName AxisType="1">TINC^NC-Task 1 SAF^Axes^M1 Motor - SR Vertical</NcItemPathName>
 										</TcLink>
@@ -44031,16 +44029,13 @@ Bit 8 - 15 : reserved]]></Comment>
 			</Device>
 			<Device Id="5" DevType="119" AmsPort="28677" AmsNetId="192.168.0.162.6.1" RemoteName="Device 5 (EL6631)">
 				<Name>Device 5 (EL6631)</Name>
-				<DevData>000000002000000000000000a08601005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff000105215140040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
+				<DevData>000000002000000000000000a08601005465726d2032302028454c3636333129000000000000000000000000000000000000000000000000000000000000000000000000000001000102a8c000ffffff0001059c7e3a040000000000000000000000000000000000000000000000000000000000000000000000000000000000</DevData>
 				<Image Id="10" AddrType="4" ImageType="3" SizeIn="8" SizeOut="35">
 					<Name>Image</Name>
 				</Image>
 				<Box Id="2" BoxType="9121">
 					<Name>dl-pn1</Name>
-					<Comment><![CDATA[
-The GSDML is not available!
-
-GSDML Name: GSDML-V2.3-Keyence-DL-PN1-20230224.xml
+					<Comment><![CDATA[GSDML Name: GSDML-V2.3-Keyence-DL-PN1-20230224.xml
 Path: $(TWINCAT3DIR)Config\Io\Profinet\
 VendorName: Keyence
 OrderNumber: DL-PN1

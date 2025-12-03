@@ -42,8 +42,8 @@ rTargetPosition := GVL_Settings.stMachineParam.aM1Position[2];
 bInPosition := ABS(rActualPosition - rTargetPosition) <= rTolerance;
 
 //Provide HMI animation details
-GVL_HMI.HMIAnimation.sLoadTextHardware := 'Sealing'; 
-GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.InProgress;
+GVL_HMI.HMIAnimation.sLoadTextSealing := 'Sealing'; 
+GVL_HMI.HMIAnimation.eIconStateSealing := E_IconState.InProgress;
 
 // Update progress bar only while executing and not yet in position
 IF bExecuting AND NOT bInPosition THEN
@@ -52,10 +52,10 @@ IF bExecuting AND NOT bInPosition THEN
 
     // Protect against division by zero
     IF EstimateTotalTime() > 0.0 THEN
-        GVL_HMI.HMIAnimation.rLoadBarHardware :=
+        GVL_HMI.HMIAnimation.rLoadBarSealing :=
             LIMIT(0.0, (rElapsedTimeSec / EstimateTotalTime()) * 100.0, 100.0);
     ELSE
-        GVL_HMI.HMIAnimation.rLoadBarHardware := 0.0;
+        GVL_HMI.HMIAnimation.rLoadBarSealing := 0.0;
     END_IF
 END_IF
 
@@ -70,7 +70,7 @@ IF bExecute THEN
 		bStartMove2 := FALSE;
 		tStartTime := TIME();
 		tonStartMove2(IN := FALSE);
-		GVL_HMI.HMIAnimation.rLoadBarHardware := 0.0; // Reset bar only once
+		GVL_HMI.HMIAnimation.rLoadBarSealing := 0.0; // Reset bar only once
 	END_IF
 
 	IF NOT bInPosition OR NOT bMotionSequenceDone THEN
@@ -119,8 +119,8 @@ IF bExecute THEN
 		IF bInPosition THEN
 			bSealSuccess := TRUE;
 			bLoadBarUpdate := FALSE;
-			GVL_HMI.HMIAnimation.rLoadBarHardware := 100.0;
-			GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.Completed;
+			GVL_HMI.HMIAnimation.rLoadBarSealing := 100.0;
+			GVL_HMI.HMIAnimation.eIconStateSealing := E_IconState.Completed;
 		ELSE
 			bSealSuccess := FALSE;
 		END_IF
@@ -177,7 +177,7 @@ END_IF
 // FINAL CALCULATION
 // Total time = Move 1 + 500 ms delay + Move 2
 // ----------------------------------------------------------
-EstimateTotalTime := rTimeMove1 + 0.5 + rTimeMove2;]]></ST>
+EstimateTotalTime := rTimeMove1 + 0.5 + rTimeMove2 + 15;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Reset" Id="{f9795723-8eae-40ab-a345-51877b5d2bb9}">
