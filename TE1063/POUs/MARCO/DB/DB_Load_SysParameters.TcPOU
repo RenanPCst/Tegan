@@ -37,13 +37,13 @@ CASE state OF
 		GVL_Settings.stCalibParameters.iCalIntervalDays					:= STRING_TO_UINT(GVL_DB.stSysParameters.cal_PumpCallIntervalDays);
 		// Close app on Completation
 		GVL_Settings.stCalibParameters.iAirDryTimeSec					:= STRING_TO_UINT(GVL_DB.stSysParameters.AirDryTimeOnCompletation);
-		// Seal And Pump
+		GVL_Settings.bGeneralSealAndPump								:= STRING_TO_BOOL(GVL_DB.stSysParameters.gen_SealAndPump);
 		GVL_Settings.stLeakTestParameters.iAllowableLeakTestFailures	:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_AllowableLeakTestFail);
 		GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestBuildupTime);
 		GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestHoldTime);
 		GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit		:= STRING_TO_REAL(GVL_DB.stSysParameters.lkt_LeakTestPressure);
-		// Plates close position
-		// Plates Dry Position
+		GVL_Settings.stMachineParam.aM1Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesClosedPosition);
+		GVL_Settings.stMachineParam.aM1Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesDryPosition);
 		GVL_Settings.stMachineParam.rM1Velocity							:= STRING_TO_LREAL(gvl_DB.stSysParameters.mec_PlatesVelocity);
 		// Max current fast down
 		// Max current slow down
@@ -52,16 +52,16 @@ CASE state OF
 		GVL_Settings.stPumpParameters.iRunVelocity						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_RunVelocity);
 		GVL_Settings.stPumpParameters.iEmptyFactor						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_EmptyFactor);
 		GVL_Settings.stPumpParameters.iFillolventTubesFactor			:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_FillSolventTubesFactor);
-		// Above Calibration
-		// Above vial set 1
-		// Vial set spacing
-		// into res bottom
-		// Into res dispense
-		// Into res weigh
-		// Into vials
-		// Into waste
-		// Display Manual Control
-		// Check Logon Each Run
+		GVL_Settings.stMachineParam.aM3Position[4]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveCalibration);// Above Calibration
+		GVL_Settings.stMachineParam.aM3Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveVialSet1);// Above vial set 1
+		GVL_Settings.stMachineParam.aM3Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_VialSetSpacing);// Vial set spacing
+		GVL_Settings.stMachineParam.aM2Position[4]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResBottom);// into res bottom
+		GVL_Settings.stMachineParam.aM2Position[5]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResDispense);// Into res dispense
+		GVL_Settings.stMachineParam.aM2Position[6]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResWeigh);// Into res weigh
+		GVL_Settings.stMachineParam.aM2Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoVials);// Into vials
+		GVL_Settings.stMachineParam.aM2Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoWaste);// Into waste
+		GVL_Settings.bDisplayManualControl								:= STRING_TO_BOOL(GVL_DB.stSysParameters.sec_DisplayManualControl);// Display Manual Control
+		GVL_Settings.bCheckLogonEachRun									:= STRING_TO_BOOL(GVL_DB.stSysParameters.sec_CheckLogonEachRun);// Check Logon Each Run
 		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID;
 		timer2(in:= TRUE, pt:= T#3S);
 		state:= 20;
@@ -131,7 +131,11 @@ END_CASE]]></ST>
       <LineId Id="71" Count="0" />
       <LineId Id="80" Count="0" />
       <LineId Id="23" Count="6" />
-      <LineId Id="31" Count="23" />
+      <LineId Id="31" Count="4" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="37" Count="7" />
+      <LineId Id="146" Count="8" />
+      <LineId Id="54" Count="0" />
       <LineId Id="93" Count="1" />
       <LineId Id="17" Count="0" />
       <LineId Id="19" Count="1" />
