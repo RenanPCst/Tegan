@@ -240,7 +240,7 @@ async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, 
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -430,7 +430,7 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -625,7 +625,7 @@ async function genCompleteMethodReport(allRevisions, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -788,7 +788,7 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -903,7 +903,7 @@ async function genCurrentUserList(userDataArray, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -1020,7 +1020,7 @@ async function genUserHistoryReport(userDataArray, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -1358,7 +1358,7 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
@@ -1689,7 +1689,7 @@ async function genCurrentSysReport(sysDataArray, reportName) {
         container.style.flexDirection = "column";
 
         const backButton = document.createElement('button');
-        backButton.textContent = "← Voltar";
+        backButton.textContent = "← Back";
         backButton.style = `
       background: #1976d2;
       color: white;
