@@ -299,7 +299,7 @@ END_IF
 (* <HMI Alerts> ********************************************************************************************************* *)
 
 //Auto Cycle Incoherence [when there is something missing to start the auto cycle] 
-GVL_HMI.bIncoherenceDetected := (NOT GVL_Recipe.bIsThereRecipeActivated) OR (NOT GVL_IO.gDigInputs.bThroatJigPresent) OR (NOT GVL_IO.bVialRackPresent) OR bSolventIssue;
+GVL_HMI.bIncoherenceDetected := (NOT GVL_Recipe.bIsThereRecipeActivated) OR (NOT GVL_IO.gDigInputs.bThroatJigPresent) OR (NOT GVL_IO.bVialRackPresent) OR bSolventIssue OR GVL_IO.gDigInputs.bWasteOverflowSensor;
 
 bSolventIssue := GVL_Alarms.aSolventLowLevel[1] OR GVL_Alarms.aSolventLowLevel[2] OR GVL_Alarms.aSolventLowLevel[3] OR GVL_Alarms.aSolventLowLevel[4] OR GVL_Alarms.bWasteHighLevel;
 

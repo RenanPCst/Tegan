@@ -188,25 +188,29 @@ CASE iStepCounter OF
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 1
+    2: // Calculates the number of degrees of rotation of the pumps based on Wash 1 volume and factor 2
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
-		END_FOR
-		
-		IF fRecirculationTime > 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
+		fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE;
 		END_FOR
 		
+		iStepCounter := 3;
+		
     3: // Starts rotary movement with calculated distance (degrees/sec -> steps) [positive movement]
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
+				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
 																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
 																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
 																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
@@ -259,25 +263,29 @@ CASE iStepCounter OF
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 2
+    2: //Calculates the number of degrees of rotation of the pumps based on Wash 2 volume and factor 2
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
-		END_FOR
-		
-		IF fRecirculationTime > 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE;
 		END_FOR
 		
+		iStepCounter := 3;
+		
     3: // Starts rotary movement with calculated distance (degrees/sec -> steps) [positive movement]
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
+				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
 																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
 																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
 																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
@@ -777,16 +785,16 @@ END_IF
 		END_IF
 		
     3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2 , iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2.5 , iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2.5, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2.5, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2.5, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2.5, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2.5, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2.5, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2.5, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2.5, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2.5, iPumpIndex := 10);
 		
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE; //resets pumps movement flags
@@ -882,16 +890,16 @@ END_CASE]]></ST>
 		END_IF
 		
     3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2.5, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2.5, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2.5, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2.5, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2.5, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2.5, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2.5, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2.5, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2.5, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2.5, iPumpIndex := 10);
 		
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE; //resets pumps movement flags
@@ -999,20 +1007,20 @@ END_CASE]]></ST>
       <LineId Id="62" Count="0" />
       <LineId Id="64" Count="1" />
       <LineId Id="63" Count="0" />
-      <LineId Id="9" Count="20" />
-      <LineId Id="70" Count="2" />
-      <LineId Id="33" Count="1" />
-      <LineId Id="36" Count="2" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="67" Count="1" />
-      <LineId Id="66" Count="0" />
+      <LineId Id="9" Count="19" />
+      <LineId Id="98" Count="10" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="74" Count="0" />
       <LineId Id="39" Count="22" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.CleaningLinesWash2">
       <LineId Id="2" Count="30" />
-      <LineId Id="68" Count="2" />
-      <LineId Id="36" Count="31" />
+      <LineId Id="71" Count="14" />
+      <LineId Id="44" Count="23" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.EstimateTotalTime">
