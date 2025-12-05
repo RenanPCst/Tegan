@@ -295,8 +295,10 @@ CASE CurrentState OF
 		GVL_DB.stPostRunInfo.sysMasterRevision := '';
 		GVL_DB.stPostRunInfo.sysSettingsRevision := '';
 		
-		DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN;
-		//Create post execution json files 
+		DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN; 
+		
+		//Goes to Stopped state
+		GVL_HMI.eMachineMode := E_MachineMode.STOPPED; 
 
     E_MachineStates.ERROR_STATE: //TODO
         GVL_IO.gDigOutputs.bTowerRedLight := TRUE; //red light
@@ -434,7 +436,9 @@ END_IF;]]></ST>
       <LineId Id="2759" Count="6" />
       <LineId Id="2758" Count="0" />
       <LineId Id="2683" Count="0" />
-      <LineId Id="2312" Count="0" />
+      <LineId Id="2933" Count="0" />
+      <LineId Id="2935" Count="0" />
+      <LineId Id="2934" Count="0" />
       <LineId Id="2080" Count="4" />
       <LineId Id="2087" Count="0" />
       <LineId Id="2606" Count="0" />
