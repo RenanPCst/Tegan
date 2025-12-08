@@ -81,12 +81,12 @@ CASE ePrimeState OF
     bBusy  := FALSE;
 
     IF bStart THEN
-        // Monta a lista de solventes que realmente serão usados
+        // Compile a list of the solvents that will actually be used.
         BuildPrimeListFromRecipe();
 
-        // Se nenhuma etapa usa solvente (ou tudo 0), não faz nada aqui
+        // If no step uses solvent (or everything is 0), nothing happens here.
         IF iNumSolventsToPrime = 0 THEN
-            // Nada para primar -> termina imediatamente
+            // Nothing to prime -> ends immediately
             GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime skipped';
             GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
             GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
