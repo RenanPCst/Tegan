@@ -129,7 +129,7 @@
     ]
   },
   {
-    "event": "%s%PLC1.GVL_HMI.bMachineModeScan%/s%",
+    "event": "%s%PLC1.GVL_HMI.bScaleNeedsAtention%/s%",
     "actions": [
       {
         "objectType": "Condition",
@@ -140,7 +140,7 @@
               {
                 "compare1": {
                   "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/String",
+                  "valueType": "tchmi:general#/definitions/BOOL",
                   "symbolExpression": "%s%PLC1.GVL_HMI.bScaleNeedsAtention%/s%"
                 },
                 "compare2": {
@@ -162,56 +162,6 @@
                   "valueType": "tchmi:framework#/definitions/TcHmi.Controls.System.TcHmiPopup.TargetFile",
                   "value": {
                     "path": "Contents/Dialog/Content_Popup_Dialog01_ScaleAttention.content"
-                  }
-                },
-                "asyncWait": true
-              },
-              {
-                "objectType": "ControlApiFunction",
-                "active": true,
-                "control": "TcHmiPopup_DialogPopup",
-                "fn": "open",
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "else": []
-          }
-        ],
-        "asyncWait": true
-      },
-      {
-        "objectType": "Condition",
-        "active": true,
-        "parts": [
-          {
-            "if": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "symbolExpression": "%s%PLC1.GVL_HMI.bCalBoxNeedsAttention%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "value": true
-                },
-                "compareOperator": "==",
-                "logic": null
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%ctrl%TcHmiPopup_DialogPopup::TargetFile%/ctrl%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.System.TcHmiPopup.TargetFile",
-                  "value": {
-                    "path": "Contents/Dialog/Content_Popup_Dialog01_CalBoxAttention.content"
                   }
                 },
                 "asyncWait": true
