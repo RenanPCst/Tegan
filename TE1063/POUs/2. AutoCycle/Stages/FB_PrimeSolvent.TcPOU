@@ -1,217 +1,302 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_PrimeSolvent" Id="{974ca82b-b2f6-4f76-bd3d-68426aaf2813}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_PrimeSolvent
+    <Declaration><![CDATA[(*
+==============================================================================
+ FB_PrimeSolvent
+------------------------------------------------------------------------------
+ Purpose:
+   - Automatically prime only the solvents that are actually used in the
+     active recipe (Rinse1, Rinse2, Wash1, Wash2).
+   - For each solvent that appears in the recipe (1..4), perform a generic
+     prime cycle:
+        1) Set valves to solvent position (1..4)
+        2) Pump forward (from bottle towards jars) to fill lines
+        3) Set valves to needles position (6)
+        4) Pump backward (from jars to waste) to empty jars and keep lines full
+   - Provides an HMI progress bar and status text for the priming phase.
+
+ Usage:
+   - Call cyclically with bExecute := TRUE to start.
+   - Monitor:
+        bDone  = TRUE  → prime sequence finished
+        bError = TRUE  → reserved for future validation / error handling
+   - After bDone, call Reset() before starting a new prime sequence.
+==============================================================================
+*)
+FUNCTION_BLOCK FB_PrimeSolvent
 VAR_INPUT
-    bExecute : BOOL;    // Start command
+    bExecute : BOOL;  // Start command for the prime sequence (edge-detected)
 END_VAR
+
 VAR_OUTPUT
-    bDone  : BOOL;      // Prime completed
-    bError : BOOL;      // Error flag (reservado para futuras validações)
+    bDone  : BOOL;    // Prime sequence completed successfully
+    bError : BOOL;    // Reserved for future validation / error handling
 END_VAR
+
 VAR
-    // State machine
-    ePrimeState : E_PrimeSolventState := E_PrimeSolventState.PS_Idle;
-    bStart      : BOOL := FALSE;
-    bBusy       : BOOL := FALSE;
+    // Prime state machine control
+    ePrimeState : E_PrimeSolventState := E_PrimeSolventState.PS_Idle;  // Main prime FSM state
+    bStart      : BOOL := FALSE;                                       // Latches rising edge of bExecute
+    bBusy       : BOOL := FALSE;                                       // Indicates this FB is currently running
 
-    // Step control
-    iStepCounter     : INT := 0;
-    bMovementComplete: BOOL := FALSE;
+    // Internal step machine for a single solvent prime cycle
+    iStepCounter      : INT  := 0;     // Generic step counter used by PrimeSolventCycle()
+    bMovementComplete : BOOL := FALSE; // TRUE when the current solvent cycle is finished
 
-    // Valves & pumps flags
-    bMoveValveDone : ARRAY[1..5] OF BOOL := [FALSE,FALSE,FALSE,FALSE,FALSE];
-    bMovePumpDone  : ARRAY[1..10] OF BOOL := [FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE];
+    // Motion flags for valves and pumps
+    bMoveValveDone : ARRAY[1..5] OF BOOL := [FALSE, FALSE, FALSE, FALSE, FALSE];  // Per-valve completion flags
+    bMovePumpDone  : ARRAY[1..10] OF BOOL := [FALSE, FALSE, FALSE, FALSE, FALSE,
+                                              FALSE, FALSE, FALSE, FALSE, FALSE]; // Per-pump completion flags
 
-    // Distances (steps) for pumps
-    fDistance : ARRAY[1..10] OF REAL;
+    // Pump distances (steps) for each rotary pump
+    fDistance : ARRAY[1..10] OF REAL;  // Steps to move each pump, computed from volume via F_VolumeToSteps()
 
-    // Volumes (ml) para o prime
-    rPrimeForwardVolume  : REAL := 35.0;   // 30 ml forward
-    rPrimeBackwardVolume : REAL := 100.0;   // 50 ml backward
+    // Prime volumes (in ml)
+    rPrimeForwardVolume  : REAL := 35.0;   // Forward prime volume (bottle → jars/lines)
+    rPrimeBackwardVolume : REAL := 100.0;  // Backward prime volume (jars → waste, keep lines primed)
 
-    // Solvent currently being primed (1..4)
-    iActiveSolventPosition : USINT := 0;
+    // Solvent selection based on recipe
+    iActiveSolventPosition : USINT := 0;   // Current solvent position being primed (1..4 = valve positions)
+    bPrimeRequired         : ARRAY[1..4] OF BOOL := [FALSE, FALSE, FALSE, FALSE];
+                                           // TRUE if that solvent (1..4) must be primed according to recipe
+    iNumSolventsToPrime    : INT := 0;     // Number of unique solvents that actually need priming
 
-	bPrimeRequired : ARRAY[1..4] OF BOOL := [FALSE, FALSE, FALSE, FALSE];
-    iNumSolventsToPrime : INT := 0;
-    iSolventIdx         : INT;
-	iStage      : INT;
-    iSolventNum : INT;
-	
-    // Loop index
-    i : INT;
+    // Loop helpers
+    iSolventIdx : INT;  // index for scanning solvents 1..4
+    iStage      : INT;  // index for scanning recipe stages (Rinse1..Wash2)
+    iSolventNum : INT;  // solvent number read from recipe (0..4)
+    i           : INT;  // generic loop index
 
-    // Progress bar support (igual RecoveryPhase)
-    tStartTime              : TIME;
-    rElapsedTimeSec         : REAL;
-    rTotalEstimatedTimeSec  : REAL := 60.0;  // default 60 s
-    bProgressInitDone       : BOOL := FALSE;
-END_VAR
-]]></Declaration>
+    // HMI progress bar support
+    tStartTime             : TIME;     // Timestamp when prime sequence started
+    rElapsedTimeSec        : REAL;     // Elapsed time since start, in seconds
+    rTotalEstimatedTimeSec : REAL := 60.0;  // Estimated total prime duration (s). Overwritten by EstimateTotalTime()
+    bProgressInitDone      : BOOL := FALSE; // Ensures estimation and HMI init is done only once
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[//=============================================================================
-// Prime Solvent - Main body
+// Main body
 //=============================================================================
 
 IF NOT bStart THEN
+    // First scan: initialise internal state and latch start condition
     ePrimeState := E_PrimeSolventState.PS_Idle;
-    bStart      := bExecute;
+    bStart      := bExecute;  // rising edge detection simplified (bExecute must go FALSE before next start)
 END_IF
 
+// --------------------------------------------------------------------------
 // Progress bar handling
-IF bProgressInitDone 
-   AND (ePrimeState <> E_PrimeSolventState.PS_Idle) 
+//   - Active only while prime is running (not IDLE or COMPLETED).
+//   - Uses elapsed time / estimated total time to compute %.
+// --------------------------------------------------------------------------
+IF bProgressInitDone
+   AND (ePrimeState <> E_PrimeSolventState.PS_Idle)
    AND (ePrimeState <> E_PrimeSolventState.PS_Completed) THEN
 
-    rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0; // seconds
+    // Compute elapsed time in seconds
+    rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
 
-    GVL_HMI.HMIAnimation.rLoadBarPrime := 
+    // Protect HMI bar from going over 100%
+    GVL_HMI.HMIAnimation.rLoadBarPrime :=
         MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
+
+// --------------------------------------------------------------------------
+// Prime state machine
+// --------------------------------------------------------------------------
 CASE ePrimeState OF
 
-    //-------------------------------------------------------------------------
+    //=====================================================================
     // IDLE
-    //-------------------------------------------------------------------------
+    //  - Wait here until bStart is latched (bExecute rising edge).
+    //  - Builds prime list from recipe and either:
+    //       * finishes immediately if nothing to prime, or
+    //       * moves to solvent 1 state to start the sequence.
+    //=====================================================================
     E_PrimeSolventState.PS_Idle:
-    bDone  := FALSE;
-    bError := FALSE;
-    bBusy  := FALSE;
 
-    IF bStart THEN
-        // Compile a list of the solvents that will actually be used.
-        BuildPrimeListFromRecipe();
+        // Reset public and internal flags
+        bDone  := FALSE;
+        bError := FALSE;
+        bBusy  := FALSE;
 
-        // If no step uses solvent (or everything is 0), nothing happens here.
-        IF iNumSolventsToPrime = 0 THEN
-            // Nothing to prime -> ends immediately
-            GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime skipped';
-            GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
-            GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
+        IF bStart THEN
+            // Build list of which solvents (1..4) are actually used in recipe
+            BuildPrimeListFromRecipe();
 
-            bDone      := TRUE;
-            ePrimeState := E_PrimeSolventState.PS_Completed;
-        ELSE
-            // Start time calculation for progress bar
-            tStartTime             := TIME();
-            rTotalEstimatedTimeSec := EstimateTotalTime();
-            bProgressInitDone      := TRUE;
+            IF iNumSolventsToPrime = 0 THEN
+                // No prime required: directly complete phase
+                GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime skipped';
+                GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
+                GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
 
-            // HMI animation
-            GVL_HMI.HMIAnimation.sLoadTextPrime   := 'Prime Solvents';
-            GVL_HMI.HMIAnimation.rLoadBarPrime    := 0.0;
-            GVL_HMI.HMIAnimation.eIconStatePrime  := E_IconState.InProgress;
+                bDone       := TRUE;
+                ePrimeState := E_PrimeSolventState.PS_Completed;
+            ELSE
+                // Configure progress bar timing and HMI texts
+                tStartTime             := TIME();
+                rTotalEstimatedTimeSec := EstimateTotalTime();
+                bProgressInitDone      := TRUE;
 
-            // Move to first solvent state
-            ePrimeState       := E_PrimeSolventState.PS_Solvent1;
+                GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime Solvents';
+                GVL_HMI.HMIAnimation.rLoadBarPrime   := 0.0;
+                GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.InProgress;
+
+                // Start from solvent 1
+                ePrimeState       := E_PrimeSolventState.PS_Solvent1;
+                iStepCounter      := 0;
+                bMovementComplete := FALSE;
+                bBusy             := TRUE;
+            END_IF
+        END_IF
+
+
+    //=====================================================================
+    // PRIME SOLVENT 1 (valve position 1)
+    //  - Skip if not required by recipe.
+    //  - Otherwise run generic prime cycle with iActiveSolventPosition = 1.
+    //=====================================================================
+    E_PrimeSolventState.PS_Solvent1:
+
+        IF NOT bPrimeRequired[1] THEN
+            // Solvent 1 not used → skip to next solvent
+            ePrimeState       := E_PrimeSolventState.PS_Solvent2;
             iStepCounter      := 0;
             bMovementComplete := FALSE;
-            bBusy             := TRUE;
+        ELSE
+            iActiveSolventPosition := 1;
+            PrimeSolventCycle();  // uses iStepCounter internally
+
+            IF bMovementComplete THEN
+                // Move to solvent 2
+                ePrimeState       := E_PrimeSolventState.PS_Solvent2;
+                iStepCounter      := 0;
+                bMovementComplete := FALSE;
+            END_IF
         END_IF
-    END_IF
 
-    //-------------------------------------------------------------------------
-    // PRIME SOLVENT 1 (valve pos 1)
-    //-------------------------------------------------------------------------
-    E_PrimeSolventState.PS_Solvent1:
-		IF NOT bPrimeRequired[1] THEN
-			ePrimeState       := E_PrimeSolventState.PS_Solvent2;
-			iStepCounter      := 0;
-			bMovementComplete := FALSE;
-		ELSE
-			iActiveSolventPosition := 1;
-			PrimeSolventCycle();
-			IF bMovementComplete THEN
-				ePrimeState       := E_PrimeSolventState.PS_Solvent2;
-				iStepCounter      := 0;
-				bMovementComplete := FALSE;
-			END_IF
-		END_IF
 
-    //-------------------------------------------------------------------------
-    // PRIME SOLVENT 2 (valve pos 2)
-    //-------------------------------------------------------------------------
+    //=====================================================================
+    // PRIME SOLVENT 2 (valve position 2)
+    //=====================================================================
     E_PrimeSolventState.PS_Solvent2:
-		IF NOT bPrimeRequired[2] THEN
-			ePrimeState       := E_PrimeSolventState.PS_Solvent3;
-			iStepCounter      := 0;
-			bMovementComplete := FALSE;
-		ELSE
-			iActiveSolventPosition := 2;
-			PrimeSolventCycle();
-			IF bMovementComplete THEN
-				ePrimeState       := E_PrimeSolventState.PS_Solvent3;
-				iStepCounter      := 0;
-				bMovementComplete := FALSE;
-			END_IF
-		END_IF
 
-    //-------------------------------------------------------------------------
-    // PRIME SOLVENT 3 (valve pos 3)
-    //-------------------------------------------------------------------------
+        IF NOT bPrimeRequired[2] THEN
+            ePrimeState       := E_PrimeSolventState.PS_Solvent3;
+            iStepCounter      := 0;
+            bMovementComplete := FALSE;
+        ELSE
+            iActiveSolventPosition := 2;
+            PrimeSolventCycle();
+
+            IF bMovementComplete THEN
+                ePrimeState       := E_PrimeSolventState.PS_Solvent3;
+                iStepCounter      := 0;
+                bMovementComplete := FALSE;
+            END_IF
+        END_IF
+
+
+    //=====================================================================
+    // PRIME SOLVENT 3 (valve position 3)
+    //=====================================================================
     E_PrimeSolventState.PS_Solvent3:
-		IF NOT bPrimeRequired[3] THEN
-			ePrimeState       := E_PrimeSolventState.PS_Solvent4;
-			iStepCounter      := 0;
-			bMovementComplete := FALSE;
-		ELSE
-			iActiveSolventPosition := 3;
-			PrimeSolventCycle();
-			IF bMovementComplete THEN
-				ePrimeState       := E_PrimeSolventState.PS_Solvent4;
-				iStepCounter      := 0;
-				bMovementComplete := FALSE;
-			END_IF
-		END_IF
 
-    //-------------------------------------------------------------------------
-    // PRIME SOLVENT 4 (valve pos 4)
-    //-------------------------------------------------------------------------
+        IF NOT bPrimeRequired[3] THEN
+            ePrimeState       := E_PrimeSolventState.PS_Solvent4;
+            iStepCounter      := 0;
+            bMovementComplete := FALSE;
+        ELSE
+            iActiveSolventPosition := 3;
+            PrimeSolventCycle();
+
+            IF bMovementComplete THEN
+                ePrimeState       := E_PrimeSolventState.PS_Solvent4;
+                iStepCounter      := 0;
+                bMovementComplete := FALSE;
+            END_IF
+        END_IF
+
+
+    //=====================================================================
+    // PRIME SOLVENT 4 (valve position 4)
+    //=====================================================================
     E_PrimeSolventState.PS_Solvent4:
-		IF NOT bPrimeRequired[4] THEN
-			ePrimeState       := E_PrimeSolventState.PS_Completed;
-			iStepCounter      := 0;
-			bMovementComplete := FALSE;
-		ELSE
-			iActiveSolventPosition := 4;
-			PrimeSolventCycle();
-			IF bMovementComplete THEN
-				ePrimeState       := E_PrimeSolventState.PS_Completed;
-				iStepCounter      := 0;
-				bMovementComplete := FALSE;
-			END_IF
-		END_IF
 
-    //-------------------------------------------------------------------------
+        IF NOT bPrimeRequired[4] THEN
+            // Last solvent is not required → finish
+            ePrimeState       := E_PrimeSolventState.PS_Completed;
+            iStepCounter      := 0;
+            bMovementComplete := FALSE;
+        ELSE
+            iActiveSolventPosition := 4;
+            PrimeSolventCycle();
+
+            IF bMovementComplete THEN
+                ePrimeState       := E_PrimeSolventState.PS_Completed;
+                iStepCounter      := 0;
+                bMovementComplete := FALSE;
+            END_IF
+        END_IF
+
+
+    //=====================================================================
     // COMPLETED
-    //-------------------------------------------------------------------------
+    //  - Terminal state of the prime sequence.
+    //  - HMI is set to "Completed" and bDone is TRUE.
+    //=====================================================================
     E_PrimeSolventState.PS_Completed:
-        GVL_HMI.HMIAnimation.sLoadTextPrime   := 'Prime Completed';
-        GVL_HMI.HMIAnimation.rLoadBarPrime    := 100.0;
-        GVL_HMI.HMIAnimation.eIconStatePrime  := E_IconState.Completed;
 
-        bDone  := TRUE;
-        bBusy  := FALSE;
-END_CASE;
-]]></ST>
+        GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime Completed';
+        GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
+        GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
+
+        bDone := TRUE;
+        bBusy := FALSE;
+
+END_CASE]]></ST>
     </Implementation>
     <Action Name="BuildPrimeListFromRecipe" Id="{2880d75e-0dd2-45f2-b32c-38da9c6c6dad}">
       <Implementation>
-        <ST><![CDATA[// Clear list
+        <ST><![CDATA[(*
+==============================================================================
+ BuildPrimeListFromRecipe
+------------------------------------------------------------------------------
+ Purpose:
+   - Inspect the active recipe and determine which solvents (1..4) are
+     actually used in:
+        * Rinse1
+        * Rinse2
+        * Wash1
+        * Wash2
+   - Build:
+        bPrimeRequired[1..4]   → TRUE if solvent N is used in at least one step
+        iNumSolventsToPrime    → number of unique solvents that must be primed
+ Notes:
+   - Recipe encoding:
+        GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1] = Rinse1 solvent
+        GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] = Rinse2 solvent
+        GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3] = Wash1 solvent
+        GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[4] = Wash2 solvent
+   - Value 0 means "no solvent" / step disabled.
+==============================================================================
+*)
+
+// Clear prime list and counter
 FOR iSolventIdx := 1 TO 4 DO
     bPrimeRequired[iSolventIdx] := FALSE;
-END_FOR
+END_FOR;
 iNumSolventsToPrime := 0;
 
 // Scan recipe stages Rinse1..Wash2 (1..4)
 FOR iStage := 1 TO 4 DO
     iSolventNum := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[iStage];
 
-    // Valid solvents are 1..4; 0 = skip stage
+    // Valid solvents are 1..4; 0 means "skip"
     IF (iSolventNum >= 1) AND (iSolventNum <= 4) THEN
-        // Mark this solvent as required
+        // Mark this solvent as required (idempotent)
         IF NOT bPrimeRequired[iSolventNum] THEN
             bPrimeRequired[iSolventNum] := TRUE;
         END_IF
@@ -227,19 +312,36 @@ END_FOR]]></ST>
       </Implementation>
     </Action>
     <Method Name="EstimateTotalTime" Id="{a46a0635-47a0-4ed4-bcad-0bd15957cb18}">
-      <Declaration><![CDATA[METHOD EstimateTotalTime : REAL
-VAR_INPUT
-END_VAR
+      <Declaration><![CDATA[(*
+==============================================================================
+ Method: EstimateTotalTime
+------------------------------------------------------------------------------
+ Purpose:
+   - Estimate the total duration (in seconds) of the prime phase for the
+     current recipe, based on how many different solvents (1..4) are used.
+   - This is used solely for the HMI progress bar to give a rough visual
+     indication of progress.
+
+ Logic:
+   1) Build a local array bLocalPrimeRequired[1..4] from the recipe, similar
+      to BuildPrimeListFromRecipe.
+   2) Count how many solvents are required (iCount).
+   3) If iCount = 0 → return a small non-zero time (1.0 s) to avoid div by 0.
+   4) Else → estimate = rTimePerSolvent * iCount * 7
+      (the factor 7 is an empirical scaling based on test runs).
+==============================================================================
+*)
+METHOD EstimateTotalTime : REAL
 VAR
-    iStage      : INT;
-    iSolventNum : INT;
-    bLocalPrimeRequired : ARRAY[1..4] OF BOOL := [FALSE,FALSE,FALSE,FALSE];
-    iCount      : INT := 0;
-    rTimePerSolvent : REAL := 15.0; // seconds
+    iStage              : INT;
+    iSolventNum         : INT;
+    bLocalPrimeRequired : ARRAY[1..4] OF BOOL := [FALSE, FALSE, FALSE, FALSE];
+    iCount              : INT := 0;
+    rTimePerSolvent     : REAL := 15.0;   // Approximate time (s) to prime one solvent
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Build a local "prime required" list based on recipe
+        <ST><![CDATA[// Build a local "prime required" list based on the active recipe
 FOR iStage := 1 TO 4 DO
     iSolventNum := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[iStage];
 
@@ -248,32 +350,54 @@ FOR iStage := 1 TO 4 DO
     END_IF
 END_FOR
 
+// Count how many solvents need priming
 FOR iStage := 1 TO 4 DO
     IF bLocalPrimeRequired[iStage] THEN
         iCount := iCount + 1;
     END_IF
 END_FOR
 
-// If nothing to prime, return a tiny time just to avoid div by zero
+// If nothing to prime, return a small value to avoid division by zero
 IF iCount = 0 THEN
     EstimateTotalTime := 1.0;
 ELSE
-    EstimateTotalTime := rTimePerSolvent * TO_REAL(iCount) * 7;
+    EstimateTotalTime := rTimePerSolvent * TO_REAL(iCount) * 7.0;
 END_IF]]></ST>
       </Implementation>
     </Method>
     <Action Name="PrimeSolventCycle" Id="{9caf3009-1f19-40bd-a2f2-ecd04e633588}">
       <Implementation>
-        <ST><![CDATA[// Generic prime cycle for the solvent defined in iActiveSolventPosition
-// Sequence:
-// 1) Set valves to solvent position (1..4)
-// 2) Pump forward 20 ml
-// 3) Set valves to needles position (6)
-// 4) Pump backward 30 ml to empty jars
+        <ST><![CDATA[(*
+==============================================================================
+ PrimeSolventCycle
+------------------------------------------------------------------------------
+ Purpose:
+   - Execute the generic prime cycle for the solvent indicated by
+     iActiveSolventPosition (1..4).
+   - This action uses iStepCounter as an internal step machine and sets
+     bMovementComplete := TRUE when the cycle for the current solvent
+     is finished.
+
+ Prime sequence (per solvent):
+   0) Initialise flags and HMI text for current solvent.
+   1) Set valves [1..5] to the solvent position (1..4).
+   2) Compute pump forward distances for rPrimeForwardVolume (ml).
+   3) Pump forward (positive Distance) to pull solvent from bottle
+      through the lines and into jars.
+   4) Set valves [1..5] to needles position (6).
+   5) Compute pump backward distances for rPrimeBackwardVolume (ml).
+   6) Pump backward (negative Distance) to empty jars while keeping
+      the lines filled with solvent.
+   7) Set bMovementComplete := TRUE (cycle finished).
+==============================================================================
+*)
 
 CASE iStepCounter OF
 
-    0: // HMI text and flags reset
+    // -------------------------------------------------------------
+    // 0) Initialise HMI state and clear flags
+    // -------------------------------------------------------------
+    0:
         CASE iActiveSolventPosition OF
             1: GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Solvent 1';
             2: GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Solvent 2';
@@ -281,12 +405,14 @@ CASE iStepCounter OF
             4: GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Solvent 4';
         ELSE
             GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Solvent';
-        END_CASE
+        END_CASE;
 
+        // Reset valve flags
         FOR i := 1 TO 5 DO
             bMoveValveDone[i] := FALSE;
         END_FOR
 
+        // Reset pump flags and distances
         FOR i := 1 TO 10 DO
             bMovePumpDone[i] := FALSE;
             fDistance[i]     := 0.0;
@@ -295,19 +421,24 @@ CASE iStepCounter OF
         bMovementComplete := FALSE;
         iStepCounter      := 1;
 
-    1: // Set valves to solvent position (1..4)
+
+    // -------------------------------------------------------------
+    // 1) Set valves [1..5] to the solvent position (1..4)
+    // -------------------------------------------------------------
+    1:
         FOR i := 1 TO 5 DO
             IF NOT bMoveValveDone[i] THEN
                 bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
-                    iPosition := iActiveSolventPosition,   // 1..4
+                    iPosition := iActiveSolventPosition,   // solvent position 1..4
                     rVelocity := GVL_Motion.aValves[i].rTargetVel,
                     rAcc      := GVL_Motion.aValves[i].rAcceleration,
                     rDec      := GVL_Motion.aValves[i].rDeceleration
                 );
             END_IF
         END_FOR
-		
-        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] 
+
+        // Wait until all valves reach solvent position
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
            AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
 
             FOR i := 1 TO 5 DO
@@ -317,10 +448,14 @@ CASE iStepCounter OF
             iStepCounter := 2;
         END_IF
 
-    2: // Calculate forward distance for 20 ml
+
+    // -------------------------------------------------------------
+    // 2) Calculate forward distance for rPrimeForwardVolume
+    // -------------------------------------------------------------
+    2:
         FOR i := 1 TO 10 DO
             fDistance[i] := F_VolumeToSteps(
-                rVolume    := rPrimeForwardVolume,   // 20 ml
+                rVolume    := rPrimeForwardVolume,   // Forward prime volume
                 iPumpIndex := i
             );
             bMovePumpDone[i] := FALSE;
@@ -328,11 +463,15 @@ CASE iStepCounter OF
 
         iStepCounter := 3;
 
-    3: // Pump forward (positive movement)
+
+    // -------------------------------------------------------------
+    // 3) Pump forward (positive movement) to fill lines and jars
+    // -------------------------------------------------------------
+    3:
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
                 bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
-                    Distance := fDistance[i],
+                    Distance := fDistance[i],  // positive → forward
                     Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
                     Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
                     Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
@@ -340,9 +479,11 @@ CASE iStepCounter OF
             END_IF
         END_FOR
 
-        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
-           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
-           bMovePumpDone[9] AND bMovePumpDone[10] THEN
+        // Wait until all pumps finish forward prime
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND
+           bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND
+           bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND
+           bMovePumpDone[10] THEN
 
             FOR i := 1 TO 10 DO
                 bMovePumpDone[i] := FALSE;
@@ -351,11 +492,15 @@ CASE iStepCounter OF
             iStepCounter := 4;
         END_IF
 
-    4: // Set valves to needles position (6)
+
+    // -------------------------------------------------------------
+    // 4) Set valves [1..5] to needles position (6)
+    // -------------------------------------------------------------
+    4:
         FOR i := 1 TO 5 DO
             IF NOT bMoveValveDone[i] THEN
                 bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
-                    iPosition := 6, // needles
+                    iPosition := 6,   // needles position
                     rVelocity := GVL_Motion.aValves[i].rTargetVel,
                     rAcc      := GVL_Motion.aValves[i].rAcceleration,
                     rDec      := GVL_Motion.aValves[i].rDeceleration
@@ -363,7 +508,8 @@ CASE iStepCounter OF
             END_IF
         END_FOR
 
-        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] 
+        // Wait until all valves are at needles position
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
            AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
 
             FOR i := 1 TO 5 DO
@@ -373,10 +519,14 @@ CASE iStepCounter OF
             iStepCounter := 5;
         END_IF
 
-    5: // Calculate backward distance for 30 ml
+
+    // -------------------------------------------------------------
+    // 5) Calculate backward distance for rPrimeBackwardVolume
+    // -------------------------------------------------------------
+    5:
         FOR i := 1 TO 10 DO
             fDistance[i] := F_VolumeToSteps(
-                rVolume    := rPrimeBackwardVolume,  // 30 ml
+                rVolume    := rPrimeBackwardVolume,  // Backward prime volume
                 iPumpIndex := i
             );
             bMovePumpDone[i] := FALSE;
@@ -384,11 +534,15 @@ CASE iStepCounter OF
 
         iStepCounter := 6;
 
-    6: // Pump backward (negative movement) to empty jars
+
+    // -------------------------------------------------------------
+    // 6) Pump backward (negative movement) to empty jars into waste
+    // -------------------------------------------------------------
+    6:
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
                 bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
-                    Distance := - fDistance[i],  // negative movement
+                    Distance := -fDistance[i],  // negative → backward
                     Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6,
                     Acc      := GVL_Settings.stPumpParameters.iRunVelocity * 3,
                     Dec      := GVL_Settings.stPumpParameters.iRunVelocity * 3
@@ -396,9 +550,11 @@ CASE iStepCounter OF
             END_IF
         END_FOR
 
-        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
-           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
-           bMovePumpDone[9] AND bMovePumpDone[10] THEN
+        // Wait until all pumps finish backward cycle
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND
+           bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND
+           bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND
+           bMovePumpDone[10] THEN
 
             FOR i := 1 TO 10 DO
                 bMovePumpDone[i] := FALSE;
@@ -407,7 +563,11 @@ CASE iStepCounter OF
             iStepCounter := 7;
         END_IF
 
-    7: // Cycle completed for this solvent
+
+    // -------------------------------------------------------------
+    // 7) Prime cycle finished for this solvent
+    // -------------------------------------------------------------
+    7:
         bMovementComplete := TRUE;
 
 END_CASE
@@ -415,16 +575,33 @@ END_CASE
       </Implementation>
     </Action>
     <Method Name="Reset" Id="{519911e5-2f7a-4736-97f8-e7117fc2bb16}">
-      <Declaration><![CDATA[METHOD Reset : BOOL
-VAR_INPUT
-END_VAR
+      <Declaration><![CDATA[(*
+==============================================================================
+ Method: Reset
+------------------------------------------------------------------------------
+ Purpose:
+   - Reset all internal flags, counters, and HMI fields associated with the
+     prime phase, so that a new prime sequence can start cleanly.
+
+ Behaviour:
+   - Clears:
+       * bStart, bBusy, bDone, bError, bProgressInitDone
+       * ePrimeState, iStepCounter, bMovementComplete
+       * bMoveValveDone[], bMovePumpDone[], fDistance[]
+       * HMI prime text / bar (Recovery text cleared here as well)
+   - Returns:
+       Reset = TRUE once the operation is completed.
+==============================================================================
+*)
+METHOD Reset : BOOL
 VAR
     j : INT;
-END_VAR]]></Declaration>
+END_VAR
+]]></Declaration>
       <Implementation>
         <ST><![CDATA[Reset := FALSE;
 
-// Clear timers / flags / counters
+// Clear basic state and flags
 bStart            := FALSE;
 bBusy             := FALSE;
 bDone             := FALSE;
@@ -435,6 +612,7 @@ ePrimeState       := E_PrimeSolventState.PS_Idle;
 iStepCounter      := 0;
 bMovementComplete := FALSE;
 
+// Clear motion flags and distances
 FOR j := 1 TO 5 DO
     bMoveValveDone[j] := FALSE;
 END_FOR
@@ -444,46 +622,35 @@ FOR j := 1 TO 10 DO
     fDistance[j]     := 0.0;
 END_FOR
 
-GVL_HMI.HMIAnimation.sLoadTextRecovery  := '';
-GVL_HMI.HMIAnimation.rLoadBarRecovery   := 0.0;
+// Clear HMI texts for prime / recovery bars if needed
+GVL_HMI.HMIAnimation.sLoadTextRecovery := '';
+GVL_HMI.HMIAnimation.rLoadBarRecovery  := 0.0;
 
-// Mark reset done
+// Mark reset as completed
 Reset := TRUE;
-RETURN;
-]]></ST>
+RETURN]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_PrimeSolvent">
-      <LineId Id="56" Count="24" />
-      <LineId Id="172" Count="34" />
-      <LineId Id="102" Count="5" />
-      <LineId Id="207" Count="11" />
-      <LineId Id="114" Count="5" />
-      <LineId Id="219" Count="11" />
-      <LineId Id="126" Count="5" />
-      <LineId Id="231" Count="11" />
-      <LineId Id="138" Count="5" />
-      <LineId Id="243" Count="11" />
-      <LineId Id="150" Count="11" />
-      <LineId Id="165" Count="0" />
+      <LineId Id="374" Count="180" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_PrimeSolvent.BuildPrimeListFromRecipe">
-      <LineId Id="2" Count="23" />
+      <LineId Id="26" Count="22" />
+      <LineId Id="54" Count="24" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_PrimeSolvent.EstimateTotalTime">
-      <LineId Id="20" Count="19" />
+      <LineId Id="76" Count="20" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_PrimeSolvent.PrimeSolventCycle">
-      <LineId Id="3" Count="41" />
-      <LineId Id="151" Count="0" />
-      <LineId Id="46" Count="103" />
+      <LineId Id="152" Count="23" />
+      <LineId Id="182" Count="179" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_PrimeSolvent.Reset">
-      <LineId Id="13" Count="27" />
+      <LineId Id="68" Count="28" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

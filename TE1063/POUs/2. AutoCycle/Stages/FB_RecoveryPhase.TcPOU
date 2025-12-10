@@ -1,467 +1,795 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_RecoveryPhase" Id="{83f5ec5b-6c67-443f-8065-7a3e8ba1c7ee}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_RecoveryPhase
+    <Declaration><![CDATA[(*
+    FB_RecoveryPhase
+    ------------------------------------------------------------------------
+    Purpose:
+      - Orchestrates the full "Recovery" macro-phase of the ASRS.
+      - Sequences all sub-steps needed to recover sample from Andersen stages:
+          1) Meter solvent 1
+          2) Recirculate solvent 1
+          3) Soak solvent
+          4) Clean lines (solvent 1)
+          5) (Optional) Meter solvent 2
+          6) Agitate and mix solvents 1 & 2
+          7) Clean lines (solvent 1 & 2)
+          8) Prime needles
+          9) Fill vials (rows 1–4, according to recipe)
+         10) Waste remaining solvent
+         11) Mark phase as completed
 
+      - Updates HMI progress bar and status text during the entire phase.
+
+    Usage:
+      - Call cyclically with bExecute = TRUE while the machine is in
+        the Recovery Phase state.
+      - Internal state machine (eRecoveryState) will progress through
+        each recovery step.
+      - When eRecoveryState reaches "Completed", bSuccess = TRUE.
+
+    Inputs:
+      - bExecute : BOOL
+          TRUE  → start/continue the recovery phase.
+          FALSE → keeps FB in Idle (no progression).
+
+    Outputs:
+      - bSuccess : BOOL
+          TRUE when the full recovery sequence finishes successfully.
+      - bError   : BOOL
+          TRUE if an error is detected in the recovery phase
+          (hook for future error handling, currently not fully used).
+
+    Side Effects:
+      - Writes to global HMI animation:
+          GVL_HMI.HMIAnimation.sLoadTextRecovery
+          GVL_HMI.HMIAnimation.rLoadBarRecovery
+          GVL_HMI.HMIAnimation.eIconStateRecovery
+      - Uses global recipe/settings structures to decide which steps
+        are required (number of solvents, vials to fill, etc.).
+*)
+
+FUNCTION_BLOCK FB_RecoveryPhase
 VAR_INPUT
-    bExecute : BOOL; 
+    bExecute : BOOL;  // TRUE to start/maintain the recovery phase
 END_VAR
 
 VAR_OUTPUT
-	bSuccess 		: BOOL;	//Success Flag
-    bError 			: BOOL; //Error Flag
+    bSuccess : BOOL;  // Phase finished successfully
+    bError   : BOOL;  // Phase error flag (reserved for future detailed handling)
 END_VAR
 
 VAR
-	eRecoveryState : E_RecoveryState := E_RecoveryState.Idle;
+    // -----------------------------
+    // Internal Recovery FSM state
+    // -----------------------------
+    eRecoveryState : E_RecoveryState := E_RecoveryState.Idle;
 
-    fbSolenoidControl 	: FB_SolenoidControl;
-	fbMeteringSolvent1 	: FB_MeteringSolvent1;
-	
-	//Error Handle
-	bErrorDetected   : BOOL := FALSE;
-    nPumpWithError   : INT := 0;
-    nErrorID         : UDINT := 0;
+    // -----------------------------
+    // Sub-function blocks
+    // -----------------------------
+    fbSolenoidControl  : FB_SolenoidControl;  // Reserved: control of solenoid configuration
+    fbMeteringSolvent1 : FB_MeteringSolvent1; // Reserved: specific metering FB (not used directly here)
 
-    iStepCounter : INT := 0;
-    i : USINT; //loop for index
+    // -----------------------------
+    // Error handling (reserved hooks)
+    // -----------------------------
+    bErrorDetected : BOOL := FALSE;   // TRUE if any error is detected internally
+    nPumpWithError : INT := 0;        // Stores pump index that failed
+    nErrorID       : UDINT := 0;      // Error code identifier (for diagnostics)
 
-	// Control flags
-	bStart		: BOOL := FALSE;
-    bMoveM2 	: BOOL := FALSE;
-	bMoveM3		: BOOL := FALSE;
-    bMovementComplete : BOOL := FALSE;
-	
-	//Metering Rinse 1 n 2
-	bMoveValveDone		 : ARRAY[1..5] OF BOOL;
-	bMovePumpDone		 : ARRAY[1..10] OF BOOL;
-	fDistance        	 : ARRAY[1..10] OF REAL;
-	
-	//Recirculate Solvent 1 n 2
-    fAgitationTime   	: REAL := 0.0;
-	fRecirculationTime	: REAL := 0.0;
-	fCalcDistance	 	: ARRAY[1..10] OF REAL;
-	
-	//Solvent Soak
-	timerSoak       : TON;
-    bTimerStarted   : BOOL := FALSE;
-	bSoakTimerDone  : BOOL := FALSE;
-	
-	//Agitate Time 1 n 2
-	tonAgitateTime1	: TON;
-	tonAgitateTime2	: TON;
-	
-	// Progress Bar Timing
-	rTotalEstimatedTimeSec : REAL := 0.0;
-	rElapsedTimeSec : REAL := 0.0;
-	tStartTime : TIME := T#0S;
-	bProgressInitDone : BOOL := FALSE;
-	
-END_VAR
-]]></Declaration>
+    // -----------------------------
+    // Generic step / loop helpers
+    // -----------------------------
+    iStepCounter : INT := 0;   // Generic counter used in step subroutines
+    i           : USINT;       // Generic loop index (for internal use)
+
+    // -----------------------------
+    // Control flags for movements
+    // -----------------------------
+    bStart             : BOOL := FALSE; // Local start latch derived from bExecute
+    bMoveM2            : BOOL := FALSE; // Reserved: movement flag for Motor M2
+    bMoveM3            : BOOL := FALSE; // Reserved: movement flag for Motor M3
+    bMovementComplete  : BOOL := FALSE; // TRUE when the active sub-step has finished
+
+    // -----------------------------
+    // Metering control (solvent 1 & 2)
+    // -----------------------------
+    bMoveValveDone : ARRAY[1..5] OF BOOL;  // Flags for valve moves completion
+    bMovePumpDone  : ARRAY[1..10] OF BOOL; // Flags for pump moves completion
+    fDistance      : ARRAY[1..10] OF REAL; // Distances for pump movements (metering)
+
+    // -----------------------------
+    // Recirculation control
+    // -----------------------------
+    fAgitationTime     : REAL := 0.0;           // Time used for agitation
+    fRecirculationTime : REAL := 0.0;           // Time used for recirculation
+    fCalcDistance      : ARRAY[1..10] OF REAL;  // Calculated pump distances for recirculation
+
+    // -----------------------------
+    // Solvent soak timing
+    // -----------------------------
+    timerSoak      : TON;        // Soak timer (TON)
+    bTimerStarted  : BOOL := FALSE;
+    bSoakTimerDone : BOOL := FALSE;
+
+    // -----------------------------
+    // Agitation timers (solvent 1 and 2)
+    // -----------------------------
+    tonAgitateTime1 : TON;       // Timer for first agitation phase
+    tonAgitateTime2 : TON;       // Timer for second agitation phase
+
+    // -----------------------------
+    // HMI Progress Bar Timing
+    // -----------------------------
+    rTotalEstimatedTimeSec : REAL := 0.0; // Estimated total duration of recovery phase (seconds)
+    rElapsedTimeSec        : REAL := 0.0; // Elapsed time since start (seconds)
+    tStartTime             : TIME := T#0S; // Time when recovery phase started
+    bProgressInitDone      : BOOL := FALSE; // TRUE when progress timing has been initialized
+END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF NOT bStart THEN
-	eRecoveryState := E_RecoveryState.Idle;
-	bStart := bExecute;
+      <ST><![CDATA[// ==========================================================================
+// 1) Start latch:
+//    On first bExecute = TRUE, set bStart and put FSM into Idle.
+// ==========================================================================
+IF NOT bStart THEN
+    eRecoveryState := E_RecoveryState.Idle;
+    bStart         := bExecute; // Latch start when execution is requested
 END_IF
 
-IF bProgressInitDone AND (eRecoveryState <> E_RecoveryState.Idle) AND (eRecoveryState <> E_RecoveryState.Completed) THEN
-	rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0; // convert to seconds
+// ==========================================================================
+// 2) HMI progress bar update
+//    - Only updates while FSM is actively running (not Idle/Completed)
+//    - Uses rTotalEstimatedTimeSec from an external EstimateTotalTime() fn.
+// ==========================================================================
+IF bProgressInitDone
+   AND (eRecoveryState <> E_RecoveryState.Idle)
+   AND (eRecoveryState <> E_RecoveryState.Completed)
+THEN
+    // Compute elapsed time in seconds since recovery start
+    rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
 
-	GVL_HMI.HMIAnimation.rLoadBarRecovery := MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
+    // Scale 0..elapsed..total into a 0..100 % load bar
+    // MIN() prevents overshoot in case of longer-than-expected duration.
+    GVL_HMI.HMIAnimation.rLoadBarRecovery :=
+        MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
+// ==========================================================================
+// 3) Recovery Phase FSM
+// ==========================================================================
 CASE eRecoveryState OF
 
+    // ----------------------------------------------------------------------
+    // Idle:
+    //  - Waiting for bStart to be set.
+    //  - Initializes HMI and timing once the phase starts.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Idle:
-		bSuccess := FALSE;
-		bError := FALSE;
-		
+
+        bSuccess := FALSE;
+        bError   := FALSE;
+
         IF bStart THEN
-			//Start time calculation
-			tStartTime := TIME();
-			rTotalEstimatedTimeSec := EstimateTotalTime();
-			bProgressInitDone := TRUE;
-			//Provide HMI animation details
-			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Starting'; 
-			GVL_HMI.HMIAnimation.rLoadBarRecovery  := 0;
-			GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.InProgress;
-			//Move to next step
+            // Initialize timing for progress bar
+            tStartTime             := TIME();
+            rTotalEstimatedTimeSec := EstimateTotalTime(); // External estimate
+            bProgressInitDone      := TRUE;
+
+            // Configure HMI animation for Recovery Phase start
+            GVL_HMI.HMIAnimation.sLoadTextRecovery   := 'Starting';
+            GVL_HMI.HMIAnimation.rLoadBarRecovery    := 0.0;
+            GVL_HMI.HMIAnimation.eIconStateRecovery  := E_IconState.InProgress;
+
+            // Move to first step: Metering of Solvent 1
             eRecoveryState := E_RecoveryState.Metering_Solvent1;
         END_IF;
 
-    E_RecoveryState.Metering_Solvent1: //Change for external FB to run in paralell if needed 
 
-		IF GVL_Settings.bGeneralSealAndPump AND GVL_Settings.bMeteringSolvent1Done THEN
-			bMovementComplete := TRUE;
-		ELSE
-			MeteringSolvent1();
-		END_IF
-        
-        IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Recirculate_Solvent1;
-			iStepCounter := 0;
-			GVL_Settings.bMeteringSolvent1Done := FALSE;
-            bMovementComplete := FALSE;
+    // ----------------------------------------------------------------------
+    // Metering_Solvent1:
+    //  - Meter solvent 1 into Andersen stages according to recipe.
+    //  - If sealing+metering was already done in seal phase (flag),
+    //    this step can be skipped.
+    // ----------------------------------------------------------------------
+    E_RecoveryState.Metering_Solvent1: // Could be replaced by external FB in parallel if needed
+
+        // If general seal+pump already metered solvent 1, skip movement
+        IF GVL_Settings.bGeneralSealAndPump
+           AND GVL_Settings.bMeteringSolvent1Done
+        THEN
+            bMovementComplete := TRUE;
+        ELSE
+            // Execute local metering logic (subroutine)
+            MeteringSolvent1();
         END_IF
 
+        // On completion, go to recirculation with solvent 1
+        IF bMovementComplete THEN
+            eRecoveryState        := E_RecoveryState.Recirculate_Solvent1;
+            iStepCounter          := 0;
+            GVL_Settings.bMeteringSolvent1Done := FALSE;
+            bMovementComplete     := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Recirculate_Solvent1:
+    //  - Recirculates solvent 1 to promote mixing and wetting of stages.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Recirculate_Solvent1:
 
-        RecirculateSolvent1(); 
+        RecirculateSolvent1();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Solvent_Soak;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.Solvent_Soak;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
-	
+
+    // ----------------------------------------------------------------------
+    // Solvent_Soak:
+    //  - Keeps solvent in contact with stages for a soak time (timer based).
+    // ----------------------------------------------------------------------
     E_RecoveryState.Solvent_Soak:
 
-        SolventSoak(); 
+        SolventSoak();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Cleaning_Lines_S1;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.Cleaning_Lines_S1;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
 
+    // ----------------------------------------------------------------------
+    // Cleaning_Lines_S1:
+    //  - Cleans fluidic lines used with solvent 1.
+    //  - If recipe requires solvent 2 for recovery, proceed to its metering.
+    //  - Otherwise, skip ahead to Prime_Needles.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Cleaning_Lines_S1:
 
         CleaningLinesSolvent1();
+
         IF bMovementComplete THEN
-            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] <> 0 THEN //check if two solvents is needed to recovery 
+            // Check if solvent 2 is configured for recovery:
+            // aSolventN[2] = 0 → second solvent not used.
+            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] <> 0 THEN
                 eRecoveryState := E_RecoveryState.Metering_Solvent2;
-				iStepCounter := 0;
-            	bMovementComplete := FALSE;
             ELSE
-                eRecoveryState := E_RecoveryState.Prime_Needles; // Skip to next applicable state
-				iStepCounter := 0;
-            	bMovementComplete := FALSE;
+                // Skip directly to needle priming if solvent 2 is not needed
+                eRecoveryState := E_RecoveryState.Prime_Needles;
             END_IF
+
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
 
+    // ----------------------------------------------------------------------
+    // Metering_Solvent2:
+    //  - Meters solvent 2, if configured, for recovery phase.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Metering_Solvent2:
 
-        MeteringSolvent2(); 
+        MeteringSolvent2();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.AgitateTime1;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-		
-	E_RecoveryState.AgitateTime1:
-	
-		AgitateTime1(); 
-        IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Mix_Solvent1_2;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.AgitateTime1;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
+
+    // ----------------------------------------------------------------------
+    // AgitateTime1:
+    //  - First agitation time window after solvent 2 metering.
+    // ----------------------------------------------------------------------
+    E_RecoveryState.AgitateTime1:
+
+        AgitateTime1();
+
+        IF bMovementComplete THEN
+            eRecoveryState    := E_RecoveryState.Mix_Solvent1_2;
+            iStepCounter      := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Mix_Solvent1_2:
+    //  - Mixes solvents 1 and 2 inside Andersen stages or fluidic path.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Mix_Solvent1_2:
 
-        MixSolvent1and2(); 
+        MixSolvent1and2();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Cleaning_Lines_S1_S2;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.Cleaning_Lines_S1_S2;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
-	
+
+    // ----------------------------------------------------------------------
+    // Cleaning_Lines_S1_S2:
+    //  - Cleans all lines used for solvent 1 and solvent 2.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Cleaning_Lines_S1_S2:
-	
-        CleaningLinesSolvent1and2(); 
+
+        CleaningLinesSolvent1and2();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.AgitateTime2;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-	
-	E_RecoveryState.AgitateTime2:
-	
-		AgitateTime2(); 
-        IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Prime_Needles;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.AgitateTime2;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
 
+
+    // ----------------------------------------------------------------------
+    // AgitateTime2:
+    //  - Second agitation time window after lines are cleaned.
+    // ----------------------------------------------------------------------
+    E_RecoveryState.AgitateTime2:
+
+        AgitateTime2();
+
+        IF bMovementComplete THEN
+            eRecoveryState    := E_RecoveryState.Prime_Needles;
+            iStepCounter      := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Prime_Needles:
+    //  - Primes the needles and final tubing before filling vials.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Prime_Needles:
-	
-        PrimeNeedles(); 
+
+        PrimeNeedles();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Fill_Vials_Row_1;
-			iStepCounter := 0;
+            eRecoveryState    := E_RecoveryState.Fill_Vials_Row_1;
+            iStepCounter      := 0;
             bMovementComplete := FALSE;
         END_IF
-	
 
+
+    // ----------------------------------------------------------------------
+    // Fill_Vials_Row_1:
+    //  - Fills the first row of vials.
+    //  - Decides next state based on how many rows must be filled
+    //    (iVialsToFill from recipe).
+    // ----------------------------------------------------------------------
     E_RecoveryState.Fill_Vials_Row_1:
-	
+
         Fill_Vials_Row_1();
+
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 1 THEN //Check how many vials lines will be filled
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 1 THEN
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_2;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
             END_IF
+
             bMovementComplete := FALSE;
-			iStepCounter := 0;
+            iStepCounter      := 0;
         END_IF
-	
-		
+
+
+    // ----------------------------------------------------------------------
+    // Fill_Vials_Row_2:
+    //  - Fills the second row of vials (if required).
+    // ----------------------------------------------------------------------
     E_RecoveryState.Fill_Vials_Row_2:
-	
+
         Fill_Vials_Row_2();
+
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 2 THEN //Check how many vials lines will be filled
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 2 THEN
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_3;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
             END_IF
+
             bMovementComplete := FALSE;
-			iStepCounter := 0;
+            iStepCounter      := 0;
         END_IF
-	
-	
-	E_RecoveryState.Fill_Vials_Row_3:
-	
+
+
+    // ----------------------------------------------------------------------
+    // Fill_Vials_Row_3:
+    //  - Fills the third row of vials (if required).
+    // ----------------------------------------------------------------------
+    E_RecoveryState.Fill_Vials_Row_3:
+
         Fill_Vials_Row_3();
+
         IF bMovementComplete THEN
-            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 3 THEN //Check how many vials lines will be filled
+            IF GVL_Recipe.stCurrentRecipe.stOtherParams.iVialsToFill > 3 THEN
                 eRecoveryState := E_RecoveryState.Fill_Vials_Row_4;
             ELSE
                 eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
             END_IF
+
             bMovementComplete := FALSE;
-			iStepCounter := 0;
+            iStepCounter      := 0;
         END_IF
-	
-	
-	E_RecoveryState.Fill_Vials_Row_4:
-	
+
+
+    // ----------------------------------------------------------------------
+    // Fill_Vials_Row_4:
+    //  - Fills the fourth row of vials (if required).
+    // ----------------------------------------------------------------------
+    E_RecoveryState.Fill_Vials_Row_4:
+
         Fill_Vials_Row_4();
-        IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Waste_Remaining_Solvent;
-            bMovementComplete := FALSE;
-			iStepCounter := 0;
-        END_IF
-	
 
+        IF bMovementComplete THEN
+            eRecoveryState    := E_RecoveryState.Waste_Remaining_Solvent;
+            bMovementComplete := FALSE;
+            iStepCounter      := 0;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Waste_Remaining_Solvent:
+    //  - Directs any remaining solvent to waste containers.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Waste_Remaining_Solvent:
-	
+
         WasteRemainingSolvent();
+
         IF bMovementComplete THEN
-            eRecoveryState := E_RecoveryState.Completed;
+            eRecoveryState    := E_RecoveryState.Completed;
             bMovementComplete := FALSE;
-			iStepCounter := 0;
+            iStepCounter      := 0;
         END_IF
 
 
+    // ----------------------------------------------------------------------
+    // Completed:
+    //  - Recovery phase has finished successfully.
+    //  - Updates HMI and raises bSuccess.
+    // ----------------------------------------------------------------------
     E_RecoveryState.Completed:
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Completed'; 
-		GVL_HMI.HMIAnimation.rLoadBarRecovery  := 100;
-		GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Completed;
-		bSuccess := TRUE;
 
-END_CASE;
-]]></ST>
+        GVL_HMI.HMIAnimation.sLoadTextRecovery   := 'Completed';
+        GVL_HMI.HMIAnimation.rLoadBarRecovery    := 100.0;
+        GVL_HMI.HMIAnimation.eIconStateRecovery  := E_IconState.Completed;
+
+        bSuccess := TRUE;
+        // bError stays FALSE here. If you later implement error transitions
+        // to a dedicated Error state, set bError accordingly there.
+
+END_CASE]]></ST>
     </Implementation>
     <Action Name="AgitateTime1" Id="{486e1b85-765d-4f63-abbb-6682219dd42d}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Check if Agitate Time 1 is greater than zero
-		IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time/1000) > 0 THEN
-			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 1';  //Provide HMI animation details
-			iStepCounter := 1;
-		ELSE
-			iStepCounter := 3;
-		END_IF
-		
-		
-    1: // Agitate Timer 1 Set
-    	tonAgitateTime1(IN := TRUE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time);
-		
-		IF tonAgitateTime1.Q THEN
-			iStepCounter := 2;
-		END_IF
-		
-    2: // Resets Agitate Timer 1
+        <ST><![CDATA[// ==========================================================================
+// AgitateTime1
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Handles the first agitation timer window for the Recovery Phase.
+//   - Uses tonAgitateTime1 and sets bMovementComplete when finished.
+//
+// Sequence (iStepCounter):
+//   0) Check if Agitate Time 1 > 0. If zero, skip directly to step 3.
+//   1) Start TON timer with recipe time tAgitate1Time.
+//   2) Stop TON timer and move to completion.
+//   3) Raise bMovementComplete to notify the caller state.
+// ==========================================================================
+CASE iStepCounter OF
 
-    	tonAgitateTime1(IN := FALSE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time);
-		iStepCounter := 3;
+    0:  // Check if Agitate Time 1 is greater than zero
+        IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time / 1000) > 0 THEN
+            // Update HMI text
+            GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 1';
+            iStepCounter := 1;
+        ELSE
+            // No time configured → skip timer and mark as done
+            iStepCounter := 3;
+        END_IF
 
-    3: // Sets the movement done flag
-		bMovementComplete := TRUE;
-        
+    1:  // Start Agitate Timer 1
+        tonAgitateTime1(
+            IN := TRUE,
+            PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time
+        );
+
+        // When timer finishes, proceed to stop it
+        IF tonAgitateTime1.Q THEN
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Reset Agitate Timer 1
+        tonAgitateTime1(
+            IN := FALSE,
+            PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate1Time
+        );
+        iStepCounter := 3;
+
+    3:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="AgitateTime2" Id="{f3aecc98-087b-41df-a160-45a2ae26b296}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Check if Agitate Time 2 is greater than zero
-		IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time/1000) > 0 THEN
-			GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 2';  //Provide HMI animation details
-			iStepCounter := 1;
-		ELSE
-			iStepCounter := 3;
-		END_IF
-		
-		
-    1: // Agitate Timer 2 Set
-    	tonAgitateTime2(IN := TRUE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time);
-		
-		IF tonAgitateTime2.Q THEN
-			iStepCounter := 2;
-		END_IF
-		
-    2: // Resets Agitate Timer 1
+        <ST><![CDATA[// ==========================================================================
+// AgitateTime2
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Handles the second agitation timer window for the Recovery Phase.
+//   - Uses tonAgitateTime2 and sets bMovementComplete when finished.
+//
+// Sequence (iStepCounter):
+//   0) Check if Agitate Time 2 > 0. If zero, skip directly to step 3.
+//   1) Start TON timer with recipe time tAgitate2Time.
+//   2) Stop TON timer and move to completion.
+//   3) Raise bMovementComplete to notify the caller state.
+// ==========================================================================
+CASE iStepCounter OF
 
-    	tonAgitateTime2(IN := FALSE, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time);
-		iStepCounter := 3;
+    0:  // Check if Agitate Time 2 is greater than zero
+        IF TIME_TO_DWORD(GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time / 1000) > 0 THEN
+            // Update HMI text
+            GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Agitate Time 2';
+            iStepCounter := 1;
+        ELSE
+            // No time configured → skip timer and mark as done
+            iStepCounter := 3;
+        END_IF
 
-    3: // Sets the movement done flag
-		bMovementComplete := TRUE;
-        
+    1:  // Start Agitate Timer 2
+        tonAgitateTime2(
+            IN := TRUE,
+            PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time
+        );
+
+        // When timer finishes, proceed to stop it
+        IF tonAgitateTime2.Q THEN
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Reset Agitate Timer 2
+        tonAgitateTime2(
+            IN := FALSE,
+            PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAgitate2Time
+        );
+        iStepCounter := 3;
+
+    3:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="CleaningLinesSolvent1" Id="{9273111f-dd95-4702-809f-ba9c490b1159}">
       <Implementation>
-        <ST><![CDATA[//Exactly the oppisite of Recirculate Solvent 1
+        <ST><![CDATA[// ==========================================================================
+// CleaningLinesSolvent1
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Flush / clean the fluidic lines after using Solvent 1.
+//   - Moves all valves to recirculation position (5).
+//   - Pumps a larger volume through all paths to clean residual solvent.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text and prepare.
+//   1) Move all valves [1..5] to position 5 (Recirculation).
+//   2) Calculate pump distances based on recipe volumes (Rinse 1) + dead volume.
+//   3) Run all pumps [1..10] forward with higher velocity for cleaning.
+//   4) Set bMovementComplete TRUE to notify FSM.
+// ==========================================================================
 CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines R1'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
-		iStepCounter := 1;
-		
-    1: // Setar válvulas para posição 5 (Recirculação)
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 5, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 2;
-		END_IF
 
-    2: // Calcula a distancia da bomba baseado no volume contido no Metering * o fator da bomba e velocidade maior
-    	
-		fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 1.5, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 1.5, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 1.5, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 1.5, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 1.5, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 1.5, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 1.5, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 1.5, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 1.5, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 1.5, iPumpIndex := 10);
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines R1';
+        iStepCounter := 1;
 
-		iStepCounter := 3;
-		
-    3: // Inicia movimento rotativo com distância calculada (graus/seg -> steps) [positive moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
-																			);
-			END_IF
+    1:  // Move valves [1..5] to position 5 (Recirculation)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 5,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 4; // Move to next step to monitor completion
-		END_IF
 
-    4: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
-END_CASE
-]]></ST>
+        // Wait until all valves have completed their move
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            // Reset valve flags and move to next step
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Calculate pump distances for cleaning (based on Rinse 1 volume)
+        // Factor 1.5 is used to add margin for extra cleaning volume
+        fDistance[1]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] +
+                                          GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 1.5, 1);
+										  
+        fDistance[2]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] +
+                                          GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 1.5, 2);
+										  
+        fDistance[3]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] +
+                                          GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 1.5, 3);
+										  
+        fDistance[4]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] +
+                                          GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 1.5, 4);
+										  
+        fDistance[5]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] +
+                                          GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 1.5, 5);
+										  
+        fDistance[6]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] +
+                                          GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 1.5, 6);
+										  
+        fDistance[7]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] +
+                                          GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 1.5, 7);
+										  
+        fDistance[8]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] +
+                                          GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 1.5, 8);
+										  
+        fDistance[9]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] +
+                                          GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 1.5, 9);
+										  
+        fDistance[10] := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] +
+                                          GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 1.5, 10);
+
+        iStepCounter := 3;
+
+    3:  // Start rotary pumps with calculated distances [positive movement]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iRunVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iRunVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        // Wait until every pump has completed the move
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 4;
+        END_IF
+
+    4:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
+END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="CleaningLinesSolvent1and2" Id="{87b6bc97-2d34-4577-b9ae-634c57593673}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 60;
-		iStepCounter := 1;
-		
-    1: // Setar válvulas para posição 5 (Recirculação)
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 5, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 2;
-		END_IF
+        <ST><![CDATA[// ==========================================================================
+// CleaningLinesSolvent1and2
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Flush / clean all lines that carried Solvent 1 and Solvent 2.
+//   - Uses the combined volumes of both rinses to determine a larger
+//     cleaning volume per pump.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Move all valves [1..5] to position 5 (Recirculation).
+//   2) Calculate pump distances from sum of Rinse 1 + Rinse 2 volumes.
+//   3) Run all pumps [1..10] forward with higher velocity.
+//   4) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo da receita Agitate Time 2
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Cleaning Lines';
+        iStepCounter := 1;
 
-    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 1.5, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 1.5, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 1.5, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 1.5, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 1.5, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 1.5, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 1.5, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 1.5, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2]  + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 1.5, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 1.5, iPumpIndex := 10);
-
-		iStepCounter := 3;
-		
-    3: // Inicia movimento rotativo com distância calculada (graus/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
-																			);
-			END_IF
+    1:  // Move valves [1..5] to position 5 (Recirculation)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 5,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 4; // Move to next step to monitor completion
-		END_IF
 
-    4: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Calculate distances using combined volumes (Rinse 1 + Rinse 2)
+        fDistance[1]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] +
+                                          GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 1.5, 1);
+										  
+        fDistance[2]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] +
+                                          GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 1.5, 2);
+										  
+        fDistance[3]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] +
+                                          GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 1.5, 3);
+										  
+        fDistance[4]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] +
+                                          GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 1.5, 4);
+										  
+        fDistance[5]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] +
+                                          GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 1.5, 5);
+										  
+        fDistance[6]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] +
+                                          GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 1.5, 6);
+										  
+        fDistance[7]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] +
+                                          GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 1.5, 7);
+										  
+        fDistance[8]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] +
+                                          GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 1.5, 8);
+										  
+        fDistance[9]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] +
+                                          GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 1.5, 9);
+										  
+        fDistance[10] := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] +
+                                          GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] +
+                                          GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 1.5, 10);
+
+        iStepCounter := 3;
+
+    3:  // Run pumps with calculated distances [positive movement]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iRunVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iRunVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 4;
+        END_IF
+
+    4:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
@@ -579,423 +907,659 @@ EstimateTotalTime := rTotalTime + 180;]]></ST>
     </Method>
     <Action Name="Fill_Vials_Row_1" Id="{175ea493-1eff-4a16-bd97-613f6d5c4b1b}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R1'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 70;
-		iStepCounter := 1;
-		
-    1: // Set Valves into position 6 - Needles
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE; // reset flags
-        	END_FOR
-        	iStepCounter := 2; //move to next step
-		END_IF
-		
-	2: // M2 and M3 Motors movement
-		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 1 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2], //vial line 1 | AboveVialSet1
-															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
-														 	);
-		END_IF
-		IF NOT bMoveM2 AND bMoveM3 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[3], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 and M3 Movement is done, reset the flags and go to the next step
-		IF bMoveM2 AND bMoveM3 THEN
-			bMoveM2 := FALSE;
-			bMoveM3 := FALSE;
-			iStepCounter := 3;
-		END_IF
- 
+        <ST><![CDATA[// ==========================================================================
+// Fill_Vials_Row_1
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Fill the first row of vials using the Recovery Phase solvent mixture.
+//   - Move M3 (horizontal) to vial row 1 position and M2 (vertical) down to
+//     the vial level.
+//   - Pump the volume configured as rVial1FillVol into each vial.
+//
+// Sequence (iStepCounter):
+//   0) Initialize HMI text and move to step 1.
+//   1) Set all valves [1..5] to position 6 (Needles).
+//   2) Move M3 to vial row 1 (horizontal) and M2 down to vial height.
+//   3) Compute pump distances based on rVial1FillVol.
+//   4) Run pumps [1..10] backward (negative Distance) to dispense volume.
+//   5) Move M2 back to home (vertical).
+//   6) Set bMovementComplete := TRUE to notify the Recovery FSM.
+// ==========================================================================
+CASE iStepCounter OF
 
-    3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol, iPumpIndex := 10);
-		
-		iStepCounter := 4; // Move to next step
-		
-    4: // Start pumping by distance (degrees/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3 
-																			);
-			END_IF
+    0: // Initialize HMI info for Row 1 filling
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R1';
+        // Optionally: GVL_HMI.HMIAnimation.rLoadBarRecovery := 70;
+        iStepCounter := 1;
+
+    1: // Set valves [1..5] to position 6 (Needles)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step
-		END_IF
 
-	5: //Reset M2 postion
-		IF NOT bMoveM2 THEN //Move M2 [Vertical Motor] to Home Position
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 Movement is done, reset the flag and go to the next step
-		IF bMoveM2 THEN
-			bMoveM2 := FALSE;
-			iStepCounter := 6;
-		END_IF	
-	
-    6: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        // Wait for all valves to finish the movement
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            // Reset valve flags and go to next step
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2: // M2 and M3 motors movement to vial row 1 position
+        // Step 2.1: Move M3 (horizontal) to Row 1 (AboveVialSet1)
+        IF NOT bMoveM3 THEN
+            bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM3Position[2], // Vial row 1
+                rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM3Deceleration
+            );
+        END_IF
+
+        // Step 2.2: After M3 is at row 1, move M2 (vertical) down to vial height
+        IF NOT bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[3], // Fill position
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        // When both motors reach their positions, clear flags and go to step 3
+        IF bMoveM2 AND bMoveM3 THEN
+            bMoveM2      := FALSE;
+            bMoveM3      := FALSE;
+            iStepCounter := 3;
+        END_IF
+
+    3: // Calculate distance (steps) for each pump based on rVial1FillVol
+        fDistance[1]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 1
+        );
+        fDistance[2]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 2
+        );
+        fDistance[3]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 3
+        );
+        fDistance[4]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 4
+        );
+        fDistance[5]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 5
+        );
+        fDistance[6]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 6
+        );
+        fDistance[7]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 7
+        );
+        fDistance[8]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 8
+        );
+        fDistance[9]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 9
+        );
+        fDistance[10] := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVial1FillVol,
+            iPumpIndex := 10
+        );
+
+        iStepCounter := 4;
+
+    4: // Pump by distance (deg/s → steps) [negative movement = dispensing to vials]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],   // negative → pushing out to vials
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        // Wait until all pumps finish their moves
+        IF bMovePumpDone[1]  AND bMovePumpDone[2]  AND bMovePumpDone[3]  AND
+           bMovePumpDone[4]  AND bMovePumpDone[5]  AND bMovePumpDone[6]  AND
+           bMovePumpDone[7]  AND bMovePumpDone[8]  AND bMovePumpDone[9]  AND
+           bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5: // Move M2 (vertical) back to home position
+        IF NOT bMoveM2 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[1], // home
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        // When M2 is home, clear flag and go to final step
+        IF bMoveM2 THEN
+            bMoveM2      := FALSE;
+            iStepCounter := 6;
+        END_IF
+
+    6: // Notify Recovery FSM that Row 1 filling is completed
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="Fill_Vials_Row_2" Id="{4d0f44b2-18a7-4986-9bc7-67bfa926fd0f}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R2'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 75;
-		iStepCounter := 1;
-		
-    1: // Set Valves into position 6 - Needles
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE; // reset flags
-        	END_FOR
-        	iStepCounter := 2; //move to next step
-		END_IF
-		
-	2: // M2 and M3 Motors movement
-		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 1 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + GVL_Settings.stMachineParam.aM3Position[3], //Vial line 2 | AboveVialSet1 + VialSetSpacing
-															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
-														 	);
-		END_IF
-		IF NOT bMoveM2 AND bMoveM3 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[3], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 and M3 Movement is done, reset the flags and go to the next step
-		IF bMoveM2 AND bMoveM3 THEN
-			bMoveM2 := FALSE;
-			bMoveM3 := FALSE;
-			iStepCounter := 3;
-		END_IF
- 
+        <ST><![CDATA[// ==========================================================================
+// Fill_Vials_Row_2
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Fill the second row of vials using the same volume used for rows 2–4.
+//   - Move M3 (horizontal) to vial row 2 and M2 (vertical) down to vial level.
+//   - Pump the volume configured as rVials2_4FillVol into each vial.
+//
+// Sequence (iStepCounter):
+//   0) Initialize HMI text and move to step 1.
+//   1) Set all valves [1..5] to position 6 (Needles).
+//   2) Move M3 to vial row 2 (AboveVialSet1 + VialSetSpacing) and M2 down.
+//   3) Compute pump distances based on rVials2_4FillVol.
+//   4) Run pumps [1..10] backward to dispense volume.
+//   5) Move M2 back to home (vertical).
+//   6) Set bMovementComplete := TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 10);
-		
-		iStepCounter := 4; // Move to next step
-		
-    4: // Start pumping by distance (degrees/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3 
-																			);
-			END_IF
+    0: // Initialize HMI info for Row 2 filling
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R2';
+        // Optionally: GVL_HMI.HMIAnimation.rLoadBarRecovery := 75;
+        iStepCounter := 1;
+
+    1: // Set valves [1..5] to position 6 (Needles)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		//Waits for every pump movement done flag
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step
-		END_IF
 
-	5: //Reset M2 postion
-		IF NOT bMoveM2 THEN //Move M2 [Vertical Motor] to Home Position
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 Movement is done, reset the flag and go to the next step
-		IF bMoveM2 THEN
-			bMoveM2 := FALSE;
-			iStepCounter := 6;
-		END_IF	
-	
-    6: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2: // M2 and M3 movement to vial row 2
+        // Step 2.1: M3 → row 2 = AboveVialSet1 + 1 * VialSetSpacing
+        IF NOT bMoveM3 THEN
+            bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM3Position[2] +
+                             (1 * GVL_Settings.stMachineParam.aM3Position[3]),
+                // comment: AboveVialSet1 + (1 * VialSetSpacing)
+                rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM3Deceleration
+            );
+        END_IF
+
+        // Step 2.2: after M3 movement, bring M2 down to fill position
+        IF NOT bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[3], // Fill position
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 AND bMoveM3 THEN
+            bMoveM2      := FALSE;
+            bMoveM3      := FALSE;
+            iStepCounter := 3;
+        END_IF
+
+    3: // Calculate distances for each pump based on rVials2_4FillVol
+        fDistance[1]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 1
+        );
+        fDistance[2]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 2
+        );
+        fDistance[3]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 3
+        );
+        fDistance[4]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 4
+        );
+        fDistance[5]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 5
+        );
+        fDistance[6]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 6
+        );
+        fDistance[7]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 7
+        );
+        fDistance[8]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 8
+        );
+        fDistance[9]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 9
+        );
+        fDistance[10] := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 10
+        );
+
+        iStepCounter := 4;
+
+    4: // Pump by distance (negative movement = dispensing to vials)
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1]  AND bMovePumpDone[2]  AND bMovePumpDone[3]  AND
+           bMovePumpDone[4]  AND bMovePumpDone[5]  AND bMovePumpDone[6]  AND
+           bMovePumpDone[7]  AND bMovePumpDone[8]  AND bMovePumpDone[9]  AND
+           bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5: // Move M2 back to home position
+        IF NOT bMoveM2 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[1], // home
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 THEN
+            bMoveM2      := FALSE;
+            iStepCounter := 6;
+        END_IF
+
+    6: // Notify Recovery FSM that Row 2 filling is completed
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="Fill_Vials_Row_3" Id="{64765b9d-3a6b-4f52-8a3a-ae25b14c22a3}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R3'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 80;
-		iStepCounter := 1;
-		
-    1: // Set Valves into position 6 - Needles
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE; // reset flags
-        	END_FOR
-        	iStepCounter := 2; //move to next step
-		END_IF
-		
-	2: // M2 and M3 Motors movement
-		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 3 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + (2 * GVL_Settings.stMachineParam.aM3Position[3]), //Vial line 3 | AboveVialSet1 + (2 * VialSetSpacing)
-															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
-														 	);
-		END_IF
-		IF NOT bMoveM2 AND bMoveM3 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[3], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 and M3 Movement is done, reset the flags and go to the next step
-		IF bMoveM2 AND bMoveM3 THEN
-			bMoveM2 := FALSE;
-			bMoveM3 := FALSE;
-			iStepCounter := 3;
-		END_IF
- 
+        <ST><![CDATA[// ==========================================================================
+// Fill_Vials_Row_3
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Fill the third row of vials using rVials2_4FillVol.
+//   - Move M3 (horizontal) to row 3 and M2 (vertical) down to vials.
+//   - Pump the configured volume into each vial.
+//
+// Sequence (iStepCounter):
+//   0) Initialize HMI text.
+//   1) Set valves [1..5] to position 6 (Needles).
+//   2) Move M3 to vial row 3 (AboveVialSet1 + 2 * VialSetSpacing) and M2 down.
+//   3) Compute pump distances based on rVials2_4FillVol.
+//   4) Pump backward to dispense.
+//   5) Move M2 back to home.
+//   6) bMovementComplete := TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 10);
-		
-		iStepCounter := 4; // Move to next step
-		
-    4: // Start pumping by distance (degrees/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3
-																			);
-			END_IF
+    0: // Initialize HMI info for Row 3 filling
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R3';
+        iStepCounter := 1;
+
+    1: // Set valves [1..5] to position 6 (Needles)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		//Waits for every pump movement done flag
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step
-		END_IF
 
-	5: //Reset M2 postion
-		IF NOT bMoveM2 THEN //Move M2 [Vertical Motor] to Home Position
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 Movement is done, reset the flag and go to the next step
-		IF bMoveM2 THEN
-			bMoveM2 := FALSE;
-			iStepCounter := 6;
-		END_IF	
-	
-    6: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2: // M2 and M3 movement to vial row 3
+        // Step 2.1: M3 → row 3 = AboveVialSet1 + 2 * VialSetSpacing
+        IF NOT bMoveM3 THEN
+            bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM3Position[2] +
+                             (2 * GVL_Settings.stMachineParam.aM3Position[3]),
+                // comment: AboveVialSet1 + (2 * VialSetSpacing)
+                rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM3Deceleration
+            );
+        END_IF
+
+        // Step 2.2: after M3 movement, bring M2 down to fill position
+        IF NOT bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[3], // Fill position
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 AND bMoveM3 THEN
+            bMoveM2      := FALSE;
+            bMoveM3      := FALSE;
+            iStepCounter := 3;
+        END_IF
+
+    3: // Calculate distances for each pump based on rVials2_4FillVol
+        fDistance[1]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 1
+        );
+        fDistance[2]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 2
+        );
+        fDistance[3]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 3
+        );
+        fDistance[4]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 4
+        );
+        fDistance[5]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 5
+        );
+        fDistance[6]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 6
+        );
+        fDistance[7]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 7
+        );
+        fDistance[8]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 8
+        );
+        fDistance[9]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 9
+        );
+        fDistance[10] := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 10
+        );
+
+        iStepCounter := 4;
+
+    4: // Pump by distance (negative movement = dispensing to vials)
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1]  AND bMovePumpDone[2]  AND bMovePumpDone[3]  AND
+           bMovePumpDone[4]  AND bMovePumpDone[5]  AND bMovePumpDone[6]  AND
+           bMovePumpDone[7]  AND bMovePumpDone[8]  AND bMovePumpDone[9]  AND
+           bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5: // Move M2 back to home position
+        IF NOT bMoveM2 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[1],
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 THEN
+            bMoveM2      := FALSE;
+            iStepCounter := 6;
+        END_IF
+
+    6: // Notify Recovery FSM that Row 3 filling is completed
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="Fill_Vials_Row_4" Id="{491460a0-4929-4ea4-bfa4-c7a25ac97b70}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R4'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 85;
-		iStepCounter := 1;
-		
-    1: // Set Valves into position 6 - Needles
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE; // reset flags
-        	END_FOR
-        	iStepCounter := 2; //move to next step
-		END_IF
-		
-	2: // M2 and M3 Motors movement
-		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to vial line 3 position
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[2] + (3 * GVL_Settings.stMachineParam.aM3Position[3]), //Vial line 4| AboveVialSet1 + (3 * VialSetSpacing)
-															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
-														 	);
-		END_IF
-		IF NOT bMoveM2 AND bMoveM3 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[3], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 and M3 Movement is done, reset the flags and go to the next step
-		IF bMoveM2 AND bMoveM3 THEN
-			bMoveM2 := FALSE;
-			bMoveM3 := FALSE;
-			iStepCounter := 3;
-		END_IF
- 
+        <ST><![CDATA[// ==========================================================================
+// Fill_Vials_Row_4
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Fill the fourth row of vials using rVials2_4FillVol.
+//   - Move M3 (horizontal) to row 4 and M2 (vertical) down to vials.
+//   - Pump the configured volume into each vial.
+//
+// Sequence (iStepCounter):
+//   0) Initialize HMI text.
+//   1) Set valves [1..5] to position 6 (Needles).
+//   2) Move M3 to vial row 4 (AboveVialSet1 + 3 * VialSetSpacing) and M2 down.
+//   3) Compute pump distances based on rVials2_4FillVol.
+//   4) Pump backward to dispense.
+//   5) Move M2 back to home.
+//   6) bMovementComplete := TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol, iPumpIndex := 10);
-		
-		iStepCounter := 4; // Move to next step
-		
-    4: // Start pumping by distance (degrees/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3 
-																			);
-			END_IF
+    0: // Initialize HMI info for Row 4 filling
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Fill Vials R4';
+        iStepCounter := 1;
+
+    1: // Set valves [1..5] to position 6 (Needles)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		//Waits for every pump movement done flag
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step
-		END_IF
 
-	5: //Reset M2 postion
-		IF NOT bMoveM2 THEN //Move M2 [Vertical Motor] to Home Position
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 Movement is done, reset the flag and go to the next step
-		IF bMoveM2 THEN
-			bMoveM2 := FALSE;
-			iStepCounter := 6;
-		END_IF	
-	
-    6: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2: // M2 and M3 movement to vial row 4
+        // Step 2.1: M3 → row 4 = AboveVialSet1 + 3 * VialSetSpacing
+        IF NOT bMoveM3 THEN
+            bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM3Position[2] +
+                             (3 * GVL_Settings.stMachineParam.aM3Position[3]),
+                // comment: AboveVialSet1 + (3 * VialSetSpacing)
+                rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM3Deceleration
+            );
+        END_IF
+
+        // Step 2.2: M2 down to fill position after M3 movement
+        IF NOT bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[3], // Fill position
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 AND bMoveM3 THEN
+            bMoveM2      := FALSE;
+            bMoveM3      := FALSE;
+            iStepCounter := 3;
+        END_IF
+
+    3: // Calculate distances for each pump based on rVials2_4FillVol
+        fDistance[1]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 1
+        );
+        fDistance[2]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 2
+        );
+        fDistance[3]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 3
+        );
+        fDistance[4]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 4
+        );
+        fDistance[5]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 5
+        );
+        fDistance[6]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 6
+        );
+        fDistance[7]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 7
+        );
+        fDistance[8]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 8
+        );
+        fDistance[9]  := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 9
+        );
+        fDistance[10] := F_VolumeToSteps(
+            rVolume    := GVL_Recipe.stActiveRecipe.stOtherParams.rVials2_4FillVol,
+            iPumpIndex := 10
+        );
+
+        iStepCounter := 4;
+
+    4: // Pump by distance (negative movement = dispensing to vials)
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1]  AND bMovePumpDone[2]  AND bMovePumpDone[3]  AND
+           bMovePumpDone[4]  AND bMovePumpDone[5]  AND bMovePumpDone[6]  AND
+           bMovePumpDone[7]  AND bMovePumpDone[8]  AND bMovePumpDone[9]  AND
+           bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5: // Move M2 back to home position
+        IF NOT bMoveM2 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[1],
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 THEN
+            bMoveM2      := FALSE;
+            iStepCounter := 6;
+        END_IF
+
+    6: // Notify Recovery FSM that Row 4 filling is completed
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
@@ -1029,339 +1593,483 @@ GetPumpVolume := volume;]]></ST>
     </Method>
     <Action Name="MeteringSolvent1" Id="{043bbe9a-a49a-4e9b-8157-9bfa39662a89}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 1'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 10;
-		iStepCounter := 1;
-	
-    1: // Initialization: Reset solenoids and set valves
-        //fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
-		
-		IF GVL_IO.gSetSolenoidControl.Idle() THEN (*fbSolenoidControl.bDone*) 
-			iStepCounter := 2;
-		END_IF
-		
-    2: // Set valves for Rinse 1 position
-	    FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1], 
-																	 	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																		 );
-			END_IF
-			
+        <ST><![CDATA[// ==========================================================================
+// MeteringSolvent1
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Meter Solvent 1 volumes from each Andersen stage into the fluidic path.
+//   - Positions valves according to recipe aSolventN[1].
+//   - Moves all 10 pumps by a distance equivalent to the configured volumes.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Ensure solenoids are in IDLE position (via gSetSolenoidControl.Idle()).
+//   2) Move all valves [1..5] to solvent-1 position (recipe-dependent).
+//   3) Calculate pump distances for metering (Rinse 1 + dead volume).
+//   4) Run all pumps forward at metering velocity.
+//   5) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
+
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 1';
+        iStepCounter := 1;
+
+    1:  // Initialization: wait solenoids at IDLE (safety/flow configuration)
+        // fbSolenoidControl could also be used if re-enabled in the future
+        // fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
+
+        IF GVL_IO.gSetSolenoidControl.Idle() THEN
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Set valves for Rinse 1 (position comes from aSolventN[1])
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1],
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 3;
-		END_IF
-        
-	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
-		
-		iStepCounter := 4;
-		
-    4: // Performs rotary movement (positive movement)
+
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 3;
+        END_IF
+
+    3:  // Calculate the distance for each pump (Rinse 1 + dead volume)
+        fDistance[1]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] +
+                                         GVL_Motion.aPumps[1].Rotary.rDeadVolume, 1);
+										 
+        fDistance[2]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] +
+                                         GVL_Motion.aPumps[2].Rotary.rDeadVolume, 2);
+										 
+        fDistance[3]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] +
+                                         GVL_Motion.aPumps[3].Rotary.rDeadVolume, 3);
+										 
+        fDistance[4]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] +
+                                         GVL_Motion.aPumps[4].Rotary.rDeadVolume, 4);
+										 
+        fDistance[5]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] +
+                                         GVL_Motion.aPumps[5].Rotary.rDeadVolume, 5);
+										 
+        fDistance[6]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] +
+                                         GVL_Motion.aPumps[6].Rotary.rDeadVolume, 6);
+										 
+        fDistance[7]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] +
+                                         GVL_Motion.aPumps[7].Rotary.rDeadVolume, 7);
+										 
+        fDistance[8]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] +
+                                         GVL_Motion.aPumps[8].Rotary.rDeadVolume, 8);
+										 
+        fDistance[9]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] +
+                                         GVL_Motion.aPumps[9].Rotary.rDeadVolume, 9);
+										 
+        fDistance[10] := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] +
+                                         GVL_Motion.aPumps[10].Rotary.rDeadVolume, 10);
+
+        iStepCounter := 4;
+
+    4:  // Perform rotary movement for metering (positive movement)
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity :=  GVL_Settings.stPumpParameters.iMeterVelocity * 6, // GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity  // Slow deceleration to ensure smoothness on metering
-																			);
-			END_IF
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step to monitor completion
-		END_IF
-	
-	5: // Sets the movement done flag
-		bMovementComplete := TRUE;
-         
-END_CASE
-]]></ST>
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
+END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="MeteringSolvent2" Id="{ab3c9a64-fa5a-49bd-80d9-c7e2f0aaf572}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 2'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 40;
-		iStepCounter := 1;
-	
-    1: // Initialization: Reset solenoids and set valves
-        //fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
-		
-		IF GVL_IO.gSetSolenoidControl.Idle() THEN  (*fbSolenoidControl.bDone*) 
-			iStepCounter := 2;
-		END_IF
-		
-    2: // Set valves for Rinse 2 position
-	    FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2], 
-																		 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																		 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																		 rDec := GVL_Motion.aValves[i].rDeceleration 
-																		 );
-			END_IF
-			
+        <ST><![CDATA[// ==========================================================================
+// MeteringSolvent2
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Meter Solvent 2 volumes from each Andersen stage into the fluidic path.
+//   - Positions valves according to recipe aSolventN[2].
+//   - Moves all 10 pumps by distance equivalent to Rinse 2 volumes.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Ensure solenoids are in IDLE position.
+//   2) Move valves [1..5] to solvent-2 position (recipe-dependent).
+//   3) Calculate pump distances (Rinse 2 + dead volume).
+//   4) Run all pumps forward at metering velocity.
+//   5) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
+
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Metering Rinse 2';
+        iStepCounter := 1;
+
+    1:  // Initialization: wait solenoids at IDLE
+        // fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE);
+
+        IF GVL_IO.gSetSolenoidControl.Idle() THEN
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Set valves for Rinse 2 (position comes from aSolventN[2])
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2],
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 3;
-		END_IF
-        
-	3: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + GVL_Motion.aPumps[1].Rotary.rDeadVolume, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + GVL_Motion.aPumps[2].Rotary.rDeadVolume, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + GVL_Motion.aPumps[3].Rotary.rDeadVolume, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + GVL_Motion.aPumps[4].Rotary.rDeadVolume, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + GVL_Motion.aPumps[5].Rotary.rDeadVolume, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + GVL_Motion.aPumps[6].Rotary.rDeadVolume, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + GVL_Motion.aPumps[7].Rotary.rDeadVolume, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + GVL_Motion.aPumps[8].Rotary.rDeadVolume, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + GVL_Motion.aPumps[9].Rotary.rDeadVolume, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + GVL_Motion.aPumps[10].Rotary.rDeadVolume, iPumpIndex := 10);
-		
-		iStepCounter := 4;
-		
-    4: // Performs rotary movement (positive movement)
+
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 3;
+        END_IF
+
+    3:  // Calculate the distance for each pump (Rinse 2 + dead volume)
+        fDistance[1]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] +
+                                         GVL_Motion.aPumps[1].Rotary.rDeadVolume, 1);
+										 
+        fDistance[2]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] +
+                                         GVL_Motion.aPumps[2].Rotary.rDeadVolume, 2);
+										 
+        fDistance[3]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] +
+                                         GVL_Motion.aPumps[3].Rotary.rDeadVolume, 3);
+										 
+        fDistance[4]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] +
+                                         GVL_Motion.aPumps[4].Rotary.rDeadVolume, 4);
+										 
+        fDistance[5]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] +
+                                         GVL_Motion.aPumps[5].Rotary.rDeadVolume, 5);
+										 
+        fDistance[6]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] +
+                                         GVL_Motion.aPumps[6].Rotary.rDeadVolume, 6);
+										 
+        fDistance[7]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] +
+                                         GVL_Motion.aPumps[7].Rotary.rDeadVolume, 7);
+										 
+        fDistance[8]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] +
+                                         GVL_Motion.aPumps[8].Rotary.rDeadVolume, 8);
+										 
+        fDistance[9]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] +
+                                         GVL_Motion.aPumps[9].Rotary.rDeadVolume, 9);
+										 
+        fDistance[10] := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] +
+                                         GVL_Motion.aPumps[10].Rotary.rDeadVolume, 10);
+
+        iStepCounter := 4;
+
+    4:  // Perform rotary movement for metering (positive movement)
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, //GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, //GVL_Motion.aPumps[i].Rotary.rSpeed, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity // Slow deceleration to ensure smoothness on metering 
-																			);
-			END_IF
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step to monitor completion
-		END_IF
-	
-	5: // Sets the movement done flag
-		bMovementComplete := TRUE;
-         
-END_CASE
-]]></ST>
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
+END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="MixSolvent1and2" Id="{be5d325a-d90b-476e-8b7a-b5a6c59989fc}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Mix Solvents 1 and 2'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 50;
-		iStepCounter := 1;
-		
-    1: // Setar válvulas para posição 5 (Recirculação)
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 5, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 2;
-		END_IF
+        <ST><![CDATA[// ==========================================================================
+// MixSolvent1and2
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Mix Solvent 1 and Solvent 2 by recirculating fluid through the system.
+//   - Uses Agitate / Recirculation time from aTime[2] and velocity for solvent 2.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Move valves [1..5] to position 5 (Recirculation).
+//   2) Compute distance per pump from recirculation time and velocity.
+//   3) Run all pumps backward (negative Distance) for mixing.
+//   4) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo de recirculacao do rinse 2
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Mix Solvents 1 and 2';
+        iStepCounter := 1;
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6);
-		END_FOR
-		
-		IF fRecirculationTime > 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
-    3: // Inicia movimento rotativo com distância calculada (graus/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6, 
-																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3, 
-																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3 
-																			);
-			END_IF
+    1:  // Move valves [1..5] to position 5 (Recirculation)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 5,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 4; // Move to next step to monitor completion
-		END_IF
 
-    4: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Calculate rotation distance based on recirculation time (Rinse 2)
+        // fRecirculationTime is in seconds (ms → s)
+        fRecirculationTime := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[2]) / 1000);
+
+        FOR i := 1 TO 10 DO
+            // Distance = time * speed (converted to steps elsewhere)
+            fCalcDistance[i] := fRecirculationTime *
+                                (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6);
+        END_FOR
+
+        IF fRecirculationTime > 0 THEN
+            iStepCounter := 3;
+        END_IF
+
+    3:  // Run pumps with calculated distances [negative movement for mixing]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fCalcDistance[i],
+                    Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 6,
+                    Acc      := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3,
+                    Dec      := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[2] * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 4;
+        END_IF
+
+    4:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="PrimeNeedles" Id="{40407892-18b3-49ae-adf9-38d07aae6967}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Needles'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 65;
-		iStepCounter := 1;
-	
-    1: // Set valves for Needles position
-	    FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-				bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-			
+        <ST><![CDATA[// ==========================================================================
+// PrimeNeedles
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Prime the needles and final tubing before vial filling.
+//   - Moves valves to needles position (6).
+//   - Pumps a configured volume (rVialPrimeVol + margin) through needles.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Move valves [1..5] to position 6 (Needles).
+//   2) Compute pump distances based on rVialPrimeVol (+10µL margin).
+//   3) Run pumps backward (negative Distance) to push fluid out of needles.
+//   4) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
+
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Prime Needles';
+        iStepCounter := 1;
+
+    1:  // Set valves for needles position (6)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 2;
-		END_IF
-        
-	2: //Calculating the distance for each pump
-		fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, iPumpIndex := 10);
-		
-		iStepCounter := 3;
-		
-    3: // Performs rotary movement (positive movement)
+
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Calculate the distance for each pump (prime volume + margin)
+        fDistance[1]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 1);
+        fDistance[2]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 2);
+        fDistance[3]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 3);
+        fDistance[4]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 4);
+        fDistance[5]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 5);
+        fDistance[6]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 6);
+        fDistance[7]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 7);
+        fDistance[8]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 8);
+        fDistance[9]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 9);
+        fDistance[10] := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stOtherParams.rVialPrimeVol + 10, 10);
+
+        iStepCounter := 3;
+
+    3:  // Perform rotary movement for priming [negative → pumping out]
         FOR i := 1 TO 10 DO
             IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 3
-																			);
-			END_IF
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iMeterVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iMeterVelocity * 3
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 4; // Move to next step to monitor completion
-		END_IF
-	
-	4: // Sets the movement done flag
-		bMovementComplete := TRUE;
-         
-END_CASE
-]]></ST>
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 4;
+        END_IF
+
+    4:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
+END_CASE]]></ST>
       </Implementation>
     </Action>
     <Action Name="RecirculateSolvent1" Id="{dd88b683-a3d6-421a-a9d9-04dab5a1112d}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Recirculate Solvent'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 20;
-		iStepCounter := 1;
-		
-    1: // Setar válvulas para posição 5 (Recirculação)
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 5, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 2;
-		END_IF
+        <ST><![CDATA[// ==========================================================================
+// RecirculateSolvent1
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Recirculate Solvent 1 through the system for a configured time
+//     to help dissolve and transport particles.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Move valves [1..5] to position 5 (Recirculation).
+//   2) Calculate distance per pump from recirculation time (Rinse 1).
+//   3) Run all pumps backward (negative Distance).
+//   4) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-    2: // Calcula o numero de graus de rotacao das bombas baseado no tempo de recirculacao do rinse 1
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Recirculate Solvent';
+        iStepCounter := 1;
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] 	:= fRecirculationTime * (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6);
-		END_FOR
-		
-		IF fRecirculationTime >= 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
-    3: // Inicia movimento rotativo com distância calculada (graus/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fCalcDistance[i],
-																			 Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6,
-																			 Acc := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3, 
-																			 Dec := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3 
-																			);
-			END_IF
+    1:  // Move valves [1..5] to position 5 (Recirculation)
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 5,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 4; // Move to next step to monitor completion
-		END_IF
 
-    4: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
-END_CASE
-]]></ST>
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // Calculate rotation distance based on recirculation time (Rinse 1)
+        fRecirculationTime := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[1]) / 1000);
+
+        FOR i := 1 TO 10 DO
+            fCalcDistance[i] := fRecirculationTime *
+                                (GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6);
+        END_FOR
+
+        IF fRecirculationTime >= 0 THEN
+            iStepCounter := 3;
+        END_IF
+
+    3:  // Run pumps with calculated distances [negative movement]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fCalcDistance[i],
+                    Velocity := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 6,
+                    Acc      := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3,
+                    Dec      := GVL_Recipe.stActiveRecipe.stSolventsTimes.aVelocity[1] * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 4;
+        END_IF
+
+    4:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
+END_CASE]]></ST>
       </Implementation>
     </Action>
     <Method Name="Reset" Id="{12eefff6-07c0-42e5-ab61-91712c03c502}">
@@ -1426,231 +2134,243 @@ END_IF
     </Method>
     <Action Name="SolventSoak" Id="{024c621c-c960-47f6-8737-9a73b1607501}">
       <Implementation>
-        <ST><![CDATA[//Provide HMI animation details
-GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Solvent Soak'; 
-//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 30;
+        <ST><![CDATA[// ==========================================================================
+// SolventSoak
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Keep solvent in contact with Andersen stages for a soak time.
+//   - Uses TON "timerSoak" with tSoakTime from recipe.
+//   - Sets bMovementComplete when soak time is elapsed.
+//
+// Behavior:
+//   - Each call keeps re-evaluating timer until bSoakTimerDone is TRUE.
+// ==========================================================================
+GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Solvent Soak';
 
-// Initialize the Soak timer
+// Start Soak timer
 bTimerStarted := TRUE;
 
+// Evaluate timer completion
 IF timerSoak.Q THEN
-	// Time completed, reset the timer
-	bTimerStarted := FALSE;
-	bSoakTimerDone := TRUE;
+    // Soak time completed, reset internal flags
+    bTimerStarted  := FALSE;
+    bSoakTimerDone := TRUE;
 END_IF
 
-// Wait for the timer to complete the time
-timerSoak(IN := bTimerStarted, PT := GVL_Recipe.stActiveRecipe.stOtherParams.tSoakTime);
+// Run TON with soak time from recipe
+timerSoak(
+    IN := bTimerStarted,
+    PT := GVL_Recipe.stActiveRecipe.stOtherParams.tSoakTime
+);
 
+// When soak timer is done, notify FSM
 IF bSoakTimerDone THEN
-	// Marks the end of the action
-	bMovementComplete := TRUE;
-END_IF
-
-]]></ST>
+    bMovementComplete := TRUE;
+END_IF]]></ST>
       </Implementation>
     </Action>
     <Action Name="WasteRemainingSolvent" Id="{a506e020-7a9f-47c0-ade1-266bb776f9c2}">
       <Implementation>
-        <ST><![CDATA[CASE iStepCounter OF
-	
-	0: //Provide HMI animation details
-		GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Waste Solvent'; 
-		//GVL_HMI.HMIAnimation.rLoadBarRecovery  := 90;
-		iStepCounter := 1;
-		
-    1: // Set Valves into position 6 - Needles
-    	FOR i := 1 TO 5 DO
-			IF NOT bMoveValveDone[i] THEN
-			bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve( iPosition := 6, 
-																	 rVelocity := GVL_Motion.aValves[i].rTargetVel, 
-																	 rAcc := GVL_Motion.aValves[i].rAcceleration, 
-																	 rDec := GVL_Motion.aValves[i].rDeceleration 
-																	);
-			END_IF
-		END_FOR
-		
-		IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3] AND bMoveValveDone[4] AND bMoveValveDone[5] THEN
-			FOR i := 1 TO 5 DO
-				bMoveValveDone[i] := FALSE; // reset flags
-        	END_FOR
-        	iStepCounter := 2; //move to next step
-		END_IF
-		
-	2: // M3 Motors movement
+        <ST><![CDATA[// ==========================================================================
+// WasteRemainingSolvent
+// --------------------------------------------------------------------------
+// Purpose:
+//   - Direct any remaining solvent to the waste container.
+//   - Moves M3 to waste position and M2 down, then pumps a combined
+//     volume of solvent 1 + solvent 2 out to waste.
+//
+// Sequence (iStepCounter):
+//   0) Set HMI text.
+//   1) Move valves [1..5] to needles position (6).
+//   2) Move M3 to waste position and M2 down to waste height.
+//   3) Calculate pump distances based on total volume (Rinse 1 + Rinse 2).
+//   4) Run pumps backward (negative Distance) at run velocity.
+//   5) Move M2 back to home position.
+//   6) Set bMovementComplete TRUE.
+// ==========================================================================
+CASE iStepCounter OF
 
-		IF NOT bMoveM3 THEN //Move M3 [Horizontal Motor] to Home Position to waste solvent left
-			bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM3Position[1], //Home Position
-															rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM3Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM3Deceleration	
-														 	);
-		END_IF
-		
-		IF NOT bMoveM2 AND bMoveM3 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[2], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		
-		// If M2 and M3 Movement is done, reset the flags and go to the next step
-		IF bMoveM2 AND bMoveM3 THEN
-			bMoveM2 := FALSE;
-			bMoveM3 := FALSE;
-			iStepCounter := 3;
-		END_IF
-		
-    3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + 10, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + 10, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + 10, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + 10, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + 10, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + 10, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + 10, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + 10, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + 10, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] + GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + 10, iPumpIndex := 10);
-		
-		iStepCounter := 4; // Move to next step
-		
-    4: // Start pumping by distance (degrees/seg -> steps) [negative moviment]
-        FOR i := 1 TO 10 DO
-			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := - fDistance[i],
-																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
-																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
-																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
-																			);
-			END_IF
+    0:  // Initialize action / HMI
+        GVL_HMI.HMIAnimation.sLoadTextRecovery := 'Waste Solvent';
+        iStepCounter := 1;
+
+    1:  // Set valves into position 6 (Needles) for wasting
+        FOR i := 1 TO 5 DO
+            IF NOT bMoveValveDone[i] THEN
+                bMoveValveDone[i] := GVL_Motion.aValvesObj[i].MoveValve(
+                    iPosition := 6,
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration
+                );
+            END_IF
         END_FOR
-		
-		//Waits for every pump movement done flag
-		IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND bMovePumpDone[9] AND bMovePumpDone[10] THEN
-			FOR i := 1 TO 10 DO
-				bMovePumpDone[i] := FALSE;
-        	END_FOR
-        	iStepCounter := 5; // Move to next step
-		END_IF
 
-	5: //Resets M2 position
-		IF NOT bMoveM2 THEN //Move M2 [Vertical Motor] to fill vials position after M3 movement is done
-			bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM2Position[1], 
-															rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM2Accleration, 
-															rDec := GVL_Settings.stMachineParam.rM2Deceleration	
-														 	);
-		END_IF
-		IF bMoveM2 THEN
-			bMoveM2 := FALSE;
-			iStepCounter := 6;
-		END_IF
-	
-		
-    6: // Sets the movement done flag
-		bMovementComplete := TRUE;
-	
-        
+        IF bMoveValveDone[1] AND bMoveValveDone[2] AND bMoveValveDone[3]
+           AND bMoveValveDone[4] AND bMoveValveDone[5]
+        THEN
+            FOR i := 1 TO 5 DO
+                bMoveValveDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 2;
+        END_IF
+
+    2:  // M3/M2 Motors movement to waste position
+        // M3 → home (used here as waste position)
+        IF NOT bMoveM3 THEN
+            bMoveM3 := GVL_Motion.aMotors[3].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM3Position[1],
+                rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM3Deceleration
+            );
+        END_IF
+
+        // After M3 is done, move M2 down to waste height
+        IF NOT bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[2],
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 AND bMoveM3 THEN
+            bMoveM2 := FALSE;
+            bMoveM3 := FALSE;
+            iStepCounter := 3;
+        END_IF
+
+    3:  // Calculate distances for each pump (Rinse 1 + Rinse 2 + margin)
+        fDistance[1]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[2] + 10, 1);
+										 
+        fDistance[2]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[2] + 10, 2);
+										 
+        fDistance[3]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[2] + 10, 3);
+										 
+        fDistance[4]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[2] + 10, 4);
+										 
+        fDistance[5]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[2] + 10, 5);
+										 
+        fDistance[6]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[2] + 10, 6);
+										 
+        fDistance[7]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[2] + 10, 7);
+										 
+        fDistance[8]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[2] + 10, 8);
+										 
+        fDistance[9]  := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[2] + 10, 9);
+										 
+        fDistance[10] := F_VolumeToSteps(GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] +
+                                         GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[2] + 10, 10);
+
+        iStepCounter := 4;
+
+    4:  // Start pumps to waste remaining solvent [negative movement]
+        FOR i := 1 TO 10 DO
+            IF NOT bMovePumpDone[i] THEN
+                bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative(
+                    Distance := -fDistance[i],
+                    Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6,
+                    Acc      := GVL_Settings.stPumpParameters.iRunVelocity * 3,
+                    Dec      := GVL_Settings.stPumpParameters.iRunVelocity * 3
+                );
+            END_IF
+        END_FOR
+
+        IF bMovePumpDone[1] AND bMovePumpDone[2] AND bMovePumpDone[3] AND bMovePumpDone[4] AND
+           bMovePumpDone[5] AND bMovePumpDone[6] AND bMovePumpDone[7] AND bMovePumpDone[8] AND
+           bMovePumpDone[9] AND bMovePumpDone[10]
+        THEN
+            FOR i := 1 TO 10 DO
+                bMovePumpDone[i] := FALSE;
+            END_FOR
+            iStepCounter := 5;
+        END_IF
+
+    5:  // Reset M2 position back to home
+        IF NOT bMoveM2 THEN
+            bMoveM2 := GVL_Motion.aMotors[2].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM2Position[1],
+                rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM2Deceleration
+            );
+        END_IF
+
+        IF bMoveM2 THEN
+            bMoveM2 := FALSE;
+            iStepCounter := 6;
+        END_IF
+
+    6:  // Signal completion to Recovery FSM
+        bMovementComplete := TRUE;
+
 END_CASE]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_RecoveryPhase">
-      <LineId Id="851" Count="0" />
-      <LineId Id="1191" Count="0" />
-      <LineId Id="1209" Count="0" />
-      <LineId Id="854" Count="0" />
-      <LineId Id="1213" Count="4" />
-      <LineId Id="1212" Count="0" />
-      <LineId Id="855" Count="3" />
-      <LineId Id="1285" Count="1" />
-      <LineId Id="868" Count="1" />
-      <LineId Id="1297" Count="0" />
-      <LineId Id="1295" Count="1" />
-      <LineId Id="1294" Count="0" />
-      <LineId Id="1288" Count="2" />
-      <LineId Id="1287" Count="0" />
-      <LineId Id="1292" Count="0" />
-      <LineId Id="870" Count="0" />
-      <LineId Id="872" Count="2" />
-      <LineId Id="1350" Count="0" />
-      <LineId Id="875" Count="0" />
-      <LineId Id="1351" Count="0" />
-      <LineId Id="1353" Count="1" />
-      <LineId Id="1352" Count="0" />
-      <LineId Id="876" Count="3" />
-      <LineId Id="1357" Count="0" />
-      <LineId Id="880" Count="1" />
-      <LineId Id="883" Count="45" />
-      <LineId Id="1416" Count="1" />
-      <LineId Id="1423" Count="0" />
-      <LineId Id="1418" Count="4" />
-      <LineId Id="929" Count="20" />
-      <LineId Id="1425" Count="6" />
-      <LineId Id="1424" Count="0" />
-      <LineId Id="950" Count="24" />
-      <LineId Id="1008" Count="11" />
-      <LineId Id="981" Count="0" />
-      <LineId Id="1020" Count="0" />
-      <LineId Id="1022" Count="11" />
-      <LineId Id="1021" Count="0" />
-      <LineId Id="1034" Count="0" />
-      <LineId Id="1036" Count="3" />
-      <LineId Id="1043" Count="0" />
-      <LineId Id="1045" Count="2" />
-      <LineId Id="1035" Count="0" />
-      <LineId Id="982" Count="0" />
-      <LineId Id="991" Count="0" />
-      <LineId Id="1048" Count="0" />
-      <LineId Id="992" Count="5" />
-      <LineId Id="1049" Count="0" />
-      <LineId Id="998" Count="1" />
-      <LineId Id="1051" Count="1" />
-      <LineId Id="1182" Count="0" />
-      <LineId Id="1118" Count="0" />
-      <LineId Id="1006" Count="1" />
+      <LineId Id="1614" Count="336" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.AgitateTime1">
-      <LineId Id="2" Count="2" />
-      <LineId Id="65" Count="1" />
-      <LineId Id="68" Count="2" />
-      <LineId Id="67" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="8" Count="1" />
-      <LineId Id="25" Count="1" />
-      <LineId Id="59" Count="0" />
-      <LineId Id="61" Count="1" />
-      <LineId Id="60" Count="0" />
-      <LineId Id="27" Count="1" />
-      <LineId Id="36" Count="0" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="54" Count="2" />
-      <LineId Id="58" Count="0" />
+      <LineId Id="71" Count="45" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.AgitateTime2">
-      <LineId Id="23" Count="25" />
+      <LineId Id="49" Count="45" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1">
-      <LineId Id="207" Count="0" />
-      <LineId Id="151" Count="0" />
-      <LineId Id="206" Count="0" />
-      <LineId Id="153" Count="23" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="217" Count="8" />
-      <LineId Id="214" Count="0" />
-      <LineId Id="181" Count="1" />
-      <LineId Id="184" Count="21" />
-      <LineId Id="150" Count="0" />
-      <LineId Id="1" Count="0" />
+      <LineId Id="227" Count="47" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="275" Count="1" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="279" Count="1" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="281" Count="1" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="283" Count="1" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="285" Count="1" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="287" Count="1" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="289" Count="1" />
+      <LineId Id="332" Count="0" />
+      <LineId Id="291" Count="31" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1and2">
-      <LineId Id="2" Count="26" />
-      <LineId Id="62" Count="10" />
-      <LineId Id="36" Count="22" />
+      <LineId Id="177" Count="45" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="223" Count="2" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="226" Count="2" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="229" Count="2" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="232" Count="2" />
+      <LineId Id="282" Count="0" />
+      <LineId Id="235" Count="2" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="238" Count="2" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="241" Count="2" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="244" Count="2" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="247" Count="30" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.EstimateTotalTime">
@@ -1672,50 +2392,18 @@ END_CASE]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Fill_Vials_Row_1">
-      <LineId Id="2" Count="23" />
-      <LineId Id="59" Count="2" />
-      <LineId Id="63" Count="0" />
-      <LineId Id="65" Count="3" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="83" Count="0" />
-      <LineId Id="73" Count="2" />
-      <LineId Id="70" Count="1" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="94" Count="0" />
-      <LineId Id="77" Count="0" />
-      <LineId Id="80" Count="2" />
-      <LineId Id="79" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="26" Count="1" />
-      <LineId Id="36" Count="0" />
-      <LineId Id="84" Count="7" />
-      <LineId Id="93" Count="0" />
-      <LineId Id="97" Count="1" />
-      <LineId Id="37" Count="16" />
-      <LineId Id="99" Count="0" />
-      <LineId Id="54" Count="0" />
-      <LineId Id="105" Count="5" />
-      <LineId Id="104" Count="0" />
-      <LineId Id="100" Count="0" />
-      <LineId Id="112" Count="2" />
-      <LineId Id="116" Count="1" />
-      <LineId Id="103" Count="0" />
-      <LineId Id="55" Count="3" />
-      <LineId Id="1" Count="0" />
+      <LineId Id="119" Count="163" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Fill_Vials_Row_2">
-      <LineId Id="92" Count="72" />
-      <LineId Id="191" Count="1" />
-      <LineId Id="165" Count="25" />
+      <LineId Id="193" Count="158" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Fill_Vials_Row_3">
-      <LineId Id="2" Count="100" />
+      <LineId Id="103" Count="157" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Fill_Vials_Row_4">
-      <LineId Id="2" Count="100" />
+      <LineId Id="103" Count="157" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.GetPumpVolume">
@@ -1723,93 +2411,59 @@ END_CASE]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MeteringSolvent1">
-      <LineId Id="216" Count="0" />
-      <LineId Id="3" Count="0" />
-      <LineId Id="217" Count="0" />
-      <LineId Id="219" Count="2" />
-      <LineId Id="218" Count="0" />
-      <LineId Id="4" Count="2" />
-      <LineId Id="204" Count="2" />
-      <LineId Id="208" Count="0" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="207" Count="0" />
-      <LineId Id="241" Count="0" />
-      <LineId Id="244" Count="3" />
-      <LineId Id="242" Count="1" />
-      <LineId Id="212" Count="0" />
-      <LineId Id="12" Count="0" />
-      <LineId Id="183" Count="0" />
-      <LineId Id="185" Count="0" />
-      <LineId Id="189" Count="1" />
-      <LineId Id="188" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="187" Count="0" />
-      <LineId Id="59" Count="0" />
-      <LineId Id="222" Count="1" />
-      <LineId Id="225" Count="5" />
-      <LineId Id="232" Count="2" />
-      <LineId Id="236" Count="0" />
-      <LineId Id="238" Count="0" />
-      <LineId Id="237" Count="0" />
-      <LineId Id="61" Count="0" />
-      <LineId Id="91" Count="0" />
-      <LineId Id="96" Count="0" />
-      <LineId Id="239" Count="0" />
-      <LineId Id="192" Count="2" />
-      <LineId Id="213" Count="0" />
-      <LineId Id="240" Count="0" />
-      <LineId Id="97" Count="0" />
-      <LineId Id="196" Count="4" />
-      <LineId Id="195" Count="0" />
-      <LineId Id="201" Count="2" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="90" Count="0" />
+      <LineId Id="248" Count="53" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="302" Count="1" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="306" Count="1" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="308" Count="1" />
+      <LineId Id="352" Count="0" />
+      <LineId Id="310" Count="1" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="314" Count="1" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="316" Count="1" />
+      <LineId Id="356" Count="0" />
+      <LineId Id="318" Count="29" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MeteringSolvent2">
-      <LineId Id="85" Count="67" />
+      <LineId Id="153" Count="52" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="206" Count="1" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="208" Count="1" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="210" Count="1" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="212" Count="1" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="214" Count="1" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="216" Count="1" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="218" Count="1" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="220" Count="1" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="222" Count="29" />
       <LineId Id="84" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.MixSolvent1and2">
-      <LineId Id="88" Count="26" />
-      <LineId Id="143" Count="6" />
-      <LineId Id="120" Count="22" />
+      <LineId Id="150" Count="79" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.PrimeNeedles">
-      <LineId Id="2" Count="6" />
-      <LineId Id="16" Count="53" />
+      <LineId Id="212" Count="80" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.RecirculateSolvent1">
-      <LineId Id="152" Count="1" />
-      <LineId Id="275" Count="1" />
-      <LineId Id="274" Count="0" />
-      <LineId Id="278" Count="0" />
-      <LineId Id="277" Count="0" />
-      <LineId Id="154" Count="0" />
-      <LineId Id="238" Count="0" />
-      <LineId Id="281" Count="0" />
-      <LineId Id="239" Count="4" />
-      <LineId Id="282" Count="0" />
-      <LineId Id="284" Count="0" />
-      <LineId Id="283" Count="0" />
-      <LineId Id="246" Count="4" />
-      <LineId Id="161" Count="2" />
-      <LineId Id="251" Count="1" />
-      <LineId Id="285" Count="2" />
-      <LineId Id="255" Count="0" />
-      <LineId Id="257" Count="2" />
-      <LineId Id="253" Count="0" />
-      <LineId Id="180" Count="0" />
-      <LineId Id="260" Count="0" />
-      <LineId Id="279" Count="0" />
-      <LineId Id="261" Count="4" />
-      <LineId Id="280" Count="0" />
-      <LineId Id="266" Count="5" />
-      <LineId Id="192" Count="2" />
-      <LineId Id="272" Count="1" />
-      <LineId Id="225" Count="1" />
+      <LineId Id="288" Count="77" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.Reset">
@@ -1853,41 +2507,29 @@ END_CASE]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.SolventSoak">
-      <LineId Id="33" Count="3" />
-      <LineId Id="4" Count="0" />
-      <LineId Id="6" Count="0" />
-      <LineId Id="12" Count="2" />
-      <LineId Id="16" Count="1" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="31" Count="1" />
-      <LineId Id="30" Count="0" />
-      <LineId Id="25" Count="0" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="29" Count="0" />
-      <LineId Id="26" Count="1" />
-      <LineId Id="23" Count="0" />
+      <LineId Id="37" Count="31" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.WasteRemainingSolvent">
-      <LineId Id="2" Count="25" />
-      <LineId Id="105" Count="0" />
-      <LineId Id="28" Count="6" />
-      <LineId Id="103" Count="0" />
-      <LineId Id="110" Count="5" />
-      <LineId Id="108" Count="1" />
-      <LineId Id="119" Count="4" />
-      <LineId Id="50" Count="0" />
-      <LineId Id="118" Count="0" />
-      <LineId Id="51" Count="31" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="98" Count="0" />
-      <LineId Id="128" Count="5" />
-      <LineId Id="127" Count="0" />
-      <LineId Id="135" Count="1" />
-      <LineId Id="138" Count="0" />
-      <LineId Id="134" Count="0" />
-      <LineId Id="125" Count="1" />
-      <LineId Id="99" Count="3" />
+      <LineId Id="139" Count="73" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="213" Count="1" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="215" Count="1" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="217" Count="1" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="219" Count="1" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="221" Count="1" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="223" Count="1" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="225" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="282" Count="0" />
+      <LineId Id="229" Count="44" />
       <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
