@@ -518,7 +518,7 @@ IF NOT bPerformHoming THEN
         );
     END_IF
 
-    IF NOT bMoveMotorDone[3] THEN
+    IF bMoveMotorDone[2] AND NOT bMoveMotorDone[3] THEN
         bMoveMotorDone[3] := GVL_Motion.aMotors[3].MoveAbsolute(
             rPosition := 0.0,
             rVelocity := 15.0,
