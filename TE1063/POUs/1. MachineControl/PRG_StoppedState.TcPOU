@@ -92,7 +92,7 @@ END_VAR
 //  - Blink only when: Safety is OK, all axes are stopped, and all resets done
 //  - Output: GVL_IO.gDigOutputs.bStartIndicator
 // ---------------------------------------------------------------------------
-IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone THEN 
+IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone AND bCalibrationReset THEN 
     fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
 ELSE
     fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
@@ -235,17 +235,28 @@ END_FOR
 // ---------------------------------------------------------------------------
 
 // Linear motors
-FOR iAxis := 1 TO 3 DO
-    IF stMotorStatus[iAxis].Error THEN
-        IF NOT aResetMotors[iAxis] THEN
-            aResetMotors[iAxis] := GVL_Motion.aMotors[iAxis].Reset();
-        END_IF
-    END_IF
-END_FOR
+
+IF stMotorStatus[1].Error OR GVL_Motion.M1Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[1] THEN
+		aResetMotors[1] := GVL_Motion.aMotors[1].Reset();
+	END_IF
+END_IF
+
+IF stMotorStatus[2].Error OR GVL_Motion.M2Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[2] THEN
+		aResetMotors[2] := GVL_Motion.aMotors[2].Reset();
+	END_IF
+END_IF
+
+IF stMotorStatus[3].Error OR GVL_Motion.M3Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[3] THEN
+		aResetMotors[3] := GVL_Motion.aMotors[3].Reset();
+	END_IF
+END_IF
 
 // Valves servo motors
 FOR iAxis := 1 TO 5 DO
-    IF stValveStatus[iAxis].Error THEN
+    IF stValveStatus[iAxis].Error OR GVL_Motion.aValves[iAxis].bMotionCommandsLocked THEN
         IF NOT aResetValves[iAxis] THEN
             aResetValves[iAxis] := GVL_Motion.aValvesObj[iAxis].Reset();
         END_IF
@@ -254,7 +265,7 @@ END_FOR
 
 // Linear pump motors
 FOR iAxis := 1 TO 10 DO
-    IF stLinearPumpStatus[iAxis].Error THEN
+    IF stLinearPumpStatus[iAxis].Error OR GVL_Motion.aPumps[iAxis].Linear.bMotionCommandsLocked THEN
         IF NOT aResetLinearPumps[iAxis] THEN
             aResetLinearPumps[iAxis] := GVL_Motion.aPumpsLinear[iAxis].Reset();
         END_IF
@@ -263,7 +274,7 @@ END_FOR
 
 // Rotary pump motors
 FOR iAxis := 1 TO 10 DO
-    IF stRotaryPumpStatus[iAxis].Error THEN
+    IF stRotaryPumpStatus[iAxis].Error OR GVL_Motion.aPumps[iAxis].Rotary.bMotionCommandsLocked THEN
         IF NOT aResetRotaryPumps[iAxis] THEN
             aResetRotaryPumps[iAxis] := GVL_Motion.aPumpsRotary[iAxis].Reset();
         END_IF
@@ -351,23 +362,23 @@ END_FOR*)
 // ---------------------------------------------------------------------------
 IF NOT bStopAllMotorsRequest THEN
     // Linear motors
-    FOR iAxis := 1 TO 3 DO
-        bStopMotors[iAxis] := TRUE;      // Stop request for each linear motor
-    END_FOR
-
+    bStopMotors[1] := NOT GVL_Motion.M1Motor.iNotMoving;      // Stop request for each linear motor
+	bStopMotors[2] := NOT GVL_Motion.M2Motor.iNotMoving; 
+	bStopMotors[3] := NOT GVL_Motion.M3Motor.iNotMoving; 
+	
     // Valves servo motors
     FOR iAxis := 1 TO 5 DO
-        bStopValves[iAxis] := TRUE;      // Stop request for each valve axis
+        bStopValves[iAxis] := NOT GVL_Motion.aValves[iAxis].iNotMoving;      // Stop request for each valve axis
     END_FOR
 
     // Linear pumps
     FOR iAxis := 1 TO 10 DO
-        bStopLinearPumps[iAxis] := TRUE; // Stop request for each linear pump axis
+        bStopLinearPumps[iAxis] := NOT GVL_Motion.aPumps[iAxis].Linear.iNotMoving; // Stop request for each linear pump axis
     END_FOR
 
     // Rotary pumps
     FOR iAxis := 1 TO 10 DO
-        bStopRotaryPumps[iAxis] := TRUE; // Stop request for each rotary pump axis
+        bStopRotaryPumps[iAxis] := NOT GVL_Motion.aPumps[iAxis].Rotary.iNotMoving; // Stop request for each rotary pump axis
     END_FOR
     
     bStopAllMotorsRequest := TRUE;       // One-shot armed
@@ -384,34 +395,40 @@ END_IF
 // ---------------------------------------------------------------------------
 
 // --- Linear motors Stop - M1 to M3 -----------------------------------------
-//  We still need a CASE here because the "iNotMoving" signal is not an array.
-FOR iAxis := 1 TO 3 DO
-    
-    CASE iAxis OF
-        1:  bIsNotMoving := GVL_Motion.M1Motor.iNotMoving;
-        2:  bIsNotMoving := GVL_Motion.M2Motor.iNotMoving;
-        3:  bIsNotMoving := GVL_Motion.M3Motor.iNotMoving;
-    ELSE
-        bIsNotMoving := TRUE; // Fallback safety (should never happen)
-    END_CASE
+IF bStopMotors[1] THEN
+	IF NOT GVL_Motion.M1Motor.iNotMoving THEN
+		bStopMotors[1] := NOT GVL_Motion.aMotors[1].Stop();
+	ELSE
+		bStopMotors[1] := FALSE;
+	END_IF
+END_IF
 
-    IF NOT bIsNotMoving THEN
-        // Stop() returns TRUE when the stop command is completed;
-        // we store the inverse so the flag becomes FALSE when done.
-        bStopMotors[iAxis] := NOT GVL_Motion.aMotors[iAxis].Stop();
-    ELSE
-        bStopMotors[iAxis] := FALSE;
-    END_IF
-END_FOR
+IF bStopMotors[2] THEN
+	IF NOT GVL_Motion.M2Motor.iNotMoving THEN
+		bStopMotors[2] := NOT GVL_Motion.aMotors[2].Stop();
+	ELSE
+		bStopMotors[2] := FALSE;
+	END_IF
+END_IF
+	
 
-
+IF bStopMotors[3] THEN
+	IF NOT GVL_Motion.M3Motor.iNotMoving THEN
+		bStopMotors[3] := NOT GVL_Motion.aMotors[3].Stop();
+	ELSE
+		bStopMotors[3] := FALSE;
+	END_IF
+END_IF
+	
 // --- Valves Servo Motors Stop - V1 to V5 -----------------------------------
 FOR iAxis := 1 TO 5 DO
-    IF NOT GVL_Motion.aValves[iAxis].iNotMoving THEN
-        bStopValves[iAxis] := NOT GVL_Motion.aValvesObj[iAxis].Stop();
-    ELSE
-        bStopValves[iAxis] := FALSE;
-    END_IF
+	IF bStopValves[iAxis] THEN
+		IF NOT GVL_Motion.aValves[iAxis].iNotMoving THEN
+			bStopValves[iAxis] := NOT GVL_Motion.aValvesObj[iAxis].Stop();
+		ELSE
+			bStopValves[iAxis] := FALSE;
+		END_IF
+	END_IF
 END_FOR
 
 
@@ -419,11 +436,13 @@ END_FOR
 //  - aPumps[x].Rotary.iNotMoving: feedback "axis moving" for each rotary pump
 //  - aPumpsRotary[x].Stop(): Stop method on the pump rotary axis wrapper
 FOR iAxis := 1 TO 10 DO
-    IF NOT GVL_Motion.aPumps[iAxis].Rotary.iNotMoving THEN
-        bStopRotaryPumps[iAxis] := NOT GVL_Motion.aPumpsRotary[iAxis].Stop();
-    ELSE
-        bStopRotaryPumps[iAxis] := FALSE;
-    END_IF
+	IF  bStopRotaryPumps[iAxis] THEN
+		IF NOT GVL_Motion.aPumps[iAxis].Rotary.iNotMoving THEN
+			bStopRotaryPumps[iAxis] := NOT GVL_Motion.aPumpsRotary[iAxis].Stop();
+		ELSE
+			bStopRotaryPumps[iAxis] := FALSE;
+		END_IF
+	END_IF
 END_FOR
 
 
@@ -431,11 +450,13 @@ END_FOR
 //  - aPumps[x].Linear.iNotMoving: feedback "axis moving" for each linear pump
 //  - aPumpsLinear[x].Stop(): Stop method on the linear pump axis wrapper
 FOR iAxis := 1 TO 10 DO
-    IF NOT GVL_Motion.aPumps[iAxis].Linear.iNotMoving THEN
-        bStopLinearPumps[iAxis] := NOT GVL_Motion.aPumpsLinear[iAxis].Stop();
-    ELSE
-        bStopLinearPumps[iAxis] := FALSE;
-    END_IF
+	IF bStopLinearPumps[iAxis] THEN
+		IF NOT GVL_Motion.aPumps[iAxis].Linear.iNotMoving THEN
+			bStopLinearPumps[iAxis] := NOT GVL_Motion.aPumpsLinear[iAxis].Stop();
+		ELSE
+			bStopLinearPumps[iAxis] := FALSE;
+		END_IF
+	END_IF
 END_FOR
 
 
@@ -753,7 +774,12 @@ END_IF
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StoppedState.ACT_ResetErrorMotors">
-      <LineId Id="68" Count="73" />
+      <LineId Id="68" Count="45" />
+      <LineId Id="142" Count="4" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="148" Count="4" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="115" Count="26" />
       <LineId Id="60" Count="1" />
       <LineId Id="2" Count="0" />
       <LineId Id="59" Count="0" />
@@ -785,7 +811,37 @@ END_IF
       <LineId Id="58" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StoppedState.ACT_StopAllMotors">
-      <LineId Id="291" Count="144" />
+      <LineId Id="291" Count="22" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="454" Count="0" />
+      <LineId Id="317" Count="29" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="473" Count="3" />
+      <LineId Id="471" Count="1" />
+      <LineId Id="477" Count="0" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="481" Count="3" />
+      <LineId Id="479" Count="1" />
+      <LineId Id="446" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="447" Count="0" />
+      <LineId Id="487" Count="3" />
+      <LineId Id="485" Count="1" />
+      <LineId Id="365" Count="0" />
+      <LineId Id="368" Count="1" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="466" Count="3" />
+      <LineId Id="464" Count="1" />
+      <LineId Id="375" Count="6" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="382" Count="4" />
+      <LineId Id="462" Count="0" />
+      <LineId Id="387" Count="6" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="394" Count="4" />
+      <LineId Id="458" Count="0" />
+      <LineId Id="399" Count="36" />
       <LineId Id="279" Count="1" />
       <LineId Id="23" Count="0" />
       <LineId Id="2" Count="13" />

@@ -60,6 +60,8 @@ VAR
 	bMoveValves	: ARRAY[1..5] OF BOOL;
 	bMoveM1Fast	: BOOL := FALSE;
 	bMoveM1Slow	: BOOL := FALSE;
+	
+	bResetDone	: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -793,6 +795,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[//Reset Calibration Flags
 bLeakTestReset := FALSE;
+bResetDone := FALSE;
 
 bStartCalibrationPrev := FALSE;
 bStartCalibrationEdge := FALSE;
@@ -861,10 +864,15 @@ FOR i := 1 TO 100 DO
 	GVL_Calibration.stPumpCalibrationData[i].sStep 				:= '';
 END_FOR
 
-fbCalibrationManager.Reset(bHard := TRUE);
+IF NOT bResetDone THEN
+	bResetDone := fbCalibrationManager.Reset(bHard := TRUE);
+ELSE
+	Reset := TRUE;
+	RETURN;
+END_IF
 
-Reset := TRUE;
-RETURN;
+
+
 ]]></ST>
       </Implementation>
     </Method>
@@ -1244,7 +1252,9 @@ END_IF*)
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
-      <LineId Id="9" Count="2" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="11" Count="0" />
       <LineId Id="14" Count="1" />
       <LineId Id="19" Count="4" />
       <LineId Id="54" Count="0" />
@@ -1270,10 +1280,13 @@ END_IF*)
       <LineId Id="110" Count="0" />
       <LineId Id="112" Count="10" />
       <LineId Id="111" Count="0" />
+      <LineId Id="130" Count="0" />
       <LineId Id="124" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="134" Count="2" />
+      <LineId Id="132" Count="0" />
       <LineId Id="123" Count="0" />
       <LineId Id="126" Count="0" />
-      <LineId Id="125" Count="0" />
       <LineId Id="34" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>

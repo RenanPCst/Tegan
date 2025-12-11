@@ -36,7 +36,10 @@ VAR
 	bHomeMotorDone	: ARRAY[1..3] OF BOOL;
 	bHomeValveDone  : ARRAY[1..5] OF BOOL;
 	bHomePumpDone	: ARRAY[1..10] OF BOOL;
-		
+	
+	bM2InPosition	: BOOL;
+	rPosTolerance	: REAL := 1.0;
+	
 	bMoveValve1Request	: BOOL := TRUE;
 	bMoveValve2Request	: BOOL := TRUE;
 	
@@ -502,28 +505,32 @@ IF NOT bPerformHoming THEN
     // You can adjust these velocity/acc/dec parameters as needed
     IF NOT bMoveMotorDone[1] THEN
         bMoveMotorDone[1] := GVL_Motion.aMotors[1].MoveAbsolute(
-            rPosition := 0.0,
-            rVelocity := 15.0,
-            rAcc      := 10.0,
-            rDec      := 10.0
+            rPosition := GVL_Settings.stMachineParam.aM1Position[1],
+            rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+            rAcc      := GVL_Settings.stMachineParam.rM1Accleration,
+            rDec      := GVL_Settings.stMachineParam.rM1Deceleration
         );
     END_IF
 
     IF NOT bMoveMotorDone[2] THEN
         bMoveMotorDone[2] := GVL_Motion.aMotors[2].MoveAbsolute(
-            rPosition := 0.0,
-            rVelocity := 15.0,
-            rAcc      := 10.0,
-            rDec      := 10.0
+            rPosition := GVL_Settings.stMachineParam.aM2Position[1],
+            rVelocity := GVL_Settings.stMachineParam.rM2Velocity,
+            rAcc      := GVL_Settings.stMachineParam.rM2Accleration,
+            rDec      := GVL_Settings.stMachineParam.rM2Deceleration
         );
     END_IF
-
-    IF bMoveMotorDone[2] AND NOT bMoveMotorDone[3] THEN
+	
+	IF bMoveMotorDone[2] THEN
+		bM2InPosition := ABS(GVL_Motion.M2Motor.rActualPos - GVL_Settings.stMachineParam.aM2Position[1]) < rPosTolerance;
+	END_IF
+ 		
+    IF bMoveMotorDone[2] AND bM2InPosition AND NOT bMoveMotorDone[3] THEN
         bMoveMotorDone[3] := GVL_Motion.aMotors[3].MoveAbsolute(
-            rPosition := 0.0,
-            rVelocity := 15.0,
-            rAcc      := 10.0,
-            rDec      := 10.0
+            rPosition := GVL_Settings.stMachineParam.aM3Position[1],
+            rVelocity := GVL_Settings.stMachineParam.rM3Velocity,
+            rAcc      := GVL_Settings.stMachineParam.rM3Accleration,
+            rDec      := GVL_Settings.stMachineParam.rM3Deceleration
         );
     END_IF
 
@@ -841,6 +848,7 @@ bPerformHoming          := FALSE;
 bInitComplete           := FALSE;
 bAllDone                := FALSE;
 bMoveZeroDone 			:= FALSE;
+bM2InPosition			:= FALSE;
 bDone                   := FALSE;   
 
 bVerticalMotorsDone     := FALSE;
@@ -957,7 +965,12 @@ Reset := TRUE;
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="PRG_SystemInit.ACT_MoveToZero">
-      <LineId Id="97" Count="99" />
+      <LineId Id="97" Count="33" />
+      <LineId Id="255" Count="2" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="131" Count="1" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="136" Count="60" />
       <LineId Id="243" Count="2" />
       <LineId Id="242" Count="0" />
       <LineId Id="246" Count="0" />
@@ -972,6 +985,7 @@ Reset := TRUE;
     <LineIds Name="PRG_SystemInit.Reset">
       <LineId Id="319" Count="27" />
       <LineId Id="439" Count="0" />
+      <LineId Id="446" Count="0" />
       <LineId Id="347" Count="91" />
       <LineId Id="5" Count="0" />
     </LineIds>

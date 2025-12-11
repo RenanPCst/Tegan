@@ -103,7 +103,7 @@ VAR
     sPrev       : STRING(120);
     tPT         : TIME;
 
-    // helpers cálculo de tempo (segundos)
+    // helpers time calc (seconds)
     rDeltaM2, rDeltaM3, rVM2, rVM3  : LREAL;
     rPumpVelDeg, rRunVelDeg         : LREAL;
     rSecs  							: LREAL;
@@ -119,7 +119,7 @@ IF bExecutePulse.Q AND eStep = E_CalibStep.IDLE THEN
 END_IF
 
 // Abort logic
-IF GVL_Calibration.bAbortCalibration THEN
+IF GVL_HMI.bAbortCalibrationBT THEN
     eStep := E_CalibStep.ERROR;
 END_IF
 
@@ -903,48 +903,34 @@ IF sStatus <> sPrev THEN
         rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
         rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
         rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
-        tPT := F_sec_to_time(rSecs);                                                                 // Positioning motors
-        // sStatus vem deste step. :contentReference[oaicite:1]{index=1}
+        tPT := F_sec_to_time(rSecs);
 
-    // POSITION_VALVES (sem feedback de tempo → constante curta)
     ELSIF FIND(sStatus, 'Positioning valves to Position 6') = 1 THEN
-        tPT := T#2S;                                                                                // Positioning valves
-        // sStatus vem deste step. :contentReference[oaicite:2]{index=2}
+        tPT := T#2S;
 
-    // FILLJAR_FORWARD (rDistanceByVol / vel_deg_s)
     ELSIF FIND(sStatus, 'Filling up the jar') = 1 THEN
-        rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;                // RPM->deg/s
+        rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0; // RPM->deg/s
         rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
         tPT := F_sec_to_time(rSecs);
-        // rDistanceByVol e vel usados no MoveRelative. :contentReference[oaicite:3]{index=3}
 
-    // WEIGH_BEFORE / WEIGH_AFTER (requisição de peso não tem TON -> janela curta)
-    ELSIF FIND(sStatus, 'Taring Scale') > 0 OR FIND(sStatus, 'Requesting Gross Weight') = 1 THEN
-        tPT := T#3S;                                                                                // ajuste se necessário
-        // sStatus de WEIGH_* ao solicitar peso. :contentReference[oaicite:4]{index=4}
+    ELSIF (FIND(sStatus, 'Taring Scale') > 0) OR (FIND(sStatus, 'Requesting Gross Weight') = 1) THEN
+        tPT := T#3S;
 
-    // WITHDRAW_BACKWARDS (para a caixa de calibração)
     ELSIF FIND(sStatus, 'Pumping to calibration box') > 0 THEN
         rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;
         rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
         tPT := F_sec_to_time(rSecs);
-        // Movimento relativo com iMeterVelocity*6. :contentReference[oaicite:5]{index=5}
 
-    // RETURN_FORWARD (retorna solvente)
     ELSIF FIND(sStatus, 'Returning solvent back to the Jar') > 0 THEN
         rPumpVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iMeterVelocity) * 6.0;
         rSecs := ABS(rDistanceByVol) / rPumpVelDeg;
         tPT := F_sec_to_time(rSecs);
-        // Movimento relativo + stabilize depois. :contentReference[oaicite:6]{index=6}
 
-    // EMPTYJAR_BACKWARDS (esvazia jar – usa iRunVelocity)
     ELSIF FIND(sStatus, 'Empty the jar') = 1 THEN
         rRunVelDeg := MAX(1.0, GVL_Settings.stPumpParameters.iRunVelocity) * 6.0;
         rSecs := ABS(rDistanceByVol) / rRunVelDeg;
         tPT := F_sec_to_time(rSecs);
-        // MoveRelative com iRunVelocity*6. :contentReference[oaicite:7]{index=7}
 
-    // HOMING_MOTORS (volta M2/M3 para home + 200ms)
     ELSIF FIND(sStatus, 'Returning M2 and M3 to home') = 1 THEN
         rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[1] - GVL_Motion.M2Motor.rActualPos);
         rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[1] - GVL_Motion.M3Motor.rActualPos);
@@ -952,44 +938,51 @@ IF sStatus <> sPrev THEN
         rVM3 := MAX(0.1, GVL_Settings.stMachineParam.rM3Velocity);
         rSecs := MAX(rDeltaM2 / rVM2, rDeltaM3 / rVM3) + 0.2;
         tPT := F_sec_to_time(rSecs);
-        // sStatus + targets de home. :contentReference[oaicite:8]{index=8}
 
-    // AIR_DRY_TIME (usa o PT real configurado)
     ELSIF (eStep = E_CalibStep.AIR_DRY_TIME) THEN
         tPT := UINT_TO_TIME(GVL_Settings.stCalibParameters.iAirDryTimeSec * 1000);
-        // PT vem do setting e é aplicado ao tonAirDry. :contentReference[oaicite:9]{index=9}
 
-    // Espera real de estabilização de peso (usa TON real)
     ELSIF FIND(sStatus, 'Waiting for weight stabilization') = 1 THEN
         tPT := tonWeigthStabilization.PT;
     END_IF
 
-    // (re)arma o TON e atualiza HMI
+    // Atualiza label na HMI
     GVL_HMI.sCalibProgressLabel := sStatus;
+
+    // (Re)arma a barra
     IF tPT > T#0MS THEN
-        tonProgress(IN := FALSE);             // zera ET
-        tonProgress(IN := TRUE, PT := tPT);   // arma
         GVL_HMI.bCalibStepLoading := TRUE;
         GVL_HMI.rCalibStepPercent := 0.0;
+
+        // reset do TON (será armado novamente abaixo)
+        tonProgress(IN := FALSE);
     ELSE
         GVL_HMI.bCalibStepLoading := FALSE;
         GVL_HMI.rCalibStepPercent := 0.0;
         tonProgress(IN := FALSE);
     END_IF
-END_IF
+END_IF;
 
-// --- 2) Atualiza percentual enquanto carrega ---
+// --- 2) Chama SEMPRE o TON (enquanto loading estiver ativo) ---
+tonProgress(
+    IN := GVL_HMI.bCalibStepLoading,
+    PT := tPT
+);
+
+// --- 3) Atualiza percentual enquanto carrega ---
 IF GVL_HMI.bCalibStepLoading AND (tPT > T#0MS) THEN
-    GVL_HMI.rCalibStepPercent := LIMIT(0.0, 100.0 * TO_REAL(tonProgress.ET) / TO_REAL(tPT), 100.0);
+    GVL_HMI.rCalibStepPercent :=
+        LIMIT(0.0, 100.0 * TO_REAL(tonProgress.ET) / TO_REAL(tPT), 100.0);
+
     IF tonProgress.Q THEN
-        GVL_HMI.rCalibStepPercent := 100.0; // trava em 100% até o próximo sStatus
-        // Se preferir ocultar a barra ao final do tempo estimado:
-        // bCalibStepLoading := FALSE;
+        GVL_HMI.rCalibStepPercent := 100.0;
+        // se quiser apagar a barra no fim:
+        // GVL_HMI.bCalibStepLoading := FALSE;
         // tonProgress(IN := FALSE);
     END_IF
-END_IF
+END_IF;
 
-// --- 3) Memoriza para borda ---
+// --- 4) Memoriza último status ---
 sPrev := sStatus;]]></ST>
       </Implementation>
     </Action>
@@ -1032,6 +1025,7 @@ tonCalDelay(IN := FALSE);
 tonStepTimeout(IN := FALSE);
 tonWeigthStabilization(IN := FALSE);
 tonMotorsDelay(in := FALSE);
+tonProgress(in := FALSE);
 
 // Drop R_TRIG by passing CLK := FALSE this cycle
 bExecutePulse(CLK := FALSE);
@@ -1070,6 +1064,16 @@ rPumpAvgGrossWeigth := 0.00;
 rPumpVolumeSum := 0.00;
 rTareWeightSum := 0.00;
 rGrossWeightSum := 0.00;
+
+sPrev       := '';
+tPT         := T#0S;
+rDeltaM2	:= 0.00;
+rDeltaM3	:= 0.00;
+rVM2		:= 0.00;
+rVM3		:= 0.00;
+rPumpVelDeg := 0.00;
+rRunVelDeg	:= 0.00;
+rSecs		:= 0.00;
 
 // 5) Optional “hard” cleanup: clear selections and results
 IF bHard THEN
@@ -1167,9 +1171,7 @@ Reset := TRUE;]]></ST>
       <LineId Id="13" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.ACT_ProgressUI_Real">
-      <LineId Id="2" Count="69" />
-      <LineId Id="73" Count="27" />
-      <LineId Id="1" Count="0" />
+      <LineId Id="102" Count="91" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
       <LineId Id="189" Count="3" />
@@ -1184,12 +1186,18 @@ Reset := TRUE;]]></ST>
       <LineId Id="304" Count="0" />
       <LineId Id="202" Count="6" />
       <LineId Id="276" Count="0" />
+      <LineId Id="323" Count="0" />
       <LineId Id="209" Count="21" />
       <LineId Id="303" Count="0" />
       <LineId Id="231" Count="6" />
       <LineId Id="295" Count="0" />
       <LineId Id="310" Count="5" />
       <LineId Id="309" Count="0" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="327" Count="1" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="337" Count="4" />
+      <LineId Id="330" Count="0" />
       <LineId Id="238" Count="30" />
       <LineId Id="5" Count="0" />
     </LineIds>
