@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="F_AnyAxisMoving" Id="{d1f45e99-9afa-488a-8ad6-100fa84fa4ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_AnyAxisMoving : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[F_AnyAxisMoving := FALSE;
+
+// Motors M1 - M3
+
+F_AnyAxisMoving := F_AnyAxisMoving  OR (NOT GVL_Motion.M1Motor.iNotMoving)
+									OR (NOT GVL_Motion.M2Motor.iNotMoving)
+									OR (NOT GVL_Motion.M3Motor.iNotMoving);
+
+// VICI Valves
+FOR i := 1 TO 5 DO
+    F_AnyAxisMoving := F_AnyAxisMoving 
+        OR (NOT GVL_Motion.aValves[i].iNotMoving);
+END_FOR
+
+// Linear pumps
+FOR i := 1 TO 10 DO
+    F_AnyAxisMoving := F_AnyAxisMoving 
+        OR (NOT GVL_Motion.aPumps[i].Linear.iNotMoving);
+END_FOR
+
+// Rotary pumps
+FOR i := 1 TO 10 DO
+    F_AnyAxisMoving := F_AnyAxisMoving 
+        OR (NOT GVL_Motion.aPumps[i].Rotary.iNotMoving);
+END_FOR]]></ST>
+    </Implementation>
+    <LineIds Name="F_AnyAxisMoving">
+      <LineId Id="33" Count="4" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="40" Count="16" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

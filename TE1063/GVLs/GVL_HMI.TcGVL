@@ -29,6 +29,14 @@ VAR_GLOBAL
 	bShowAutoCyclePopup     	: BOOL := FALSE; // Controls Auto Cycle popup visibility on HMI
 	bSystemReady_ReqAutoCycle 	: BOOL := FALSE; // One-shot request to go to AUTO_CYCLE from SystemReady
 	
+	// --- Auto cycle soft-stop / hold control ---
+    bAutoCycleHoldReq        : BOOL;  // 1st STOP inside AUTO_CYCLE
+    bAutoCycleHoldActive     : BOOL;  // TRUE while StateMachine is in PAUSE_STATE
+    bAutoCycleHoldPopup      : BOOL;  // HMI shows the "Cancel / Continue" popup
+
+    bAutoCycleContinueCmd    : BOOL;  // HMI "Continue" button
+    bAutoCycleCancelCmd      : BOOL;  // HMI "Cancel Run" button
+	
 	bLightsToggleButton	: BOOL := FALSE; // Home screen toggle button for turn lights on or off on HMI 
 	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
 	
@@ -106,7 +114,7 @@ VAR_GLOBAL
 	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
 	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date
 	
-	bScaleNeedsAtention		: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to handle the scale error
+	bScaleNeedsAtention		: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to handle the scale error | Listener on Desktop.view Index Region
 	bScaleFixed				: BOOL := FALSE; // Feedback from hmi to tell the system that scale is ready to continue
 	
 	bCalBoxNeedsAttention	: BOOL := FALSE; // Flag to trigger a popup on hmi telling operator to fill up the calibration box

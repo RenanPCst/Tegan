@@ -29,7 +29,9 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// System Power Up Timer
+      <ST><![CDATA[// =====================================================================================================================
+// 0) System Power Up Timer
+// =====================================================================================================================
 tonPowerUp( IN 	:= TRUE, 
 			PT 	:= T#2S,	
 			Q 	=> bPowerUpTimerComplete);
@@ -39,11 +41,13 @@ IF bPowerUpTimerComplete AND NOT bPowerUpDone THEN
 	bPowerUpDone := TRUE; // Indicates que the initialization is already happened
 END_IF
 
+// =====================================================================================================================
+// 1) Peripherals monitoring
+// =====================================================================================================================
+
 // Mode Change Monitoring
 bModeChanged := (GVL_HMI.eMachineMode <> eMachineModePrev);
 eMachineModePrev := GVL_HMI.eMachineMode;
-
-//bResetStateMachine := bModeChanged AND (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE);
 
 // Buttons Triggers
 rTriggerStartButton(CLK := GVL_IO.gDigInputs.bStartButton);
@@ -55,9 +59,12 @@ IF (GVL_HMI.eMachineMode = E_MachineMode.IMEDIATE_FAULT) AND NOT GVL_Safety. bSa
 END_IF
 
 // Stop Button monitoring
+ACT_StopMonitoring();
+(*
 IF rTriggerStopButton.Q AND NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
 	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
 END_IF
+*)
 
 //Safety Enable Monitoring
 IF NOT GVL_Safety.bSafetyEnable THEN
@@ -67,7 +74,7 @@ END_IF
 //Reset PRG`s when in system init 
 IF (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
 	//PRG_Calibration.Reset();
-	PRG_StateMachine.Reset();
+	PRG_AutoCycle.Reset();
 END_IF
 
 //Reset the Reset flags every time gets out of auto cycle
@@ -77,7 +84,6 @@ IF NOT (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
 END_IF
 
 //Resets PRG_SystemIniti *********************************************************************************************
-//rTrigEnterSystemInit(CLK := NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING));
 
 IF (GVL_HMI.eMachineMode <> E_MachineMode.SYSTEM_INITIALIZING) AND NOT bSystemInitReseted THEN
 	bSystemInitReseted := PRG_SystemInit.Reset();
@@ -86,22 +92,26 @@ IF (GVL_HMI.eMachineMode <> E_MachineMode.SYSTEM_INITIALIZING) AND NOT bSystemIn
 	END_IF
 END_IF
 //**********************************************************************************************************************
+
 //Reset the Stopped state flags every time gets out of Stopped State
 IF NOT (GVL_HMI.eMachineMode = E_MachineMode.STOPPED) THEN
 	bStoppedResetDone := PRG_StoppedState.Reset();
 END_IF
 
-// Main Master controll logic
+// =====================================================================================================================
+// 2) Main Master controll logic
+// =====================================================================================================================
+
 CASE GVL_HMI.eMachineMode OF
 
     E_MachineMode.AUTO_CYCLE: 	// Entry from Stopped state
 		IF bResetStateMachine THEN
-			bResetSMDone := PRG_StateMachine.Reset(); //Resets the state machine everytime entry this case
+			bResetSMDone := PRG_AutoCycle.Reset(); //Resets the state machine everytime entry this case
 		END_IF; 
 		
 		IF bResetSMDone THEN
 			bResetStateMachine := FALSE;
-    		PRG_StateMachine(); // calls the state machine
+    		PRG_AutoCycle(); // calls the state machine
 		END_IF
 
     E_MachineMode.MANUAL:		// Entry from HMI Selection
@@ -112,12 +122,11 @@ CASE GVL_HMI.eMachineMode OF
 
         IF PRG_Calibration.bCalibrationFinished THEN
             GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
-			PRG_Calibration.Reset(); //TODO
+			PRG_Calibration.Reset();
         END_IF
 
     E_MachineMode.IMEDIATE_FAULT: //Entry from Safety Monitoring
         //PRG_SafetyHandle();
-
         IF GVL_Safety.bSafetyEnable THEN
             GVL_HMI.eMachineMode := E_MachineMode.SYSTEM_INITIALIZING;
         END_IF
@@ -162,9 +171,51 @@ CASE GVL_HMI.eMachineMode OF
 END_CASE
 ]]></ST>
     </Implementation>
+    <Action Name="ACT_StopMonitoring" Id="{408b804c-dcff-463a-80c2-49128a5c115d}">
+      <Implementation>
+        <ST><![CDATA[// Stop Button monitoring
+IF rTriggerStopButton.Q AND NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INITIALIZING) THEN
+    
+    CASE GVL_HMI.eMachineMode OF
+
+        // --------------------------------------------------------------------
+        // AUTO_CYCLE: 1st STOP -> soft hold request
+        //             2nd STOP while on hold -> hard STOP
+        // --------------------------------------------------------------------
+        E_MachineMode.AUTO_CYCLE:
+            IF NOT GVL_HMI.bAutoCycleHoldActive THEN
+                // First STOP press during Auto Cycle:
+                // request a soft hold; PRG_StateMachine
+                // will move to PAUSE_STATE at a safe boundary.
+                GVL_HMI.bAutoCycleHoldReq := TRUE;
+            ELSE
+                // Second STOP press while hold is active:
+                // force a full STOP.
+                GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+            END_IF
+
+        // --------------------------------------------------------------------
+        // All other modes keep hard STOP behaviour
+        // --------------------------------------------------------------------
+        ELSE
+            GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+    END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
     <LineIds Name="PRG_MasterControl">
-      <LineId Id="1062" Count="130" />
+      <LineId Id="1232" Count="29" />
+      <LineId Id="1371" Count="0" />
+      <LineId Id="1369" Count="0" />
+      <LineId Id="1262" Count="3" />
+      <LineId Id="1372" Count="0" />
+      <LineId Id="1266" Count="102" />
       <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_MasterControl.ACT_StopMonitoring">
+      <LineId Id="2" Count="27" />
+      <LineId Id="1" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

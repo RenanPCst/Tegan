@@ -2,43 +2,157 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_StoppedState" Id="{e1a020b0-65f1-4f8b-82e2-3f08dab3c53c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_StoppedState
+
 VAR_OUTPUT
-	bStopAllMotorsDone	: BOOL := FALSE;
+    bStopAllMotorsDone : BOOL := FALSE; // TRUE when ALL axes (motors, valves, rotary pumps,
+                     					// linear pumps) have completely finished stopping.
+	                      				// Used by PRG_MasterControl to release SystemInit.
 END_VAR
 
 VAR
-	fbBlinkStartButton	:	FB_Blink;
-	
-	bStopAllMotorsRequest	: BOOL := FALSE;
-	
-	bStopMotors 		: ARRAY[1..3]  OF BOOL;
-	bStopValves 		: ARRAY[1..5]  OF BOOL;
-	bStopLinearPumps 	: ARRAY[1..10] OF BOOL;
-	bStopRotaryPumps 	: ARRAY[1..10] OF BOOL;
-	
-	i	: INT :=1;
-	//Motors Status
-	stMotorStatus		: ARRAY[1..3] OF  ST_AxisReadStatus;
-	stValveStatus		: ARRAY[1..5] OF  ST_AxisReadStatus;
-	stLinearPumpStatus	: ARRAY[1..10] OF  ST_AxisReadStatus;
-	stRotaryPumpStatus	: ARRAY[1..10] OF  ST_AxisReadStatus;
+    // ------------------------------------------------------------------------
+    // 1) HMI / Visual Feedback
+    // ------------------------------------------------------------------------
+    fbBlinkStartButton : FB_Blink;  // Blink logic for the Start button indicator
+    
+    // ------------------------------------------------------------------------
+    // 2) Master Stop Execution Control
+    // ------------------------------------------------------------------------
+    bStopAllMotorsRequest : BOOL := FALSE;  
+    // One-shot latch:
+    // FALSE → stop request not yet triggered
+    // TRUE  → stop request already armed; stop routine executing
 
-	//Motors Reset flag
-	aResetMotors		: ARRAY[1..3] OF BOOL;
-	aResetValves		: ARRAY[1..5] OF BOOL;
-	aResetLinearPumps	: ARRAY[1..10] OF BOOL;
-	aResetRotaryPumps	: ARRAY[1..10] OF BOOL;
-	
-	bAllMotorsReset		: BOOL := FALSE;
-	bAllMotorsStop		: BOOL := FALSE;
-	bAutoCycleReset		: BOOL := FALSE;
-	bCalibrationReset	: BOOL := FALSE;
-	bAllResetsDone		: BOOL := FALSE;
+    // ------------------------------------------------------------------------
+    // 3) Per-axis STOP flags
+    //    These arrays are used by ACTION ACT_StopAllMotors.
+    //    TRUE  → axis still must be stopped (Stop() still being executed)
+    //    FALSE → axis already fully stopped
+    // ------------------------------------------------------------------------
+    bStopMotors        : ARRAY[1..3]  OF BOOL;   // Linear motors M1..M3
+    bStopValves        : ARRAY[1..5]  OF BOOL;   // Valves V1..V5
+    bStopLinearPumps   : ARRAY[1..10] OF BOOL;   // Linear pump axes
+    bStopRotaryPumps   : ARRAY[1..10] OF BOOL;   // Rotary pump axes
+
+    // ------------------------------------------------------------------------
+    // 4) Axis Status Structures
+    //    Captured during ACTION ACT_ResetErrorMotors.
+    // ------------------------------------------------------------------------
+    stMotorStatus       : ARRAY[1..3]  OF ST_AxisReadStatus;
+    stValveStatus       : ARRAY[1..5]  OF ST_AxisReadStatus;
+    stLinearPumpStatus  : ARRAY[1..10] OF ST_AxisReadStatus;
+    stRotaryPumpStatus  : ARRAY[1..10] OF ST_AxisReadStatus;
+
+    // ------------------------------------------------------------------------
+    // 5) Reset request guards for each axis
+    //    TRUE  → Reset already attempted
+    //    FALSE → Reset() still allowed to be triggered once
+    // ------------------------------------------------------------------------
+    aResetMotors       : ARRAY[1..3]  OF BOOL;
+    aResetValves       : ARRAY[1..5]  OF BOOL;
+    aResetLinearPumps  : ARRAY[1..10] OF BOOL;
+    aResetRotaryPumps  : ARRAY[1..10] OF BOOL;
+
+    // ------------------------------------------------------------------------
+    // 6) Stop Monitoring Flags (used inside the refactored ACT_StopAllMotors)
+    // ------------------------------------------------------------------------
+    iAxis                    : INT;   // Generic loop index
+    bIsNotMoving             : BOOL;  // Temporary axis movement flag
+    bAllMotorsStopped        : BOOL;  // Group completion flags
+    bAllValvesStopped        : BOOL;
+    bAllRotaryPumpsStopped   : BOOL;
+    bAllLinearPumpsStopped   : BOOL;
+
+    // ------------------------------------------------------------------------
+    // 7) Global Reset / StateMachine Control Flags
+    // ------------------------------------------------------------------------ 
+    bAllMotorsStop    : BOOL := FALSE;  // TRUE when all axes reached iNotMoving
+    bAutoCycleReset   : BOOL := FALSE;  // TRUE when PRG_StateMachine.Reset() finished
+    bCalibrationReset : BOOL := FALSE;  // TRUE when PRG_Calibration.Reset() finished
+    bAllResetsDone    : BOOL := FALSE;  // TRUE when everything above is completed
 
 END_VAR
+
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Start Button Blink ------------------------------------------------
+      <ST><![CDATA[// ============================================================================
+// PRG_StoppedState
+// ----------------------------------------------------------------------------
+// This program is executed while the machine is in the "Stopped" state.
+// Responsibilities:
+//  - Make the Start button blink when it is safe to start again
+//  - Stop all axes (motors, valves, pumps) in a controlled way
+//  - Reset axis errors
+//  - Reset the AutoCycle and Calibration state machines
+//  - Inform MasterControl when everything is fully reset (bAllResetsDone)
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// Start Button Blink
+//  - Blink only when: Safety is OK, all axes are stopped, and all resets done
+//  - Output: GVL_IO.gDigOutputs.bStartIndicator
+// ---------------------------------------------------------------------------
+IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone AND bCalibrationReset THEN 
+    fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
+ELSE
+    fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
+END_IF
+
+GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
+
+// ---------------------------------------------------------------------------
+// Reset axis errors
+//  - Only executed after ALL motors have been confirmed as stopped
+//  - This avoids resetting drives while they are still trying to stop
+// ---------------------------------------------------------------------------
+IF bAllMotorsStop THEN
+    ACT_ResetErrorMotors();
+END_IF
+
+// ---------------------------------------------------------------------------
+// Stop all axes
+//  - This action:
+//      * Sets stop requests for every axis (one-shot)
+//      * Calls Stop() for each axis while it is moving
+//      * Monitors when all stop requests are cleared
+//      * Sets bStopAllMotorsDone when everything is stopped
+// ---------------------------------------------------------------------------
+ACT_StopAllMotors();
+
+IF bStopAllMotorsDone THEN
+    bAllMotorsStop := TRUE;     // All axes are now in a "not moving" state
+END_IF
+
+// ---------------------------------------------------------------------------
+// Reset AutoCycle State Machine
+//  - PRG_StateMachine.Reset() should internally clear its own flags and states
+//  - This is called until it returns TRUE once
+// ---------------------------------------------------------------------------
+IF NOT bAutoCycleReset THEN
+    bAutoCycleReset := PRG_AutoCycle.Reset();
+END_IF
+
+// ---------------------------------------------------------------------------
+// Reset Calibration Program
+//  - PRG_Calibration.Reset() behaves similarly to PRG_StateMachine.Reset()
+// ---------------------------------------------------------------------------
+IF NOT bCalibrationReset THEN
+    bCalibrationReset := PRG_Calibration.Reset();
+END_IF
+
+// ---------------------------------------------------------------------------
+// Global done flag
+//  - Used by MasterControl to know when StoppedState finished its job
+//  - Only TRUE when:
+//      * All axes are stopped   (bStopAllMotorsDone)
+//      * AutoCycle reset is ok  (bAutoCycleReset)
+//      * Calibration reset is ok(bCalibrationReset)
+// ---------------------------------------------------------------------------
+bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset;
+
+
+(* Before Tidy up from 05/12 
+//Start Button Blink ------------------------------------------------
 IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone THEN 
 	fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
 ELSE
@@ -69,7 +183,7 @@ IF NOT bCalibrationReset THEN
 	bCalibrationReset := PRG_Calibration.Reset();
 END_IF
 
-bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset;
+bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset; *)
 
 
 
@@ -81,7 +195,95 @@ bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset;
     </Implementation>
     <Action Name="ACT_ResetErrorMotors" Id="{a54bb40d-e6ae-48a4-9e89-e35e45ae1f57}">
       <Implementation>
-        <ST><![CDATA[//Getting status from all motors
+        <ST><![CDATA[// ============================================================================
+// ACT_ResetErrorMotors
+// ----------------------------------------------------------------------------
+// Purpose:
+//  1) Read status from all axis wrappers (motors, valves, pumps)
+//  2) For each axis that is in Error, call its Reset() method once
+//     - The aReset* arrays guarantee we do not repeatedly call Reset()
+//     - Reset() is expected to return TRUE when the reset command has been sent
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// 1) Read status from all axis wrappers
+// ---------------------------------------------------------------------------
+
+// Linear motors (M1..M3)
+FOR iAxis := 1 TO 3 DO
+    stMotorStatus[iAxis] := GVL_Motion.aMotors[iAxis].ReadStatus();
+END_FOR
+
+// Valves servo motors (V1..V5)
+FOR iAxis := 1 TO 5 DO
+    stValveStatus[iAxis] := GVL_Motion.aValvesObj[iAxis].ReadStatus();
+END_FOR
+
+// Linear pump motors (1..10)
+FOR iAxis := 1 TO 10 DO
+    stLinearPumpStatus[iAxis] := GVL_Motion.aPumpsLinear[iAxis].ReadStatus();
+END_FOR
+
+// Rotary pump motors (1..10)
+FOR iAxis := 1 TO 10 DO
+    stRotaryPumpStatus[iAxis] := GVL_Motion.aPumpsRotary[iAxis].ReadStatus();
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 2) For each axis in Error = TRUE, call Reset() once
+//    The flag arrays (aReset*) are used as "one-shot" guards per axis.
+// ---------------------------------------------------------------------------
+
+// Linear motors
+
+IF stMotorStatus[1].Error OR GVL_Motion.M1Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[1] THEN
+		aResetMotors[1] := GVL_Motion.aMotors[1].Reset();
+	END_IF
+END_IF
+
+IF stMotorStatus[2].Error OR GVL_Motion.M2Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[2] THEN
+		aResetMotors[2] := GVL_Motion.aMotors[2].Reset();
+	END_IF
+END_IF
+
+IF stMotorStatus[3].Error OR GVL_Motion.M3Motor.bMotionCommandsLocked THEN
+	IF NOT aResetMotors[3] THEN
+		aResetMotors[3] := GVL_Motion.aMotors[3].Reset();
+	END_IF
+END_IF
+
+// Valves servo motors
+FOR iAxis := 1 TO 5 DO
+    IF stValveStatus[iAxis].Error OR GVL_Motion.aValves[iAxis].bMotionCommandsLocked THEN
+        IF NOT aResetValves[iAxis] THEN
+            aResetValves[iAxis] := GVL_Motion.aValvesObj[iAxis].Reset();
+        END_IF
+    END_IF
+END_FOR
+
+// Linear pump motors
+FOR iAxis := 1 TO 10 DO
+    IF stLinearPumpStatus[iAxis].Error OR GVL_Motion.aPumps[iAxis].Linear.bMotionCommandsLocked THEN
+        IF NOT aResetLinearPumps[iAxis] THEN
+            aResetLinearPumps[iAxis] := GVL_Motion.aPumpsLinear[iAxis].Reset();
+        END_IF
+    END_IF
+END_FOR
+
+// Rotary pump motors
+FOR iAxis := 1 TO 10 DO
+    IF stRotaryPumpStatus[iAxis].Error OR GVL_Motion.aPumps[iAxis].Rotary.bMotionCommandsLocked THEN
+        IF NOT aResetRotaryPumps[iAxis] THEN
+            aResetRotaryPumps[iAxis] := GVL_Motion.aPumpsRotary[iAxis].Reset();
+        END_IF
+    END_IF
+END_FOR
+
+
+(* Before Tidy up from 05/12
+//Getting status from all motors
 //Linear Motors
 FOR i := 1 TO 3 DO
 	stMotorStatus[i] := GVL_Motion.aMotors[i].ReadStatus();
@@ -131,13 +333,170 @@ FOR i := 1 TO 10 DO
 			aResetRotaryPumps[i] := GVL_Motion.aPumpsRotary[i].Reset();
 		END_IF
 	END_IF
-END_FOR
+END_FOR*)
 ]]></ST>
       </Implementation>
     </Action>
     <Action Name="ACT_StopAllMotors" Id="{50bbb3a6-15a9-4259-b7a6-543c7ccc62e3}">
       <Implementation>
-        <ST><![CDATA[
+        <ST><![CDATA[// ============================================================================
+// ACT_StopAllMotors (Refactored)
+// ----------------------------------------------------------------------------
+// Purpose:
+//  - Trigger a controlled stop for all motion axes:
+//      * Linear motors (M1..M3)
+//      * Valves servo motors (V1..V5)
+//      * Rotary pumps (1..10)
+//      * Linear pumps (1..10)
+//  - Stop logic:
+//      1) On first call (bStopAllMotorsRequest = FALSE), set all stop flags = TRUE
+//      2) For each axis that is still moving, call its Stop() method
+//      3) When Stop() returns TRUE, clear the corresponding flag to FALSE
+//      4) When all flags are FALSE, set bStopAllMotorsDone = TRUE
+// ============================================================================
+
+
+// ---------------------------------------------------------------------------
+// 1) One-shot: arm stop request for all axes
+//    This block runs only once per StoppedState sequence.
+// ---------------------------------------------------------------------------
+IF NOT bStopAllMotorsRequest THEN
+    // Linear motors
+    bStopMotors[1] := NOT GVL_Motion.M1Motor.iNotMoving;      // Stop request for each linear motor
+	bStopMotors[2] := NOT GVL_Motion.M2Motor.iNotMoving; 
+	bStopMotors[3] := NOT GVL_Motion.M3Motor.iNotMoving; 
+	
+    // Valves servo motors
+    FOR iAxis := 1 TO 5 DO
+        bStopValves[iAxis] := NOT GVL_Motion.aValves[iAxis].iNotMoving;      // Stop request for each valve axis
+    END_FOR
+
+    // Linear pumps
+    FOR iAxis := 1 TO 10 DO
+        bStopLinearPumps[iAxis] := NOT GVL_Motion.aPumps[iAxis].Linear.iNotMoving; // Stop request for each linear pump axis
+    END_FOR
+
+    // Rotary pumps
+    FOR iAxis := 1 TO 10 DO
+        bStopRotaryPumps[iAxis] := NOT GVL_Motion.aPumps[iAxis].Rotary.iNotMoving; // Stop request for each rotary pump axis
+    END_FOR
+    
+    bStopAllMotorsRequest := TRUE;       // One-shot armed
+    bStopAllMotorsDone    := FALSE;      // Not done yet
+END_IF
+
+
+// ---------------------------------------------------------------------------
+// 2) Call Stop() for each axis while it is still moving
+//    Strategy:
+//      - If axis is moving (iNotMoving = FALSE), keep requesting Stop()
+//      - When Stop() returns TRUE, we clear the stop flag to FALSE
+//      - If axis is already not moving, force the flag to FALSE
+// ---------------------------------------------------------------------------
+
+// --- Linear motors Stop - M1 to M3 -----------------------------------------
+IF bStopMotors[1] THEN
+	IF NOT GVL_Motion.M1Motor.iNotMoving THEN
+		bStopMotors[1] := NOT GVL_Motion.aMotors[1].Stop();
+	ELSE
+		bStopMotors[1] := FALSE;
+	END_IF
+END_IF
+
+IF bStopMotors[2] THEN
+	IF NOT GVL_Motion.M2Motor.iNotMoving THEN
+		bStopMotors[2] := NOT GVL_Motion.aMotors[2].Stop();
+	ELSE
+		bStopMotors[2] := FALSE;
+	END_IF
+END_IF
+	
+
+IF bStopMotors[3] THEN
+	IF NOT GVL_Motion.M3Motor.iNotMoving THEN
+		bStopMotors[3] := NOT GVL_Motion.aMotors[3].Stop();
+	ELSE
+		bStopMotors[3] := FALSE;
+	END_IF
+END_IF
+	
+// --- Valves Servo Motors Stop - V1 to V5 -----------------------------------
+FOR iAxis := 1 TO 5 DO
+	IF bStopValves[iAxis] THEN
+		IF NOT GVL_Motion.aValves[iAxis].iNotMoving THEN
+			bStopValves[iAxis] := NOT GVL_Motion.aValvesObj[iAxis].Stop();
+		ELSE
+			bStopValves[iAxis] := FALSE;
+		END_IF
+	END_IF
+END_FOR
+
+
+// --- Rotary Pumps Stop - 1 to 10 -------------------------------------------
+//  - aPumps[x].Rotary.iNotMoving: feedback "axis moving" for each rotary pump
+//  - aPumpsRotary[x].Stop(): Stop method on the pump rotary axis wrapper
+FOR iAxis := 1 TO 10 DO
+	IF  bStopRotaryPumps[iAxis] THEN
+		IF NOT GVL_Motion.aPumps[iAxis].Rotary.iNotMoving THEN
+			bStopRotaryPumps[iAxis] := NOT GVL_Motion.aPumpsRotary[iAxis].Stop();
+		ELSE
+			bStopRotaryPumps[iAxis] := FALSE;
+		END_IF
+	END_IF
+END_FOR
+
+
+// --- Linear Pumps Stop - 1 to 10 -------------------------------------------
+//  - aPumps[x].Linear.iNotMoving: feedback "axis moving" for each linear pump
+//  - aPumpsLinear[x].Stop(): Stop method on the linear pump axis wrapper
+FOR iAxis := 1 TO 10 DO
+	IF bStopLinearPumps[iAxis] THEN
+		IF NOT GVL_Motion.aPumps[iAxis].Linear.iNotMoving THEN
+			bStopLinearPumps[iAxis] := NOT GVL_Motion.aPumpsLinear[iAxis].Stop();
+		ELSE
+			bStopLinearPumps[iAxis] := FALSE;
+		END_IF
+	END_IF
+END_FOR
+
+
+// ---------------------------------------------------------------------------
+// 3) Global "done" condition for stopping all axes
+//    When no stop flag is active in any group, all axes are considered stopped.
+// ---------------------------------------------------------------------------
+
+// Check linear motors
+bAllMotorsStopped := TRUE;
+FOR iAxis := 1 TO 3 DO
+    bAllMotorsStopped := bAllMotorsStopped AND NOT bStopMotors[iAxis];
+END_FOR
+
+// Check valves
+bAllValvesStopped := TRUE;
+FOR iAxis := 1 TO 5 DO
+    bAllValvesStopped := bAllValvesStopped AND NOT bStopValves[iAxis];
+END_FOR
+
+// Check rotary pumps
+bAllRotaryPumpsStopped := TRUE;
+FOR iAxis := 1 TO 10 DO
+    bAllRotaryPumpsStopped := bAllRotaryPumpsStopped AND NOT bStopRotaryPumps[iAxis];
+END_FOR
+
+// Check linear pumps
+bAllLinearPumpsStopped := TRUE;
+FOR iAxis := 1 TO 10 DO
+    bAllLinearPumpsStopped := bAllLinearPumpsStopped AND NOT bStopLinearPumps[iAxis];
+END_FOR
+
+// Final global flag
+bStopAllMotorsDone := bAllMotorsStopped
+                      AND bAllValvesStopped
+                      AND bAllRotaryPumpsStopped
+                      AND bAllLinearPumpsStopped;
+
+
+(* Before Tidy up from 05/12
 //Stop all motors. Linear, valves, pumps.
 IF NOT bStopAllMotorsRequest THEN
 	FOR i := 1 TO 3 DO
@@ -159,107 +518,188 @@ END_IF
 
 //Every Motor Method Stop() call
 //Linear Motors Stop - M1 to M3
-IF bStopMotors[1] THEN
+IF NOT GVL_Motion.M1Motor.iNotMoving THEN
 	bStopMotors[1] := NOT GVL_Motion.aMotors[1].Stop();
+ELSE
+	bStopMotors[1] := FALSE;
 END_IF
-IF bStopMotors[2] THEN
+
+IF NOT GVL_Motion.M2Motor.iNotMoving THEN
 	bStopMotors[2] := NOT GVL_Motion.aMotors[2].Stop();
+ELSE
+	bStopMotors[2] := FALSE;
 END_IF
-IF bStopMotors[3] THEN
+
+
+IF NOT GVL_Motion.M3Motor.iNotMoving THEN
 	bStopMotors[3] := NOT GVL_Motion.aMotors[3].Stop();
+ELSE
+	bStopMotors[3] := FALSE;
 END_IF
 
 //Valve Servo Motors Stop - M4 to M8
-IF bStopValves[1] THEN
+IF NOT GVL_Motion.aValves[1].iNotMoving THEN
 	bStopValves[1] := NOT GVL_Motion.aValvesObj[1].Stop();
+ELSE
+	bStopValves[1] := FALSE;
 END_IF
-IF bStopValves[2] THEN
+
+IF NOT GVL_Motion.aValves[2].iNotMoving THEN
 	bStopValves[2] := NOT GVL_Motion.aValvesObj[2].Stop();
+ELSE
+	bStopValves[2] := FALSE;
 END_IF
-IF bStopValves[3] THEN
+
+IF NOT GVL_Motion.aValves[3].iNotMoving THEN
 	bStopValves[3] := NOT GVL_Motion.aValvesObj[3].Stop();
+ELSE
+	bStopValves[3] := FALSE;
 END_IF
-IF bStopValves[4] THEN
+
+IF NOT GVL_Motion.aValves[4].iNotMoving THEN
 	bStopValves[4] := NOT GVL_Motion.aValvesObj[4].Stop();
+ELSE
+	bStopValves[4] := FALSE;
 END_IF
-IF bStopValves[5] THEN
+
+IF NOT GVL_Motion.aValves[5].iNotMoving THEN
 	bStopValves[5] := NOT GVL_Motion.aValvesObj[5].Stop();
+ELSE
+	bStopValves[5] := FALSE;
 END_IF
 
 //Rotary Pumps Stop - 1 to 10
-IF bStopRotaryPumps[1] THEN
+IF NOT GVL_Motion.aPumps[1].Rotary.iNotMoving THEN
 	bStopRotaryPumps[1] := NOT GVL_Motion.aPumpsRotary[1].Stop();
+ELSE
+	bStopRotaryPumps[1] := FALSE;
 END_IF
-IF bStopRotaryPumps[2] THEN
+
+IF NOT GVL_Motion.aPumps[2].Rotary.iNotMoving THEN
 	bStopRotaryPumps[2] := NOT GVL_Motion.aPumpsRotary[2].Stop();
+ELSE
+	bStopRotaryPumps[2] := FALSE;
 END_IF
-IF bStopRotaryPumps[3] THEN
+
+IF NOT GVL_Motion.aPumps[3].Rotary.iNotMoving THEN
 	bStopRotaryPumps[3] := NOT GVL_Motion.aPumpsRotary[3].Stop();
+ELSE
+	bStopRotaryPumps[3] := FALSE;
 END_IF
-IF bStopRotaryPumps[4] THEN
+
+IF NOT GVL_Motion.aPumps[4].Rotary.iNotMoving THEN
 	bStopRotaryPumps[4] := NOT GVL_Motion.aPumpsRotary[4].Stop();
+ELSE
+	bStopRotaryPumps[4] := FALSE;
 END_IF
-IF bStopRotaryPumps[5] THEN
+
+IF NOT GVL_Motion.aPumps[5].Rotary.iNotMoving THEN
 	bStopRotaryPumps[5] := NOT GVL_Motion.aPumpsRotary[5].Stop();
+ELSE
+	bStopRotaryPumps[5] := FALSE;
 END_IF
-IF bStopRotaryPumps[6] THEN
+
+IF NOT GVL_Motion.aPumps[6].Rotary.iNotMoving THEN
 	bStopRotaryPumps[6] := NOT GVL_Motion.aPumpsRotary[6].Stop();
+ELSE
+	bStopRotaryPumps[6] := FALSE;
 END_IF
-IF bStopRotaryPumps[7] THEN
+
+IF NOT GVL_Motion.aPumps[7].Rotary.iNotMoving THEN
 	bStopRotaryPumps[7] := NOT GVL_Motion.aPumpsRotary[7].Stop();
+ELSE
+	bStopRotaryPumps[7] := FALSE;
 END_IF
-IF bStopRotaryPumps[8] THEN
+
+IF NOT GVL_Motion.aPumps[8].Rotary.iNotMoving THEN
 	bStopRotaryPumps[8] := NOT GVL_Motion.aPumpsRotary[8].Stop();
+ELSE
+	bStopRotaryPumps[8] := FALSE;
 END_IF
-IF bStopRotaryPumps[9] THEN
+
+IF NOT GVL_Motion.aPumps[9].Rotary.iNotMoving THEN
 	bStopRotaryPumps[9] := NOT GVL_Motion.aPumpsRotary[9].Stop();
+ELSE
+	bStopRotaryPumps[9] := FALSE;
 END_IF
-IF bStopRotaryPumps[10] THEN
+
+IF NOT GVL_Motion.aPumps[10].Rotary.iNotMoving THEN
 	bStopRotaryPumps[10] := NOT GVL_Motion.aPumpsRotary[10].Stop();
+ELSE
+	bStopRotaryPumps[10] := FALSE;
 END_IF
 
 //Linear Pumps Stop - 1 to 10
-IF bStopLinearPumps[1] THEN
+IF NOT GVL_Motion.aPumps[1].Linear.iNotMoving THEN
 	bStopLinearPumps[1] := NOT GVL_Motion.aPumpsLinear[1].Stop();
+ELSE
+	bStopLinearPumps[1] := FALSE;
 END_IF
-IF bStopLinearPumps[2] THEN
+
+IF NOT GVL_Motion.aPumps[2].Linear.iNotMoving THEN
 	bStopLinearPumps[2] := NOT GVL_Motion.aPumpsLinear[2].Stop();
+ELSE
+	bStopLinearPumps[2] := FALSE;
 END_IF
-IF bStopLinearPumps[3] THEN
+
+IF NOT GVL_Motion.aPumps[3].Linear.iNotMoving THEN
 	bStopLinearPumps[3] := NOT GVL_Motion.aPumpsLinear[3].Stop();
+ELSE
+	bStopLinearPumps[3] := FALSE;
 END_IF
-IF bStopLinearPumps[4] THEN
+
+IF NOT GVL_Motion.aPumps[4].Linear.iNotMoving THEN
 	bStopLinearPumps[4] := NOT GVL_Motion.aPumpsLinear[4].Stop();
+ELSE
+	bStopLinearPumps[4] := FALSE;
 END_IF
-IF bStopLinearPumps[5] THEN
+
+IF NOT GVL_Motion.aPumps[5].Linear.iNotMoving THEN
 	bStopLinearPumps[5] := NOT GVL_Motion.aPumpsLinear[5].Stop();
+ELSE
+	bStopLinearPumps[5] := FALSE;
 END_IF
-IF bStopLinearPumps[6] THEN
+
+IF NOT GVL_Motion.aPumps[6].Linear.iNotMoving THEN
 	bStopLinearPumps[6] := NOT GVL_Motion.aPumpsLinear[6].Stop();
+ELSE
+	bStopLinearPumps[6] := FALSE;
 END_IF
-IF bStopLinearPumps[7] THEN
+
+IF NOT GVL_Motion.aPumps[7].Linear.iNotMoving THEN
 	bStopLinearPumps[7] := NOT GVL_Motion.aPumpsLinear[7].Stop();
+ELSE
+	bStopLinearPumps[7] := FALSE;
 END_IF
-IF bStopLinearPumps[8] THEN
+
+IF NOT GVL_Motion.aPumps[8].Linear.iNotMoving THEN
 	bStopLinearPumps[8] := NOT GVL_Motion.aPumpsLinear[8].Stop();
+ELSE
+	bStopLinearPumps[8] := FALSE;
 END_IF
-IF bStopLinearPumps[9] THEN
+
+IF NOT GVL_Motion.aPumps[9].Linear.iNotMoving THEN
 	bStopLinearPumps[9] := NOT GVL_Motion.aPumpsLinear[9].Stop();
+ELSE
+	bStopLinearPumps[9] := FALSE;
 END_IF
-IF bStopLinearPumps[10] THEN
+
+IF NOT GVL_Motion.aPumps[10].Linear.iNotMoving THEN
 	bStopLinearPumps[10] := NOT GVL_Motion.aPumpsLinear[10].Stop();
+ELSE
+	bStopLinearPumps[10] := FALSE;
 END_IF
 
 IF NOT bStopMotors[1] AND NOT bStopMotors[2] AND NOT bStopMotors[3] THEN
 	IF NOT bStopValves[1] AND NOT bStopValves[2] AND NOT bStopValves[3] AND NOT bStopValves[4] AND NOT bStopValves[5] THEN
-		IF NOT bStopRotaryPumps[1] AND NOT bStopRotaryPumps[2] AND (*NOT bStopRotaryPumps[3] AND*) NOT bStopRotaryPumps[4] AND NOT bStopRotaryPumps[5] AND NOT bStopRotaryPumps[6] AND NOT bStopRotaryPumps[7] AND NOT bStopRotaryPumps[8] AND NOT bStopRotaryPumps[9] AND NOT bStopRotaryPumps[10] THEN
+		IF NOT bStopRotaryPumps[1] AND NOT bStopRotaryPumps[2] AND NOT bStopRotaryPumps[3] AND NOT bStopRotaryPumps[4] AND NOT bStopRotaryPumps[5] AND NOT bStopRotaryPumps[6] AND NOT bStopRotaryPumps[7] AND NOT bStopRotaryPumps[8] AND NOT bStopRotaryPumps[9] AND NOT bStopRotaryPumps[10] THEN
 			IF NOT bStopLinearPumps[1] AND NOT bStopLinearPumps[2] AND NOT bStopLinearPumps[3] AND NOT bStopLinearPumps[4] AND NOT bStopLinearPumps[5] AND NOT bStopLinearPumps[6] AND NOT bStopLinearPumps[7] AND NOT bStopLinearPumps[8] AND NOT bStopLinearPumps[9] AND NOT bStopLinearPumps[10] THEN
 				bStopAllMotorsDone		:= TRUE;
 			END_IF
 		END_IF
 	END_IF
 END_IF
-]]></ST>
+*)]]></ST>
       </Implementation>
     </Action>
     <Method Name="Reset" Id="{41eb9ee5-a5a7-4766-b5c8-ee4c9b23437e}">
@@ -268,76 +708,81 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Reset Flags
-bStopAllMotorsRequest 	:= FALSE;
-bStopAllMotorsDone 		:= FALSE;
+        <ST><![CDATA[// ============================================================================
+// Reset()
+// ----------------------------------------------------------------------------
+// Purpose:
+//  - Clear all internal flags and arrays of PRG_StoppedState
+//  - Prepare this program to run a new full stopped-sequence
+// Behavior:
+//  - Sets all internal booleans and arrays to FALSE
+//  - Returns TRUE once, when the reset conditions are satisfied
+//    (here: simply when there is no stop request and no "done" flag)
+// ============================================================================
 
-bAllMotorsReset		 	:= FALSE;
-bAllMotorsStop			:= FALSE;
-bAutoCycleReset			:= FALSE;
-bCalibrationReset		:= FALSE;
-bAllResetsDone			:= FALSE;
+// ---------------------------------------------------------------------------
+// 1) Reset main flags
+// ---------------------------------------------------------------------------
+bStopAllMotorsRequest := FALSE;
+bStopAllMotorsDone    := FALSE;
 
-//Motors Reset flags
-FOR i := 1 TO 3 DO
-	aResetMotors[i] := FALSE;
-END_FOR
-FOR i := 1 TO 5 DO
-	aResetValves[i] := FALSE;
-END_FOR
-FOR i := 1 TO 10 DO
-	aResetLinearPumps[i] := FALSE;
-END_FOR
-FOR i := 1 TO 10 DO
-	aResetRotaryPumps[i] := FALSE;
+bAllMotorsStop        := FALSE;
+bAutoCycleReset       := FALSE;
+bCalibrationReset     := FALSE;
+bAllResetsDone        := FALSE;
+
+// ---------------------------------------------------------------------------
+// 2) Reset arrays used in error reset / stop logic
+// ---------------------------------------------------------------------------
+// Motors reset flags
+FOR iAxis := 1 TO 3 DO
+    aResetMotors[iAxis] := FALSE;
 END_FOR
 
-// Send Reset Return
+// Valves reset flags
+FOR iAxis := 1 TO 5 DO
+    aResetValves[iAxis] := FALSE;
+END_FOR
+
+// Linear pumps reset flags
+FOR iAxis := 1 TO 10 DO
+    aResetLinearPumps[iAxis] := FALSE;
+END_FOR
+
+// Rotary pumps reset flags
+FOR iAxis := 1 TO 10 DO
+    aResetRotaryPumps[iAxis] := FALSE;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 3) Return value
+//    - With the current logic, right after executing this method
+//      both bStopAllMotorsRequest and bStopAllMotorsDone are FALSE
+//      so Reset = TRUE will be returned.
+// ---------------------------------------------------------------------------
 IF NOT bStopAllMotorsRequest AND NOT bStopAllMotorsDone THEN
-	Reset := TRUE;
-	RETURN;
+    Reset := TRUE;
+    RETURN;
 ELSE
-	Reset := FALSE;
-END_IF]]></ST>
+    Reset := FALSE;
+END_IF
+]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="PRG_StoppedState">
-      <LineId Id="5" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="14" Count="2" />
-      <LineId Id="128" Count="0" />
-      <LineId Id="25" Count="0" />
-      <LineId Id="106" Count="0" />
-      <LineId Id="131" Count="0" />
-      <LineId Id="201" Count="2" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="26" Count="0" />
-      <LineId Id="215" Count="1" />
-      <LineId Id="75" Count="0" />
-      <LineId Id="199" Count="1" />
-      <LineId Id="208" Count="0" />
-      <LineId Id="204" Count="0" />
-      <LineId Id="198" Count="0" />
-      <LineId Id="207" Count="0" />
-      <LineId Id="206" Count="0" />
-      <LineId Id="211" Count="0" />
-      <LineId Id="28" Count="0" />
-      <LineId Id="209" Count="1" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="214" Count="0" />
-      <LineId Id="213" Count="0" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="162" Count="0" />
-      <LineId Id="161" Count="0" />
-      <LineId Id="163" Count="0" />
-      <LineId Id="27" Count="0" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="8" Count="0" />
+      <LineId Id="401" Count="115" />
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StoppedState.ACT_ResetErrorMotors">
+      <LineId Id="68" Count="45" />
+      <LineId Id="142" Count="4" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="148" Count="4" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="115" Count="26" />
+      <LineId Id="60" Count="1" />
       <LineId Id="2" Count="0" />
+      <LineId Id="59" Count="0" />
       <LineId Id="24" Count="0" />
       <LineId Id="8" Count="0" />
       <LineId Id="10" Count="1" />
@@ -366,6 +811,38 @@ END_IF]]></ST>
       <LineId Id="58" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StoppedState.ACT_StopAllMotors">
+      <LineId Id="291" Count="22" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="454" Count="0" />
+      <LineId Id="317" Count="29" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="473" Count="3" />
+      <LineId Id="471" Count="1" />
+      <LineId Id="477" Count="0" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="481" Count="3" />
+      <LineId Id="479" Count="1" />
+      <LineId Id="446" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="447" Count="0" />
+      <LineId Id="487" Count="3" />
+      <LineId Id="485" Count="1" />
+      <LineId Id="365" Count="0" />
+      <LineId Id="368" Count="1" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="466" Count="3" />
+      <LineId Id="464" Count="1" />
+      <LineId Id="375" Count="6" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="382" Count="4" />
+      <LineId Id="462" Count="0" />
+      <LineId Id="387" Count="6" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="394" Count="4" />
+      <LineId Id="458" Count="0" />
+      <LineId Id="399" Count="36" />
+      <LineId Id="279" Count="1" />
       <LineId Id="23" Count="0" />
       <LineId Id="2" Count="13" />
       <LineId Id="131" Count="0" />
@@ -373,42 +850,76 @@ END_IF]]></ST>
       <LineId Id="120" Count="0" />
       <LineId Id="17" Count="0" />
       <LineId Id="24" Count="0" />
-      <LineId Id="18" Count="4" />
-      <LineId Id="25" Count="1" />
+      <LineId Id="18" Count="3" />
+      <LineId Id="132" Count="1" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="137" Count="3" />
       <LineId Id="1" Count="0" />
-      <LineId Id="28" Count="1" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="141" Count="3" />
       <LineId Id="27" Count="0" />
       <LineId Id="32" Count="3" />
-      <LineId Id="42" Count="2" />
+      <LineId Id="146" Count="1" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="151" Count="3" />
       <LineId Id="39" Count="0" />
-      <LineId Id="45" Count="1" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="155" Count="3" />
       <LineId Id="31" Count="0" />
-      <LineId Id="48" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="159" Count="3" />
       <LineId Id="47" Count="0" />
-      <LineId Id="51" Count="1" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="163" Count="3" />
       <LineId Id="50" Count="0" />
       <LineId Id="54" Count="3" />
+      <LineId Id="168" Count="1" />
       <LineId Id="53" Count="0" />
-      <LineId Id="59" Count="1" />
-      <LineId Id="58" Count="0" />
-      <LineId Id="62" Count="1" />
-      <LineId Id="61" Count="0" />
-      <LineId Id="65" Count="1" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="68" Count="1" />
-      <LineId Id="67" Count="0" />
-      <LineId Id="71" Count="1" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="74" Count="1" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="77" Count="1" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="80" Count="1" />
-      <LineId Id="79" Count="0" />
-      <LineId Id="83" Count="1" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="170" Count="3" />
       <LineId Id="82" Count="0" />
-      <LineId Id="86" Count="30" />
+      <LineId Id="175" Count="4" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="181" Count="4" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="187" Count="4" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="193" Count="4" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="199" Count="3" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="204" Count="4" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="210" Count="4" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="216" Count="4" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="86" Count="3" />
+      <LineId Id="222" Count="1" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="224" Count="4" />
       <LineId Id="85" Count="0" />
+      <LineId Id="230" Count="4" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="236" Count="4" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="242" Count="4" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="248" Count="4" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="254" Count="4" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="260" Count="4" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="266" Count="4" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="272" Count="3" />
+      <LineId Id="271" Count="0" />
       <LineId Id="119" Count="0" />
       <LineId Id="118" Count="0" />
       <LineId Id="121" Count="1" />
@@ -417,23 +928,8 @@ END_IF]]></ST>
       <LineId Id="117" Count="0" />
     </LineIds>
     <LineIds Name="PRG_StoppedState.Reset">
-      <LineId Id="14" Count="0" />
-      <LineId Id="5" Count="1" />
-      <LineId Id="58" Count="4" />
-      <LineId Id="57" Count="0" />
-      <LineId Id="40" Count="0" />
-      <LineId Id="19" Count="3" />
-      <LineId Id="46" Count="1" />
-      <LineId Id="45" Count="0" />
-      <LineId Id="49" Count="1" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="52" Count="1" />
-      <LineId Id="51" Count="0" />
-      <LineId Id="42" Count="0" />
-      <LineId Id="8" Count="0" />
-      <LineId Id="7" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="11" Count="2" />
+      <LineId Id="67" Count="16" />
+      <LineId Id="85" Count="40" />
       <LineId Id="10" Count="0" />
     </LineIds>
   </POU>

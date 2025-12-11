@@ -1,0 +1,652 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_AutoCycle" Id="{3698ba7e-335b-4575-b74b-b2c2009fcddd}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+    PRG_AutoCycle
+    -------------------------
+    High-level state machine that executes the full automatic cycle of the ASRS:
+      - Initialization and safety checks
+      - Air supply verification
+      - Stage sealing and (optional) metering
+      - Leak test
+      - Prime solvent lines
+      - Recovery, washing and drying phases
+      - Post-execution data logging
+      - Pause / Hold handling
+      - Error handling and safe fallback
+
+    This program is expected to run cyclically while the machine is in AUTO mode
+    (e.g. GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE).
+*)
+PROGRAM PRG_AutoCycle
+VAR
+    // -----------------------------
+    // Global state and basic flags
+    // -----------------------------
+    CurrentState          : E_MachineStates;     // Current logical state of the auto-cycle state machine
+    bErrorFlag            : BOOL;                // Generic error flag (used locally in ERROR_STATE)
+    bPowerUpDone          : BOOL := FALSE;       // Indicates that power-up timer has completed at least once
+    tonPowerUp            : Tc2_Standard.TON;    // Timer used for initial power-up delay
+    bPowerUpTimerComplete : BOOL;                // TRUE when the initial power-up delay has elapsed
+
+    // -----------------------------
+    // Initialization stage
+    // -----------------------------
+    fbInitChecks  : FB_InitChecks;   // FB responsible for initialization safety checks
+    bInitCheckDone: BOOL := FALSE;   // TRUE when FB_InitChecks reports initialization OK
+    bInitError    : BOOL := FALSE;   // TRUE when FB_InitChecks reports an initialization error
+
+    // -----------------------------
+    // Air flow / supply monitoring
+    // -----------------------------
+    fbAirFlowCheck    : FB_AirFlowCheck; // FB instance that validates main air supply
+    bAirSupplyStable  : BOOL;            // TRUE when air supply has been stable above threshold
+    bAirSupplyError   : BOOL;            // TRUE if air supply check fails
+    rAirSupplyNow     : LREAL;           // Instantaneous air flow / pressure measurement (if needed)
+
+    // -----------------------------
+    // Recovery Phase
+    // -----------------------------
+    fbRecoveryPhase : FB_RecoveryPhase;  // FB that executes the full recovery phase
+    aSolenoidSets   : ST_SolenoidSet;    // (Reserved) Solenoid configuration for phases
+    bRecoverySuccess: BOOL;              // TRUE when recovery phase completes successfully
+    bRecoveryError  : BOOL;              // TRUE when recovery phase fails
+
+    // -----------------------------
+    // Washing Phase
+    // -----------------------------
+    fbWashingPhase  : FB_WashingPhase;   // FB that executes the washing phase
+    bWashingSuccess : BOOL;              // TRUE when washing phase completes successfully
+    bWashingError   : BOOL;              // TRUE when washing phase fails
+
+    // -----------------------------
+    // Drying Phase
+    // -----------------------------
+    fbDryingPhase  : FB_DryingPhase;     // FB that executes the drying phase
+    bDryingSuccess : BOOL;               // TRUE when drying phase completes successfully
+    bDryingError   : BOOL;               // TRUE when drying phase fails
+
+    // -----------------------------
+    // Seal Stages / Metering
+    // -----------------------------
+    fbSealStages       : FB_SealStages;       // FB that handles sealing of Andersen stages
+    fbMeteringSolvent1 : FB_MeteringSolvent1; // FB for metering solvent 1 during seal if enabled
+    bSealStages        : BOOL := FALSE;       // Local execute flag for fbSealStages
+    bSealSuccess       : BOOL := FALSE;       // TRUE when sealing operation completes successfully
+    bSealError         : BOOL := FALSE;       // TRUE when sealing operation fails
+
+    // -----------------------------
+    // Leak Test
+    // -----------------------------
+    fbLeakTest        : FB_LeakTest;          // FB that performs the leak test routine
+    bTestCompleted    : BOOL := FALSE;        // TRUE when the leak test cycle completes
+    bTestFailed       : BOOL := FALSE;        // TRUE if the leak test detects a failure
+    sTestErrorMessage : STRING := '';         // Leak test error description / details
+
+    // -----------------------------
+    // Prime Solvents
+    // -----------------------------
+    fbPrimeSolvent : FB_PrimeSolvent;         // FB that executes solvent priming routine
+    bPrimeDone     : BOOL := FALSE;           // TRUE when priming is completed
+    bPrimeError    : BOOL := FALSE;           // TRUE if priming fails
+
+    // -----------------------------
+    // Pause / Hold State
+    // -----------------------------
+    ePauseReturnState   : E_MachineStates;    // State to return to when leaving PAUSE_STATE
+    bHoldRequestLatched : BOOL;              // Latched flag for hold request (not fully used here)
+    bAnyAxisMoving      : BOOL;              // TRUE if any axis is currently moving (F_AnyAxisMoving)
+
+    // -----------------------------
+    // Event / Alarm Triggering
+    // -----------------------------
+    fbEventHandler : FB_EventHandler;        // Generic event/alarm logger
+    bExecuteEvent  : BOOL := FALSE;          // Rising edge triggers event execution
+    bEventDone     : BOOL := FALSE;          // TRUE when event handling is finished
+    sSystem        : STRING(256);            // System / subsystem identifier for event log
+    sMessage       : STRING(256);            // Human-readable event description
+
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ==========================================================================
+// 1) Detect if any axis is still moving
+//    This is used by the HOLD / PAUSE logic to avoid interrupting moves
+//    mid-motion. The state machine only enters PAUSE_STATE when all
+//    axes are stopped, so we pause between movements, not in the middle.
+// ==========================================================================
+bAnyAxisMoving := F_AnyAxisMoving();
+
+// ==========================================================================
+// 2) HOLD request handling (global "Pause" behavior)
+//
+//    If the operator requests a HOLD (bAutoCycleHoldReq = TRUE) while:
+//      - the machine is running auto cycle,
+//      - no other hold is already active,
+//      - and no axis is currently moving,
+//    then:
+//      - Capture the current state as the "return state"
+//      - Mark HOLD as active
+//      - Open the HOLD popup on the HMI
+//      - Jump to PAUSE_STATE
+//
+//    This allows pausing between macro-steps without losing the current
+//    state machine context.
+// ==========================================================================
+IF GVL_HMI.bAutoCycleHoldReq
+   AND NOT GVL_HMI.bAutoCycleHoldActive
+   AND NOT bAnyAxisMoving
+THEN
+    // We are pausing between "macro-steps", so the return state
+    // is the current state of the auto-cycle.
+    ePauseReturnState            := CurrentState;
+
+    // Mark hold as active and consume the request
+    GVL_HMI.bAutoCycleHoldActive := TRUE;
+    GVL_HMI.bAutoCycleHoldReq    := FALSE;
+
+    // Open the HOLD popup on HMI
+    GVL_HMI.bAutoCycleHoldPopup  := TRUE;
+
+    // Enter PAUSE_STATE. Execution below is skipped this cycle.
+    CurrentState := E_MachineStates.PAUSE_STATE;
+    RETURN;
+END_IF
+
+// ==========================================================================
+// 3) Auto Cycle State Machine
+// ==========================================================================
+CASE CurrentState OF
+
+    // ----------------------------------------------------------------------
+    // INIT
+    //  - Check power supplies, doors and air supply interlocks.
+    //  - Only proceeds to air flow check when all conditions are OK.
+    //  - Any error drives the machine to ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.INIT:
+
+        // Log info event: Initialization is being checked
+        sSystem  := 'StateMachine.INIT';
+        sMessage := 'Cheking Safety Conditions!'; // NOTE: text used as-is to keep compatibility
+        fbEventHandler(
+            bExecute   := bExecuteEvent,
+            eEventName := E_Events.INFO,
+            sSystem    := sSystem,
+            sMessage   := sMessage,
+            bDone      => bEventDone
+        );
+        ResetEventTrigger();
+
+        // Execute FB responsible for all initial operation checks
+        fbInitChecks(
+            bPower24V_OK := GVL_IO.gDigInputs.b24VPowerSupplyOK,
+            bPower48V_OK := GVL_IO.gDigInputs.b48VPowerSupplyOK,
+            bDoorsClosed := GVL_Safety.bDoorClosedAlias,
+            bDoorsLocked := GVL_Safety.bDoorLockedFeedback,
+            // Air supply currently re-used from door "below" feedback
+            bAirEnabled  := GVL_Safety.SafetyOutputs.bBelowDoorsFeedback,
+            bExecute     := TRUE,
+            bReset       := FALSE,
+            bInitOK      => bInitCheckDone,
+            bError       => bInitError
+        );
+
+        // --- State transitions based on initialization result ---
+        IF bInitError THEN
+            // Log error and go to ERROR_STATE
+            sSystem  := 'StateMachine.INIT';
+            sMessage := 'Initialization fail - Going to Error State!';
+            fbEventHandler(
+                bExecute   := bExecuteEvent,
+                eEventName := E_Events.ERROR,
+                sSystem    := sSystem,
+                sMessage   := sMessage,
+                bDone      => bEventDone
+            );
+            ResetEventTrigger();
+
+            CurrentState := E_MachineStates.ERROR_STATE;
+
+        ELSIF bInitCheckDone THEN
+            // Initialization successful: log and start post-run tracking
+            sSystem  := 'StateMachine.INIT';
+            sMessage := 'Initialization Successful!';
+            fbEventHandler(
+                bExecute   := bExecuteEvent,
+                eEventName := E_Events.INFO,
+                sSystem    := sSystem,
+                sMessage   := sMessage,
+                bDone      => bEventDone
+            );
+            ResetEventTrigger();
+
+            // Start post-run info record (start time and DB select)
+            GVL_DB.stPostRunInfo.timeEventStarted := TO_STRING(TIME());
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_POST_LAST_RUN;
+
+            // Proceed to air flow check
+            CurrentState := E_MachineStates.CHECK_AIR_FLOW;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // CHECK_AIR_FLOW
+    //  - Validates that main air supply is above configured threshold
+    //    and remains stable for a given time.
+    //  - Any sensor or stability error sends the machine to ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.CHECK_AIR_FLOW:
+
+        // 1. Check if the pressure sensor reports an error state
+        IF GVL_IO.gAnalogInputs.bPressureRegulatorError THEN
+            // Log sensor error
+            fbEventHandler(
+                bExecute   := bExecuteEvent,
+                eEventName := E_Events.ERROR,
+                sSystem    := 'Air Supply Check',
+                sMessage   := 'Air Supply Sensor Error State!',
+                bDone      => bEventDone
+            );
+            ResetEventTrigger();
+
+            // Go to ERROR_STATE and mark local error flag
+            CurrentState    := E_MachineStates.ERROR_STATE;
+            bAirSupplyError := TRUE;
+        ELSE
+            // 2. Execute airflow verification (threshold + stabilization time)
+            fbAirFlowCheck(
+                iRawSensorValue    := GVL_IO.gAnalogInputs.rMainPressureSupplyInput,  // Raw sensor input
+                iSensorID          := 1,                                              // FESTO air supply sensor ID
+                rPressureThreshold := GVL_Settings.rAirSupplyThreshold,               // Minimum pressure
+                tStabilizationTime := GVL_Settings.rAirSupplyTestingTime,             // Time to remain stable
+                bExecute           := TRUE,
+                bReset             := FALSE,
+                bAirFlowOK         => bAirSupplyStable,
+                bAirFlowError      => bAirSupplyError
+            );
+
+            // 3. State transitions based on air flow result
+            IF bAirSupplyError THEN
+                // Any error drives to ERROR_STATE and activates tower red light
+                CurrentState := E_MachineStates.ERROR_STATE;
+                GVL_IO.gDigOutputs.bTowerRedLight := TRUE;
+
+            ELSIF bAirSupplyStable THEN
+                // Air supply OK → proceed to sealing stages
+                CurrentState := E_MachineStates.SEAL_STAGES;
+            END_IF;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // SEAL_STAGES
+    //  - Close and seal Andersen stages.
+    //  - Optionally execute metering of solvent 1 in parallel (if enabled).
+    //  - On success → LEAK_TEST, on any error → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.SEAL_STAGES:
+
+        // Enable sealing logic only if M1 STO is enabled (safety condition)
+        IF GVL_Safety.bM1STOEnabled THEN
+            bSealStages := TRUE;
+        ELSE
+            bSealStages := FALSE;
+        END_IF
+
+        // Execute sealing stages FB
+        fbSealStages(bExecute := bSealStages);
+
+        // Optional metering of solvent 1 during seal step
+        IF GVL_Settings.bGeneralSealAndPump THEN
+            fbMeteringSolvent1(bExecute := TRUE);
+        END_IF
+
+        // Error check for both sealing and metering
+        IF fbSealStages.bSealError OR fbMeteringSolvent1.bError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF
+
+        // State transitions on success
+        IF NOT GVL_Settings.bGeneralSealAndPump THEN
+            // Only sealing required
+            IF fbSealStages.bSealSuccess AND NOT fbSealStages.bSealError THEN
+                CurrentState := E_MachineStates.LEAK_TEST;
+            END_IF
+        ELSE
+            // Seal + metering required
+            IF fbSealStages.bSealSuccess
+               AND fbMeteringSolvent1.bDone
+               AND NOT fbSealStages.bSealError
+               AND NOT fbMeteringSolvent1.bError
+            THEN
+                // Mark metering complete and reset FB before proceeding
+                GVL_Settings.bMeteringSolvent1Done := TRUE;
+
+                IF fbMeteringSolvent1.Reset() THEN
+                    CurrentState := E_MachineStates.LEAK_TEST;
+                END_IF
+            END_IF
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // LEAK_TEST
+    //  - Performs leak test using FB_LeakTest with configured timing.
+    //  - On success → PRIME_SOLVENT, on failure → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.LEAK_TEST:
+
+        // Call the Leak Test function block
+        fbLeakTest(
+            bExecute          := TRUE,
+            eSolenoidPosition := E_SolenoidSet.LEAKTEST, // Configure solenoids for leak test
+            tMonitorTime      := GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime,
+            tPressureUpTime   := GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime,
+            bLeakTestDone     => bTestCompleted,
+            bLeakTestError    => bTestFailed,
+            sLTMessageError   => sTestErrorMessage
+        );
+
+        // Transitions based on leak test result
+        IF bTestCompleted THEN
+            // Leak test OK → proceed to priming
+            CurrentState := E_MachineStates.PRIME_SOLVENT;
+
+        ELSIF bTestFailed THEN
+            // Leak test failed → go to ERROR_STATE
+            CurrentState := E_MachineStates.ERROR_STATE;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // PRIME_SOLVENT
+    //  - Primes all necessary solvent lines according to recipe/settings.
+    //  - On success → RECOVERY_PHASE, on error → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.PRIME_SOLVENT:
+
+        // Execute PrimeSolvent FB
+        fbPrimeSolvent(bExecute := TRUE);
+
+        // Capture FB outputs for clarity
+        bPrimeDone  := fbPrimeSolvent.bDone;
+        bPrimeError := fbPrimeSolvent.bError;
+
+        // Evaluate prime result
+        IF bPrimeError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+
+        ELSIF bPrimeDone THEN
+            // Optionally reset FB instance before moving on
+            IF fbPrimeSolvent.Reset() THEN
+                CurrentState := E_MachineStates.RECOVERY_PHASE;
+            END_IF
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // RECOVERY_PHASE
+    //  - Executes the full recovery of particles/solvents from stages.
+    //  - On success → WASHING_PHASE, on error → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.RECOVERY_PHASE:
+
+        // Execute Recovery Phase FB
+        fbRecoveryPhase(bExecute := TRUE);
+
+        // Capture result flags
+        bRecoverySuccess := fbRecoveryPhase.bSuccess;
+        bRecoveryError   := fbRecoveryPhase.bError;
+
+        // State transitions based on FB result
+        IF bRecoveryError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        ELSIF bRecoverySuccess THEN
+            CurrentState := E_MachineStates.WASHING_PHASE;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // WASHING_PHASE
+    //  - Executes the washing routine after recovery.
+    //  - On success → DRYING_PHASE, on error → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.WASHING_PHASE:
+
+        // Execute Washing Phase FB
+        fbWashingPhase(bExecute := TRUE);
+
+        // Capture result flags
+        bWashingSuccess := fbWashingPhase.bWashingDone;
+        bWashingError   := fbWashingPhase.bWashingError;
+
+        // State transitions based on FB result
+        IF bWashingError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        ELSIF bWashingSuccess THEN
+            CurrentState := E_MachineStates.DRYING_PHASE;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // DRYING_PHASE
+    //  - Executes the drying routine after washing.
+    //  - On success → POST_EXECUTION, on error → ERROR_STATE.
+    // ----------------------------------------------------------------------
+    E_MachineStates.DRYING_PHASE:
+
+        // Execute Drying Phase FB
+        fbDryingPhase(bExecute := TRUE);
+
+        // Capture result flags
+        bDryingSuccess := fbDryingPhase.bDryingDone;
+        bDryingError   := fbDryingPhase.bDryingError;
+
+        // State transitions based on FB result
+        IF bDryingError THEN
+            CurrentState := E_MachineStates.ERROR_STATE;
+        ELSIF bDryingSuccess THEN
+            CurrentState := E_MachineStates.POST_EXECUTION;
+        END_IF;
+
+
+    // ----------------------------------------------------------------------
+    // POST_EXECUTION
+    //  - Collects and stores post-run information for reporting.
+    //  - Triggers DB insert and returns machine to STOPPED mode.
+    // ----------------------------------------------------------------------
+    E_MachineStates.POST_EXECUTION:
+
+        // Fill post-run info structure with timing and recipe data
+        GVL_DB.stPostRunInfo.timeEventCompleted  := TO_STRING(TIME());
+        GVL_DB.stPostRunInfo.runNo              := GVL_DB.stPostRunReport[0].runNo + 1;
+        GVL_DB.stPostRunInfo.comment            := GVL_HMI.sAutoCycleComment;
+        GVL_DB.stPostRunInfo.analyst            := '';
+        GVL_DB.stPostRunInfo.CalibrationNo      := 0;
+        GVL_DB.stPostRunInfo.emptyTubesFactor   := TO_STRING(GVL_Settings.stPumpParameters.iEmptyFactor);
+        GVL_DB.stPostRunInfo.fillTubesFactor    := TO_STRING(GVL_Settings.stPumpParameters.iFillolventTubesFactor);
+        GVL_DB.stPostRunInfo.meterVelocity      := TO_STRING(GVL_Settings.stPumpParameters.iMeterVelocity);
+        GVL_DB.stPostRunInfo.methodID           := GVL_HMI.stRecipeInfo.iRevision;
+        GVL_DB.stPostRunInfo.runVelocity        := TO_STRING(GVL_Settings.stPumpParameters.iRunVelocity);
+        GVL_DB.stPostRunInfo.softwareVersion    := '';
+        GVL_DB.stPostRunInfo.solvent1NameRevision := '';
+        GVL_DB.stPostRunInfo.solvent2NameRevision := '';
+        GVL_DB.stPostRunInfo.solvent3NameRevision := '';
+        GVL_DB.stPostRunInfo.solvent4NameRevision := '';
+        GVL_DB.stPostRunInfo.sysMasterRevision    := '';
+        GVL_DB.stPostRunInfo.sysSettingsRevision  := '';
+
+        // Request DB insert of the new run record
+        DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN;
+
+        // When finished, hand control back to STOPPED mode
+        GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+
+
+    // ----------------------------------------------------------------------
+    // PAUSE_STATE
+    //  - Neutral wait state when the auto-cycle is on HOLD.
+    //  - The operator can:
+    //      - CONTINUE: resume exactly from ePauseReturnState
+    //      - CANCEL: abort the run and go to STOPPED / SystemInit
+    // ----------------------------------------------------------------------
+    E_MachineStates.PAUSE_STATE:
+
+        // Ensure popup remains active while in pause
+        GVL_HMI.bAutoCycleHoldPopup := TRUE;
+
+        // CONTINUE: resume from the previously stored state
+        IF GVL_HMI.bAutoCycleContinueCmd THEN
+
+            GVL_HMI.bAutoCycleContinueCmd := FALSE;
+            GVL_HMI.bAutoCycleHoldActive  := FALSE;
+            GVL_HMI.bAutoCycleHoldPopup   := FALSE;
+            // Note: we do not re-assert bAutoCycleHoldReq here
+
+            // Resume at the same logical state where the pause occurred
+            CurrentState := ePauseReturnState;
+            // The FBs in that state will see that no moves are in progress
+            // and will continue with the next sub-step in their internal logic.
+
+        // CANCEL: abort current run and go back to STOPPED State
+        ELSIF GVL_HMI.bAutoCycleCancelCmd THEN
+
+            GVL_HMI.bAutoCycleCancelCmd  := FALSE;
+            GVL_HMI.bAutoCycleHoldActive := FALSE;
+            GVL_HMI.bAutoCycleHoldPopup  := FALSE;
+            GVL_HMI.bAutoCycleHoldReq    := FALSE;
+
+            // Switch machine mode to STOPPED. PRG_StoppedState will take over.
+            GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // ERROR_STATE
+    //  - Generic error handling state for the auto-cycle.
+    //  - Ensures safe outputs (e.g. tower red light, solenoids idle).
+    //  - Machine remains in STOPPED mode until reset logic is applied.
+    // ----------------------------------------------------------------------
+    E_MachineStates.ERROR_STATE:
+
+        // Signal error via tower light
+        GVL_IO.gDigOutputs.bTowerRedLight := TRUE;
+
+        // Return solenoids to idle / safe position
+        GVL_IO.gSetSolenoidControl.Idle();
+
+        // Force machine mode to STOPPED; PRG_StoppedState will manage reset
+        GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+
+        // Simple example of local error reset logic:
+        // if the physical stop button is pressed, clear the local flag
+        // and send the state machine back to INIT.
+        IF GVL_IO.gDigInputs.bStopButton THEN
+            bErrorFlag   := FALSE;
+            CurrentState := E_MachineStates.INIT;
+        END_IF;
+
+END_CASE;]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{1669a766-3630-4bf1-8f08-d4512a274fc5}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset FBs and flags
+fbInitChecks(bExecute := FALSE, bReset := TRUE);
+fbAirFlowCheck(bExecute := FALSE, bReset := TRUE);
+fbSealStages(bExecute := FALSE);
+fbLeakTest(bExecute := FALSE);
+fbRecoveryPhase(bExecute := FALSE);
+fbEventHandler(bExecute := FALSE);
+
+//Resets the state machine
+CurrentState := E_MachineStates.INIT;
+
+//Reset the HMI Icons animation
+GVL_HMI.HMIAnimation.eIconStateAirFlow 	:= E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateSealing	:= E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateHardware := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStatePrime 	:= E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateRecovery := E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateWashing 	:= E_IconState.Waiting;
+GVL_HMI.HMIAnimation.eIconStateDry 		:= E_IconState.Waiting;
+
+// Reset State flags
+bInitCheckDone 		:= FALSE;
+bInitError 			:= FALSE;
+bAirSupplyStable 	:= FALSE;
+bAirSupplyError 	:= FALSE;
+bSealSuccess 		:= FALSE;
+bSealError 			:= FALSE;
+bTestCompleted 		:= FALSE;
+bTestFailed 		:= FALSE;
+sTestErrorMessage 	:= '';
+bRecoverySuccess 	:= FALSE;
+bRecoveryError 		:= FALSE;
+bErrorFlag 			:= FALSE;
+bExecuteEvent 		:= FALSE;
+bEventDone 			:= FALSE;
+
+// Auto Cycle FB's Reset	
+IF  fbSealStages.Reset() 
+    AND fbRecoveryPhase.Reset() 
+    AND fbLeakTest.Reset() 
+    AND fbMeteringSolvent1.Reset() 
+    AND fbAirFlowCheck.Reset() 
+    AND fbInitChecks.Reset()
+    AND fbWashingPhase.Reset()
+    AND fbDryingPhase.Reset()
+    AND fbPrimeSolvent.Reset() THEN  
+		Reset := TRUE;
+		RETURN;
+ELSE
+	Reset := FALSE;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="ResetEventTrigger" Id="{2d5034a6-643b-4aff-aeda-4e9dc3f48beb}">
+      <Implementation>
+        <ST><![CDATA[IF bEventDone THEN
+        bExecuteEvent := FALSE;
+        bEventDone := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="PRG_AutoCycle">
+      <LineId Id="3309" Count="438" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_AutoCycle.Reset">
+      <LineId Id="50" Count="6" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="82" Count="3" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="90" Count="2" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="57" Count="17" />
+      <LineId Id="114" Count="8" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_AutoCycle.ResetEventTrigger">
+      <LineId Id="2" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

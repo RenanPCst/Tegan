@@ -1,130 +1,197 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_SealStages" Id="{b9c49897-ef39-427d-b9c0-f5c61609c2a7}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_SealStages
+    <Declaration><![CDATA[(*
+    FB_SealStages
+    ----------------------------------------
+    Purpose:
+      - Execute the "sealing" movement of Motor M1 to a predefined position.
+      - Uses a two-step positioning strategy:
+          1) Fast move to a pre-position (with deceleration offset)
+          2) Precise move to the final seal position
+      - Provides status back to the caller (bSealSuccess / bSealError).
+      - Updates HMI animation (text, icon state and progress bar).
 
+    Usage:
+      - Call with bExecute = TRUE cyclically while the auto cycle is in
+        the sealing step.
+      - bSealSuccess becomes TRUE when M1 reaches the target position
+        within tolerance.
+      - bSealError becomes TRUE if a motion error is detected.
+*)
+
+FUNCTION_BLOCK FB_SealStages
 VAR_INPUT
-    bExecute 		: BOOL;  	//Start the movement
+    bExecute : BOOL;   // TRUE to start/maintain the sealing sequence
 END_VAR
 
 VAR_OUTPUT
-	bSealSuccess 	: BOOL; 	//Indicates whether the process was completed successfully
-    bSealError 		: BOOL;  	//Indicates whether there was an error during execution
+    bSealSuccess : BOOL; // TRUE when sealing sequence completes successfully
+    bSealError   : BOOL; // TRUE if an error occurs during execution
 END_VAR
 
 VAR
-	bExecuting		: BOOL := FALSE;
-	rActualPosition	: LREAL;
-	rTargetPosition : LREAL;
-	rTolerance      : LREAL := 0.5;
-	bInPosition     : BOOL := FALSE;
-	
-	bMoveM1Pos1	 	: BOOL := FALSE;
-	bMoveM1Pos2	 	: BOOL := FALSE;
+    // -----------------------------
+    // Execution & positioning
+    // -----------------------------
+    bExecuting      : BOOL := FALSE; // TRUE after first cycle with bExecute = TRUE
+    rActualPosition : LREAL;         // Current position of M1
+    rTargetPosition : LREAL;         // Final sealing position for M1
+    rTolerance      : LREAL := 0.5;  // Allowed position tolerance for "in position"
+    bInPosition     : BOOL := FALSE; // TRUE when |actual - target| <= tolerance
 
-	bMotionSequenceDone	: BOOL := FALSE;
-	
-	bStartMove2		: BOOL := FALSE;
-	tonStartMove2	: ton;
-	stStatus		: ST_ActuatorStatus;
-		
-	// HMI Icon Progress bar Variables
-	rElapsedTimeSec : REAL := 0.0;
-	tStartTime 		: TIME := T#0S;
-	bLoadBarUpdate 	: BOOL := FALSE;
+    // Two-step motion sequence flags
+    bMoveM1Pos1 : BOOL := FALSE;     // TRUE when pre-position move is completed
+    bMoveM1Pos2 : BOOL := FALSE;     // TRUE when final precision move is completed
 
-END_VAR
-]]></Declaration>
+    bMotionSequenceDone : BOOL := FALSE; // TRUE when both steps are completed
+
+    // Timer and trigger for second move
+    bStartMove2  : BOOL := FALSE;    // Internal trigger to start second move
+    tonStartMove2: TON;              // Timer between move 1 and move 2
+
+    stStatus : ST_ActuatorStatus;    // Status structure returned by motor wrapper
+
+    // -----------------------------
+    // HMI Icon / Progress Bar
+    // -----------------------------
+    rElapsedTimeSec : REAL := 0.0;   // Elapsed time since FB start (seconds)
+    tStartTime      : TIME := T#0S;  // Time when execution started
+    bLoadBarUpdate  : BOOL := FALSE; // TRUE while progress bar should be updated
+END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Get the M1 Motor actual position
-rActualPosition := GVL_Motion.M1Motor.rActualPos;
-rTargetPosition := GVL_Settings.stMachineParam.aM1Position[2];
-bInPosition := ABS(rActualPosition - rTargetPosition) <= rTolerance;
+      <ST><![CDATA[// ==========================================================================
+// 1) Read actual position and evaluate "in position"
+// ==========================================================================
+rActualPosition := GVL_Motion.M1Motor.rActualPos;                     // Read current motor position
+rTargetPosition := GVL_Settings.stMachineParam.aM1Position[2];        // Sealing target position (index 2)
+bInPosition     := ABS(rActualPosition - rTargetPosition) <= rTolerance;
 
-//Provide HMI animation details
-GVL_HMI.HMIAnimation.sLoadTextSealing := 'Sealing'; 
+// ==========================================================================
+// 2) HMI: basic sealing animation state
+// ==========================================================================
+GVL_HMI.HMIAnimation.sLoadTextSealing   := 'Sealing';
 GVL_HMI.HMIAnimation.eIconStateSealing := E_IconState.InProgress;
 
-// Update progress bar only while executing and not yet in position
+// ==========================================================================
+// 3) HMI: Load bar update (only while executing and not yet in position)
+//    - Uses an external function EstimateTotalTime() to estimate total
+//      sealing time, and scales elapsed time into 0..100%.
+// ==========================================================================
 IF bExecuting AND NOT bInPosition THEN
     // Elapsed time in seconds since FB start
-    rElapsedTimeSec := TIME_TO_REAL(TIME() - tStartTime) / 1000.0; 
+    rElapsedTimeSec := TIME_TO_REAL(TIME() - tStartTime) / 1000.0;
 
-    // Protect against division by zero
+    // Protect against division by zero or invalid estimate
     IF EstimateTotalTime() > 0.0 THEN
         GVL_HMI.HMIAnimation.rLoadBarSealing :=
-            LIMIT(0.0, (rElapsedTimeSec / EstimateTotalTime()) * 100.0, 100.0);
+            LIMIT(0.0,
+                  (rElapsedTimeSec / EstimateTotalTime()) * 100.0,
+                  100.0);
     ELSE
         GVL_HMI.HMIAnimation.rLoadBarSealing := 0.0;
     END_IF
 END_IF
 
+// ==========================================================================
+// 4) Main execution logic: only runs when bExecute = TRUE
+// ==========================================================================
 IF bExecute THEN
 
-	// Reset flags on first entry
-	IF NOT bExecuting THEN
-		bExecuting := TRUE;
-		bLoadBarUpdate := TRUE;
-		bMoveM1Pos1 := FALSE;
-		bMoveM1Pos2 := FALSE;
-		bStartMove2 := FALSE;
-		tStartTime := TIME();
-		tonStartMove2(IN := FALSE);
-		GVL_HMI.HMIAnimation.rLoadBarSealing := 0.0; // Reset bar only once
-	END_IF
+    // -------------------------------------------------------------
+    // 4.1) First entry initialization (rising edge of bExecute)
+    //      - Reset internal flags and start timing for the load bar
+    // -------------------------------------------------------------
+    IF NOT bExecuting THEN
+        bExecuting      := TRUE;
+        bLoadBarUpdate  := TRUE;
 
-	IF NOT bInPosition OR NOT bMotionSequenceDone THEN
-		// Movement sequence finished
-		IF bMoveM1Pos1 AND bMoveM1Pos2 THEN
-			bStartMove2 := FALSE;
-			bMotionSequenceDone := TRUE;
-		END_IF
+        bMoveM1Pos1     := FALSE;
+        bMoveM1Pos2     := FALSE;
+        bStartMove2     := FALSE;
+        bMotionSequenceDone := FALSE;
 
-		// Step 1: Move to pre-position with deceleration offset
-		IF NOT bMoveM1Pos1 THEN
-			bMoveM1Pos1 := GVL_Motion.aMotors[1].MoveAbsolute(
-				rPosition := rTargetPosition + GVL_Settings.stMachineParam.fM1PositionDeceleration,
-				rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-				rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-				rDec := GVL_Settings.stMachineParam.rM1Deceleration
-			);
-		END_IF
+        tStartTime      := TIME();       // Reference start time
+        tonStartMove2(IN := FALSE);      // Reset timer input
 
-		// Trigger move 2 when move 1 is done
-		IF bMoveM1Pos1 AND NOT bMoveM1Pos2 THEN
-			bStartMove2 := TRUE;
-		END_IF
+        // Reset progress bar only once at the beginning
+        GVL_HMI.HMIAnimation.rLoadBarSealing := 0.0;
+    END_IF
 
-		tonStartMove2(IN := bStartMove2, PT := T#500MS);
+    // -------------------------------------------------------------
+    // 4.2) Execute two-step motion sequence while:
+    //      - M1 is not yet in final position, or
+    //      - the motion sequence is not finished
+    // -------------------------------------------------------------
+    IF NOT bInPosition OR NOT bMotionSequenceDone THEN
 
-		// Step 2: Final precise move to target
-		IF NOT bMoveM1Pos2 AND tonStartMove2.Q THEN
-			bMoveM1Pos2 := GVL_Motion.aMotors[1].MoveAbsolute(
-				rPosition := rTargetPosition,
-				rVelocity := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
-				rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-				rDec := GVL_Settings.stMachineParam.rM1Deceleration
-			);
-		END_IF
-	END_IF
+        // If both moves are completed, flag sequence as done
+        IF bMoveM1Pos1 AND bMoveM1Pos2 THEN
+            bStartMove2        := FALSE;
+            bMotionSequenceDone := TRUE;
+        END_IF
 
-	// Get status and handle errors or success
-	stStatus := GVL_Motion.aMotors[1].GetStatus();
+        // ---------------------------------------------------------
+        // Step 1: Move M1 to a pre-position (with deceleration offset)
+        //         This allows a faster approach before the precision step.
+        // ---------------------------------------------------------
+        IF NOT bMoveM1Pos1 THEN
+            bMoveM1Pos1 := GVL_Motion.aMotors[1].MoveAbsolute(
+                rPosition := rTargetPosition + GVL_Settings.stMachineParam.fM1PositionDeceleration,
+                rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM1Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM1Deceleration
+            );
+        END_IF
 
-	IF stStatus.bError THEN
-		bSealError := TRUE;
-		bSealSuccess := FALSE;
-	ELSE
-		bSealError := FALSE;
-		IF bInPosition THEN
-			bSealSuccess := TRUE;
-			bLoadBarUpdate := FALSE;
-			GVL_HMI.HMIAnimation.rLoadBarSealing := 100.0;
-			GVL_HMI.HMIAnimation.eIconStateSealing := E_IconState.Completed;
-		ELSE
-			bSealSuccess := FALSE;
-		END_IF
-	END_IF
+        // When step 1 is completed, start the trigger for step 2
+        IF bMoveM1Pos1 AND NOT bMoveM1Pos2 THEN
+            bStartMove2 := TRUE;
+        END_IF
+
+        // Timer between step 1 and step 2 (settling time)
+        tonStartMove2(IN := bStartMove2, PT := T#500MS);
+
+        // ---------------------------------------------------------
+        // Step 2: Final precise move to the exact target position
+        //         - Uses a lower velocity for better accuracy.
+        // ---------------------------------------------------------
+        IF NOT bMoveM1Pos2 AND tonStartMove2.Q THEN
+            bMoveM1Pos2 := GVL_Motion.aMotors[1].MoveAbsolute(
+                rPosition := rTargetPosition,
+                rVelocity := GVL_Settings.stMachineParam.rM1PrecisionVelocity,
+                rAcc      := GVL_Settings.stMachineParam.rM1Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM1Deceleration
+            );
+        END_IF
+    END_IF
+
+    // -------------------------------------------------------------
+    // 4.3) Read motor status and evaluate error / success
+    // -------------------------------------------------------------
+    stStatus := GVL_Motion.aMotors[1].GetStatus();
+
+    // --- Error handling ---
+    IF stStatus.bError THEN
+        bSealError   := TRUE;
+        bSealSuccess := FALSE;
+
+    ELSE
+        bSealError := FALSE;
+
+        // --- Success condition: M1 is within target tolerance ---
+        IF bInPosition THEN
+            bSealSuccess  := TRUE;
+            bLoadBarUpdate := FALSE;
+
+            // Force progress bar and HMI icon to "Completed"
+            GVL_HMI.HMIAnimation.rLoadBarSealing   := 100.0;
+            GVL_HMI.HMIAnimation.eIconStateSealing := E_IconState.Completed;
+        ELSE
+            bSealSuccess := FALSE;
+        END_IF
+    END_IF
+
 END_IF]]></ST>
     </Implementation>
     <Method Name="EstimateTotalTime" Id="{ac2174a7-358e-4bee-bb09-a75921d7c1bc}">
@@ -215,25 +282,7 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_SealStages">
-      <LineId Id="316" Count="3" />
-      <LineId Id="443" Count="0" />
-      <LineId Id="445" Count="1" />
-      <LineId Id="444" Count="0" />
-      <LineId Id="485" Count="0" />
-      <LineId Id="501" Count="11" />
-      <LineId Id="486" Count="0" />
-      <LineId Id="326" Count="5" />
-      <LineId Id="494" Count="0" />
-      <LineId Id="332" Count="2" />
-      <LineId Id="493" Count="0" />
-      <LineId Id="335" Count="0" />
-      <LineId Id="519" Count="0" />
-      <LineId Id="336" Count="42" />
-      <LineId Id="390" Count="3" />
-      <LineId Id="495" Count="0" />
-      <LineId Id="520" Count="0" />
-      <LineId Id="448" Count="0" />
-      <LineId Id="406" Count="3" />
+      <LineId Id="611" Count="131" />
       <LineId Id="181" Count="0" />
     </LineIds>
     <LineIds Name="FB_SealStages.EstimateTotalTime">

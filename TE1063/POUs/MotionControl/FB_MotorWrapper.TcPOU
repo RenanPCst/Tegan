@@ -678,15 +678,16 @@ Reset := FALSE;
 
 // Allways read the actual axis state
 Axis.ReadStatus();
-stAxisStat.Disabled   := Axis.Status.Disabled;
-stAxisStat.Error      := Axis.Status.Error;
-stAxisStat.ErrorID    := Axis.Status.ErrorID;
-stAxisStat.Homed      := Axis.Status.Homed;
-stAxisStat.Operational:= Axis.Status.Operational;
-stAxisStat.StandStill := Axis.Status.StandStill;
+stAxisStat.Disabled   			:= Axis.Status.Disabled;
+stAxisStat.Error      			:= Axis.Status.Error;
+stAxisStat.ErrorID    			:= Axis.Status.ErrorID;
+stAxisStat.Homed      			:= Axis.Status.Homed;
+stAxisStat.Operational			:= Axis.Status.Operational;
+stAxisStat.StandStill 			:= Axis.Status.StandStill;
+stAxisStat.MotionCommandsLocked	:= Axis.Status.MotionCommandsLocked;
 
 // 0.1) If the axis is NOT in error, there is nothing to reset.
-IF NOT stAxisStat.Error THEN
+IF NOT stAxisStat.Error AND NOT stAxisStat.MotionCommandsLocked THEN
     // It guarantees a "clean" status.
     stStatus.bError      := FALSE;
     stStatus.iErrorCode  := 0;
@@ -725,6 +726,7 @@ IF bFirstCall THEN
     fbHalt(Axis := Axis, Execute := FALSE);
     fbReadStatus(Axis := Axis, Enable := FALSE);
     fbReadPos(Axis := Axis, Enable := FALSE);
+	fbReset(Axis := Axis, Execute := FALSE);
 
     bPowerRequest         := FALSE;
     bDisableReq           := FALSE;
@@ -835,7 +837,7 @@ END_IF
 IF bResetDone AND NOT fbReset.Busy THEN
     // reads the axis status again
     Axis.ReadStatus();
-    IF NOT Axis.Status.Error THEN
+    IF NOT Axis.Status.Error AND NOT Axis.Status.MotionCommandsLocked THEN
         // Success
         stStatus.bError      := FALSE;
         stStatus.iErrorCode  := 0;
@@ -1462,9 +1464,13 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
-      <LineId Id="382" Count="32" />
+      <LineId Id="382" Count="12" />
+      <LineId Id="582" Count="0" />
+      <LineId Id="395" Count="19" />
       <LineId Id="570" Count="0" />
-      <LineId Id="416" Count="142" />
+      <LineId Id="416" Count="19" />
+      <LineId Id="581" Count="0" />
+      <LineId Id="436" Count="122" />
       <LineId Id="572" Count="0" />
       <LineId Id="559" Count="0" />
       <LineId Id="561" Count="4" />

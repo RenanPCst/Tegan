@@ -1,161 +1,328 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_WashingPhase" Id="{8cd1e697-bf8b-43c9-9f41-396622ef9579}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_WashingPhase
+    <Declaration><![CDATA[(*
+    FB_WashingPhase
+    ------------------------------------------------------------------------
+    Purpose:
+      - Orchestrates the full "Washing" macro-phase of the ASRS.
+      - Sequences all washing-related steps according to the active recipe:
+          1) (Optional) Wash 1:
+               - Metering_Wash1
+               - Recirculate_Wash1
+               - Cleaning_Lines_W1
+               - Waste_Wash1
+          2) (Optional) Wash 2:
+               - Metering_Wash2
+               - Recirculate_Wash2
+               - Cleaning_Lines_W2
+               - Waste_Wash2
+          3) Marks washing as Completed when all required steps are done.
 
+      - Updates HMI load bar and washing icon during the entire phase.
+
+    Usage:
+      - Call cyclically with bExecute = TRUE while the machine is in
+        the Washing Phase state.
+      - Internal state machine (eWashingState) progresses through
+        each washing step depending on recipe configuration.
+      - When eWashingState reaches "Completed", bWashingDone = TRUE.
+
+    Inputs:
+      - bExecute : BOOL
+          TRUE  → start/continue the washing phase.
+          FALSE → keeps FB in Idle (no progression).
+
+    Outputs:
+      - bWashingDone  : BOOL
+          TRUE when all configured washing steps finish successfully.
+      - bWashingError : BOOL
+          TRUE if the phase enters Error state
+          (currently a reserved hook, not fully used yet).
+
+    Side Effects:
+      - Writes to global HMI animation:
+          GVL_HMI.HMIAnimation.eIconStateWashing
+          GVL_HMI.HMIAnimation.sLoadTextWashing
+          GVL_HMI.HMIAnimation.rLoadBarWashing
+      - Reads recipe configuration to decide whether Wash 1 and/or Wash 2
+        are active:
+          GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3] and [4]
+*)
+
+FUNCTION_BLOCK FB_WashingPhase
 VAR_INPUT
-	bExecute : BOOL;
+    bExecute : BOOL;  // TRUE to start/maintain the washing phase
 END_VAR
 
 VAR_OUTPUT
-	bWashingDone 	: BOOL; 	//washing done flag
-	bWashingError 	: BOOL;		//washing error flag
+    bWashingDone  : BOOL; // Washing finished successfully
+    bWashingError : BOOL; // Washing error flag (used in Error state)
 END_VAR
 
 VAR
-	bStart : BOOL := FALSE;
-	eWashingState : E_WashingState := E_WashingState.Idle; //internal states
-	
-	iStepCounter : UINT := 0; //Internal action state machine
-	bMovementComplete : BOOL := FALSE; //Done flag between states
-	
-	bMoveM2			: BOOL := FALSE; // M2 Vertical Motor Movement Flag
-	bMoveValveDone	: ARRAY[1..5] OF BOOL; // Valves movement flags
-	bMovePumpDone	: ARRAY[1..10] OF BOOL; // Pumps movement flags
-	fDistance       : ARRAY[1..10] OF REAL; // Distance for pumps movement based on volume
-	
-	fAgitationTime   	: REAL := 0; // Recipe Agitation time
-	fRecirculationTime  : REAL := 0; // Recipe Recirculate time
-	fCalcDistance	 	: ARRAY[1..10] OF REAL; //Pump distance based on time
+    // -----------------------------
+    // Internal Washing FSM state
+    // -----------------------------
+    bStart        : BOOL := FALSE;                       // Local start latch
+    eWashingState : E_WashingState := E_WashingState.Idle; // FSM current state
 
-	i : UINT;
-	
-	//HMI Icon progress bar animation
-	tStartTime : TIME := T#0S; // stores start time of phase
-	rElapsedTimeSec : REAL := 0.0; // time passed in seconds
-	rTotalEstimatedTimeSec : REAL := 0.0; // total time expected
-	bProgressInitDone : BOOL := FALSE; // to ensure estimation runs only once
+    // -----------------------------
+    // Step / movement coordination
+    // -----------------------------
+    iStepCounter      : UINT := 0;  // Generic step counter for subroutines
+    bMovementComplete : BOOL := FALSE; // TRUE when current washing step is done
 
+    // -----------------------------
+    // Motion & flow control flags
+    // -----------------------------
+    bMoveM2        : BOOL := FALSE;              // Vertical motor M2 movement flag
+    bMoveValveDone : ARRAY[1..5] OF BOOL;        // Valve movement completion flags
+    bMovePumpDone  : ARRAY[1..10] OF BOOL;       // Pump movement completion flags
+    fDistance      : ARRAY[1..10] OF REAL;       // Distance for pump moves (volume-based)
 
-END_VAR
-]]></Declaration>
+    // -----------------------------
+    // Recirculation / agitation parameters
+    // -----------------------------
+    fAgitationTime     : REAL := 0.0;            // Agitation time from recipe
+    fRecirculationTime : REAL := 0.0;            // Recirculation time from recipe
+    fCalcDistance      : ARRAY[1..10] OF REAL;   // Pump distances based on time
+
+    i : UINT;                                    // Generic loop index (internal use)
+
+    // -----------------------------
+    // HMI progress bar animation
+    // -----------------------------
+    tStartTime             : TIME := T#0S;  // Stores start time of washing phase
+    rElapsedTimeSec        : REAL := 0.0;   // Elapsed time in seconds
+    rTotalEstimatedTimeSec : REAL := 0.0;   // Total expected washing time
+    bProgressInitDone      : BOOL := FALSE; // TRUE once timing estimation is initialized
+END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF NOT bStart THEN
-	eWashingState := E_WashingState.Idle;
-	bStart := bExecute;
+      <ST><![CDATA[// ==========================================================================
+// 1) Start latch:
+//    - When bExecute becomes TRUE for the first time, latch bStart and
+//      put FSM into Idle.
+// ==========================================================================
+IF NOT bStart THEN
+    eWashingState := E_WashingState.Idle;
+    bStart        := bExecute;
 END_IF
 
-//HMI Progress Bar Animation
-IF bProgressInitDone AND (eWashingState <> E_WashingState.Idle) AND (eWashingState <> E_WashingState.Completed) THEN
-	rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
-	GVL_HMI.HMIAnimation.rLoadBarWashing := MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
+// ==========================================================================
+// 2) HMI Progress Bar Animation
+//    - Only updates while FSM is running (not Idle/Completed).
+//    - Uses external EstimateTotalTime() to scale elapsed time into 0..100%.
+// ==========================================================================
+IF bProgressInitDone
+   AND (eWashingState <> E_WashingState.Idle)
+   AND (eWashingState <> E_WashingState.Completed)
+THEN
+    // Elapsed time in seconds since washing start
+    rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
+
+    // Scale elapsed / estimated total into a percentage
+    GVL_HMI.HMIAnimation.rLoadBarWashing :=
+        MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
+// ==========================================================================
+// 3) Washing Phase FSM
+// ==========================================================================
 CASE eWashingState OF
 
+    // ----------------------------------------------------------------------
+    // Idle:
+    //  - Reset flags and wait for bStart.
+    //  - Initializes HMI and progress timing when phase starts.
+    // ----------------------------------------------------------------------
     E_WashingState.Idle:
-		bWashingDone := FALSE; //Reset Flags
-		bWashingError := FALSE;
+
+        // Reset output flags in Idle
+        bWashingDone  := FALSE;
+        bWashingError := FALSE;
+
         IF bStart THEN
-			//Start time calculation
-			tStartTime := TIME();
-			rTotalEstimatedTimeSec := EstimateTotalTime();
-			bProgressInitDone := TRUE;
-			//Provide HMI animation details
-			GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.InProgress;
-			GVL_HMI.HMIAnimation.sLoadTextWashing := 'Starting'; 
-			GVL_HMI.HMIAnimation.rLoadBarWashing  := 0;	
-			//Move to next step
-			IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3] > 0 THEN //Check if wash 1 is activated on recipe
-				eWashingState := E_WashingState.Metering_Wash1;
-			ELSE
-				eWashingState := E_WashingState.Completed;
-			END_IF
-            
+            // Initialize timing for washing progress bar
+            tStartTime             := TIME();
+            rTotalEstimatedTimeSec := EstimateTotalTime(); // External estimate
+            bProgressInitDone      := TRUE;
+
+            // Configure HMI animation for Washing Phase start
+            GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.InProgress;
+            GVL_HMI.HMIAnimation.sLoadTextWashing  := 'Starting';
+            GVL_HMI.HMIAnimation.rLoadBarWashing   := 0.0;
+
+            // Decide whether Wash 1 is enabled by recipe:
+            // aSolventN[3] > 0 → Wash 1 active
+            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3] > 0 THEN
+                eWashingState := E_WashingState.Metering_Wash1;
+            ELSE
+                // If Wash 1 is not active and neither is Wash 2, the phase can
+                // jump directly to Completed. Wash 2 check happens later.
+                eWashingState := E_WashingState.Completed;
+            END_IF
         END_IF
 
+
+    // ----------------------------------------------------------------------
+    // Metering_Wash1:
+    //  - Meters solvent for Wash 1 according to recipe.
+    // ----------------------------------------------------------------------
     E_WashingState.Metering_Wash1:
-        MeteringWash1(); 
+
+        MeteringWash1();
+
         IF bMovementComplete THEN
-            eWashingState := E_WashingState.Recirculate_Wash1;
-			iStepCounter := 0;
+            eWashingState    := E_WashingState.Recirculate_Wash1;
+            iStepCounter     := 0;
             bMovementComplete := FALSE;
-        END_IF
-	
-	E_WashingState.Recirculate_Wash1:
-        RecirculateWash1(); 
-        IF bMovementComplete THEN
-            eWashingState := E_WashingState.Cleaning_Lines_W1;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-		
-	E_WashingState.Cleaning_Lines_W1:
-        CleaningLinesWash1(); 
-        IF bMovementComplete THEN
-            eWashingState := E_WashingState.Waste_Wash1;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-	
-	E_WashingState.Waste_Wash1:
-        WasteWash1(); 
-        IF bMovementComplete THEN
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-			IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[4] > 0 THEN //Check if wash 2 is activated on recipe
-				eWashingState := E_WashingState.Metering_Wash2;
-			ELSE
-				eWashingState := E_WashingState.Completed;
-			END_IF
-        END_IF
-		
-	E_WashingState.Metering_Wash2:
-        MeteringWash2(); 
-        IF bMovementComplete THEN
-            eWashingState := E_WashingState.Recirculate_Wash2;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-		
-	E_WashingState.Recirculate_Wash2:
-        RecirculateWash2(); 
-        IF bMovementComplete THEN
-            eWashingState := E_WashingState.Cleaning_Lines_W2;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-		
-	E_WashingState.Cleaning_Lines_W2:
-        CleaningLinesWash2(); 
-        IF bMovementComplete THEN
-            eWashingState := E_WashingState.Waste_Wash2;
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-        END_IF
-		
-	E_WashingState.Waste_Wash2:
-        WasteWash2(); 
-        IF bMovementComplete THEN
-			iStepCounter := 0;
-            bMovementComplete := FALSE;
-			eWashingState := E_WashingState.Completed;
         END_IF
 
-	E_WashingState.Completed:
-		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Completed'; 
-		GVL_HMI.HMIAnimation.rLoadBarWashing  := 100;
-		GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Completed;
-		bWashingDone := TRUE;
-		
-	E_WashingState.Error:
-		GVL_HMI.HMIAnimation.sLoadTextWashing := 'Error'; 
-		GVL_HMI.HMIAnimation.rLoadBarWashing  := 0;
-		GVL_HMI.HMIAnimation.eIconStateWashing := E_IconState.Waiting;
-		bWashingError := TRUE;
-		
-END_CASE
-	]]></ST>
+
+    // ----------------------------------------------------------------------
+    // Recirculate_Wash1:
+    //  - Recirculates Wash 1 solvent to improve cleaning efficiency.
+    // ----------------------------------------------------------------------
+    E_WashingState.Recirculate_Wash1:
+
+        RecirculateWash1();
+
+        IF bMovementComplete THEN
+            eWashingState    := E_WashingState.Cleaning_Lines_W1;
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Cleaning_Lines_W1:
+    //  - Cleans lines used for Wash 1 solvent.
+    // ----------------------------------------------------------------------
+    E_WashingState.Cleaning_Lines_W1:
+
+        CleaningLinesWash1();
+
+        IF bMovementComplete THEN
+            eWashingState    := E_WashingState.Waste_Wash1;
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Waste_Wash1:
+    //  - Sends Wash 1 solvent remaining in lines to waste.
+    //  - Then decides whether Wash 2 is enabled by recipe.
+    // ----------------------------------------------------------------------
+    E_WashingState.Waste_Wash1:
+
+        WasteWash1();
+
+        IF bMovementComplete THEN
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+
+            // Check if Wash 2 is active in the recipe:
+            // aSolventN[4] > 0 → Wash 2 enabled
+            IF GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[4] > 0 THEN
+                eWashingState := E_WashingState.Metering_Wash2;
+            ELSE
+                eWashingState := E_WashingState.Completed;
+            END_IF
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Metering_Wash2:
+    //  - Meters solvent for Wash 2 if configured in recipe.
+    // ----------------------------------------------------------------------
+    E_WashingState.Metering_Wash2:
+
+        MeteringWash2();
+
+        IF bMovementComplete THEN
+            eWashingState    := E_WashingState.Recirculate_Wash2;
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Recirculate_Wash2:
+    //  - Recirculates Wash 2 solvent.
+    // ----------------------------------------------------------------------
+    E_WashingState.Recirculate_Wash2:
+
+        RecirculateWash2();
+
+        IF bMovementComplete THEN
+            eWashingState    := E_WashingState.Cleaning_Lines_W2;
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Cleaning_Lines_W2:
+    //  - Cleans lines used for Wash 2 solvent.
+    // ----------------------------------------------------------------------
+    E_WashingState.Cleaning_Lines_W2:
+
+        CleaningLinesWash2();
+
+        IF bMovementComplete THEN
+            eWashingState    := E_WashingState.Waste_Wash2;
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Waste_Wash2:
+    //  - Sends Wash 2 solvent remaining in lines to waste.
+    // ----------------------------------------------------------------------
+    E_WashingState.Waste_Wash2:
+
+        WasteWash2();
+
+        IF bMovementComplete THEN
+            iStepCounter     := 0;
+            bMovementComplete := FALSE;
+            eWashingState    := E_WashingState.Completed;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // Completed:
+    //  - Washing phase has finished successfully.
+    //  - Updates HMI and raises bWashingDone.
+    // ----------------------------------------------------------------------
+    E_WashingState.Completed:
+
+        GVL_HMI.HMIAnimation.sLoadTextWashing   := 'Completed';
+        GVL_HMI.HMIAnimation.rLoadBarWashing    := 100.0;
+        GVL_HMI.HMIAnimation.eIconStateWashing  := E_IconState.Completed;
+
+        bWashingDone  := TRUE;
+        bWashingError := FALSE;
+
+
+    // ----------------------------------------------------------------------
+    // Error:
+    //  - Generic washing error state (hook for future error handling).
+    //  - Currently sets HMI to "Error" and raises bWashingError.
+    // ----------------------------------------------------------------------
+    E_WashingState.Error:
+
+        GVL_HMI.HMIAnimation.sLoadTextWashing   := 'Error';
+        GVL_HMI.HMIAnimation.rLoadBarWashing    := 0.0;
+        GVL_HMI.HMIAnimation.eIconStateWashing  := E_IconState.Waiting;
+
+        bWashingError := TRUE;
+        bWashingDone  := FALSE;
+
+END_CASE]]></ST>
     </Implementation>
     <Action Name="CleaningLinesWash1" Id="{3918b628-ba7d-4ae8-b5bc-d73985505edc}">
       <Implementation>
@@ -188,25 +355,29 @@ CASE iStepCounter OF
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 1
+    2: // Calculates the number of degrees of rotation of the pumps based on Wash 1 volume and factor 2
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[3])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
-		END_FOR
-		
-		IF fRecirculationTime > 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
+		fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE;
 		END_FOR
 		
+		iStepCounter := 3;
+		
     3: // Starts rotary movement with calculated distance (degrees/sec -> steps) [positive movement]
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
+				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
 																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
 																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
 																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
@@ -259,25 +430,29 @@ CASE iStepCounter OF
         	iStepCounter := 2;
 		END_IF
 
-    2: // Calculates the number of degrees of rotation of the pumps based on the recipe time Agitate Time 2
+    2: //Calculates the number of degrees of rotation of the pumps based on Wash 2 volume and factor 2
 
-    	fRecirculationTime  := TO_REAL(TIME_TO_DWORD(GVL_Recipe.stCurrentRecipe.stSolventsTimes.aTime[4])/1000);
-		FOR i := 1 TO 10 DO
-			fCalcDistance[i] := fRecirculationTime * (GVL_Settings.stPumpParameters.iRunVelocity * 6);
-		END_FOR
-		
-		IF fRecirculationTime > 0 THEN
-			iStepCounter := 3;
-		END_IF
-		
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE;
 		END_FOR
 		
+		iStepCounter := 3;
+		
     3: // Starts rotary movement with calculated distance (degrees/sec -> steps) [positive movement]
         FOR i := 1 TO 10 DO
 			IF NOT bMovePumpDone[i] THEN
-				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fCalcDistance[i],
+				bMovePumpDone[i] := GVL_Motion.aPumpsRotary[i].MoveRelative( Distance := fDistance[i],
 																			 Velocity := GVL_Settings.stPumpParameters.iRunVelocity * 6, 
 																			 Acc := GVL_Settings.stPumpParameters.iRunVelocity * 3, 
 																			 Dec := GVL_Settings.stPumpParameters.iRunVelocity * 3 
@@ -777,16 +952,16 @@ END_IF
 		END_IF
 		
     3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2 , iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[3] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2.5 , iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[3] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2.5, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[3] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2.5, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[3] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2.5, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[3] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2.5, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[3] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2.5, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[3] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2.5, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[3] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2.5, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[3] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2.5, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[3] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2.5, iPumpIndex := 10);
 		
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE; //resets pumps movement flags
@@ -882,16 +1057,16 @@ END_CASE]]></ST>
 		END_IF
 		
     3: // Calculating distance for each pump
-    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2, iPumpIndex := 1);
-		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2, iPumpIndex := 2);
-		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2, iPumpIndex := 3);
-		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2, iPumpIndex := 4);
-		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2, iPumpIndex := 5);
-		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2, iPumpIndex := 6);
-		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2, iPumpIndex := 7);
-		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2, iPumpIndex := 8);
-		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2, iPumpIndex := 9);
-		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2, iPumpIndex := 10);
+    	fDistance[1] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[4] + GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 2.5, iPumpIndex := 1);
+		fDistance[2] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS0_Volume[4] + GVL_Motion.aPumps[2].Rotary.rDeadVolume) * 2.5, iPumpIndex := 2);
+		fDistance[3] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS1_Volume[4] + GVL_Motion.aPumps[3].Rotary.rDeadVolume) * 2.5, iPumpIndex := 3);
+		fDistance[4] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS2_Volume[4] + GVL_Motion.aPumps[4].Rotary.rDeadVolume) * 2.5, iPumpIndex := 4);
+		fDistance[5] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS3_Volume[4] + GVL_Motion.aPumps[5].Rotary.rDeadVolume) * 2.5, iPumpIndex := 5);
+		fDistance[6] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS4_Volume[4] + GVL_Motion.aPumps[6].Rotary.rDeadVolume) * 2.5, iPumpIndex := 6);
+		fDistance[7] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS5_Volume[4] + GVL_Motion.aPumps[7].Rotary.rDeadVolume) * 2.5, iPumpIndex := 7);
+		fDistance[8] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS6_Volume[4] + GVL_Motion.aPumps[8].Rotary.rDeadVolume) * 2.5, iPumpIndex := 8);
+		fDistance[9] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aS7_Volume[4] + GVL_Motion.aPumps[9].Rotary.rDeadVolume) * 2.5, iPumpIndex := 9);
+		fDistance[10] := F_VolumeToSteps(rVolume := (GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[4] + GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 2.5, iPumpIndex := 10);
 		
 		FOR i := 1 TO 10 DO
 			bMovePumpDone[i] := FALSE; //resets pumps movement flags
@@ -940,58 +1115,7 @@ END_CASE]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="FB_WashingPhase">
-      <LineId Id="24" Count="3" />
-      <LineId Id="220" Count="0" />
-      <LineId Id="216" Count="3" />
-      <LineId Id="202" Count="0" />
-      <LineId Id="28" Count="3" />
-      <LineId Id="105" Count="1" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="210" Count="0" />
-      <LineId Id="213" Count="1" />
-      <LineId Id="209" Count="0" />
-      <LineId Id="102" Count="2" />
-      <LineId Id="100" Count="1" />
-      <LineId Id="131" Count="1" />
-      <LineId Id="134" Count="1" />
-      <LineId Id="133" Count="0" />
-      <LineId Id="38" Count="0" />
-      <LineId Id="40" Count="2" />
-      <LineId Id="44" Count="5" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="73" Count="5" />
-      <LineId Id="107" Count="0" />
-      <LineId Id="109" Count="5" />
-      <LineId Id="108" Count="0" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="117" Count="2" />
-      <LineId Id="129" Count="1" />
-      <LineId Id="124" Count="1" />
-      <LineId Id="127" Count="1" />
-      <LineId Id="126" Count="0" />
-      <LineId Id="116" Count="0" />
-      <LineId Id="143" Count="0" />
-      <LineId Id="137" Count="5" />
-      <LineId Id="136" Count="0" />
-      <LineId Id="144" Count="0" />
-      <LineId Id="146" Count="5" />
-      <LineId Id="145" Count="0" />
-      <LineId Id="152" Count="0" />
-      <LineId Id="154" Count="5" />
-      <LineId Id="153" Count="0" />
-      <LineId Id="160" Count="0" />
-      <LineId Id="162" Count="4" />
-      <LineId Id="170" Count="0" />
-      <LineId Id="161" Count="0" />
-      <LineId Id="173" Count="4" />
-      <LineId Id="172" Count="0" />
-      <LineId Id="178" Count="0" />
-      <LineId Id="180" Count="3" />
-      <LineId Id="179" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="63" Count="0" />
+      <LineId Id="356" Count="223" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.CleaningLinesWash1">
       <LineId Id="2" Count="4" />
@@ -999,20 +1123,20 @@ END_CASE]]></ST>
       <LineId Id="62" Count="0" />
       <LineId Id="64" Count="1" />
       <LineId Id="63" Count="0" />
-      <LineId Id="9" Count="20" />
-      <LineId Id="70" Count="2" />
-      <LineId Id="33" Count="1" />
-      <LineId Id="36" Count="2" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="67" Count="1" />
-      <LineId Id="66" Count="0" />
+      <LineId Id="9" Count="19" />
+      <LineId Id="98" Count="10" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="74" Count="0" />
       <LineId Id="39" Count="22" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.CleaningLinesWash2">
       <LineId Id="2" Count="30" />
-      <LineId Id="68" Count="2" />
-      <LineId Id="36" Count="31" />
+      <LineId Id="71" Count="14" />
+      <LineId Id="44" Count="23" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_WashingPhase.EstimateTotalTime">

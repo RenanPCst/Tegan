@@ -1,160 +1,325 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_DryingPhase" Id="{3fed5c2e-00c0-41f9-b86a-23cb950cee48}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_DryingPhase
+    <Declaration><![CDATA[(*
+    FB_DryingPhase
+    ------------------------------------------------------------------------
+    Purpose:
+      - Orchestrates the full "Drying" macro-phase of the ASRS.
+      - Sequence:
+          1) Position M1 to the drying position (above Andersen stages)
+          2) Open air supply through solenoids
+          3) Maintain air flow for a configured drying time
+          4) Close air supply and return solenoids to IDLE
+          5) Move M1 back to the home position
+          6) Mark phase as DONE
 
+      - Updates HMI load bar and drying icon during the entire phase.
+
+    Usage:
+      - Call cyclically with bExecute = TRUE while the machine is in
+        the Drying Phase state.
+      - Internal state machine (eDryState) progresses through each step.
+      - When eDryState reaches DONE and M1 is in home position,
+        bDryingDone = TRUE.
+
+    Inputs:
+      - bExecute : BOOL
+          TRUE  → start/continue the drying phase.
+          FALSE → keeps FB in IDLE (no progression).
+
+    Outputs:
+      - bDryingDone  : BOOL
+          TRUE when the drying sequence finished successfully.
+      - bDryingError : BOOL
+          TRUE if the phase enters ERROR state
+          (currently a generic hook, no detailed error transitions here).
+
+    Side Effects:
+      - Writes to global HMI animation:
+          GVL_HMI.HMIAnimation.eIconStateDry
+          GVL_HMI.HMIAnimation.sLoadTextDry
+          GVL_HMI.HMIAnimation.rLoadBarDry
+      - Uses global motion/settings:
+          GVL_Motion.M1Motor.rActualPos
+          GVL_Motion.aMotors[1].MoveAbsolute(...)
+          GVL_Settings.stMachineParam.aM1Position[1..2]
+          GVL_Recipe.stActiveRecipe.stOtherParams.tAirDryTime
+      - Uses solenoid control:
+          GVL_IO.gSetSolenoidControl.PressureUp()
+          GVL_IO.gSetSolenoidControl.Idle()
+*)
+
+FUNCTION_BLOCK FB_DryingPhase
 VAR_INPUT
-	bExecute : BOOL;
+    bExecute : BOOL;  // TRUE to start/maintain drying phase
 END_VAR
+
 VAR_OUTPUT
-	bDryingDone : BOOL := FALSE;
-	bDryingError : BOOL := FALSE;
+    bDryingDone  : BOOL := FALSE; // TRUE when drying phase completes successfully
+    bDryingError : BOOL := FALSE; // TRUE when an error occurs (ERROR state)
 END_VAR
+
 VAR
-	eDryState	: (IDLE, POSITION_M1, OPEN_AIR, WAITING_TIME, CLOSE_AIR, HOME_M1, DONE, ERROR); //Drying Phase internal States
-	
-	fbSolenoidControl : FB_SolenoidControl; //Solenoid control fb instance
-	tonAirDryTime : ton; //Timer to run air trought stages
-	
-	bStart 	: BOOL := FALSE; //Start Flag	
-	bMoveM1	: BOOL := FALSE; // M1 Vertical Motor Movement Flag
-	bM1RightPosition	: BOOL := FALSE; // Make sure M1 is in the right position
-	
-	//HMI progress bar animation variables
-	tStartTime : TIME := T#0S; // Drying start timestamp
-	rElapsedTimeSec : REAL := 0.0; // Time passed in seconds
-	rTotalEstimatedTimeSec : REAL := 0.0; // Total estimated time
-	bProgressInitDone : BOOL := FALSE; // Estimation only once
-	
-END_VAR
-]]></Declaration>
+    // -----------------------------
+    // Internal Drying FSM state
+    // -----------------------------
+    eDryState : (IDLE,          // Waiting for start
+                 POSITION_M1,   // Move M1 to drying position
+                 OPEN_AIR,      // Open air supply to stages
+                 WAITING_TIME,  // Keep air on for configured time
+                 CLOSE_AIR,     // Close air supply / return solenoids to idle
+                 HOME_M1,       // Move M1 back to home position
+                 DONE,          // Drying finished
+                 ERROR);        // Error state
+
+    // -----------------------------
+    // Sub-function blocks
+    // -----------------------------
+    fbSolenoidControl : FB_SolenoidControl; // Solenoid control FB instance (not fully used here)
+    tonAirDryTime     : TON;                // Timer to run air flow through stages
+
+    // -----------------------------
+    // Control flags
+    // -----------------------------
+    bStart          : BOOL := FALSE; // Start latch derived from bExecute
+    bMoveM1         : BOOL := FALSE; // M1 vertical motor movement flag
+    bM1RightPosition: BOOL := FALSE; // TRUE when M1 is within tolerance of target position
+
+    // -----------------------------
+    // HMI progress bar animation
+    // -----------------------------
+    tStartTime             : TIME := T#0S; // Drying start timestamp
+    rElapsedTimeSec        : REAL := 0.0;  // Elapsed time in seconds
+    rTotalEstimatedTimeSec : REAL := 0.0;  // Estimated total drying time (seconds)
+    bProgressInitDone      : BOOL := FALSE; // Ensure estimation is done only once
+END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF NOT bStart THEN
-	eDryState := IDLE;
-	bStart := bExecute;
+      <ST><![CDATA[(*
+	* There is procedure doubts in here. Client says the drying phase leave stage closed and blow leak test pressure, around 4.2 psi. Now programmed this way.
+	* Documentation says the stage should be opened and then blow main pressure, around 6 bar.
+*)
+
+// ==========================================================================
+// 1) Start latch:
+//    - On first bExecute = TRUE, latch bStart and initialize FSM to IDLE.
+// ==========================================================================
+IF NOT bStart THEN
+    eDryState := IDLE;
+    bStart    := bExecute;
 END_IF
 
-//HMI Progress Bar Animation
-IF bProgressInitDone AND (eDryState <> IDLE) AND (eDryState <> DONE) AND (eDryState <> ERROR) THEN
-	rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
-	GVL_HMI.HMIAnimation.rLoadBarDry := MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
+// ==========================================================================
+// 2) HMI Progress Bar Animation
+//    - Only updates while FSM is actively drying:
+//        not IDLE, not DONE, not ERROR.
+//    - Uses external EstimateTotalTime() to scale elapsed time into 0..100%.
+// ==========================================================================
+IF bProgressInitDone
+   AND (eDryState <> IDLE)
+   AND (eDryState <> DONE)
+   AND (eDryState <> ERROR)
+THEN
+    // Elapsed time in seconds since drying started
+    rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 100.0 / 10.0; // or /1000.0; adjust if needed
+    // More explicit:
+    // rElapsedTimeSec := TO_REAL(TIME() - tStartTime) / 1000.0;
+
+    // Scale elapsed / estimated total into percentage
+    GVL_HMI.HMIAnimation.rLoadBarDry :=
+        MIN(100.0, rElapsedTimeSec / rTotalEstimatedTimeSec * 100.0);
 END_IF
 
+// ==========================================================================
+// 3) Drying Phase FSM
+// ==========================================================================
 CASE eDryState OF
-	
-	IDLE:
-		// Reset Flags
-		bDryingDone := FALSE; 
-		bDryingError := FALSE;
-		bMoveM1 := FALSE;
-        IF bStart THEN
-			//Start time calculation
-			tStartTime := TIME();
-			rTotalEstimatedTimeSec := EstimateTotalTime();
-			bProgressInitDone := TRUE;
-			// Provide HMI animation details
-			GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.InProgress;
-			GVL_HMI.HMIAnimation.sLoadTextDry := 'Starting'; 
-			GVL_HMI.HMIAnimation.rLoadBarDry  := 0;	
-			// Move to next step
-			eDryState := POSITION_M1;
-        END_IF
-	
-	POSITION_M1:
-		// Updating the HMI icon text
-		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Moving Motor';
-		
-		IF NOT bMoveM1 THEN // M1 Movement to dry position
-			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[2],
-															rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-															rDec := GVL_Settings.stMachineParam.rM1Deceleration
-															);
-		END_IF
-		
-		
-		
-		IF bMoveM1 THEN
-			bMoveM1 := FALSE; // Reset Movement flag
-			eDryState := OPEN_AIR; // Next step
-		END_IF
-	
-	OPEN_AIR:
-		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[2]) <= 2.0;
-		// Check if the motor M1 is in the correct position
-		IF bM1RightPosition THEN
-			// Set air by solenoid position
-			IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
-				eDryState := WAITING_TIME; // Move to next step
-			END_IF
-		ELSE
-			bMoveM1 := FALSE; // Reset Movement flag
-			eDryState := POSITION_M1;
-		END_IF
-	
-	WAITING_TIME:
-		// Updating the HMI icon text
-		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Drying';
-		
-		//fbSolenoidControl(bExecute := FALSE); //Resets solenoid position
-		tonAirDryTime(in := TRUE, pt := GVL_Recipe.stActiveRecipe.stOtherParams.tAirDryTime); //Start timer
-		IF tonAirDryTime.Q THEN
-			eDryState := CLOSE_AIR;
-		END_IF
-		
-	CLOSE_AIR:
-		tonAirDryTime(in := FALSE); //Timer resets
-		//fbSolenoidControl(bExecute := TRUE, eSolenoidSet := E_SolenoidSet.IDLE); //Set air by solenoid position
-		IF GVL_IO.gSetSolenoidControl.Idle() THEN //IF fbSolenoidControl.bDone THEN
-			bMoveM1 := FALSE;
-			eDryState := HOME_M1; //moving to Done Step
-		END_IF
-		
-	HOME_M1:
-		// Updating the HMI icon text
-		GVL_HMI.HMIAnimation.sLoadTextDry  := 'Homing Motor';
-		
-		IF NOT bMoveM1 THEN // M1 Movement to dry position
-			bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(	rPosition := GVL_Settings.stMachineParam.aM1Position[1],
-															rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
-															rAcc := GVL_Settings.stMachineParam.rM1Accleration,
-															rDec := GVL_Settings.stMachineParam.rM1Deceleration
-															);
-		END_IF
-		
-		
-		
-		IF bMoveM1 THEN
-			bMoveM1 := FALSE; // Reset Movement flag
-			eDryState := DONE; // Next step
-		END_IF
-		
-		
-	DONE:
-		// Check if M1 was homed 
-		bM1RightPosition := ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[1]) <= 2.0;
-		IF bM1RightPosition THEN
-			//HMI Icon animation
-			GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Completed;
-			GVL_HMI.HMIAnimation.sLoadTextDry  := 'Completed'; 
-			GVL_HMI.HMIAnimation.rLoadBarDry   := 100;
-			
-			bDryingDone := TRUE; //Sucess flag
-		ELSE
-			bMoveM1 := FALSE; // Reset Movement flag
-			eDryState := HOME_M1; // step back
-		END_IF
-		
-			
-	ERROR:
-		//HMI Icon animation
-		GVL_HMI.HMIAnimation.sLoadTextDry := 'Error'; 
-		GVL_HMI.HMIAnimation.rLoadBarDry  := 0;
-		GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Waiting;
-		
-		bDryingError := TRUE; //Error Flag
 
-END_CASE]]></ST>
+    // ----------------------------------------------------------------------
+    // IDLE:
+    //  - Reset flags and wait for bStart.
+    //  - Initializes HMI and timing when phase starts.
+    // ----------------------------------------------------------------------
+    IDLE:
+
+        // Reset outputs in Idle
+        bDryingDone  := FALSE;
+        bDryingError := FALSE;
+        bMoveM1      := FALSE;
+
+        IF bStart THEN
+            // Initialize timing for drying progress
+            tStartTime             := TIME();
+            rTotalEstimatedTimeSec := EstimateTotalTime(); // External estimate
+            bProgressInitDone      := TRUE;
+
+            // Configure HMI animation for Drying Phase start
+            GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.InProgress;
+            GVL_HMI.HMIAnimation.sLoadTextDry  := 'Starting';
+            GVL_HMI.HMIAnimation.rLoadBarDry   := 0.0;
+
+            // Move to first step: position M1 for drying
+            eDryState := POSITION_M1;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // POSITION_M1:
+    //  - Move M1 to the drying position (above Andersen stages).
+    // ----------------------------------------------------------------------
+    POSITION_M1:
+
+        // Update HMI text
+        GVL_HMI.HMIAnimation.sLoadTextDry := 'Moving Motor';
+
+        // Start movement to drying position if not already triggered
+        IF NOT bMoveM1 THEN
+            bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM1Position[2],
+                rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM1Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM1Deceleration
+            );
+        END_IF
+
+        // When MoveAbsolute reports TRUE (command accepted/completed depending on wrapper),
+        // go to next step to open air
+        IF bMoveM1 THEN
+            bMoveM1   := FALSE;          // Reset movement flag for next moves
+            eDryState := OPEN_AIR;       // Next step
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // OPEN_AIR:
+    //  - Ensure M1 is in the right position and then open air supply
+    //    using solenoid control.
+	// ----------------------------------------------------------------------
+    OPEN_AIR:
+
+        // Check if M1 is at the drying position within tolerance
+        bM1RightPosition :=
+            ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[2]) <= 2.0;
+
+        IF bM1RightPosition THEN
+            // Raise pressure via solenoid control (air ON)
+            IF GVL_IO.gSetSolenoidControl.PressureUp() THEN
+                eDryState := WAITING_TIME; // Next: wait for configured air drying time
+            END_IF
+        ELSE
+            // If position is not correct, go back to POSITION_M1
+            bMoveM1   := FALSE;
+            eDryState := POSITION_M1;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // WAITING_TIME:
+    //  - Keep air flowing for the configured drying time (tAirDryTime).
+    // ----------------------------------------------------------------------
+    WAITING_TIME:
+
+        // Update HMI text
+        GVL_HMI.HMIAnimation.sLoadTextDry := 'Drying';
+
+        // Start/maintain timer for air drying time
+        tonAirDryTime(
+            IN := TRUE,
+            PT := GVL_Recipe.stActiveRecipe.stOtherParams.tAirDryTime
+        );
+
+        // When timer completes, go to close air step
+        IF tonAirDryTime.Q THEN
+            eDryState := CLOSE_AIR;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // CLOSE_AIR:
+    //  - Turn off air supply and return solenoids to idle.
+// ----------------------------------------------------------------------
+    CLOSE_AIR:
+
+        // Reset timer input
+        tonAirDryTime(IN := FALSE);
+
+        // Set solenoids to idle position (air OFF, safe position)
+        IF GVL_IO.gSetSolenoidControl.Idle() THEN
+            bMoveM1   := FALSE;
+            eDryState := HOME_M1; // Next: move M1 back home
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // HOME_M1:
+    //  - Move M1 back to home position after drying.
+    // ----------------------------------------------------------------------
+    HOME_M1:
+
+        // Update HMI text
+        GVL_HMI.HMIAnimation.sLoadTextDry := 'Homing Motor';
+
+        // Command M1 to home/initial position if not already triggered
+        IF NOT bMoveM1 THEN
+            bMoveM1 := GVL_Motion.aMotors[1].MoveAbsolute(
+                rPosition := GVL_Settings.stMachineParam.aM1Position[1],
+                rVelocity := GVL_Settings.stMachineParam.rM1Velocity,
+                rAcc      := GVL_Settings.stMachineParam.rM1Accleration,
+                rDec      := GVL_Settings.stMachineParam.rM1Deceleration
+            );
+        END_IF
+
+        // When movement is finished, go to DONE state
+        IF bMoveM1 THEN
+            bMoveM1   := FALSE;
+            eDryState := DONE;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // DONE:
+    //  - Final state when drying phase is completed successfully.
+    //  - Validates M1 position and updates HMI + done flag.
+    // ----------------------------------------------------------------------
+    DONE:
+
+        // Confirm that M1 is at home position within tolerance
+        bM1RightPosition :=
+            ABS(GVL_Motion.M1Motor.rActualPos - GVL_Settings.stMachineParam.aM1Position[1]) <= 2.0;
+
+        IF bM1RightPosition THEN
+            // HMI animation: drying completed
+            GVL_HMI.HMIAnimation.eIconStateDry := E_IconState.Completed;
+            GVL_HMI.HMIAnimation.sLoadTextDry  := 'Completed';
+            GVL_HMI.HMIAnimation.rLoadBarDry   := 100.0;
+
+            // Success flag
+            bDryingDone  := TRUE;
+            bDryingError := FALSE;
+        ELSE
+            // If position is not correct, try to home again
+            bMoveM1   := FALSE;
+            eDryState := HOME_M1;
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // ERROR:
+    //  - Generic drying error state (hook for future detailed handling).
+    //  - Currently only updates HMI and sets bDryingError.
+    // ----------------------------------------------------------------------
+    ERROR:
+
+        // HMI animation: error state
+        GVL_HMI.HMIAnimation.sLoadTextDry   := 'Error';
+        GVL_HMI.HMIAnimation.rLoadBarDry    := 0.0;
+        GVL_HMI.HMIAnimation.eIconStateDry  := E_IconState.Waiting;
+
+        bDryingError := TRUE;
+        bDryingDone  := FALSE;
+
+END_CASE
+]]></ST>
     </Implementation>
     <Method Name="EstimateTotalTime" Id="{05ac8e4d-b1e3-4e8e-9944-a1369c6a61ae}">
       <Declaration><![CDATA[METHOD EstimateTotalTime : REAL
@@ -221,83 +386,12 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="FB_DryingPhase">
-      <LineId Id="34" Count="2" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="136" Count="0" />
-      <LineId Id="138" Count="2" />
-      <LineId Id="137" Count="0" />
-      <LineId Id="38" Count="0" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="39" Count="0" />
-      <LineId Id="42" Count="0" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="64" Count="1" />
-      <LineId Id="79" Count="0" />
-      <LineId Id="66" Count="0" />
-      <LineId Id="135" Count="0" />
-      <LineId Id="133" Count="1" />
-      <LineId Id="132" Count="0" />
-      <LineId Id="67" Count="4" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="46" Count="1" />
-      <LineId Id="44" Count="0" />
-      <LineId Id="168" Count="0" />
-      <LineId Id="167" Count="0" />
-      <LineId Id="169" Count="0" />
-      <LineId Id="80" Count="0" />
-      <LineId Id="83" Count="0" />
-      <LineId Id="85" Count="2" />
-      <LineId Id="81" Count="1" />
-      <LineId Id="198" Count="2" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="90" Count="0" />
-      <LineId Id="88" Count="1" />
-      <LineId Id="58" Count="0" />
-      <LineId Id="49" Count="0" />
-      <LineId Id="217" Count="0" />
-      <LineId Id="206" Count="0" />
-      <LineId Id="208" Count="0" />
-      <LineId Id="213" Count="2" />
-      <LineId Id="210" Count="2" />
-      <LineId Id="216" Count="0" />
-      <LineId Id="207" Count="0" />
-      <LineId Id="59" Count="0" />
-      <LineId Id="51" Count="0" />
-      <LineId Id="170" Count="2" />
-      <LineId Id="98" Count="0" />
-      <LineId Id="60" Count="0" />
-      <LineId Id="45" Count="0" />
-      <LineId Id="101" Count="1" />
-      <LineId Id="104" Count="0" />
-      <LineId Id="43" Count="0" />
-      <LineId Id="54" Count="0" />
-      <LineId Id="105" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="109" Count="0" />
-      <LineId Id="106" Count="2" />
-      <LineId Id="219" Count="0" />
-      <LineId Id="223" Count="15" />
-      <LineId Id="222" Count="0" />
-      <LineId Id="221" Count="0" />
-      <LineId Id="220" Count="0" />
-      <LineId Id="55" Count="0" />
-      <LineId Id="239" Count="0" />
-      <LineId Id="110" Count="0" />
-      <LineId Id="240" Count="0" />
-      <LineId Id="243" Count="4" />
-      <LineId Id="241" Count="0" />
-      <LineId Id="248" Count="2" />
-      <LineId Id="242" Count="0" />
-      <LineId Id="118" Count="0" />
-      <LineId Id="117" Count="0" />
-      <LineId Id="57" Count="0" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="122" Count="1" />
-      <LineId Id="121" Count="0" />
-      <LineId Id="119" Count="0" />
-      <LineId Id="125" Count="0" />
-      <LineId Id="41" Count="0" />
+      <LineId Id="588" Count="0" />
+      <LineId Id="590" Count="0" />
+      <LineId Id="592" Count="0" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="369" Count="218" />
       <LineId Id="40" Count="0" />
     </LineIds>
     <LineIds Name="FB_DryingPhase.EstimateTotalTime">

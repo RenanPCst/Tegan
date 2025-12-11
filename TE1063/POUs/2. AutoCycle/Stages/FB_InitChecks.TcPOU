@@ -1,147 +1,233 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_InitChecks" Id="{ca2f8e73-30a6-41b7-a1d5-e28e096b5f8e}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_InitChecks
+    <Declaration><![CDATA[(*
+==============================================================================
+ FB_InitChecks
+------------------------------------------------------------------------------
+ Purpose:
+   Perform the machine initialization safety validation before starting 
+   Auto Cycle or any motion-critical operation.
+
+   This block verifies the following conditions in sequence:
+     1) 24V and 48V power supply availability  
+     2) All safety doors are physically closed  
+     3) Doors are locked (interlock engaged)  
+     4) Air supply is available and safe to enable  
+     5) If all checks pass → bInitOK := TRUE
+
+ Usage:
+   - Call cyclically.
+   - Set bExecute := TRUE to start evaluation.
+   - bInitOK  = TRUE  → All initial conditions satisfied.
+   - bError   = TRUE  → A condition failed; machine must not start.
+   - bReset   = TRUE  → Asynchronous reset to return FB to state 0.
+
+ Safety Outputs Controlled:
+   - GVL_Safety.bAirSupplyEnable   : Enables solenoid / pneumatic air supply.
+   - GVL_Safety.bDoorLockCommand   : Locks the safety doors.
+   - GVL_Safety.SafetyOutputs.bAirPressureOK : Temporary mock (TODO).
+
+ Notes:
+   - State machine steps:
+       0 : Reset / Idle  
+       1 : Check power  
+       2 : Check doors closed  
+       3 : Check doors locked  
+       4 : Enable air supply  
+       5 : Success  
+      99 : Error state  
+==============================================================================
+*)
+FUNCTION_BLOCK FB_InitChecks
 VAR_INPUT
-	bExecute	 : BOOL;
-    bPower24V_OK : BOOL;
-    bPower48V_OK : BOOL;
-    bDoorsClosed : BOOL;
-    bDoorsLocked : BOOL;
-    bAirEnabled  : BOOL;
-    bReset       : BOOL;  // Input to reset the FB state
+    bExecute      : BOOL;   // Start initialization check
+    bPower24V_OK  : BOOL;   // External 24V supply OK
+    bPower48V_OK  : BOOL;   // External 48V supply OK
+    bDoorsClosed  : BOOL;   // Physical door closed sensors
+    bDoorsLocked  : BOOL;   // Door lock feedback
+    bAirEnabled   : BOOL;   // Air supply feedback (valves/sensors)
+    bReset        : BOOL;   // Asynchronous reset
 END_VAR
 
 VAR_OUTPUT
-    bInitOK : BOOL := FALSE; 	// Indicates if the initialization sequence passed
-    bError  : BOOL := FALSE;    // Indicates an initialization error
+    bInitOK : BOOL := FALSE; // TRUE when all safety checks pass
+    bError  : BOOL := FALSE; // TRUE if any condition fails
 END_VAR
 
 VAR
-    iState         : INT := 0;  // State machine variable
+    iState : INT := 0;       // Internal state machine
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE iState OF
-    // State 0: Reset all variables before starting checks
-    0:
-        bInitOK := FALSE;
-        bError := FALSE;
+      <ST><![CDATA[// ==========================================================================
+// Initialization State Machine
+// ==========================================================================
+CASE iState OF
 
-        
+    // ----------------------------------------------------------------------
+    // STATE 0 — RESET / IDLE
+    // ----------------------------------------------------------------------
+    0:
+        // Reset outputs
+        bInitOK := FALSE;
+        bError  := FALSE;
+
         // Reset safety commands
         GVL_Safety.bAirSupplyEnable := FALSE;
         GVL_Safety.bDoorLockCommand := FALSE;
-		
+
+        // Start sequence
         IF bExecute AND NOT bReset THEN
-        	iState := 1; // Move to power supply check
-		END_IF
-		
-    // State 1: Check power supply
+            iState := 1;   // Next: power supply check
+        END_IF
+
+
+    // ----------------------------------------------------------------------
+    // STATE 1 — POWER SUPPLY CHECK
+    // ----------------------------------------------------------------------
     1:
         IF bReset THEN
-            iState := 0; // Force reset if requested
+            iState := 0;   // Full reset if requested
+
         ELSIF NOT (bPower24V_OK AND bPower48V_OK) THEN
-            bError := TRUE;            
+            // Fail: power missing
+            bError := TRUE;
+
             GVL_Safety.bAirSupplyEnable := FALSE;
             GVL_Safety.bDoorLockCommand := FALSE;
-            
-            iState := 99; // Move to error state
+
+            iState := 99;  // Error state
+
         ELSE
-            iState := 2; // Proceed to door check
+            iState := 2;   // Pass → next check
         END_IF;
 
-    // State 2: Check if doors are closed
+
+    // ----------------------------------------------------------------------
+    // STATE 2 — DOORS CLOSED CHECK
+    // ----------------------------------------------------------------------
     2:
         IF bReset THEN
-            iState := 0; 
-        ELSIF NOT bDoorsClosed THEN           
+            iState := 0;
+
+        ELSIF NOT bDoorsClosed THEN
+            // Fail: a door is open
             GVL_Safety.bAirSupplyEnable := FALSE;
             GVL_Safety.bDoorLockCommand := FALSE;
-            
-            iState := 99; // Move to error state
+
+            iState := 99;
+
         ELSE
-            iState := 3; // Proceed to door locking check
+            iState := 3;   // Pass → next
         END_IF;
 
-    // State 3: Lock doors if they are not locked
+
+    // ----------------------------------------------------------------------
+    // STATE 3 — DOOR LOCK CHECK
+    // ----------------------------------------------------------------------
     3:
         IF bReset THEN
-            iState := 0; 
+            iState := 0;
+
         ELSIF NOT bDoorsLocked THEN
-            //GVL_Safety.bDoorLockCommand := TRUE; // #TODO: TESTING PURPORSES ##############################################
+            (* NOTE:
+               In the original system, the door locking command might be issued here.
+               For now, it is commented out due to testing state of the machine.
+               TODO: Restore door locking command when hardware is validated:
+                 GVL_Safety.bDoorLockCommand := TRUE;
+            *)
             GVL_Safety.bAirSupplyEnable := FALSE;
+
         ELSE
-            iState := 4; // Proceed to air supply check
+            iState := 4;   // Pass → proceed to air supply
         END_IF;
 
-    // State 4: Enable air supply if doors are locked
+
+    // ----------------------------------------------------------------------
+    // STATE 4 — AIR SUPPLY CHECK
+    // ----------------------------------------------------------------------
     4:
         IF bReset THEN
-            iState := 0; 
+            iState := 0;
+
         ELSIF NOT bAirEnabled THEN
-            GVL_Safety.SafetyOutputs.bAirPressureOK := TRUE; // #TODO: Implement actual air pressure measurement
+            // Temporary: assert air pressure OK (mock)
+            // TODO: Replace with actual analog pressure measurement
+            GVL_Safety.SafetyOutputs.bAirPressureOK := TRUE;
+
             GVL_Safety.bAirSupplyEnable := TRUE;
+
         ELSE
-            iState := 5; // Proceed to final state
+            // Air OK → move to final state
+            iState := 5;
         END_IF;
 
-    // State 5: All checks passed, allow transition to the next stage
+
+    // ----------------------------------------------------------------------
+    // STATE 5 — SUCCESS (ALL CHECKS PASSED)
+    // ----------------------------------------------------------------------
     5:
         IF bReset THEN
-            iState := 0; // Ensure reset can occur from here
-        ELSE           
+            iState := 0;
+        ELSE
             bInitOK := TRUE;
         END_IF;
 
-    // State 99: Error state
+
+    // ----------------------------------------------------------------------
+    // STATE 99 — ERROR STATE
+    // ----------------------------------------------------------------------
     99:
         IF bReset THEN
-            iState := 0; // Ensure reset from error state
+            iState := 0;
         ELSE
             bError := TRUE;
         END_IF;
 
-END_CASE;]]></ST>
+END_CASE]]></ST>
     </Implementation>
     <Method Name="Reset" Id="{2e04276d-176d-4cd9-a240-d7674b5986ea}">
-      <Declaration><![CDATA[METHOD Reset : BOOL
+      <Declaration><![CDATA[(*
+==============================================================================
+ Method: Reset
+------------------------------------------------------------------------------
+ Purpose:
+   Restore internal state to default so a new initialization sequence 
+   may be executed safely.
+
+ Behaviour:
+   - Clears bInitOK, bError.
+   - Returns to state 0.
+   - Does NOT automatically re-enable safety outputs (left to state machine).
+==============================================================================
+*)
+METHOD Reset : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[Reset := FALSE;
 
+// Clear flags
 bInitOK := FALSE;
 bError  := FALSE;
 
-iState	:= 0;  
+// Reset internal FSM
+iState := 0;
 
+// Method completes successfully
 Reset := TRUE;
-RETURN;]]></ST>
+RETURN;
+]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_InitChecks">
-      <LineId Id="738" Count="4" />
-      <LineId Id="744" Count="4" />
-      <LineId Id="862" Count="0" />
-      <LineId Id="749" Count="0" />
-      <LineId Id="861" Count="0" />
-      <LineId Id="860" Count="0" />
-      <LineId Id="857" Count="0" />
-      <LineId Id="752" Count="5" />
-      <LineId Id="768" Count="12" />
-      <LineId Id="791" Count="23" />
-      <LineId Id="825" Count="10" />
-      <LineId Id="846" Count="10" />
+      <LineId Id="937" Count="123" />
+      <LineId Id="1062" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_InitChecks.Reset">
-      <LineId Id="12" Count="0" />
-      <LineId Id="6" Count="2" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="13" Count="0" />
+      <LineId Id="35" Count="11" />
       <LineId Id="15" Count="0" />
     </LineIds>
   </POU>

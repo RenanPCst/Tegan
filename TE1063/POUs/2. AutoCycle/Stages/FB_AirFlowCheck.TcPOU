@@ -1,205 +1,312 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="FB_AirFlowCheck" Id="{a48de8b8-7051-4c87-a9e3-464f1e624d2c}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK FB_AirFlowCheck
+    <Declaration><![CDATA[(*
+==============================================================================
+ FB_AirFlowCheck
+------------------------------------------------------------------------------
+ Purpose:
+   - Validate that the main air supply / airflow is above a minimum threshold
+     and remains stable for a configured stabilization time.
+
+ Behaviour:
+   - Inputs:
+       iRawSensorValue   : Raw value from analog pressure sensor (16-bit).
+       iSensorID         : Which sensor type is in use (1 = Festo, 2 = SMC).
+       rPressureThreshold: Minimum acceptable pressure for "OK" condition.
+       tStabilizationTime: Time that pressure must stay above threshold.
+       bExecute          : Command to start the check.
+       bReset            : Asynchronous reset for this FB.
+
+   - Outputs:
+       bAirFlowOK        : TRUE when pressure ≥ threshold for the whole
+                           stabilization time.
+       bAirFlowError     : TRUE when pressure < threshold, or check fails.
+
+   - Internal steps (iState):
+       0: Reset / Idle
+       1: Read and scale sensor
+       2: Compare pressure against threshold
+       3: Wait for stabilization timer to elapse
+       4: Completed successfully
+      99: Error state
+
+   - HMI:
+       - Action ACT_HMIProgressBar updates:
+           GVL_HMI.HMIAnimation.sLoadTextAirFlow
+           GVL_HMI.HMIAnimation.rLoadBarAirFlow
+           GVL_HMI.HMIAnimation.eIconStateAirFlow
+
+ Usage:
+   - Call cyclically.
+   - Set bExecute := TRUE to start the airflow verification.
+   - Check bAirFlowOK / bAirFlowError.
+   - Use method Reset() to bring FB back to a clean state if needed.
+==============================================================================
+*)
+FUNCTION_BLOCK FB_AirFlowCheck
 VAR_INPUT
-    iRawSensorValue     : INT;   // Raw sensor value (16-bit)
-    iSensorID           : INT;   // Sensor ID (1 = Festo, 2 = SMC)
-    rPressureThreshold  : REAL;  // Minimum air pressure threshold
-    tStabilizationTime  : TIME;  // Required stabilization time
-    bExecute            : BOOL;  // Signal to start verification
-    bReset              : BOOL;  // Reset command
+    iRawSensorValue    : INT;   // Raw sensor value (16-bit)
+    iSensorID          : INT;   // Sensor ID (1 = Festo, 2 = SMC)
+    rPressureThreshold : REAL;  // Minimum air pressure threshold
+    tStabilizationTime : TIME;  // Required stabilization time above threshold
+    bExecute           : BOOL;  // Signal to start verification
+    bReset             : BOOL;  // Reset command
 END_VAR
 
 VAR_OUTPUT
-    bAirFlowOK      : BOOL;  // Indicates if the airflow is within acceptable limits
-    bAirFlowError   : BOOL;  // Indicates if there was an airflow failure
+    bAirFlowOK    : BOOL;       // TRUE if airflow is within acceptable limits
+    bAirFlowError : BOOL;       // TRUE if airflow check failed
 END_VAR
 
 VAR
-    iState               : INT := 0;  // State machine variable
-    TON_Stabilization    : TON;       // Stabilization timer
+    iState               : INT := 0;          // State machine variable
+    TON_Stabilization    : TON;              // Stabilization timer
     fbSensorScaling      : FB_SensorScaling; // Sensor scaling function block
-    rConvertedPressure   : REAL;      // Scaled pressure value
-    bTimerActive         : BOOL;      // Internal flag to keep the timer running
-	bProgressBarComplete : BOOL := FALSE;
+    rConvertedPressure   : REAL;             // Scaled pressure value
+    bTimerActive         : BOOL;             // Internal flag to keep the timer running
+    bProgressBarComplete : BOOL := FALSE;    // HMI progress bar completion latch
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// HMI Progress Bar Animation
+      <ST><![CDATA[// -----------------------------------------------------------------------------
+// HMI Progress Bar Animation for Air Flow / Init Sequence
+// -----------------------------------------------------------------------------
 ACT_HMIProgressBar();
 
+// -----------------------------------------------------------------------------
+// Air Flow Check State Machine
+// -----------------------------------------------------------------------------
 CASE iState OF
-   
-    0: // State 0: Reset all variables
-        bAirFlowOK     := FALSE;
-        bAirFlowError  := FALSE;
+
+    //=====================================================================
+    // 0) RESET / IDLE
+    //    - Clear outputs and internal flags.
+    //    - Wait for bExecute to start verification (if not resetting).
+    //=====================================================================
+    0:
+        bAirFlowOK          := FALSE;
+        bAirFlowError       := FALSE;
         TON_Stabilization(IN := FALSE);
-        rConvertedPressure := 0.0;
-        bTimerActive := FALSE;
+        rConvertedPressure  := 0.0;
+        bTimerActive        := FALSE;
+
         IF bExecute AND NOT bReset THEN
-			iState := 1; // Proceed to airflow verification
-		END_IF
-        
-    1: // State 1: Start verification
+            iState := 1;  // Proceed to airflow verification
+        END_IF
+
+
+    //=====================================================================
+    // 1) START VERIFICATION
+    //    - Optionally handle reset.
+    //    - Trigger sensor scaling (raw → engineering units).
+    //=====================================================================
+    1:
         IF bReset THEN
-            iState := 0; // Ensure reset if requested
+            iState := 0;  // Go back to reset state if requested
+
         ELSIF bExecute THEN
             // Convert the raw sensor value before checking airflow
             fbSensorScaling(
-                iRawValue  := iRawSensorValue,
-                iSensorID  := iSensorID,
-                rPressure  => rConvertedPressure
+                iRawValue := iRawSensorValue,
+                iSensorID := iSensorID,
+                rPressure => rConvertedPressure
             );
-            
-            iState := 2; // Proceed to pressure check
+
+            iState := 2;  // Proceed to pressure check
         END_IF;
 
-    2: // State 2: Check if airflow meets the threshold
+
+    //=====================================================================
+    // 2) PRESSURE CHECK
+    //    - Compare scaled pressure against threshold.
+    //      * If ≥ threshold → start stabilization timer.
+    //      * If < threshold → set error and go to error state.
+    //=====================================================================
+    2:
         IF bReset THEN
-            iState := 0; // Ensure reset if requested
+            iState := 0;  // Ensure reset if requested
+
         ELSIF rConvertedPressure >= rPressureThreshold THEN
-            bTimerActive := TRUE; // Activate timer
+            // Pressure is high enough, start stabilization timing
+            bTimerActive := TRUE;
             TON_Stabilization(IN := bTimerActive, PT := tStabilizationTime);
-            
-            iState := 3; // Proceed to stabilization time check
+
+            iState := 3;  // Proceed to stabilization time check
         ELSE
+            // Pressure below threshold → immediate error
             bTimerActive := FALSE;
             TON_Stabilization(IN := FALSE);
-            bAirFlowOK     := FALSE;
-            bAirFlowError  := TRUE;
-            
+
+            bAirFlowOK   := FALSE;
+            bAirFlowError:= TRUE;
+
             iState := 99; // Move to error state
         END_IF;
 
-    3: // State 3: Wait for stabilization time
+
+    //=====================================================================
+    // 3) STABILIZATION TIME
+    //    - Require pressure to stay ≥ threshold for the entire
+    //      tStabilizationTime.
+    //=====================================================================
+    3:
         IF bReset THEN
-            iState := 0; // Ensure reset if requested
+            iState := 0;  // Ensure reset if requested
+
         ELSIF TON_Stabilization.Q THEN
+            // Stabilization time elapsed with acceptable pressure
             bTimerActive := FALSE;
-            TON_Stabilization(IN := FALSE); // Stop the timer       
-            iState := 4; // Proceed to final state
+            TON_Stabilization(IN := FALSE);  // Stop the timer
+
+            iState := 4;  // Proceed to final state
         ELSE
-            TON_Stabilization(IN := bTimerActive, PT := tStabilizationTime); // Keep the timer running
+            // Keep timer running while we are waiting
+            TON_Stabilization(IN := bTimerActive, PT := tStabilizationTime);
         END_IF;
 
-    4: // State 4: Airflow verification completed
-        IF bReset THEN
-            iState := 0; // Ensure reset from final state
-        END_IF;
-		
-		bProgressBarComplete := FALSE;
-		bAirFlowOK     := TRUE;
-        bAirFlowError  := FALSE;
 
-    99:	// State 99: Error state
+    //=====================================================================
+    // 4) COMPLETED
+    //    - Airflow successfully verified.
+    //=====================================================================
+    4:
         IF bReset THEN
-            iState := 0; // Ensure reset from error state
+            iState := 0;  // Allow clean reset from final state
+        END_IF;
+
+        // Prepare progress bar for next cycle and set outputs
+        bProgressBarComplete := FALSE;
+        bAirFlowOK           := TRUE;
+        bAirFlowError        := FALSE;
+
+
+    //=====================================================================
+    // 99) ERROR STATE
+    //    - Airflow check failed (pressure below threshold).
+    //=====================================================================
+    99:
+        IF bReset THEN
+            iState := 0;  // Ensure reset from error state
         ELSE
             bAirFlowError := TRUE;
         END_IF;
 
-END_CASE;]]></ST>
+END_CASE]]></ST>
     </Implementation>
     <Action Name="ACT_HMIProgressBar" Id="{dfe2b571-d80f-4ac9-b57c-018f58b38b5d}">
       <Implementation>
-        <ST><![CDATA[// ------------------------------------------------------
-// HMI animation and progress bar for Init Sequence
-// ------------------------------------------------------
+        <ST><![CDATA[(*
+==============================================================================
+ ACT_HMIProgressBar
+------------------------------------------------------------------------------
+ Purpose:
+   - Provide a simple, state-based progress indication (0–100%) for the
+     airflow / init check in the HMI.
+   - Maps internal state iState to a fixed bar percentage and updates:
+        GVL_HMI.HMIAnimation.sLoadTextAirFlow
+        GVL_HMI.HMIAnimation.rLoadBarAirFlow
+        GVL_HMI.HMIAnimation.eIconStateAirFlow
 
-// Static text and default icon for this FB
+ Notes:
+   - This is a coarse progress indicator; it does not use real timing.
+==============================================================================
+*)
+
+// Static text and default icon while the check is in progress
 IF NOT bProgressBarComplete THEN
-	GVL_HMI.HMIAnimation.sLoadTextAirFlow  := 'Init Checks';
-	GVL_HMI.HMIAnimation.rLoadBarAirFlow   := 0.0;
-	GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.InProgress;
+    GVL_HMI.HMIAnimation.sLoadTextAirFlow  := 'Init Checks';
+    GVL_HMI.HMIAnimation.rLoadBarAirFlow   := 0.0;
+    GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.InProgress;
 END_IF
 
 // Map state machine to a simple 0–100% progress value
 CASE iState OF
-    0:  // Idle / reset
+    0:  // State 0: Idle / reset
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 0.0;
 
     1:  // State 1: Start verification
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 25.0;
 
-    2:  // State 2: Check if airflow meets the threshold
+    2:  // State 2: Threshold comparison
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 50.0;
 
-    3:  // State 3: Wait for stabilization time
+    3:  // State 3: Stabilization time
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 75.0;
 
     4:  // State 4: Airflow verification completed
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 100.0;
+
         // Mark icon as completed when initialization is OK
         GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Completed;
-		bProgressBarComplete := TRUE;
+        bProgressBarComplete := TRUE;
 
     99: // State 99: Error state
         GVL_HMI.HMIAnimation.rLoadBarAirFlow := 0.0;
-END_CASE;]]></ST>
+END_CASE
+]]></ST>
       </Implementation>
     </Action>
     <Method Name="Reset" Id="{30baa270-ea8d-4f12-9a2e-2e8589f294cb}">
-      <Declaration><![CDATA[METHOD Reset : BOOL
+      <Declaration><![CDATA[(*
+==============================================================================
+ Method: Reset
+------------------------------------------------------------------------------
+ Purpose:
+   - Reset FB_AirFlowCheck to a known idle state so that a new airflow check
+     can start cleanly.
+
+ Behaviour:
+   - Clears:
+       * Outputs: bAirFlowOK, bAirFlowError
+       * State machine: iState
+       * Internal flags: bTimerActive, bProgressBarComplete
+       * Internal values: rConvertedPressure
+       * Timer TON_Stabilization
+       * HMI icon state for AirFlow
+
+   - Returns:
+       Reset = TRUE  (always, after executing reset logic)
+==============================================================================
+*)
+METHOD Reset : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[Reset := FALSE;
 
-bAirFlowOK      := FALSE;
-bAirFlowError   := FALSE;
+// Clear public outputs
+bAirFlowOK    := FALSE;
+bAirFlowError := FALSE;
 
-iState          := 0;  
-
-rConvertedPressure   := 0.0;      
-bTimerActive         := FALSE;      
+// Reset internal state machine and values
+iState               := 0;
+rConvertedPressure   := 0.0;
+bTimerActive         := FALSE;
 bProgressBarComplete := FALSE;
 
+// Stop and reset stabilization timer
 TON_Stabilization(IN := FALSE);
 
+// Reset HMI icon to "Waiting" state
 GVL_HMI.HMIAnimation.eIconStateAirFlow := E_IconState.Waiting;
 
+// Indicate reset completed
 Reset := TRUE;
 RETURN;]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_AirFlowCheck">
-      <LineId Id="435" Count="0" />
-      <LineId Id="432" Count="0" />
-      <LineId Id="434" Count="0" />
-      <LineId Id="279" Count="8" />
-      <LineId Id="420" Count="0" />
-      <LineId Id="374" Count="0" />
-      <LineId Id="288" Count="0" />
-      <LineId Id="291" Count="12" />
-      <LineId Id="305" Count="16" />
-      <LineId Id="323" Count="6" />
-      <LineId Id="334" Count="3" />
-      <LineId Id="339" Count="4" />
-      <LineId Id="458" Count="0" />
-      <LineId Id="460" Count="1" />
-      <LineId Id="459" Count="0" />
-      <LineId Id="345" Count="7" />
+      <LineId Id="549" Count="122" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_AirFlowCheck.ACT_HMIProgressBar">
-      <LineId Id="2" Count="6" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="9" Count="15" />
-      <LineId Id="28" Count="8" />
+      <LineId Id="38" Count="15" />
+      <LineId Id="55" Count="31" />
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_AirFlowCheck.Reset">
-      <LineId Id="19" Count="0" />
-      <LineId Id="6" Count="2" />
-      <LineId Id="11" Count="1" />
-      <LineId Id="14" Count="2" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="17" Count="1" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="20" Count="0" />
+      <LineId Id="50" Count="19" />
       <LineId Id="22" Count="0" />
     </LineIds>
   </POU>
