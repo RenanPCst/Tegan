@@ -92,7 +92,7 @@ END_VAR
 //  - Blink only when: Safety is OK, all axes are stopped, and all resets done
 //  - Output: GVL_IO.gDigOutputs.bStartIndicator
 // ---------------------------------------------------------------------------
-IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone AND bAllResetsDone AND bCalibrationReset THEN 
+IF GVL_Safety.bSafetyEnable AND bStopAllMotorsDone (*AND bAllResetsDone AND bCalibrationReset*) THEN 
     fbBlinkStartButton( bEnable := TRUE, tPeriod := T#1S );
 ELSE
     fbBlinkStartButton( bEnable := FALSE, tPeriod := T#1S );
@@ -105,10 +105,10 @@ GVL_IO.gDigOutputs.bStartIndicator := fbBlinkStartButton.bBlink;
 //  - Only executed after ALL motors have been confirmed as stopped
 //  - This avoids resetting drives while they are still trying to stop
 // ---------------------------------------------------------------------------
-IF bAllMotorsStop THEN
+(*IF bAllMotorsStop THEN
     ACT_ResetErrorMotors();
 END_IF
-
+*)
 // ---------------------------------------------------------------------------
 // Stop all axes
 //  - This action:
@@ -122,7 +122,7 @@ ACT_StopAllMotors();
 IF bStopAllMotorsDone THEN
     bAllMotorsStop := TRUE;     // All axes are now in a "not moving" state
 END_IF
-
+(*
 // ---------------------------------------------------------------------------
 // Reset AutoCycle State Machine
 //  - PRG_StateMachine.Reset() should internally clear its own flags and states
@@ -149,7 +149,7 @@ END_IF
 //      * Calibration reset is ok(bCalibrationReset)
 // ---------------------------------------------------------------------------
 bAllResetsDone := bStopAllMotorsDone AND bAutoCycleReset AND bCalibrationReset;
-
+*)
 
 (* Before Tidy up from 05/12 
 //Start Button Blink ------------------------------------------------
@@ -466,10 +466,9 @@ END_FOR
 // ---------------------------------------------------------------------------
 
 // Check linear motors
-bAllMotorsStopped := TRUE;
-FOR iAxis := 1 TO 3 DO
-    bAllMotorsStopped := bAllMotorsStopped AND NOT bStopMotors[iAxis];
-END_FOR
+
+bAllMotorsStopped := NOT bStopMotors[1] AND NOT bStopMotors[2] AND NOT bStopMotors[3];
+
 
 // Check valves
 bAllValvesStopped := TRUE;
@@ -841,7 +840,8 @@ END_IF
       <LineId Id="455" Count="0" />
       <LineId Id="394" Count="4" />
       <LineId Id="458" Count="0" />
-      <LineId Id="399" Count="36" />
+      <LineId Id="399" Count="8" />
+      <LineId Id="409" Count="26" />
       <LineId Id="279" Count="1" />
       <LineId Id="23" Count="0" />
       <LineId Id="2" Count="13" />

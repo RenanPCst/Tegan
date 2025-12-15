@@ -323,6 +323,54 @@ END_VAR
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Method Name="Reset" Id="{3efe6967-dee9-4be0-8a3c-52ce8e0ef307}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+VAR
+    i : INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// FB_AllPumpsController.Reset()
+// ---------------------------------------------------------------------------
+// Logic reset only:
+// - Clears all pending requests (MoveBySpeed/Vol/Distance/Linear + StopAllPumps)
+// - Clears all internal "one-shot" arrays (move/stop flags)
+// - Clears cached helper arrays (distance, valve positions, path)
+// - Does NOT stop axes by itself (unless you decide to call StopAllPumps separately)
+// ============================================================================
+
+Reset := FALSE;
+
+// 1) Clear pending "request" latches
+bRequestMoveBySpeed     := FALSE;
+bRequestMoveByVol       := FALSE;
+bRequestMoveByDistance  := FALSE;
+bRequestMoveLinearPumps := FALSE;
+bRequestStopAllPumps    := FALSE;
+
+// 2) Clear internal command arrays
+FOR i := 1 TO 10 DO
+    bMoveVelocityPumps[i] := FALSE;
+    bMoveDistancePumps[i] := FALSE;
+    bMoveRelativePumps[i] := FALSE;
+    bMoveLinearPumps[i]   := FALSE;
+
+    bStopRotaryPump[i] := FALSE;
+    bStopLinearPump[i] := FALSE;
+
+    // Helper/cached arrays (optional but recommended)
+    rDistanceByVol[i] := 0.0;
+    aValvePosition[i] := 0;
+    aPumpPath[i]      := E_PumpPath.FillCalBox; // adjust if your enum has a proper "default"
+END_FOR
+
+Reset := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="StopAllPumps" Id="{34ba740c-c4d4-4e5f-b07e-c264940d9963}">
       <Declaration><![CDATA[METHOD StopAllPumps : BOOL
 VAR_INPUT
@@ -517,6 +565,10 @@ END_IF
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_AllPumpsController.MoveLinearPumps">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AllPumpsController.Reset">
+      <LineId Id="11" Count="35" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_AllPumpsController.StopAllPumps">

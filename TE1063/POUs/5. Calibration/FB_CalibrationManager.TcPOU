@@ -997,6 +997,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// 1) Stop motion/actuators best-effort (ignore returns; repeated calls are safe)
+(*
 IF (SIZEOF(GVL_Motion.aMotors) >= 3*SIZEOF(GVL_Motion.aMotors[1])) THEN
     GVL_Motion.aMotors[2].Stop();
     GVL_Motion.aMotors[3].Stop();
@@ -1013,6 +1014,7 @@ FOR iLocal := 1 TO 5 DO
     GVL_Motion.aValvesObj[iLocal].Stop();
 	GVL_Motion.aValvesObj[iLocal].Reset();
 END_FOR
+*)
 
 FOR iLocal := 1 TO 10 DO
 	GVL_HMI.aCalPumpResults[iLocal].eStatus := E_CalibrationStatus.IDLE;
@@ -1174,14 +1176,18 @@ Reset := TRUE;]]></ST>
       <LineId Id="102" Count="91" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
-      <LineId Id="189" Count="3" />
+      <LineId Id="189" Count="1" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="191" Count="1" />
       <LineId Id="284" Count="1" />
       <LineId Id="193" Count="3" />
       <LineId Id="286" Count="0" />
       <LineId Id="197" Count="3" />
       <LineId Id="287" Count="0" />
       <LineId Id="201" Count="0" />
-      <LineId Id="305" Count="1" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="306" Count="0" />
       <LineId Id="308" Count="0" />
       <LineId Id="304" Count="0" />
       <LineId Id="202" Count="6" />

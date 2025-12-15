@@ -337,6 +337,99 @@ GVL_Motion.aPumpsLinear[9].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[9], 
 GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10], bBwd := GVL_HMI.ManualMov.bPumpsLinearJogBwd[10]);]]></ST>
       </Implementation>
     </Action>
+    <Method Name="Reset" Id="{5a353881-7420-4224-ba50-72d1cb6a89c1}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	i : INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ============================================================================
+// PRG_ManualControl.Reset()
+// ---------------------------------------------------------------------------
+// Clears all manual commands, internal latches and FB states so that
+// no manual movement can "resume" automatically when re-entering Manual Mode.
+//
+// This is a LOGIC reset only:
+//  - Does NOT stop axes
+//  - Does NOT reset axes
+//  - Does NOT enable/disable drives
+//
+// Intended to be called from SystemInit.
+// ============================================================================
+
+// Default return
+Reset := FALSE;
+
+// ---------------------------------------------------------------------------
+// 1) Reset HMI Manual Motor Commands (M1..M3)
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 3 DO
+    GVL_HMI.aManualMotorsCmd[i].bRun      := FALSE;
+    GVL_HMI.aManualMotorsCmd[i].bStop     := FALSE;
+    GVL_HMI.aManualMotorsCmd[i].iPosition := 0;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 2) Reset HMI Manual Valve Commands (V1..V5)
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 5 DO
+    GVL_HMI.aManualValvesCmd[i].bMove      := FALSE;
+    GVL_HMI.aManualValvesCmd[i].bStop      := FALSE;
+    GVL_HMI.aManualValvesCmd[i].iTargetPos := 0;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 3) Reset HMI Manual Pump Commands (P1..P10)
+// ---------------------------------------------------------------------------
+FOR i := 1 TO 10 DO
+    GVL_HMI.aManualPumpsCmd[i].bActive    := FALSE;
+    GVL_HMI.aManualPumpsCmd[i].rSpeed     := 0.0;
+    GVL_HMI.aManualPumpsCmd[i].rVolume    := 0.0;
+    GVL_HMI.aManualPumpsCmd[i].iDistance  := 0;
+END_FOR
+
+GVL_HMI.bRunPumpsBySpeedBt    := FALSE;
+GVL_HMI.bRunPumpsByVolumeBt   := FALSE;
+GVL_HMI.bRunPumpsByDistanceBt := FALSE;
+GVL_HMI.bStopPumpsBt          := FALSE;
+
+// ---------------------------------------------------------------------------
+// 4) Reset internal pump control flags and arrays
+// ---------------------------------------------------------------------------
+bRunPumpsBySpeed    := FALSE;
+bRunPumpsByVolume   := FALSE;
+bRunPumpsByDistance := FALSE;
+
+FOR i := 1 TO 10 DO
+    aPumpsActivated[i] := FALSE;
+    aPumpsSpeed[i]     := 0.0;
+    aPumpsVolume[i]    := 0.0;
+    aPumpsDistance[i]  := 0;
+END_FOR
+
+// ---------------------------------------------------------------------------
+// 5) Reset interlock and auxiliary variables
+// ---------------------------------------------------------------------------
+bAllowMoveM2 := TRUE;
+iTargetPosM2 := 0;
+iM3Position  := 0;
+rActualPosM3 := 0.0;
+
+// ---------------------------------------------------------------------------
+// 6) Reset FBs with internal state
+// ---------------------------------------------------------------------------
+fbPumpsController.Reset();   // assumes your FB has a Reset() method
+
+// ---------------------------------------------------------------------------
+// 7) Finalize
+// ---------------------------------------------------------------------------
+Reset := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="PRG_ManualControl">
       <LineId Id="846" Count="72" />
       <LineId Id="1156" Count="1" />
@@ -410,6 +503,10 @@ GVL_Motion.aPumpsLinear[10].Jog(bFwd := GVL_HMI.ManualMov.bPumpsLinearJogFwd[10]
       <LineId Id="632" Count="0" />
       <LineId Id="652" Count="0" />
       <LineId Id="633" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_ManualControl.Reset">
+      <LineId Id="14" Count="80" />
+      <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

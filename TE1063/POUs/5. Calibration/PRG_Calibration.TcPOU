@@ -9,6 +9,8 @@ VAR
 	fbLeakTest : FB_LeakTest;
 	bLeakTestReset : BOOL := FALSE;
 	
+	bResetRequested : BOOL := FALSE;
+	
 	fbCalibrationManager : FB_CalibrationManager;
 	fbSaveCalReport		 : FB_SaveCalibrationReport;
 
@@ -793,7 +795,93 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[//Reset Calibration Flags
+        <ST><![CDATA[Reset := FALSE;
+
+// 1) First entry: clear everything ONCE
+IF NOT bResetRequested THEN
+    bResetRequested := TRUE;
+
+    // Reset Calibration Flags (tudo o que você já limpa hoje)
+    bLeakTestReset := FALSE;
+
+    bStartCalibrationPrev := FALSE;
+    bStartCalibrationEdge := FALSE;
+
+    bLinearPumpsEnabled      := FALSE;
+    bLinearPumpsHomed        := FALSE;
+    bLinearPumpsOldPosStart  := FALSE;
+    bLinearPumpsOldPosDone   := FALSE;
+
+    eStopState := E_StopState.Init;
+    ePState    := E_PState.Init;
+    GVL_Calibration.eLeakTestState := E_LeakTestState.IDLE;
+
+    bPressureUpExecute      := FALSE;
+    bPressureUpRequested    := FALSE;
+    bSealStages             := FALSE;
+    bPressureUpSolenoids    := FALSE;
+    bHoldPressureExecute    := FALSE;
+    bHoldPressureRequested  := FALSE;
+    bHoldPressureSolenoids  := FALSE;
+    bStopLeakTestExecute    := FALSE;
+    bStopLeakTestRequested  := FALSE;
+    bStopLeakTestSolenoids  := FALSE;
+
+    bMoveIssued := FALSE;
+    bNeedsSet   := FALSE;
+
+    tonSealTimeout(IN := FALSE);
+    tonResetMotorDelay(IN := FALSE);
+
+    bStopM1Motor  := FALSE;
+    bResetM1Motor := FALSE;
+
+    // arrays / buffers
+    FOR i := 1 TO 5 DO
+        bMoveValves[i] := FALSE;
+    END_FOR
+
+    FOR i := 1 TO 10 DO
+        aLinearPumpsEnable[i]      := FALSE;
+        aLinearPumpsHoming[i]      := FALSE;
+        bLinearPumpsOldPosMove[i]  := FALSE;
+        aLinearPumpsMoveDone[i]    := FALSE;
+    END_FOR
+
+    FOR i := 1 TO 100 DO
+        GVL_Calibration.stPumpCalibrationData[i].dDateTime := '';
+        GVL_Calibration.stPumpCalibrationData[i].iPumpNumber := 0;
+        GVL_Calibration.stPumpCalibrationData[i].iPumpRevs := 0;
+        GVL_Calibration.stPumpCalibrationData[i].rCriteria := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rDifferencePercent := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rDifferenceUl := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rGrossWeigth := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rNetVolume := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rNetWeigth := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rTareWeigth := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].rTargetVolume := 0.0;
+        GVL_Calibration.stPumpCalibrationData[i].sStep := '';
+    END_FOR
+
+    // IMPORTANT: Resets bResetDone here (1x)
+    bResetDone := FALSE;
+END_IF
+
+// 2) Run the manager reset until done
+IF NOT bResetDone THEN
+    bResetDone := fbCalibrationManager.Reset(bHard := TRUE);
+END_IF
+
+// 3) Finish (one pulse)
+IF bResetDone THEN
+    bResetRequested := FALSE;
+    bResetDone := FALSE; 
+    Reset := TRUE;
+    RETURN;
+END_IF
+
+(*
+//Reset Calibration Flags
 bLeakTestReset := FALSE;
 bResetDone := FALSE;
 
@@ -870,7 +958,7 @@ ELSE
 	Reset := TRUE;
 	RETURN;
 END_IF
-
+*)
 
 
 ]]></ST>
@@ -1252,6 +1340,9 @@ END_IF*)
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
+      <LineId Id="147" Count="83" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="140" Count="0" />
       <LineId Id="9" Count="1" />
       <LineId Id="133" Count="0" />
       <LineId Id="11" Count="0" />
