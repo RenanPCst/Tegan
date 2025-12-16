@@ -105,6 +105,8 @@ END_VAR]]></Declaration>
 // 1) HMI icon animation and load-bar handling (time estimation)
 ACT_LoadingIcon();
 
+ACT_CalScreenStatus();
+
 // 2) Leak-test state machine
 CASE eState OF
 
@@ -188,10 +190,10 @@ CASE eState OF
 
         // Read status of each valve actuator
         stStatus[1] := GVL_Motion.aValvesObj[1].GetStatus();
-        stStatus[2] := GVL_Motion.aValvesObj[1].GetStatus();
-        stStatus[3] := GVL_Motion.aValvesObj[1].GetStatus();
-        stStatus[4] := GVL_Motion.aValvesObj[1].GetStatus();
-        stStatus[5] := GVL_Motion.aValvesObj[1].GetStatus();
+        stStatus[2] := GVL_Motion.aValvesObj[2].GetStatus();
+        stStatus[3] := GVL_Motion.aValvesObj[3].GetStatus();
+        stStatus[4] := GVL_Motion.aValvesObj[4].GetStatus();
+        stStatus[5] := GVL_Motion.aValvesObj[5].GetStatus();
 
         // All valves in position 6 → continue
         IF    aValveMoveDone[1]
@@ -203,7 +205,7 @@ CASE eState OF
             bMoveValves := FALSE;
 
             // Decide whether we must re-seal stages (M1 position check)
-            IF GVL_Motion.M1Motor.rActualPos <= (GVL_Settings.stMachineParam.aM1Position[2] + 1) THEN
+            IF GVL_Motion.M1Motor.rActualPos <= (GVL_Settings.stMachineParam.aM1Position[2] + 0.5) THEN
                 // Already at or very close to sealing position, set solenoids
                 eState := SET_SOLENOIDS;
             ELSE
@@ -409,6 +411,37 @@ CASE eState OF
 
 END_CASE;]]></ST>
     </Implementation>
+    <Action Name="ACT_CalScreenStatus" Id="{de6dfea6-5ac4-4542-abcb-b531fb141ff7}">
+      <Implementation>
+        <ST><![CDATA[IF GVL_HMI.bCalLeakTestButton THEN
+	CASE eState OF
+	
+		POSITION_VALVES:
+			GVL_HMI.sCalLeakTestStatus := 'Idle';
+			GVL_HMI.iCalLeakTestState  := 1;
+		
+		PRESSURIZE:
+			GVL_HMI.sCalLeakTestStatus := 'Pressuring up';
+			GVL_HMI.iCalLeakTestState  := 1;
+		
+		MONITOR:
+			GVL_HMI.sCalLeakTestStatus := 'Monitoring';
+			GVL_HMI.iCalLeakTestState  := 1;
+		
+		DONE:
+			GVL_HMI.sCalLeakTestStatus := 'Passed';
+			GVL_HMI.iCalLeakTestState  := 2;
+		
+		ERROR:
+			GVL_HMI.sCalLeakTestStatus := 'Failed';
+			GVL_HMI.iCalLeakTestState  := 3;
+			
+	END_CASE	
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="ACT_LoadingIcon" Id="{962ba985-7ef5-422c-a6af-d14d915a472d}">
       <Implementation>
         <ST><![CDATA[(*
@@ -551,8 +584,18 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="FB_LeakTest">
-      <LineId Id="1510" Count="308" />
+      <LineId Id="1510" Count="5" />
+      <LineId Id="1918" Count="0" />
+      <LineId Id="1917" Count="0" />
+      <LineId Id="1516" Count="302" />
       <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_LeakTest.ACT_CalScreenStatus">
+      <LineId Id="31" Count="0" />
+      <LineId Id="35" Count="21" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="30" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.ACT_LoadingIcon">
       <LineId Id="81" Count="60" />

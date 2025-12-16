@@ -35,6 +35,7 @@ VAR
 	bStopLeakTestExecute 	: BOOL := FALSE;
     bStopLeakTestRequested 	: BOOL := FALSE;
 	bStopLeakTestSolenoids 	: BOOL := FALSE;
+	tonLeakTestStateDelay	: TON;
 	
 	
 	bMoveIssued     : BOOL := FALSE;
@@ -102,6 +103,13 @@ IF fbLeakTest.bLeakTestError THEN
 	IF NOT bLeakTestReset THEN
 		bLeakTestReset := fbLeakTest.Reset();
 	END_IF
+END_IF
+
+tonLeakTestStateDelay( IN := (GVL_HMI.bCalLeakTestPass AND NOT GVL_HMI.bCalLeakTestButton), PT := T#10S);
+
+IF tonLeakTestStateDelay.Q THEN
+	GVL_HMI.sCalLeakTestStatus := 'Idle';
+	GVL_HMI.iCalLeakTestState  := 1;
 END_IF
 
 // HMI Button responsible for pressurize the system
@@ -1113,6 +1121,13 @@ END_IF*)
       <LineId Id="48" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="26" Count="0" />
+      <LineId Id="1174" Count="0" />
+      <LineId Id="1173" Count="0" />
+      <LineId Id="1169" Count="0" />
+      <LineId Id="1168" Count="0" />
+      <LineId Id="1170" Count="0" />
+      <LineId Id="1175" Count="0" />
+      <LineId Id="1171" Count="0" />
       <LineId Id="534" Count="0" />
       <LineId Id="527" Count="1" />
       <LineId Id="939" Count="1" />

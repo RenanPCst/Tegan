@@ -9022,6 +9022,91 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bAutoCycleCancelCmd": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAutoCycleCancelCmd",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI \"Cancel Run\" button"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bAutoCycleContinueCmd": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAutoCycleContinueCmd",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI \"Continue\" button"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bAutoCycleHoldActive": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAutoCycleHoldActive",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "TRUE while StateMachine is in PAUSE_STATE"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bAutoCycleHoldPopup": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAutoCycleHoldPopup",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "HMI shows the \"Cancel / Continue\" popup"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bAutoCycleHoldReq": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bAutoCycleHoldReq",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "1st STOP inside AUTO_CYCLE"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bCalBoxFixed": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -9954,6 +10039,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.iCalLeakTestState": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::iCalLeakTestState",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/USINT"
+                    },
+                    {
+                        "comment": "Automatic sealing test image state LED on calibration screen"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.iCalMoveM1MotorPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10151,6 +10253,24 @@
                     {
                         "comment": "Comment inserted by user before going to autocycle",
                         "maxLength": 256
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.sCalLeakTestStatus": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::sCalLeakTestStatus",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Automatic sealing test status text on calibration screen",
+                        "maxLength": 32
                     },
                     {
                         "$ref": "tchmi:general#/definitions/String"
@@ -15362,6 +15482,11 @@
                 "PLC1.GVL_HMI.aSolventAndTimesRows": 3,
                 "PLC1.GVL_HMI.aVolumeRows": 3,
                 "PLC1.GVL_HMI.bAbortCalibrationBT": 3,
+                "PLC1.GVL_HMI.bAutoCycleCancelCmd": 3,
+                "PLC1.GVL_HMI.bAutoCycleContinueCmd": 3,
+                "PLC1.GVL_HMI.bAutoCycleHoldActive": 3,
+                "PLC1.GVL_HMI.bAutoCycleHoldPopup": 3,
+                "PLC1.GVL_HMI.bAutoCycleHoldReq": 3,
                 "PLC1.GVL_HMI.bBtStartCycle": 3,
                 "PLC1.GVL_HMI.bBtStopCycle": 3,
                 "PLC1.GVL_HMI.bCalBoxFixed": 3,
@@ -15434,6 +15559,7 @@
                 "PLC1.GVL_HMI.bStopPumpsBt": 3,
                 "PLC1.GVL_HMI.bSystemReady_ReqAutoCycle": 3,
                 "PLC1.GVL_HMI.eMachineMode": 3,
+                "PLC1.GVL_HMI.iCalLeakTestState": 3,
                 "PLC1.GVL_HMI.iCalMoveM1MotorPosition": 3,
                 "PLC1.GVL_HMI.iCalMoveValvesPosition": 3,
                 "PLC1.GVL_HMI.iDelayStart": 3,
@@ -15455,6 +15581,7 @@
                 "PLC1.GVL_HMI.sActivatedRecipeHomeNaming": 3,
                 "PLC1.GVL_HMI.sActualUserName": 3,
                 "PLC1.GVL_HMI.sAutoCycleComment": 3,
+                "PLC1.GVL_HMI.sCalLeakTestStatus": 3,
                 "PLC1.GVL_HMI.sCalibProgressLabel": 3,
                 "PLC1.GVL_HMI.sCountdownText": 3,
                 "PLC1.GVL_HMI.sDateAndTimeEventTriggered": 3,

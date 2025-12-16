@@ -196,88 +196,76 @@
 </div>
 <div id="TcHmiTextblock_142" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="30" data-tchmi-height-unit="px" data-tchmi-left="155" data-tchmi-left-unit="px" data-tchmi-text="Approx. Pressure (psi)" data-tchmi-top="450" data-tchmi-top-unit="px" data-tchmi-width="160" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-text-font-weight="Normal" data-tchmi-zindex="1">
 </div>
-<div id="TcHmiButton_5" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Run Automatic Test" data-tchmi-top="72" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
+<div id="TcHmiButton_LeakTestBt" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Run Automatic Test" data-tchmi-top="67" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
+
+
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
-    "event": "TcHmiButton_5.onPressed",
+    "event": "TcHmiButton_LeakTestBt.onPressed",
     "actions": [
       {
-        "objectType": "Condition",
+        "objectType": "JavaScript",
         "active": true,
-        "parts": [
-          {
-            "if": [
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "symbolExpression": "%s%PLC1.GVL_HMI.bCalPressureUpSystemBt%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "value": false
-                },
-                "compareOperator": "==",
-                "logic": null
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "symbolExpression": "%s%PLC1.GVL_HMI.bCalHoldSysPressureBt%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "value": false
-                },
-                "compareOperator": "==",
-                "logic": "AND"
-              },
-              {
-                "compare1": {
-                  "objectType": "Symbol",
-                  "valueType": "tchmi:general#/definitions/String",
-                  "symbolExpression": "%s%PLC1.GVL_HMI.bCalStopLeakTestBt%/s%"
-                },
-                "compare2": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "value": false
-                },
-                "compareOperator": "==",
-                "logic": "AND"
-              }
-            ],
-            "then": [
-              {
-                "objectType": "WriteToSymbol",
-                "active": true,
-                "symbolExpression": "%s%PLC1.GVL_HMI.bCalLeakTestButton%/s%",
-                "value": {
-                  "objectType": "StaticValue",
-                  "valueType": "tchmi:general#/definitions/BOOL",
-                  "value": true
-                },
-                "asyncWait": true
-              }
-            ]
-          },
-          {
-            "else": []
-          }
+        "sourceLines": [
+          "(function () {",
+          "    const SYM_ACTUAL_POS = \"%s%PLC1.GVL_Motion.M1Motor.rActualPos%/s%\";",
+          "    const SYM_SEAL_POS   = \"%s%PLC1.GVL_Settings.stMachineParam.aM1Position[1]%/s%\"; // conforme você pediu",
+          "    const SYM_TRIGGER    = \"%s%PLC1.GVL_HMI.bCalLeakTestButton%/s%\";",
+          "",
+          "    const TOL_MM = 1.0;",
+          "",
+          "    function readSymbol(sym) {",
+          "        return new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.readEx2(sym, function (data) {",
+          "                if (data.error === TcHmi.Errors.NONE) resolve(data.value);",
+          "                else reject(data.error);",
+          "            });",
+          "        });",
+          "    }",
+          "",
+          "    function writeSymbol(sym, value) {",
+          "        return new Promise((resolve, reject) => {",
+          "            TcHmi.Symbol.writeEx2(sym, value, function (data) {",
+          "                if (data.error === TcHmi.Errors.NONE) resolve(true);",
+          "                else reject(data.error);",
+          "            });",
+          "        });",
+          "    }",
+          "",
+          "    // Exponha essa função para o Event Handler do botão",
+          "    window.LeakTest_Request = async function () {",
+          "        try {",
+          "            const actualPos = await readSymbol(SYM_ACTUAL_POS);",
+          "            const sealPos   = await readSymbol(SYM_SEAL_POS);",
+          "",
+          "            // Compare com tolerância ±1mm",
+          "            if (Math.abs(actualPos - sealPos) > TOL_MM) {",
+          "                alert(\"Stage Collection Motor needs to be on seal position!\");",
+          "                return;",
+          "            }",
+          "",
+          "            // Interlock OK -> dispara trigger no PLC",
+          "            await writeSymbol(SYM_TRIGGER, true);",
+          "",
+          "        } catch (err) {",
+          "            // fallback simples",
+          "            alert(\"Leak Test: unable to read/write PLC symbols. Error: \" + err);",
+          "        }",
+          "    };",
+          "})();"
         ],
-        "asyncWait": true
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
 ]
 </script>
 </div>
-<div id="TcHmiButton_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Pressurize System" data-tchmi-top="160" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
+<div id="TcHmiButton_6" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Pressurize System" data-tchmi-top="152" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
@@ -355,7 +343,7 @@
 ]
 </script>
 </div>
-<div id="TcHmiButton_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Hold System Pressure" data-tchmi-top="254" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
+<div id="TcHmiButton_7" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Hold System Pressure" data-tchmi-top="237" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
@@ -430,7 +418,7 @@
 ]
 </script>
 </div>
-<div id="TcHmiButton_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Stop" data-tchmi-top="345" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
+<div id="TcHmiButton_8" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="60" data-tchmi-height-unit="px" data-tchmi-left="54" data-tchmi-left-unit="px" data-tchmi-text="Stop" data-tchmi-top="323" data-tchmi-top-unit="px" data-tchmi-width="250" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-font-size="16" data-tchmi-zindex="1" data-tchmi-text-font-weight="Bold">
 
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
@@ -8900,6 +8888,29 @@ Weight (g)" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="80" d
         "asyncWait": true
       }
     ]
+  }
+]
+</script>
+</div>
+<div id="TcHmiTextblock_1044" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="44" data-tchmi-left-unit="px" data-tchmi-text="Leak Test status:" data-tchmi-top="411" data-tchmi-top-unit="px" data-tchmi-width="126" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-text-font-weight="Normal" data-tchmi-zindex="1">
+</div>
+<div id="TcHmiTextblock_1045" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiTextblock" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="214" data-tchmi-left-unit="px" data-tchmi-text="%s%PLC1.GVL_HMI.sCalLeakTestStatus%/s%" data-tchmi-top="411" data-tchmi-top-unit="px" data-tchmi-width="101" data-tchmi-width-unit="px" data-tchmi-word-wrap="true" data-tchmi-text-vertical-alignment="Center" data-tchmi-text-horizontal-alignment="Center" data-tchmi-text-font-size="18" data-tchmi-text-font-weight="Normal" data-tchmi-zindex="1">
+</div>
+<div id="TcHmiStateImage_1" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiStateImage" data-tchmi-height="26" data-tchmi-height-unit="px" data-tchmi-left="181" data-tchmi-left-unit="px" data-tchmi-top="411" data-tchmi-top-unit="px" data-tchmi-width="26" data-tchmi-width-unit="px" data-tchmi-fallback-image="Resources/Custom/Images/Controls/GrayIndicator.svg" data-tchmi-state="%s%PLC1.GVL_HMI.iCalLeakTestState%/s%">
+
+<script data-tchmi-target-attribute="data-tchmi-state-list" type="application/json">
+[
+  {
+    "state": "1",
+    "stateIcon": "Resources/Custom/Images/Controls/GrayIndicator.svg"
+  },
+  {
+    "state": "2",
+    "stateIcon": "Resources/Custom/Images/Controls/GreenIndicator.svg"
+  },
+  {
+    "state": "3",
+    "stateIcon": "Resources/Custom/Images/Controls/RedIndicator.svg"
   }
 ]
 </script>
