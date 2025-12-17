@@ -183,7 +183,7 @@ CASE eStep OF
 
 		IF bWeightReady THEN
 			
-			bBoxWeightOK := (rScaleWeight >= 900.0) AND (rScaleWeight <= 1300.0);
+			bBoxWeightOK := (rScaleWeight >= 1100.0) AND (rScaleWeight <= 1300.0);
 			
 			IF tonStepTimeout.Q THEN
 				//GVL_HMI.aAlarmFlags[1] := TRUE; // Timeout during motor positioning
@@ -804,7 +804,7 @@ CASE eStep OF
     // No timeouts are running in this state.
 
     bBusy   := TRUE;
-    sStatus := 'Calibration box weight out of range. Please fill to 1100–1300g and press Continue.';
+    sStatus := 'Calibration box requires attention. Please fix and press continue.';
 
     // Continue pressed on HMI?
     IF GVL_HMI.bCalBoxFixed THEN
@@ -1104,6 +1104,7 @@ END_IF
 bBusy   := FALSE;
 bDone   := FALSE;
 sStatus := 'Idle (reset)';
+GVL_HMI.bAbortCalibrationBT := FALSE;
 eStep   := E_CalibStep.IDLE;
 
 // 7) Idempotent return
@@ -1204,7 +1205,9 @@ Reset := TRUE;]]></ST>
       <LineId Id="334" Count="0" />
       <LineId Id="337" Count="4" />
       <LineId Id="330" Count="0" />
-      <LineId Id="238" Count="30" />
+      <LineId Id="238" Count="27" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="266" Count="2" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>

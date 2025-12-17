@@ -65,7 +65,7 @@ VAR
     bPressureInput  : BOOL := FALSE;        // Internal enable for monitoring TON
     tStartTime      : TIME;                 // Reserved (not used in current implementation)
     rScaledPressure : REAL;                 // Raw scaled pressure in PSI
-    eState          : (IDLE, POSITION_VALVES, SET_SOLENOIDS, SEAL_STAGES, PRESSURIZE, CLOSE_AIR, MONITOR, DONE, ERROR); //Implicit_Enum__FB_LeakTest__eState; // Internal state machine
+    eState          : (IDLE, POSITION_VALVES, SET_SOLENOIDS, SEAL_STAGES, PRESSURIZE, CLOSE_AIR, MONITOR, RELEASE_AIR, DONE, ERROR); //Implicit_Enum__FB_LeakTest__eState; // Internal state machine
 
     bMoveValves        : BOOL := FALSE;     // Internal "valve move" flag
     bPressureTime      : BOOL := FALSE;     // Enables pressurization TON
@@ -73,7 +73,8 @@ VAR
     bMoveM1MotorFast   : BOOL := FALSE;     // Fast movement part of M1 sealing (coarse position)
     bMoveM1MotorSlow   : BOOL := FALSE;     // Slow, precise movement of M1 to sealing position
     bM1MoveStartDelay  : BOOL := FALSE;     // Delay between fast and slow M1 movements
-
+	bLeakTestPassed	   : BOOL := FALSE;     // Leak test passed flag
+	
     rClosedSystemPressure : REAL := 0.0;    // Pressure threshold limit (from settings)
 
     // Timers
@@ -359,12 +360,14 @@ CASE eState OF
             IF (rScaledPressure >= rClosedSystemPressure) AND tonMonitoring.Q THEN
                 // Pressure stayed above limit during full monitoring window
                 bPressureTaken := FALSE;
-                eState         := DONE;
+				bLeakTestPassed := TRUE;
+                eState         := RELEASE_AIR;
 
             ELSIF rScaledPressure < rClosedSystemPressure THEN
                 // Pressure dropped below limit before timer expired
                 bPressureTaken := FALSE;
-                eState         := ERROR;
+				bLeakTestPassed := FALSE;
+                eState         := RELEASE_AIR;
             END_IF
         END_IF
 
@@ -372,6 +375,21 @@ CASE eState OF
         GVL_HMI.rCalLeakTestPressure := rScaledPressure;
         rSystemPressure              := rScaledPressure;
 
+		
+	 //=====================================================================
+    // RELEASE_AIR
+    //  - Release the air inside the system.
+    //=====================================================================
+    RELEASE_AIR:
+		// Set the solenoids to "Idle" configuration
+        IF GVL_IO.gSetSolenoidControl.Idle() THEN
+            IF bLeakTestPassed THEN
+				eState        := DONE;
+			ELSE
+				eState        := ERROR;
+			END_IF
+        END_IF
+		
 
     //=====================================================================
     // DONE
@@ -379,11 +397,13 @@ CASE eState OF
     //  - Wait for bExecute to go FALSE to return to IDLE for next run.
     //=====================================================================
     DONE:
-        // HMI final state for successful leak test
-        GVL_HMI.HMIAnimation.rLoadBarLeakTest   := 100.0;
-        GVL_HMI.HMIAnimation.sLoadTextLeakTest  := 'Completed';
-        GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Completed;
-
+		// HMI final state for successful leak test if on auto cycle state
+		IF (GVL_HMI.eMachineMode = E_MachineMode.AUTO_CYCLE) THEN
+			GVL_HMI.HMIAnimation.rLoadBarLeakTest   := 100.0;
+			GVL_HMI.HMIAnimation.sLoadTextLeakTest  := 'Completed';
+			GVL_HMI.HMIAnimation.eIconStateLeakTest := E_IconState.Completed;
+		END_IF
+        
         bLeakTestDone := TRUE;
 
         // Wait for start command to be released before going back to IDLE
@@ -587,7 +607,29 @@ END_IF
       <LineId Id="1510" Count="5" />
       <LineId Id="1918" Count="0" />
       <LineId Id="1917" Count="0" />
-      <LineId Id="1516" Count="302" />
+      <LineId Id="1516" Count="252" />
+      <LineId Id="2054" Count="0" />
+      <LineId Id="1769" Count="4" />
+      <LineId Id="2055" Count="0" />
+      <LineId Id="1774" Count="6" />
+      <LineId Id="2041" Count="0" />
+      <LineId Id="1781" Count="0" />
+      <LineId Id="2043" Count="2" />
+      <LineId Id="2047" Count="0" />
+      <LineId Id="2042" Count="0" />
+      <LineId Id="2049" Count="2" />
+      <LineId Id="2059" Count="0" />
+      <LineId Id="2061" Count="1" />
+      <LineId Id="2060" Count="0" />
+      <LineId Id="2048" Count="0" />
+      <LineId Id="2056" Count="0" />
+      <LineId Id="1782" Count="6" />
+      <LineId Id="2068" Count="0" />
+      <LineId Id="2017" Count="0" />
+      <LineId Id="2066" Count="1" />
+      <LineId Id="2063" Count="1" />
+      <LineId Id="2039" Count="0" />
+      <LineId Id="1794" Count="24" />
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_LeakTest.ACT_CalScreenStatus">

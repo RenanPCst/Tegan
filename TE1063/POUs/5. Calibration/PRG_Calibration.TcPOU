@@ -105,7 +105,7 @@ IF fbLeakTest.bLeakTestError THEN
 	END_IF
 END_IF
 
-tonLeakTestStateDelay( IN := (GVL_HMI.bCalLeakTestPass AND NOT GVL_HMI.bCalLeakTestButton), PT := T#10S);
+tonLeakTestStateDelay( IN := ((GVL_HMI.bCalLeakTestError OR GVL_HMI.bCalLeakTestPass) AND NOT GVL_HMI.bCalLeakTestButton), PT := T#10S);
 
 IF tonLeakTestStateDelay.Q THEN
 	GVL_HMI.sCalLeakTestStatus := 'Idle';
@@ -843,6 +843,8 @@ IF NOT bResetRequested THEN
 
     bStopM1Motor  := FALSE;
     bResetM1Motor := FALSE;
+	
+	GVL_Calibration.sGlobalStatus := 'Idle';
 
     // arrays / buffers
     FOR i := 1 TO 5 DO
@@ -1355,7 +1357,9 @@ END_IF*)
       <LineId Id="6" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.Reset">
-      <LineId Id="147" Count="83" />
+      <LineId Id="147" Count="39" />
+      <LineId Id="234" Count="1" />
+      <LineId Id="187" Count="43" />
       <LineId Id="141" Count="0" />
       <LineId Id="140" Count="0" />
       <LineId Id="9" Count="1" />

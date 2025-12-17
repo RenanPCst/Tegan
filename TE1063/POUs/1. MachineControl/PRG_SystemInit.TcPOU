@@ -46,10 +46,11 @@ VAR
 	bMoveMotorsRequest	: ARRAY[1..3] OF BOOL;
 	bMoveMotorDone		: ARRAY[1..3] OF BOOL;
 	
-	bCalibrationReset	: BOOL := FALSE;
-	bManualModeReset	: BOOL := FALSE;
-	bAutoCycleReset		: BOOL := FALSE;
-	bAllLogicResetDone	: BOOL := FALSE;
+	bCalibrationReset	  : BOOL := FALSE;
+	bManualModeReset	  : BOOL := FALSE;
+	bAutoCycleReset		  : BOOL := FALSE;
+	bAllLogicResetDone	  : BOOL := FALSE;
+	bInitLogicLatchesDone : BOOL := FALSE;
 	
 	tonResetDelay	: ton;
 	tonEnableDelay	: ton;
@@ -92,14 +93,16 @@ tonEnableDelay(
 );
 
 // ---------------------------------------------------------------------------
-// 0) Step 0 - Reset all logic PRGs and FBs
+// 0) Step 0 - Reset all logic Flags, PRGs and FBs
 // ---------------------------------------------------------------------------
-IF NOT bAllLogicResetDone THEN ACT_LogicResets(); END_IF
+IF NOT bInitLogicLatchesDone THEN ACT_ResetCommandFlags(); END_IF
+
+IF NOT bAllLogicResetDone AND bInitLogicLatchesDone THEN ACT_LogicResets(); END_IF
 
 // ---------------------------------------------------------------------------
 // 1) Step 1 - Reset all axes (motors, valves, linear and rotary pumps)
 // ---------------------------------------------------------------------------
-IF NOT bAllResetDone AND bAllLogicResetDone AND tonResetDelay.Q THEN
+IF NOT bAllResetDone AND bAllLogicResetDone AND bInitLogicLatchesDone AND tonResetDelay.Q THEN
     ACT_ResetMotors();   // Uses bResetCheck[1..28], tonResetTimeOut, etc.
 END_IF
 
@@ -664,6 +667,107 @@ END_IF
 ]]></ST>
       </Implementation>
     </Action>
+    <Action Name="ACT_ResetCommandFlags" Id="{b3a2d6e7-e76c-4702-9ecb-55034b8fa2f1}">
+      <Implementation>
+        <ST><![CDATA[(*
+    Action: ACT_ResetCommandFlags
+    Purpose:
+        Clear all HMI command flags and internal latched commands that might remain TRUE
+        after an abnormal interruption (STOP/Abort), preventing unintended auto-start
+        when re-entering a mode.
+
+    Where to call:
+        - PRG_StoppedState (first scan / when entering STOPPED)
+        - PRG_SystemInit (first scan / at init start)
+
+    Notes:
+        - This action is safe to call repeatedly (idempotent).
+        - Adjust array bounds if your project differs.
+*)
+
+// ============================================================
+// 1) Calibration - HMI triggers (buttons / commands)
+// ============================================================
+GVL_HMI.bStartCalibrationBt        := FALSE;
+
+GVL_HMI.bCalLeakTestButton         := FALSE;
+GVL_HMI.bCalPressureUpSystemBt     := FALSE;
+GVL_HMI.bCalHoldSysPressureBt      := FALSE;
+GVL_HMI.bCalStopLeakTestBt         := FALSE;
+
+GVL_HMI.bCalLinearPumpsEnableBt    := FALSE;
+GVL_HMI.bCalLinearPumpsHomeBt      := FALSE;
+GVL_HMI.bCalLinearPumpsMoveBt      := FALSE;
+GVL_HMI.bCalLinearPumpsStopBt      := FALSE;
+GVL_HMI.bCalLinearPumpsDirty       := FALSE;
+
+GVL_HMI.bCalMoveValves             := FALSE;
+GVL_HMI.bCalMoveM1Motor            := FALSE;
+
+// Scale / CalBox popups / acknowledge flags
+GVL_HMI.bScaleNeedsAtention        := FALSE;
+GVL_HMI.bScaleFixed                := FALSE;
+GVL_HMI.bCalBoxNeedsAttention      := FALSE;
+GVL_HMI.bCalBoxFixed               := FALSE;
+
+
+// ============================================================
+// 2) Calibration - internal latches (must be cleared on STOP/Init)
+// ============================================================
+GVL_Calibration.bStartCalibration      := FALSE;
+GVL_Calibration.bAbortCalibration      := FALSE;
+GVL_Calibration.bStartCreationCalJson  := FALSE;
+
+
+// ============================================================
+// 3) Manual Mode - motors / valves / pumps command arrays
+// ============================================================
+
+// Manual motors (adjust bounds if needed)
+FOR i := 1 TO 3 DO
+    GVL_HMI.aManualMotorsCmd[i].bRun  := FALSE;
+    GVL_HMI.aManualMotorsCmd[i].bStop := FALSE;
+END_FOR
+
+// Manual valves
+FOR i := 1 TO 5 DO
+    GVL_HMI.aManualValvesCmd[i].bMove := FALSE;
+    GVL_HMI.aManualValvesCmd[i].bStop := FALSE;
+END_FOR
+
+// Global pump buttons
+GVL_HMI.bRunPumpsBySpeedBt  := FALSE;
+GVL_HMI.bRunPumpsByVolumeBt := FALSE;
+
+// Per-pump commands
+FOR i := 1 TO 10 DO
+    GVL_HMI.aManualPumpsCmd[i].bRunBySpeed  := FALSE;
+    GVL_HMI.aManualPumpsCmd[i].bRunByVolume := FALSE;
+    GVL_HMI.aManualPumpsCmd[i].bStop        := FALSE;
+    GVL_HMI.aManualPumpsCmd[i].bActive      := FALSE;
+END_FOR
+
+
+// ============================================================
+// 4) AutoCycle - popup/start/hold commands
+// ============================================================
+GVL_HMI.bShowAutoCyclePopup     	:= FALSE;
+GVL_HMI.bStartAutoCycleButton   	:= FALSE;
+GVL_HMI.bSystemReady_ReqAutoCycle 	:= FALSE;
+
+GVL_HMI.bAutoCycleHoldReq       	:= FALSE;
+GVL_HMI.bAutoCycleHoldActive    	:= FALSE;
+GVL_HMI.bAutoCycleHoldPopup     	:= FALSE;
+GVL_HMI.bAutoCycleContinueCmd   	:= FALSE;
+GVL_HMI.bAutoCycleCancelCmd     	:= FALSE;
+
+
+// ============================================================
+// 5) Finishing
+// ============================================================
+bInitLogicLatchesDone := TRUE; ]]></ST>
+      </Implementation>
+    </Action>
     <Action Name="ACT_ResetMotors" Id="{827879fc-000a-4b08-b7c6-194c29783c28}">
       <Implementation>
         <ST><![CDATA[// ============================================================================
@@ -881,6 +985,7 @@ bCalibrationReset 		:= FALSE;
 bManualModeReset 		:= FALSE;
 bAutoCycleReset	 		:= FALSE;
 bAllLogicResetDone 		:= FALSE;
+bInitLogicLatchesDone	:= FALSE;
 
 // ---------------------------------------------------------------------------
 // 2) Per-device reset tracking array (1..28)
@@ -978,8 +1083,11 @@ Reset := TRUE;
       <LineId Id="2583" Count="0" />
       <LineId Id="2578" Count="1" />
       <LineId Id="2582" Count="0" />
-      <LineId Id="2580" Count="0" />
-      <LineId Id="2414" Count="21" />
+      <LineId Id="2645" Count="0" />
+      <LineId Id="2649" Count="0" />
+      <LineId Id="2414" Count="0" />
+      <LineId Id="2648" Count="0" />
+      <LineId Id="2415" Count="20" />
       <LineId Id="2512" Count="1" />
       <LineId Id="2436" Count="0" />
       <LineId Id="2439" Count="72" />
@@ -1020,6 +1128,10 @@ Reset := TRUE;
       <LineId Id="238" Count="2" />
       <LineId Id="1" Count="0" />
     </LineIds>
+    <LineIds Name="PRG_SystemInit.ACT_ResetCommandFlags">
+      <LineId Id="2" Count="95" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
     <LineIds Name="PRG_SystemInit.ACT_ResetMotors">
       <LineId Id="265" Count="162" />
       <LineId Id="1" Count="0" />
@@ -1031,6 +1143,7 @@ Reset := TRUE;
       <LineId Id="347" Count="4" />
       <LineId Id="454" Count="3" />
       <LineId Id="453" Count="0" />
+      <LineId Id="464" Count="0" />
       <LineId Id="352" Count="86" />
       <LineId Id="5" Count="0" />
     </LineIds>
