@@ -82,6 +82,9 @@ VAR
     tStepTimeout     : TIME := T#60S; // Default timeout per step;
 	tWeightStable	 : TIME := T#10S; // Default waiting time befe request weight
 	
+	bScalePlausible : BOOL := FALSE; // Plausibility window flag
+    bScaleInvalid   : BOOL := FALSE; // Invalid scale response flag
+	
 	// Scale-attention handling (9999 pause)
     bScaleAttention  : BOOL := FALSE; // TRUE while waiting operator
 	bCalBoxAttention : BOOL := FALSE; // TRUE while waiting operator
@@ -151,73 +154,111 @@ CASE eStep OF
 
 	
     E_CalibStep.CHECKING_WEIGH:
-
+		// ----------------------------------------------------
+		// Step guards / status
+		// ----------------------------------------------------
 		tonStepTimeout(IN := TRUE, PT := tStepTimeout);
 		sStatus := 'Checking the Calibration Box Weigth';
-        bBoxPresent := GVL_IO.gDigInputs.bCalibrationBoxPresent;
-		
-		// Request non-blocking reading
-		IF bRequestWeight THEN
-			rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
-			IF GVL_Calibration.fbScaleDevice.bWeightReady THEN
-				// if returns 9999 pause and wait operator
-				IF rScaleWeight = 9999.0 THEN
-					tonCalDelay(IN := FALSE);
-					tonStepTimeout(IN := FALSE);
-					tonWeigthStabilization(IN := FALSE);
 	
-					GVL_HMI.bScaleNeedsAtention := TRUE;
-					bScaleAttention := TRUE;
+		bBoxPresent := GVL_IO.gDigInputs.bCalibrationBoxPresent;
 	
-					bRequestWeight := FALSE;
-					bWeightReady   := FALSE;
+		// ----------------------------------------------------
+		// 1) Global guards first (avoid processing stale values)
+		// ----------------------------------------------------
+		IF tonStepTimeout.Q THEN
+			sStatus := 'Timeout while checking scale';
+			eStep := E_CalibStep.ERROR;
 	
-					eStepResume := E_CalibStep.CHECKING_WEIGH;
-					eStep := E_CalibStep.SCALE_ATTENTION;
-				ELSE
-					bWeightReady   := TRUE;
-					bRequestWeight := NOT GVL_Calibration.fbScaleDevice.Reset();
+		ELSIF NOT bBoxPresent THEN
+			sStatus := 'Calibration box not present!';
+	
+			// Defensive cleanup (avoid sticky UI flags)
+			GVL_HMI.bCalBoxNeedsAttention := FALSE;
+			bCalBoxAttention := FALSE;
+	
+			// Clear local request state
+			bRequestWeight := FALSE;
+	
+			eStep := E_CalibStep.IDLE;
+	
+		ELSE
+			// ----------------------------------------------------
+			// 2) Request weight (non-blocking)
+			// ----------------------------------------------------
+			IF bRequestWeight THEN
+				// This returns the "current" weight value (may be old until ready)
+				rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
+	
+				// ------------------------------------------------
+				// 3) Process only when the device says it's ready
+				//    (treat bWeightReady as an event)
+				// ------------------------------------------------
+				IF GVL_Calibration.fbScaleDevice.bWeightReady THEN
+	
+					// ---- scale response plausibility window
+					bScalePlausible := (rScaleWeight > 0.0) AND (rScaleWeight < 1215.0);
+					bScaleInvalid   := (rScaleWeight = 9999.0) OR (NOT bScalePlausible);
+	
+					// ------------------------------------------------
+					// 3a) Scale invalid -> SCALE_ATTENTION (priority)
+					// ------------------------------------------------
+					IF bScaleInvalid THEN
+						tonCalDelay(IN := FALSE);
+						tonStepTimeout(IN := FALSE);
+						tonWeigthStabilization(IN := FALSE);
+	
+						// Prevent cascade: if scale is faulty, do not allow CalBox popup to stack behind
+						GVL_HMI.bCalBoxNeedsAttention := FALSE;
+						bCalBoxAttention := FALSE;
+	
+						GVL_HMI.bScaleNeedsAtention := TRUE;
+						bScaleAttention := TRUE;
+	
+						// Stop requesting until operator continues
+						bRequestWeight := FALSE;
+	
+						eStepResume := E_CalibStep.CHECKING_WEIGH;
+						eStep := E_CalibStep.SCALE_ATTENTION;
+	
+					ELSE
+						// ------------------------------------------------
+						// 3b) Scale valid -> evaluate box weight range
+						// ------------------------------------------------
+						bBoxWeightOK := (rScaleWeight >= 1100.0) AND (rScaleWeight <= 1300.0);
+	
+						IF NOT bBoxWeightOK THEN
+							tonCalDelay(IN := FALSE);
+							tonStepTimeout(IN := FALSE);
+							tonWeigthStabilization(IN := FALSE);
+	
+							// Ask operator to fill calbox
+							GVL_HMI.bCalBoxNeedsAttention := TRUE;
+							bCalBoxAttention := TRUE;
+	
+							// Stop requesting until operator continues
+							bRequestWeight := FALSE;
+	
+							eStepResume := E_CalibStep.CHECKING_WEIGH;
+							eStep       := E_CalibStep.CALBOX_ATTENTION;
+	
+						ELSE
+							// Proceed
+							bBoxWeightOK := FALSE;
+							bRequestWeight := FALSE;
+	
+							eStep := E_CalibStep.FEED_HMI_RESULTS;
+							rAcceptanceCrit := GVL_Settings.stCalibParameters.rAcceptanceCriteria;
+						END_IF
+					END_IF
+	
+					// ------------------------------------------------
+					// 4) Always reset the device session AFTER processing
+					//    (so bWeightReady doesn't stay stuck TRUE / repeat)
+					// ------------------------------------------------
+					// If Reset() returns BOOL and you need to ensure completion, you can loop it outside.
+					// For now, keep your pattern:
+					GVL_Calibration.fbScaleDevice.Reset();
 				END_IF
-			END_IF
-		END_IF
-
-		IF bWeightReady THEN
-			
-			bBoxWeightOK := (rScaleWeight >= 1100.0) AND (rScaleWeight <= 1300.0);
-			
-			IF tonStepTimeout.Q THEN
-				//GVL_HMI.aAlarmFlags[1] := TRUE; // Timeout during motor positioning
-				sStatus := 'Timeout while positioning motors';
-				eStep := E_CalibStep.ERROR;
-			ELSIF NOT bBoxPresent THEN
-				//GVL_HMI.bCalibrationBoxMissing := TRUE;
-				sStatus := 'Calibration box not present!';
-				bBoxWeightOK := FALSE;
-				eStep := E_CalibStep.IDLE;
-			ELSIF NOT bBoxWeightOK THEN
-				//GVL_HMI.bCalibrationBoxEmpty := TRUE;
-				tonCalDelay(IN := FALSE);
-				tonStepTimeout(IN := FALSE);
-				tonWeigthStabilization(IN := FALSE);
-				bBoxWeightOK := FALSE;
-	
-				// Show HMI popup asking operator to fill box to 1100–1300 g
-				GVL_HMI.bCalBoxNeedsAttention := TRUE;
-				bCalBoxAttention := TRUE;
-	
-				// Clear current weight request state
-				bRequestWeight := FALSE;
-				bWeightReady   := FALSE;
-	
-				// Resume back to this same step after operator presses Continue
-				eStepResume := E_CalibStep.CHECKING_WEIGH;
-				eStep       := E_CalibStep.CALBOX_ATTENTION;
-			ELSE
-				//Proceed
-				bWeightReady := FALSE;
-				bBoxWeightOK := FALSE;
-				eStep := E_CalibStep.FEED_HMI_RESULTS;
-				rAcceptanceCrit := GVL_Settings.stCalibParameters.rAcceptanceCriteria;
 			END_IF
 		END_IF
 	
@@ -829,6 +870,12 @@ CASE eStep OF
 	E_CalibStep.SCALE_ATTENTION:
 		bBusy := TRUE;
 		sStatus := 'Scale requires attention. Please fix on the device and press Continue.';
+		
+		// Resets calibration box attention
+		GVL_HMI.bCalBoxNeedsAttention := FALSE;
+		GVL_HMI.bCalBoxFixed := FALSE;
+		bCalBoxAttention := FALSE;
+		
 		// Wait for operator to press "Continue" (HMI toggles this)
 		IF GVL_HMI.bScaleFixed THEN
 			GVL_HMI.bScaleNeedsAtention := FALSE;
@@ -1113,7 +1160,11 @@ Reset := TRUE;]]></ST>
     </Method>
     <LineIds Name="FB_CalibrationManager">
       <LineId Id="4468" Count="21" />
-      <LineId Id="4501" Count="145" />
+      <LineId Id="4501" Count="17" />
+      <LineId Id="5894" Count="0" />
+      <LineId Id="5896" Count="41" />
+      <LineId Id="5945" Count="63" />
+      <LineId Id="4588" Count="58" />
       <LineId Id="5184" Count="0" />
       <LineId Id="4647" Count="254" />
       <LineId Id="5665" Count="0" />
@@ -1159,7 +1210,12 @@ Reset := TRUE;]]></ST>
       <LineId Id="5321" Count="0" />
       <LineId Id="5319" Count="0" />
       <LineId Id="5280" Count="0" />
-      <LineId Id="5093" Count="90" />
+      <LineId Id="5093" Count="57" />
+      <LineId Id="5778" Count="0" />
+      <LineId Id="5783" Count="0" />
+      <LineId Id="5781" Count="1" />
+      <LineId Id="5779" Count="1" />
+      <LineId Id="5151" Count="32" />
       <LineId Id="9" Count="0" />
       <LineId Id="5557" Count="0" />
       <LineId Id="5556" Count="0" />
