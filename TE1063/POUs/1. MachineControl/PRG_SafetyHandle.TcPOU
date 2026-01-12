@@ -9,6 +9,9 @@ VAR
 	
 	bLockDoors	  	: BOOL 	:= FALSE;	   	// Variable that sends the lock doors signal
 	
+	tonStabilizingFaults : TON;
+	tonClearFaults		 : TON;
+	
 	i	: USINT;
 END_VAR
 ]]></Declaration>
@@ -77,13 +80,54 @@ IF NOT GVL_Safety.bSafetyEnable AND GVL_Motion.bInitialHomingDone THEN
 		GVL_Motion.aPumpsRotary[i].Disable();
 		GVL_Motion.aPumpsLinear[i].Disable();
 	END_FOR
-END_IF]]></ST>
+END_IF
+
+// ====================================================================
+// 2. Immediate Fault Command from software conditions
+// ====================================================================
+// This section activates an immediate fault from alarms flags 
+
+IF GVL_Safety.bSafetyEnable THEN
+	GVL_Safety.bImmediateFaultCommand := 
+	GVL_Alarms.arrEventFlag[50] OR GVL_Alarms.arrEventFlag[51] OR GVL_Alarms.arrEventFlag[52] OR 
+	GVL_Alarms.arrEventFlag[53] OR GVL_Alarms.arrEventFlag[54] OR GVL_Alarms.arrEventFlag[55] OR 
+	GVL_Alarms.arrEventFlag[56] OR GVL_Alarms.arrEventFlag[57] OR GVL_Alarms.arrEventFlag[58] OR 
+	GVL_Alarms.arrEventFlag[59] OR GVL_Alarms.arrEventFlag[60] OR GVL_Alarms.arrEventFlag[61] OR 
+	GVL_Alarms.arrEventFlag[62] OR GVL_Alarms.arrEventFlag[63] OR GVL_Alarms.arrEventFlag[64] OR 
+	GVL_Alarms.arrEventFlag[65] OR GVL_Alarms.arrEventFlag[66] OR GVL_Alarms.arrEventFlag[67] OR 
+	GVL_Alarms.arrEventFlag[68] OR GVL_Alarms.arrEventFlag[69] OR GVL_Alarms.arrEventFlag[70] OR 
+	GVL_Alarms.arrEventFlag[71] OR GVL_Alarms.arrEventFlag[72] OR GVL_Alarms.arrEventFlag[73] OR 
+	GVL_Alarms.arrEventFlag[74] OR GVL_Alarms.arrEventFlag[75] OR GVL_Alarms.arrEventFlag[76] OR 
+	GVL_Alarms.arrEventFlag[77] OR GVL_Alarms.arrEventFlag[78] OR GVL_Alarms.arrEventFlag[79] OR 
+	GVL_Alarms.arrEventFlag[80] OR GVL_Alarms.arrEventFlag[81] OR GVL_Alarms.arrEventFlag[82] OR 
+	GVL_Alarms.arrEventFlag[83] OR GVL_Alarms.arrEventFlag[84] OR GVL_Alarms.arrEventFlag[85] OR 
+	GVL_Alarms.arrEventFlag[86] OR GVL_Alarms.arrEventFlag[200] OR GVL_Alarms.arrEventFlag[201] OR
+	GVL_Alarms.arrEventFlag[202] OR GVL_Alarms.arrEventFlag[203] OR (*GVL_Alarms.arrEventFlag[204] OR*) 
+	GVL_Alarms.arrEventFlag[205] OR GVL_Alarms.arrEventFlag[206] OR GVL_Alarms.arrEventFlag[207] OR 
+	GVL_Alarms.arrEventFlag[208] OR GVL_Alarms.arrEventFlag[209] OR GVL_Alarms.arrEventFlag[210] OR 
+	GVL_Alarms.arrEventFlag[211] OR GVL_Alarms.arrEventFlag[212] OR GVL_Alarms.arrEventFlag[213] OR 
+	GVL_Alarms.arrEventFlag[214] OR GVL_Alarms.arrEventFlag[215] OR GVL_Alarms.arrEventFlag[216] OR 
+	GVL_Alarms.arrEventFlag[217] OR GVL_Alarms.arrEventFlag[218] OR GVL_Alarms.arrEventFlag[219] OR 
+	GVL_Alarms.arrEventFlag[220] OR GVL_Alarms.arrEventFlag[221] OR GVL_Alarms.arrEventFlag[222] OR 
+	GVL_Alarms.arrEventFlag[223] OR GVL_Alarms.arrEventFlag[224];
+ELSE
+	GVL_Safety.bImmediateFaultCommand := FALSE;
+END_IF
+]]></ST>
     </Implementation>
     <LineIds Name="PRG_SafetyHandle">
       <LineId Id="10" Count="45" />
       <LineId Id="5" Count="0" />
       <LineId Id="67" Count="16" />
       <LineId Id="66" Count="0" />
+      <LineId Id="95" Count="4" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="134" Count="20" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="155" Count="1" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="94" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

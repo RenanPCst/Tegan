@@ -1,0 +1,619 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2025-12-19T08:24:02.1043098" />
+  <contentHeader name="TE1063" modificationDateTime="2025-12-19T08:24:02.1142105">
+    <coordinateInfo>
+      <fbd>
+        <scaling x="1" y="1" />
+      </fbd>
+      <ld>
+        <scaling x="1" y="1" />
+      </ld>
+      <sfc>
+        <scaling x="1" y="1" />
+      </sfc>
+    </coordinateInfo>
+    <addData>
+      <data name="http://www.3s-software.com/plcopenxml/projectinformation" handleUnknown="implementation">
+        <ProjectInformation />
+      </data>
+    </addData>
+  </contentHeader>
+  <types>
+    <dataTypes />
+    <pous>
+      <pou name="POU_FaultHandler" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="tonSF200Delay">
+              <type>
+                <derived name="TON" />
+              </type>
+            </variable>
+            <variable name="bSF200Alarm">
+              <type>
+                <BOOL />
+              </type>
+              <initialValue>
+                <simpleValue value="FALSE" />
+              </initialValue>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">
+
+//------__________________________----------------------------------------------------------------------------------------------------
+//----- Related to Emergency Stop ----------------------------------------------------------------------------------------------------
+
+
+(*-ES-000: HMI E-Stop Button Active-*)
+IF NOT GVL_Safety.SafetyInputs.bEStopHMICh1 OR 
+	NOT GVL_Safety.SafetyInputs.bEStopHMICh2 THEN
+		GVL_Alarms.arrEventFlag[0]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[0]:= FALSE;	
+END_IF
+
+(*-ES-001: Side E-Stop Button Active-*)
+IF NOT GVL_Safety.SafetyInputs.bEStopSideCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bEStopSideCh2 THEN
+		GVL_Alarms.arrEventFlag[1]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[1]:= FALSE;	
+END_IF
+
+(*-ES-002: Door 1 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bStageCollectLeftDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[2]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[2]:= FALSE;	
+END_IF
+
+(*-ES-003: Door 2 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bStageCollectRightDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[3]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[3]:= FALSE;	
+END_IF
+
+(*-ES-004: Door 3 Open-*)
+IF NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh1 OR 
+	NOT GVL_Safety.SafetyInputs.bSampleRecoveryDoorCh2 THEN
+		GVL_Alarms.arrEventFlag[4]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[4]:= FALSE;	
+END_IF
+
+(*-ES-005: Door 4 Open-*)
+IF GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD4AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[5]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[5]:= FALSE;	
+END_IF
+
+(*-ES-006: Door 5 Open-*)
+IF GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD5AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[6]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[6]:= FALSE;	
+END_IF
+
+(*-ES-007: Door 6 Open-*)
+IF GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD1 OR 
+	GVL_Safety.SafetyInputs.bD6AccessDoorIntlckOSSD2 THEN
+		GVL_Alarms.arrEventFlag[7]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[7]:= FALSE;	
+END_IF
+
+(*-ES-008: Terminal EL6910 FB Error-*)
+IF GVL_Safety.SafetyInputs.iSafetyFBError THEN
+		GVL_Alarms.arrEventFlag[8]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[8]:= FALSE;	
+END_IF
+
+(*-ES-009: Terminal EL6910 Communication Error-*)
+IF GVL_Safety.SafetyInputs.iSafetyComError THEN
+		GVL_Alarms.arrEventFlag[9]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[9]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------_________________________-----------------------------------------------------------------------------------------------------
+//----- Related to Motion Errors -----------------------------------------------------------------------------------------------------
+
+
+(*-ME-050: Vertical Axis Stage Collection Error-*)
+IF GVL_Motion.M1Motor.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[50]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[50]:= FALSE;	
+END_IF
+
+(*-ME-051: Vertical Axis Sample Recovery Error-*)
+IF GVL_Motion.M2Motor.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[51]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[51]:= FALSE;	
+END_IF
+
+(*-ME-052: Horizontal Axis Sample Recovery Error-*)
+IF GVL_Motion.M3Motor.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[52]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[52]:= FALSE;	
+END_IF
+
+(*-ME-053: Opening Control Pump 1 Error-*)
+IF GVL_Motion.aPumps[1].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[53]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[53]:= FALSE;	
+END_IF
+
+(*-ME-054: Opening Control Pump 2 Error-*)
+IF GVL_Motion.aPumps[2].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[54]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[54]:= FALSE;	
+END_IF
+
+(*-ME-055: Opening Control Pump 3 Error-*)
+IF GVL_Motion.aPumps[3].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[55]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[55]:= FALSE;	
+END_IF
+
+(*-ME-056: Opening Control Pump 4 Error-*)
+IF GVL_Motion.aPumps[4].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[56]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[56]:= FALSE;	
+END_IF
+
+(*-ME-057: Opening Control Pump 5 Error-*)
+IF GVL_Motion.aPumps[5].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[57]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[57]:= FALSE;	
+END_IF
+
+(*-ME-058: Opening Control Pump 6 Error-*)
+IF GVL_Motion.aPumps[6].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[58]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[58]:= FALSE;	
+END_IF
+
+(*-ME-059: Opening Control Pump 7 Error-*)
+IF GVL_Motion.aPumps[7].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[59]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[59]:= FALSE;	
+END_IF
+
+(*-ME-060: Opening Control Pump 8 Error-*)
+IF GVL_Motion.aPumps[8].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[60]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[60]:= FALSE;	
+END_IF
+
+(*-ME-061: Opening Control Pump 9 Error-*)
+IF GVL_Motion.aPumps[9].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[61]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[61]:= FALSE;	
+END_IF
+
+(*-ME-062: Opening Control Pump 10 Error-*)
+IF GVL_Motion.aPumps[10].Linear.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[62]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[62]:= FALSE;	
+END_IF
+
+(*-ME-063: Pump Motor 1 Error-*)
+IF GVL_Motion.aPumps[1].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[63]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[63]:= FALSE;	
+END_IF
+
+(*-ME-064: Pump Motor 2 Error-*)
+IF GVL_Motion.aPumps[2].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[64]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[64]:= FALSE;	
+END_IF
+
+(*-ME-065: Pump Motor 3 Error-*)
+IF GVL_Motion.aPumps[3].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[65]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[65]:= FALSE;	
+END_IF
+
+(*-ME-066: Pump Motor 4 Error-*)
+IF GVL_Motion.aPumps[4].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[66]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[66]:= FALSE;	
+END_IF
+
+(*-ME-067: Pump Motor 5 Error-*)
+IF GVL_Motion.aPumps[5].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[67]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[67]:= FALSE;	
+END_IF
+
+(*-ME-068: Pump Motor 6 Error-*)
+IF GVL_Motion.aPumps[6].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[68]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[68]:= FALSE;	
+END_IF
+
+(*-ME-069: Pump Motor 7 Error-*)
+IF GVL_Motion.aPumps[7].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[69]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[69]:= FALSE;	
+END_IF
+
+(*-ME-070: Pump Motor 8 Error-*)
+IF GVL_Motion.aPumps[8].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[70]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[70]:= FALSE;	
+END_IF
+
+(*-ME-071: Pump Motor 9 Error-*)
+IF GVL_Motion.aPumps[9].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[71]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[71]:= FALSE;	
+END_IF
+
+(*-ME-072: Pump Motor 10 Error-*)
+IF GVL_Motion.aPumps[10].Rotary.iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[72]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[72]:= FALSE;	
+END_IF
+
+(*-ME-073: Valve Motor 1 Error-*)
+IF GVL_Motion.aValves[1].iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[73]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[73]:= FALSE;	
+END_IF
+
+(*-ME-074: Valve Motor 2 Error-*)
+IF GVL_Motion.aValves[2].iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[74]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[74]:= FALSE;	
+END_IF
+
+(*-ME-075: Valve Motor 3 Error-*)
+IF GVL_Motion.aValves[3].iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[75]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[75]:= FALSE;	
+END_IF
+
+(*-ME-076: Valve Motor 4 Error-*)
+IF GVL_Motion.aValves[4].iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[76]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[76]:= FALSE;	
+END_IF
+
+(*-ME-077: Valve Motor 5 Error-*)
+IF GVL_Motion.aValves[5].iError AND GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[77]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[77]:= FALSE;	
+END_IF
+
+
+(*-ME-082: Axis Emergency Stop Pump Deceleration Active-*)
+IF GVL_Motion.bAnyPumpRunning AND NOT GVL_Safety.bSafetyEnable THEN
+		GVL_Alarms.arrEventFlag[82]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[82]:= FALSE;	
+END_IF
+
+(* ME-083: System Init Failed - Timeout on Reset *)
+IF GVL_Alarms.bMotionResetTimeout THEN
+		GVL_Alarms.arrEventFlag[83]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[83]:= FALSE;	
+END_IF
+
+(* ME-084: System Init Failed - Timeout on Enable *)
+IF GVL_Alarms.bMotionEnableTimeout THEN
+		GVL_Alarms.arrEventFlag[84]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[84]:= FALSE;	
+END_IF
+
+(* ME-085: System Init Failed - Timeout on Homing *)
+IF GVL_Alarms.bMotionHomeTimeout THEN
+		GVL_Alarms.arrEventFlag[85]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[85]:= FALSE;	
+END_IF
+
+(* ME-086: System Init Failed - Timeout on Motion *)
+IF GVL_Alarms.bMotionMoveAbsTimeout THEN
+		GVL_Alarms.arrEventFlag[86]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[86]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------____________________________--------------------------------------------------------------------------------------------------
+//----- Related to Interlock Errors --------------------------------------------------------------------------------------------------
+
+(* IE-100: M2 Movement NOT allowed *)
+IF GVL_HMI.bM2MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[100]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[100]:= FALSE;	
+END_IF
+
+(* IE-101: M3 Movement Not allowed *)
+IF GVL_HMI.bM2MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[101]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[101]:= FALSE;	
+END_IF
+
+(* IE-102: Attempt going Auto Cycle without a Recipe *)
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_Recipe.bIsThereRecipeActivated THEN
+		GVL_Alarms.arrEventFlag[102]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[102]:= FALSE;	
+END_IF
+
+(* IE-103: Attempt going Auto Cycle without Throat stage in correct position *)
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_IO.gDigInputs.bThroatJigPresent THEN
+		GVL_Alarms.arrEventFlag[103]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[103]:= FALSE;	
+END_IF
+
+(* IE-104: Attempt going Auto Cycle without Vias Rack in correct position *)
+IF GVL_HMI.bIncoherenceAlert AND NOT GVL_IO.bVialRackPresent THEN
+		GVL_Alarms.arrEventFlag[104]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[104]:= FALSE;	
+END_IF
+
+(* IE-105: Attempt going Auto Cycle With Solvent 1 Low level *)
+
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[1] THEN
+		GVL_Alarms.arrEventFlag[105]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[105]:= FALSE;	
+END_IF
+
+(* IE-106: Attempt going Auto Cycle With Solvent 2 Low level *)
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[2] THEN
+		GVL_Alarms.arrEventFlag[106]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[106]:= FALSE;	
+END_IF
+
+(* IE-107: Attempt going Auto Cycle With Solvent 3 Low level *)
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[3] THEN
+		GVL_Alarms.arrEventFlag[107]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[107]:= FALSE;	
+END_IF
+
+(* IE-108: Attempt going Auto Cycle With Solvent 4 Low level *)
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.aSolventLowLevel[4] THEN
+		GVL_Alarms.arrEventFlag[108]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[108]:= FALSE;	
+END_IF
+
+(* IE-109: Attempt going Auto Cycle With Waste Bottle high level *)
+IF GVL_HMI.bIncoherenceAlert AND GVL_Alarms.bWasteHighLevel THEN
+		GVL_Alarms.arrEventFlag[109]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[109]:= FALSE;	
+END_IF
+
+(* IE-110: Attempt to perform a calibration procedure without a calibration box *)
+IF GVL_HMI.bCalNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[110]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[110]:= FALSE;	
+END_IF
+
+(* IE-111: M1 Movement Not allowed *)
+IF GVL_HMI.bM1MoveNotAllowedTrigger THEN
+		GVL_Alarms.arrEventFlag[111]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[111]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------____________________________--------------------------------------------------------------------------------------------------
+//----- Related to Process Warnings --------------------------------------------------------------------------------------------------
+
+(* PW-150: Solvent 1 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[1] THEN
+		GVL_Alarms.arrEventFlag[150]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[150]:= FALSE;	
+END_IF
+
+(* PW-151: Solvent 2 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[2] THEN
+		GVL_Alarms.arrEventFlag[151]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[151]:= FALSE;	
+END_IF
+
+(* PW-152: Solvent 3 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[3] THEN
+		GVL_Alarms.arrEventFlag[152]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[152]:= FALSE;	
+END_IF
+
+(* PW-153: Solvent 4 Near Low Level *)
+IF GVL_Alarms.aSolventNearLowLevel[4] THEN
+		GVL_Alarms.arrEventFlag[153]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[153]:= FALSE;	
+END_IF
+
+(* PW-154: Waste Bottle Near High Level *)
+IF GVL_Alarms.bWasteNearHighLevel THEN
+		GVL_Alarms.arrEventFlag[154]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[154]:= FALSE;	
+END_IF
+
+(* PW-162: Profinet Communicaton Error ( Vial Rack pen sensor ) *)
+IF GVL_IO.gProfinetInput.iPnIoBoxState &lt;&gt; 0 THEN
+		GVL_Alarms.arrEventFlag[162]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[162]:= FALSE;	
+END_IF
+
+(* PW-163: Profinet Vial Rack pen sensor error *)
+IF GVL_IO.gProfinetInput.bErrorStatus THEN
+		GVL_Alarms.arrEventFlag[163]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[163]:= FALSE;	
+END_IF
+
+(* PW-163: Internal Waste Tank Overflow sensor *)
+IF GVL_IO.gDigInputs.bWasteOverflowSensor THEN
+		GVL_Alarms.arrEventFlag[164]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[164]:= FALSE;	
+END_IF
+
+(* PW-164: UPS Replace Battery Activated *)
+IF GVL_IO.gDigInputs.bUPSReplaceBattery THEN
+		GVL_Alarms.arrEventFlag[165]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[165]:= FALSE;	
+END_IF
+
+(* PW-165: UPS Ready Signal drop *)
+IF NOT GVL_IO.gDigInputs.bUPSReady THEN
+		GVL_Alarms.arrEventFlag[166]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[166]:= FALSE;	
+END_IF
+
+
+//*********************************************************END SECTION****************************************************************
+
+//------_________________________-----------------------------------------------------------------------------------------------------
+//----- Related to System Faults -----------------------------------------------------------------------------------------------------
+
+(* SF-200: System Powered Off (PLC on Battery) *)
+tonSF200Delay( IN := bSF200Alarm, PT := T#3S);
+
+bSF200Alarm := NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck);
+
+IF tonSF200Delay.Q THEN
+		GVL_Alarms.arrEventFlag[200]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[200]:= FALSE;	
+END_IF
+
+(* SF-202: TwinSAFE Fault (EL6910/EL1918/EL2904) *)
+IF 	GVL_IO.stEL6910.nEL6910State &lt;&gt; 8 OR GVL_IO.nEL1918T04State &lt;&gt; 8 OR GVL_IO.nEL1918T05State &lt;&gt; 8 OR 
+	GVL_IO.nEL1918T06State &lt;&gt; 8 OR GVL_IO.nEL2904T07State &lt;&gt; 8 OR GVL_IO.nEL2904T08State &lt;&gt; 8 OR GVL_IO.nEL2904T19State &lt;&gt; 8 
+	THEN
+		GVL_Alarms.arrEventFlag[202]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[202]:= FALSE;	
+END_IF
+
+
+(* SF-204: Drive STO Active (M1 - M3 or Valves Motors) *)
+IF 	NOT GVL_Safety.iMotorsSTOEnabled THEN
+		GVL_Alarms.arrEventFlag[204]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[204]:= FALSE;	
+END_IF
+
+(* SF-212: Scale Communication Error - TCP Connect *)
+IF 	GVL_Alarms.bTCPCLientConnectError THEN
+		GVL_Alarms.arrEventFlag[212]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[212]:= FALSE;	
+END_IF
+
+(* SF-213: Scale Communication Error - TCP Send Message *)
+IF 	GVL_Alarms.bTCPCLientSendError THEN
+		GVL_Alarms.arrEventFlag[213]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[213]:= FALSE;	
+END_IF
+
+(* SF-214: Scale Communication Error - TCP Receive Message *)
+IF 	GVL_Alarms.bTCPCLientReceiveError THEN
+		GVL_Alarms.arrEventFlag[214]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[214]:= FALSE;	
+END_IF
+
+(* SF-215: Scale Communication Error - TCP Close Communication *)
+IF 	GVL_Alarms.bTCPCLientCloseError THEN
+		GVL_Alarms.arrEventFlag[215]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[215]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+
+
+</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>b1ce7aec-da98-4fd1-9638-edc1a122ac6a</ObjectId>
+          </data>
+        </addData>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations />
+  </instances>
+  <addData>
+    <data name="http://www.3s-software.com/plcopenxml/projectstructure" handleUnknown="discard">
+      <ProjectStructure>
+        <Object Name="POU_FaultHandler" ObjectId="b1ce7aec-da98-4fd1-9638-edc1a122ac6a" />
+      </ProjectStructure>
+    </data>
+  </addData>
+</project>

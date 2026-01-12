@@ -416,6 +416,18 @@ IF tonInterlockReleaseM3.Q THEN
 	GVL_HMI.bM3MoveNotAllowedTrigger := FALSE;
 END_IF
 
+(* <HMI Reminders> ******************************************************************************************************* *)
+
+GVL_HMI.stReminders.bRecipeActivated 	:= GVL_Recipe.bIsThereRecipeActivated;
+GVL_HMI.stReminders.bSolventLevels 		:= GVL_Alarms.aSolventLowLevel[1] OR GVL_Alarms.aSolventLowLevel[2] OR GVL_Alarms.aSolventLowLevel[3] OR GVL_Alarms.aSolventLowLevel[4]; // TODO - only evaluate the levels used on recipe
+GVL_HMI.stReminders.bWasteLevel 		:= GVL_Alarms.bWasteHighLevel;
+GVL_HMI.stReminders.bThroatJigPresent	:= GVL_IO.gDigInputs.bThroatJigPresent;
+GVL_HMI.stReminders.bVialRackPresent	:= GVL_IO.bVialRackPresent;
+GVL_HMI.stReminders.bVialRackRemoved	:= NOT GVL_IO.bVialRackPresent;
+
+
+(* <\HMI Reminders> ******************************************************************************************************* *)
+
 (* <TEMP ******************************************************************************************************* *)
 IF GVL_HMI.bResetM1MotorBt THEN
 	GVL_HMI.bResetM1MotorBt := NOT GVL_Motion.aMotors[1].Reset();
@@ -1254,6 +1266,10 @@ END_IF]]></ST>
       <LineId Id="1243" Count="1" />
       <LineId Id="1247" Count="2" />
       <LineId Id="1245" Count="0" />
+      <LineId Id="1807" Count="3" />
+      <LineId Id="1817" Count="5" />
+      <LineId Id="1816" Count="0" />
+      <LineId Id="1806" Count="0" />
       <LineId Id="577" Count="0" />
       <LineId Id="575" Count="0" />
       <LineId Id="578" Count="2" />

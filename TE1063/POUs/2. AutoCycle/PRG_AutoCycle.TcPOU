@@ -351,10 +351,14 @@ CASE CurrentState OF
 
         // Transitions based on leak test result
         IF bTestCompleted THEN
+			// Return solenoids to idle / safe position
+        	GVL_IO.gSetSolenoidControl.Idle();
             // Leak test OK → proceed to priming
             CurrentState := E_MachineStates.PRIME_SOLVENT;
 
         ELSIF bTestFailed THEN
+			// Return solenoids to idle / safe position
+        	GVL_IO.gSetSolenoidControl.Idle();
             // Leak test failed → go to ERROR_STATE
             CurrentState := E_MachineStates.ERROR_STATE;
         END_IF;
@@ -622,7 +626,11 @@ END_IF;]]></ST>
       </Implementation>
     </Action>
     <LineIds Name="PRG_AutoCycle">
-      <LineId Id="3309" Count="438" />
+      <LineId Id="3309" Count="240" />
+      <LineId Id="3855" Count="1" />
+      <LineId Id="3550" Count="3" />
+      <LineId Id="3857" Count="1" />
+      <LineId Id="3554" Count="193" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_AutoCycle.Reset">

@@ -11,6 +11,9 @@ VAR
 	
 	i : UINT := 1;
 	
+	aDebug	: ARRAY[1..10] OF BOOL;
+	bUpdatePumpFactor	: BOOL := FALSE;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -37,15 +40,15 @@ END_IF
 // Valves Settings Assignment
 IF NOT bValvesSettingsAssignment THEN
 	FOR i := 1 TO 5 DO
-		GVL_Motion.aValves[i].rTargetVel := 3000;
-		GVL_Motion.aValves[i].rAcceleration := 2000;
-		GVL_Motion.aValves[i].rDeceleration := 2000;
+		GVL_Motion.aValves[i].rTargetVel := 1200;
+		GVL_Motion.aValves[i].rAcceleration := 600;
+		GVL_Motion.aValves[i].rDeceleration := 600;
 	END_FOR
 	bValvesSettingsAssignment := TRUE;
 END_IF
 
 //Pumps factor Assignment [ml/rev]
-IF NOT bPumpsFactorAssignment THEN
+IF NOT bPumpsFactorAssignment OR bUpdatePumpFactor THEN
 
 	FOR i := 1 TO 10 DO
 		GVL_Motion.aPumps[i].Rotary.rPumpFactorFillJars 	:= GVL_Retain.aCalibrationPumpFactor[i];
@@ -58,16 +61,16 @@ END_IF
 
 //Pumps line dead Volume pipes/tubing Assignment [ml]
 IF NOT bPumpsDeadVolumeAssignment THEN
-	GVL_Motion.aPumps[1].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[2].Rotary.rDeadVolume := 10.0;
-	GVL_Motion.aPumps[3].Rotary.rDeadVolume := 27.0;
-	GVL_Motion.aPumps[4].Rotary.rDeadVolume := 19.0;
-	GVL_Motion.aPumps[5].Rotary.rDeadVolume := 14.0;
-	GVL_Motion.aPumps[6].Rotary.rDeadVolume := 21.0;
-	GVL_Motion.aPumps[7].Rotary.rDeadVolume := 21.0;
-	GVL_Motion.aPumps[8].Rotary.rDeadVolume := 12.0;
-	GVL_Motion.aPumps[9].Rotary.rDeadVolume := 16.0;
-	GVL_Motion.aPumps[10].Rotary.rDeadVolume := 16.0;
+	GVL_Motion.aPumps[1].Rotary.rDeadVolume := 5;//10.0;
+	GVL_Motion.aPumps[2].Rotary.rDeadVolume := 8;//10.0;
+	GVL_Motion.aPumps[3].Rotary.rDeadVolume := 5;//27.0;
+	GVL_Motion.aPumps[4].Rotary.rDeadVolume := 8;//19.0;
+	GVL_Motion.aPumps[5].Rotary.rDeadVolume := 5;//14.0;
+	GVL_Motion.aPumps[6].Rotary.rDeadVolume := 8;//21.0;
+	GVL_Motion.aPumps[7].Rotary.rDeadVolume := 5;//21.0;
+	GVL_Motion.aPumps[8].Rotary.rDeadVolume := 8;//12.0;
+	GVL_Motion.aPumps[9].Rotary.rDeadVolume := 5;//16.0;
+	GVL_Motion.aPumps[10].Rotary.rDeadVolume := 8;//16.0;
 END_IF
 
 //Pumps Settings Assignment
@@ -92,7 +95,40 @@ GVL_Motion.aPumps[8].Linear.bHomeSensorState := GVL_Motion.aPumps[8].Linear.iHom
 GVL_Motion.aPumps[9].Linear.bHomeSensorState := GVL_Motion.aPumps[9].Linear.iHomeSensor.0; 
 GVL_Motion.aPumps[10].Linear.bHomeSensorState := GVL_Motion.aPumps[10].Linear.iHomeSensor.0; 
 
-//temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
+// Pump factor Restore
+IF aDebug[1] THEN
+	GVL_Retain.aCalibrationPumpFactor[1] := 0.1;
+END_IF
+IF aDebug[2] THEN
+	GVL_Retain.aCalibrationPumpFactor[2] := 0.1;
+END_IF
+IF aDebug[3] THEN
+	GVL_Retain.aCalibrationPumpFactor[3] := 0.1;
+END_IF
+IF aDebug[4] THEN
+	GVL_Retain.aCalibrationPumpFactor[4] := 0.1;
+END_IF
+IF aDebug[5] THEN
+	GVL_Retain.aCalibrationPumpFactor[5] := 0.1;
+END_IF
+IF aDebug[6] THEN
+	GVL_Retain.aCalibrationPumpFactor[6] := 0.1;
+END_IF
+IF aDebug[7] THEN
+	GVL_Retain.aCalibrationPumpFactor[7] := 0.1;
+END_IF
+IF aDebug[8] THEN
+	GVL_Retain.aCalibrationPumpFactor[8] := 0.1;
+END_IF
+IF aDebug[9] THEN
+	GVL_Retain.aCalibrationPumpFactor[9] := 0.1;
+END_IF
+IF aDebug[10] THEN
+	GVL_Retain.aCalibrationPumpFactor[10] := 0.1;
+END_IF
+
+
+// temporary until we are able to get this parameter from hmi or configuration File **************************************************************************
 IF NOT bFirstVariablesAssignment THEN
 	//Default Homing Motors settings
 	GVL_Motion.M1Motor.rHomeAcc 	:= 20.0;
@@ -180,6 +216,26 @@ END_IF
       <LineId Id="126" Count="0" />
       <LineId Id="128" Count="2" />
       <LineId Id="132" Count="6" />
+      <LineId Id="518" Count="4" />
+      <LineId Id="524" Count="1" />
+      <LineId Id="523" Count="0" />
+      <LineId Id="527" Count="1" />
+      <LineId Id="526" Count="0" />
+      <LineId Id="530" Count="1" />
+      <LineId Id="529" Count="0" />
+      <LineId Id="533" Count="1" />
+      <LineId Id="532" Count="0" />
+      <LineId Id="536" Count="1" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="539" Count="1" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="542" Count="1" />
+      <LineId Id="541" Count="0" />
+      <LineId Id="545" Count="1" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="548" Count="1" />
+      <LineId Id="547" Count="0" />
+      <LineId Id="550" Count="0" />
       <LineId Id="75" Count="1" />
       <LineId Id="98" Count="0" />
       <LineId Id="140" Count="1" />
