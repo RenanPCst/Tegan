@@ -104,9 +104,10 @@ FOR i := 1 TO 5 DO
 	
 	IF bValveStatus[i] THEN
 		IF bSetValvePosition[i] AND GVL_Retain.bPositionIsValid[i] THEN
-			GVL_Motion.bValvesPositionRecovered := TRUE; // Permissive flag for valve repositioning after shutdown
 			// Single attempt to restore the position
 			bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(rPosition := GVL_Retain.rValveLastPosition[i]);
+			// Permissive flag for valve repositioning after shutdown
+			GVL_Motion.bValvesPositionRecovered := TRUE; 
 		ELSE
 			// Stores position continuously while motor is energized
 			GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
@@ -153,7 +154,11 @@ END_IF
       <LineId Id="7291" Count="2" />
       <LineId Id="7290" Count="0" />
       <LineId Id="7430" Count="0" />
-      <LineId Id="6885" Count="21" />
+      <LineId Id="6885" Count="6" />
+      <LineId Id="6893" Count="1" />
+      <LineId Id="7709" Count="0" />
+      <LineId Id="7708" Count="0" />
+      <LineId Id="6895" Count="11" />
       <LineId Id="7635" Count="2" />
       <LineId Id="7639" Count="1" />
       <LineId Id="7638" Count="0" />

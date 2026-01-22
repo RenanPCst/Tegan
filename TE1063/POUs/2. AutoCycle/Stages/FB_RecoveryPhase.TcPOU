@@ -617,6 +617,7 @@ CASE iStepCounter OF
 
     2:  // Calculate pump distances for cleaning (based on Rinse 1 volume)
         // Factor 1.5 is used to add margin for extra cleaning volume
+		(*
         fDistance[1]  := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aT_IC_Volume[1] +
                                           GVL_Motion.aPumps[1].Rotary.rDeadVolume) * 1.5, 1);
 										  
@@ -646,7 +647,13 @@ CASE iStepCounter OF
 										  
         fDistance[10] := F_VolumeToSteps((GVL_Recipe.stActiveRecipe.stVolumes.aF_Volume[1] +
                                           GVL_Motion.aPumps[10].Rotary.rDeadVolume) * 1.5, 10);
-
+		*)
+		
+		// Constant volume for cleaning lines. change#15/01/26
+		FOR i := 1 TO 10 DO
+			fDistance[i]  := F_VolumeToSteps( 100 + GVL_Motion.aPumps[i].Rotary.rDeadVolume, i);
+		END_FOR
+		
         iStepCounter := 3;
 
     3:  // Start rotary pumps with calculated distances [positive movement]
@@ -2331,7 +2338,9 @@ END_CASE]]></ST>
       <LineId Id="1" Count="0" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1">
-      <LineId Id="227" Count="47" />
+      <LineId Id="227" Count="45" />
+      <LineId Id="333" Count="0" />
+      <LineId Id="273" Count="1" />
       <LineId Id="324" Count="0" />
       <LineId Id="275" Count="1" />
       <LineId Id="325" Count="0" />
@@ -2349,7 +2358,11 @@ END_CASE]]></ST>
       <LineId Id="331" Count="0" />
       <LineId Id="289" Count="1" />
       <LineId Id="332" Count="0" />
-      <LineId Id="291" Count="31" />
+      <LineId Id="291" Count="2" />
+      <LineId Id="334" Count="1" />
+      <LineId Id="338" Count="2" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="294" Count="28" />
     </LineIds>
     <LineIds Name="FB_RecoveryPhase.CleaningLinesSolvent1and2">
       <LineId Id="177" Count="45" />
