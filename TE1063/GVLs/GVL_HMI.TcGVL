@@ -136,15 +136,19 @@ VAR_GLOBAL
 	
 	// <\Calibration> ------------------------------------------------------------------------------------------------------------------------------------------
 	
-	// Machine Settings 
-	HMIParameters		 : ST_HMIParameters; 		// Motion Parameters from HMI inputs
-	stHMICalibParameters : ST_CalibrationSettings;	// Calibration Parameters from HMI inputs
-	stHMIPumpParameters	 : ST_PumpSettings;			// Pump Parameters from HMI inputs
-	stLeakTestParameters : ST_LeakTestSettings;		// Leak Test Parameters from HMI Inputs
-	bReloadHMIParameters : BOOL := FALSE;			// Reload parameters from GVL_Settings when first loading the screen
-	bSaveParametersBt	 : BOOL := FALSE; 			// Save Parameters from HMI
-	bSaveParametersDone	 : BOOL := FALSE;			// Save Parameters Done flag from PLC
- 	bSaveParametersError : BOOL := FALSE;			// Save Parameters Error flag from PLC
+	//<Machine Settings> Variables to handle solvents insert in the settings screen ----------------------------------------------------------------------------
+	HMIParameters		 : ST_HMIParameters; 					// Motion Parameters from HMI inputs
+	stHMICalibParameters : ST_CalibrationSettings;				// Calibration Parameters from HMI inputs
+	stHMIPumpParameters	 : ST_PumpSettings;						// Pump Parameters from HMI inputs
+	stLeakTestParameters : ST_LeakTestSettings;					// Leak Test Parameters from HMI Inputs
+	stHMISolventsInfo	 : ARRAY[1..4] OF ST_SolventsSettings;	// Solvents name and density to be inserted on the settings screen 		
+	bReloadHMIParameters : BOOL := FALSE;						// Reload parameters from GVL_Settings when first loading the screen
+	bSaveParametersBt	 : BOOL := FALSE; 						// Save Parameters from HMI
+	bSaveParametersDone	 : BOOL := FALSE;						// Save Parameters Done flag from PLC
+ 	bSaveParametersError : BOOL := FALSE;						// Save Parameters Error flag from PLC
+	bSaveSolventsBt		 : BOOL := FALSE;						// Save Solvents change from HMI settings screen
+	bSaveSolventsDone	 : BOOL := FALSE;						// Save Solvents Done flag from HMI settings screen
+	bSaveSolventsError	 : BOOL := FALSE;						// Save Solvents Error flag from HMI settings screen
 	
 	(* Manual Motors Moviment *) //--------------------------------------------------------------------------------------------------------------
 	ManualMov			: ST_MotorsJog; // Manual Joging motors from old manual screen

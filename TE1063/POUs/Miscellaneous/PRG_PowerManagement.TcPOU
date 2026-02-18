@@ -1,0 +1,206 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_PowerManagement" Id="{d39c70ab-ac6c-402e-857c-9d2a0eb233ba}" SpecialFunc="None">
+    <Declaration><![CDATA[(*
+Unified Power Action Sequencer
+- Handles: Power fail shutdown, HMI shutdown, HMI reboot
+- Writes persistent data once per event
+- Abort/reset only allowed for power-fail-triggered shutdown if power returns
+- Manual shutdown never aborts
+- Requests are converted to 1-cycle pulses for fbShutdown / fbReboot
+*)
+PROGRAM PRG_PowerManagement
+VAR
+	//FB's instances
+	fbReboot    : NT_Reboot;
+    fbShutdown  : NT_Shutdown;
+    fbWritePersistentData : FB_WritePersistentData;	
+
+	// Raw inputs
+    bPowerFailRaw       : BOOL;
+    bShutdownManual     : BOOL;
+    bRebootManual       : BOOL;
+
+    // Debounce
+    tonPowerFailDeb     : TON;
+    bPowerFailDebounced : BOOL;
+
+    // Sequence control
+    eState              : E_SeqState := E_SeqState.STANDBY;
+    eAction             : E_PowerAction := E_PowerAction.NONE;   // what we will execute after countdown
+    eTriggerSource      : E_PowerAction := E_PowerAction.NONE;   // for abort rules (powerfail vs manual)
+
+    bAbortAllowed       : BOOL;
+    bWriteStarted       : BOOL;
+    bWriteDone          : BOOL;
+
+    // Timers
+    tonActionDelay      : TON;
+
+    // Pulses
+    bShutdownRequest    : BOOL;
+    bRebootRequest      : BOOL;
+
+    // Helpers
+    rCountdownSeconds   : LREAL;
+
+    // Config
+    tPowerFailDebounce  : TIME := T#3S;
+    tRebootDelay        : TIME := T#10S;           // time before reboot (after write)
+    tShutdownTime       : TIME;                    // use your existing variable
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// -------------------- Read inputs (IMPORTANT: order) --------------------
+bPowerFailRaw := NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK 	 AND
+                      GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND
+                      GVL_IO.gDigInputs.b48VPowerSupplyOK 	 AND
+                      GVL_IO.gDigInputs.b48VPowerSupplyOKBck );
+
+bShutdownManual := GVL_HMI.HMIDigInputs.bShutdownPLC;
+bRebootManual   := GVL_HMI.HMIDigInputs.bRebootPLC;
+
+
+// -------------------- Debounce power fail --------------------
+tonPowerFailDeb(IN := bPowerFailRaw, PT := tPowerFailDebounce);
+bPowerFailDebounced := tonPowerFailDeb.Q;
+
+
+// -------------------- Default outputs (pulses) --------------------
+bShutdownRequest := FALSE;
+bRebootRequest   := FALSE;
+
+
+// -------------------- Decide desired action (priority) --------------------
+// Priority suggestion: manual shutdown > powerfail shutdown > manual reboot
+// You can change if you want.
+IF bShutdownManual THEN
+    // Manual shutdown always wins
+    // (even if reboot also pressed)
+    // We'll handle it in STANDBY when we arm the sequence
+ELSIF bPowerFailDebounced THEN
+    // Powerfail shutdown
+ELSIF bRebootManual THEN
+    // Manual reboot
+END_IF
+
+
+// -------------------- Sequencer --------------------
+CASE eState OF
+
+    E_SeqState.STANDBY:
+        // Reset internals
+        bWriteStarted := FALSE;
+        bWriteDone := FALSE;
+        tonActionDelay(IN := FALSE);
+
+        // HMI Countdown display reset/standby
+        GVL_HMI.rTimeCountingDown := 0;
+
+        // Arm new event
+        IF bShutdownManual THEN
+            eAction := E_PowerAction.SHUTDOWN;
+            eTriggerSource := E_PowerAction.SHUTDOWN; // manual source
+            eState := E_SeqState.WRITE_REQ;
+
+        ELSIF bPowerFailDebounced THEN
+            eAction := E_PowerAction.SHUTDOWN;
+            eTriggerSource := E_PowerAction.NONE;     // we'll interpret NONE as "powerfail source"
+            eState := E_SeqState.WRITE_REQ;
+
+        ELSIF bRebootManual THEN
+            eAction := E_PowerAction.REBOOT;
+            eTriggerSource := E_PowerAction.REBOOT;   // manual source
+            eState := E_SeqState.WRITE_REQ;
+        END_IF
+
+
+    E_SeqState.WRITE_REQ:
+        // Start persistent write only once
+        IF NOT bWriteStarted THEN
+            bWriteStarted := TRUE;
+            fbWritePersistentData(NETID := '', PORT := 851, START := TRUE, TMOUT := T#1S);
+        ELSE
+            fbWritePersistentData(START := FALSE);
+        END_IF
+
+        eState := E_SeqState.WRITE_WAIT;
+
+
+    E_SeqState.WRITE_WAIT:
+        fbWritePersistentData(START := FALSE);
+
+        // Abort rules:
+        // - If trigger was powerfail (i.e., NOT manual shutdown) and power returns, abort.
+        // - Manual shutdown never aborts.
+        // - Manual reboot: you may choose to abort if button released; by default, I keep it latched once started.
+        bAbortAllowed := NOT bShutdownManual AND (eAction = E_PowerAction.SHUTDOWN) AND (NOT bPowerFailRaw);
+
+        IF bAbortAllowed THEN
+            // Power returned before finishing the sequence -> abort and return standby
+            eState := E_SeqState.STANDBY;
+
+        ELSIF (NOT fbWritePersistentData.BUSY) THEN
+            // Write finished (success or error)
+            bWriteDone := (NOT fbWritePersistentData.ERR);
+
+            // Decide delay based on action
+            IF eAction = E_PowerAction.SHUTDOWN THEN
+                tonActionDelay(IN := TRUE, PT := tShutdownTime);
+            ELSE
+                tonActionDelay(IN := TRUE, PT := tRebootDelay);
+            END_IF
+
+            eState := E_SeqState.COUNTDOWN;
+        END_IF
+
+
+    E_SeqState.COUNTDOWN:
+        // Keep timer running
+        IF eAction = E_PowerAction.SHUTDOWN THEN
+            tonActionDelay(IN := TRUE, PT := tShutdownTime);
+            rCountdownSeconds :=
+                (TIME_TO_DWORD(tShutdownTime) / 1000.0) - (TIME_TO_DWORD(tonActionDelay.ET) / 1000.0);
+        ELSE
+            tonActionDelay(IN := TRUE, PT := tRebootDelay);
+            rCountdownSeconds :=
+                (TIME_TO_DWORD(tRebootDelay) / 1000.0) - (TIME_TO_DWORD(tonActionDelay.ET) / 1000.0);
+        END_IF
+
+        IF rCountdownSeconds < 0 THEN rCountdownSeconds := 0; END_IF
+        GVL_HMI.rTimeCountingDown := rCountdownSeconds;
+
+        // Abort only for powerfail shutdown if power returns
+        IF (eAction = E_PowerAction.SHUTDOWN) AND (NOT bShutdownManual) AND (NOT bPowerFailRaw) THEN
+            tonActionDelay(IN := FALSE);
+            eState := E_SeqState.STANDBY;
+
+        ELSIF tonActionDelay.Q THEN
+            eState := E_SeqState.EXECUTE;
+        END_IF
+
+
+    E_SeqState.EXECUTE:
+        // 1-cycle pulse
+        IF eAction = E_PowerAction.SHUTDOWN THEN
+            bShutdownRequest := TRUE;
+        ELSIF eAction = E_PowerAction.REBOOT THEN
+            bRebootRequest := TRUE;
+        END_IF
+
+        // Return to standby immediately after firing pulse
+        eState := E_SeqState.STANDBY;
+
+END_CASE
+
+
+// -------------------- Execute actions --------------------
+fbShutdown(Start := bShutdownRequest);
+fbReboot(Start := bRebootRequest);]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_PowerManagement">
+      <LineId Id="47" Count="144" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

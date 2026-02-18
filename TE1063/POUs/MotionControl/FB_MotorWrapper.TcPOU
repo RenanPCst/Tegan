@@ -647,17 +647,24 @@ ReadStatus := stReadStatus;]]></ST>
     </Method>
     <Method Name="ReadValveStatus" Id="{42b9d689-2539-4c89-af9c-94ac21a9a691}">
       <Declaration><![CDATA[METHOD ReadValveStatus : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
+VAR
+	cAxisPowerErrorID : UDINT := 16#00004466;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[Axis.ReadStatus();
+        <ST><![CDATA[// Read Axis status
+Axis.ReadStatus();
+(*
+// False if there is any power source fail or power fault axis error 
+ReadValveStatus :=
+    NOT GVL_IO.bPowerSupplyDropSignal
+    AND NOT Axis.Status.Error
+    AND NOT Axis.Status.ErrorStop
+    AND NOT Axis.Status.DriveDeviceError;
+*)
+//ReadValveStatus := (*NOT Axis.Status.Disabled AND*) NOT (Axis.Status.Error AND Axis.Status.ErrorID = cAxisPowerErrorID);
 
-IF Axis.Status.Error AND Axis.Status.ErrorID = 16#00004466 THEN
-    ReadValveStatus := FALSE;
-ELSE
-    ReadValveStatus := NOT Axis.Status.Error AND NOT Axis.Status.Disabled;
-END_IF]]></ST>
+ReadValveStatus := (NOT Axis.Status.Error) AND (NOT Axis.Status.Disabled);
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="Reset" Id="{55ea212e-113c-4739-bf54-01562c1314f2}">
@@ -1122,7 +1129,40 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// Reuse the same logic from MoveAbsolute
+        <ST><![CDATA[// Start request once
+IF NOT bSetPosRequested THEN
+    bSetPosExecute   := TRUE;   // rising edge
+    bSetPosRequested := TRUE;
+END_IF
+
+fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);
+
+// Drop execute after it was accepted
+IF fbSetPos.Busy THEN
+    bSetPosExecute := FALSE;
+END_IF
+
+// Error handling
+IF fbSetPos.Error THEN
+    bSetPosExecute   := FALSE;
+    bSetPosRequested := FALSE;   // ou mantenha TRUE se quiser retry controlado
+    stStatus.eState  := E_ActuatorState.eError;
+    stStatus.sMessage := 'Error in motor Set Position';
+    SetPosition := FALSE;
+    RETURN;
+END_IF
+
+// SUCCESS only on Done
+IF fbSetPos.Done THEN
+    bSetPosExecute   := FALSE;
+    bSetPosRequested := FALSE;
+    SetPosition := TRUE;
+ELSE
+    SetPosition := FALSE;
+END_IF
+
+(* Before Feb05th 2026
+// Reuse the same logic from MoveAbsolute
 IF NOT bSetPosRequested THEN
     bSetPosExecute := TRUE;
     bSetPosRequested := TRUE;
@@ -1156,7 +1196,7 @@ END_IF
 (*
 // Call the internal motion block
 fbSetPos(Axis := Axis, Execute := bSetPosExecute, Position := rPosition, Mode := FALSE);
-*)]]></ST>
+*)*)]]></ST>
       </Implementation>
     </Method>
     <Method Name="Stop" Id="{27336d58-d763-4c6d-b6e1-79be37906c83}">
@@ -1460,8 +1500,17 @@ END_IF
       <LineId Id="89" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.ReadValveStatus">
-      <LineId Id="6" Count="5" />
-      <LineId Id="5" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="47" Count="3" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="29" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.Reset">
       <LineId Id="382" Count="12" />
@@ -1491,7 +1540,11 @@ END_IF
       <LineId Id="179" Count="0" />
     </LineIds>
     <LineIds Name="FB_MotorWrapper.SetPosition">
-      <LineId Id="6" Count="4" />
+      <LineId Id="62" Count="29" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="7" Count="3" />
       <LineId Id="48" Count="1" />
       <LineId Id="47" Count="0" />
       <LineId Id="11" Count="0" />

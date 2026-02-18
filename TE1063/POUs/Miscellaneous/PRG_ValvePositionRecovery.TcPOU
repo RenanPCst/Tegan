@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_ValvePositionRecovery" Id="{aee666df-462f-41ad-bfd7-73c1d0e7ee22}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_ValvePositionRecovery
+VAR
+    i : INT;
+
+    // ------------------------------------------------------------
+    // Power status (based on your global drop signal)
+    // ------------------------------------------------------------
+    bPowerOk       : BOOL;
+    bPowerOkPrev   : BOOL;
+
+    // ------------------------------------------------------------
+    // Drop duration timer (same threshold used by your auto-shutdown)
+    // If drop lasts >= 3 minutes, PLC will shutdown -> next time is a BOOT scenario
+    // ------------------------------------------------------------
+    tonDropDur     : TON;
+    tDropMax       : TIME := T#3m;
+
+    // ------------------------------------------------------------
+    // Boot request (non-retentive flag)
+    // TRUE at PLC start -> forces position restore before any enable/initialization
+    // ------------------------------------------------------------
+    bBootRestoreReq : BOOL := TRUE;
+
+    // ------------------------------------------------------------
+    // Global evaluation
+    // bAllDone  : TRUE only when no valve is pending restore (all SetPosition done)
+    // bAllValid : TRUE only when all valves have a valid stored position in Persistent memory
+    // ------------------------------------------------------------
+    bAllDone       : BOOL;
+    bAllValid      : BOOL;
+
+    // ------------------------------------------------------------
+    // Restore pending flags per valve
+    // IMPORTANT:
+    // - Keep these flags non-retentive
+    // - If you already have a global array for this, remove this local declaration
+    //   and use the global one instead.
+    // ------------------------------------------------------------
+    bSetValvePosition : ARRAY[1..5] OF BOOL;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// 0) Power OK (inverse of drop signal)
+// ============================================================
+GVL_IO.bPowerSupplyDropSignal := NOT (
+    GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND
+    GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck
+	);
+
+bPowerOk := NOT GVL_IO.bPowerSupplyDropSignal;
+
+
+// ============================================================
+// 1) Measure power drop duration
+// tonDropDur.Q becomes TRUE when drop lasts >= tDropMax (3 minutes)
+// ============================================================
+tonDropDur(IN := NOT bPowerOk, PT := tDropMax);
+
+
+// ============================================================
+// 2) EVENT: Power returns (only if drop was < 3 minutes)
+// If PLC stayed alive, we must restore accumulated (multi-turn) position
+// BEFORE any enable/initialization.
+// ============================================================
+IF (bPowerOk AND NOT bPowerOkPrev) THEN
+    // Power returned NOW (rising edge)
+
+    // If drop did NOT exceed 3 minutes, PLC did not shutdown -> restore required
+    IF NOT tonDropDur.Q THEN
+        FOR i := 1 TO 5 DO
+            bSetValvePosition[i] := TRUE;
+        END_FOR
+        // Force gate low during restore
+        GVL_Motion.bValvesPositionRecovered := FALSE;
+    END_IF
+END_IF
+
+bPowerOkPrev := bPowerOk;
+
+
+// ============================================================
+// 3) EVENT: Boot / PLC start
+// Always restore BEFORE enabling axes (single-turn encoder needs multi-turn restore)
+// ============================================================
+IF bBootRestoreReq THEN
+    FOR i := 1 TO 5 DO
+        bSetValvePosition[i] := TRUE;
+    END_FOR
+    bBootRestoreReq := FALSE;
+    // Force gate low during restore
+    GVL_Motion.bValvesPositionRecovered := FALSE;
+END_IF
+
+
+// ============================================================
+// 4) Main loop:
+// (A) Store last valid accumulated position while running
+// (B) Restore accumulated position only on the two events:
+//     - Boot
+//     - Short power dip (< 3 minutes) where PLC did not shutdown
+// ============================================================
+bAllDone  := TRUE;
+bAllValid := TRUE;
+
+FOR i := 1 TO 5 DO
+
+    // ---- Global validity (fail-safe) ----
+    // If any valve has no valid persistent position, never release SystemInit
+    bAllValid := bAllValid AND GVL_Retain.bPositionIsValid[i];
+
+    // --------------------------------------------------------
+    // (A) Store last known GOOD position (persistent)
+    // Only when:
+    // - Power is OK
+    // - Axis is in a "safe to trust position" state (no error, not disabled)
+    // - NOT pending restore (avoid overwriting stored value during restore)
+    // --------------------------------------------------------
+    IF bPowerOk AND GVL_Motion.aValvesObj[i].ReadValveStatus() THEN
+        IF NOT bSetValvePosition[i] THEN
+            GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
+            GVL_Retain.bPositionIsValid[i] := TRUE;
+        END_IF
+    END_IF
+
+    // --------------------------------------------------------
+    // (B) Restore pending (BEFORE enable)
+    // Restore only when:
+    // - We have a valid stored position
+    // - Power is OK
+    // - EtherCAT slave state is OP (8) -> drive communication is operational
+    // --------------------------------------------------------
+    IF bSetValvePosition[i] THEN
+
+        // Fail-safe: no stored position -> cannot restore -> keep gate FALSE
+        IF NOT GVL_Retain.bPositionIsValid[i] THEN
+            bAllDone := FALSE;
+            CONTINUE;
+        END_IF
+
+        // Try SetPosition only when drive is in OP state
+        IF bPowerOk AND (GVL_Motion.aValves[i].nState = 8) THEN
+            // Your SetPosition() returns TRUE only on Done
+            bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(
+                rPosition := GVL_Retain.rValveLastPosition[i]
+            );
+        ELSE
+            // Not ready yet (power unstable or drive not OP) -> keep gate FALSE
+            bAllDone := FALSE;
+            CONTINUE;
+        END_IF
+
+        // Valve is done only when pending flag becomes FALSE
+        bAllDone := bAllDone AND (NOT bSetValvePosition[i]);
+    END_IF
+
+END_FOR
+
+
+// ============================================================
+// 5) Single gate for SystemInit
+// TRUE only when:
+// - Power is OK
+// - All valves have valid stored positions
+// - All pending restores are completed
+// ============================================================
+GVL_Motion.bValvesPositionRecovered := bPowerOk AND bAllValid AND bAllDone;]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_ValvePositionRecovery">
+      <LineId Id="364" Count="2" />
+      <LineId Id="521" Count="3" />
+      <LineId Id="519" Count="0" />
+      <LineId Id="367" Count="115" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

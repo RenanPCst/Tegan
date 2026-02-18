@@ -101,6 +101,17 @@ CASE state OF
 
 40:
 	IF timer2.Q THEN
+		// Solvents Assignment | Renan 25Jan2025
+		GVL_HMI.stHMISolventsInfo[1].sSolventName := GVL_DB.stSolvents.solventName1;
+		GVL_HMI.stHMISolventsInfo[2].sSolventName := GVL_DB.stSolvents.solventName2;
+		GVL_HMI.stHMISolventsInfo[3].sSolventName := GVL_DB.stSolvents.solventName3;
+		GVL_HMI.stHMISolventsInfo[4].sSolventName := GVL_DB.stSolvents.solventName4;
+		GVL_HMI.stHMISolventsInfo[1].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density1);
+		GVL_HMI.stHMISolventsInfo[2].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density2);
+		GVL_HMI.stHMISolventsInfo[3].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density3);
+		GVL_HMI.stHMISolventsInfo[4].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density4);
+		GVL_Settings.stSolventsInfo := GVL_HMI.stHMISolventsInfo;
+		
 		timer2(in:=FALSE);
 		start:= TRUE;
 		state:= 0;
@@ -158,6 +169,12 @@ END_CASE]]></ST>
       <LineId Id="114" Count="0" />
       <LineId Id="110" Count="0" />
       <LineId Id="115" Count="0" />
+      <LineId Id="164" Count="1" />
+      <LineId Id="167" Count="3" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="173" Count="1" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="171" Count="0" />
       <LineId Id="125" Count="0" />
       <LineId Id="120" Count="0" />
       <LineId Id="122" Count="2" />

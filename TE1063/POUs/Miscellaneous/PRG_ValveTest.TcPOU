@@ -26,13 +26,14 @@ CASE eStep OF
             // Se alguma ainda não terminou o movimento, AllDone fica FALSE
             IF NOT GVL_Motion.aValvesObj[i].MoveValve(
                     iPosition := 1,
-                    rVelocity := 3000,
-                    rAcc      := 1500,
-                    rDec      := 1500)
+                    rVelocity := 600,
+                    rAcc      := 200,
+                    rDec      := 200)
             THEN
                 bAllDone := FALSE;
             END_IF
         END_FOR
+		
 
         // Só avança quando TODAS retornarem TRUE
         IF bAllDone THEN
@@ -59,9 +60,9 @@ CASE eStep OF
         FOR i := 1 TO 5 DO
             IF NOT GVL_Motion.aValvesObj[i].MoveValve(
                     iPosition := 6,
-                    rVelocity := 3000,
-                    rAcc      := 1500,
-                    rDec      := 1500)
+                    rVelocity := 600,
+                    rAcc      := 200,
+                    rDec      := 200)
             THEN
                 bAllDone := FALSE;
             END_IF
@@ -100,7 +101,9 @@ END_CASE
 ]]></ST>
     </Implementation>
     <LineIds Name="PRG_ValveTest">
-      <LineId Id="90" Count="82" />
+      <LineId Id="90" Count="19" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="110" Count="62" />
       <LineId Id="75" Count="0" />
       <LineId Id="5" Count="0" />
     </LineIds>

@@ -15,14 +15,17 @@ VAR_GLOBAL
 	gParameters			: ST_HMIParameters; 	//Machine Parameters
 	gSetSolenoidControl : FB_SetSolenoid;		//FB only instance to control solenoids valves set. 
 	
-	//Safety Alias
+	// Safety Alias
 	bInAckSignal		AT %I* : BOOL; // Aknowledge input
 	bInResetSignal		AT %Q* : BOOL; // Reset input
 	
 	stEL6910	: ST_EL6910; // Safety PLC - Terminal 3
 	
-	//Is Vials Rack Present?
+	// Is Vials Rack Present?
 	bVialRackPresent : BOOL;
+	
+	// power source signal for recovery valves position purposes
+	bPowerSupplyDropSignal	: BOOL := FALSE;
 	
 	//----------------------------------------------------------------------------------------------------------------------
 	// IO Terminals to feed HMI IO Screens

@@ -95,7 +95,7 @@ tonEnableDelay(
 // ---------------------------------------------------------------------------
 // 0) Step 0 - Reset all logic Flags, PRGs and FBs
 // ---------------------------------------------------------------------------
-IF NOT bInitLogicLatchesDone THEN ACT_ResetCommandFlags(); END_IF
+IF NOT bInitLogicLatchesDone AND GVL_Motion.bValvesPositionRecovered THEN ACT_ResetCommandFlags(); END_IF // Valves position recovery after shutdown change | Renan 22Jan2026
 
 IF NOT bAllLogicResetDone AND bInitLogicLatchesDone THEN ACT_LogicResets(); END_IF
 

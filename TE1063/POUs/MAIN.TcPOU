@@ -62,6 +62,7 @@ VAR
 	// ########## Retain valves position ####################
  	bSetValvePosition : ARRAY[1..5] OF BOOL := [TRUE, TRUE, TRUE, TRUE, TRUE];
     bValveStatus      : ARRAY[1..5] OF BOOL;
+	bAllRecovered	  : BOOL;
     i                 : INT;
 	
 	fbPumpsController : FB_AllPumpsController; 
@@ -74,6 +75,7 @@ END_VAR
 DB_Query();//Has to stay here!
 
 //Call Master Control and peripheral programs
+
 PRG_MasterControl(); 
 PRG_UpdateVariablesMoving();
 PRG_SafetyHandle();
@@ -90,16 +92,61 @@ PRG_AxisAssignment();
 PRG_RecipeManager();
 PRG_SystemInfo();
 PRG_LevelHandler();
-//PRG_RetainValveAngles();
+PRG_ValvePositionRecovery();
 
 //Related to Events control
 POU_EventTest();
 POU_FaultHandler();
 PRG_MasterSystemTime();
 
+(*
 //Retain valves position everytime machine is turned off 
+GVL_IO.bPowerSupplyDropSignal := NOT (
+    GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND
+    GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck
+);
+
 FOR i := 1 TO 5 DO
-	
+    bValveStatus[i] := GVL_Motion.aValvesObj[i].ReadValveStatus();
+
+    IF bValveStatus[i] THEN
+
+        // --- MIN CHANGE: if restore is pending, do NOT store position ---
+        IF bSetValvePosition[i] THEN
+            IF GVL_Retain.bPositionIsValid[i] THEN
+                // Try restore until SetPosition returns TRUE (now based on Done)
+                bSetValvePosition[i] := NOT GVL_Motion.aValvesObj[i].SetPosition(
+                    rPosition := GVL_Retain.rValveLastPosition[i]
+                );
+            END_IF
+
+            // Permissive flag for valve repositioning after shutdown
+            IF NOT bSetValvePosition[i] THEN
+                GVL_Motion.bValvesPositionRecovered := TRUE;
+            ELSE
+                GVL_Motion.bValvesPositionRecovered := FALSE;
+            END_IF
+
+            CONTINUE; // <<< prevents overwriting retain with GetPosition during restore
+        END_IF
+        // --- end min change ---
+
+        // Stores position continuously while motor is energized (only after restore)
+        GVL_Retain.rValveLastPosition[i] := GVL_Motion.aValvesObj[i].GetPosition();
+        GVL_Retain.bPositionIsValid[i] := TRUE;
+
+    ELSE
+        // Motor not energized: reset flag to set position when restarting
+        bSetValvePosition[i] := TRUE;
+        // Reseting permissive flag for valve repositioning after shutdown
+        GVL_Motion.bValvesPositionRecovered := FALSE;
+    END_IF
+END_FOR
+*)
+(*
+//Retain valves position everytime machine is turned off 
+GVL_IO.bPowerSupplyDropSignal :=  NOT (GVL_IO.gDigInputs.b24VPowerSupplyOK AND GVL_IO.gDigInputs.b24VPowerSupplyOKBck AND GVL_IO.gDigInputs.b48VPowerSupplyOK AND GVL_IO.gDigInputs.b48VPowerSupplyOKBck);
+FOR i := 1 TO 5 DO
 	bValveStatus[i] := GVL_Motion.aValvesObj[i].ReadValveStatus();
 	
 	IF bValveStatus[i] THEN
@@ -116,9 +163,11 @@ FOR i := 1 TO 5 DO
 	ELSE
 		// Motor not energized: reset flag to set position when restarting
 		bSetValvePosition[i] := TRUE;
+		// Reseting permissive flag for valve repositioning after shutdown
+		GVL_Motion.bValvesPositionRecovered := FALSE; 
 	END_IF
 END_FOR
-
+*)
 //################ TESTING AREA ################################################################################################################################
 
 // Valve testing
@@ -144,21 +193,37 @@ END_IF
     <LineIds Name="MAIN">
       <LineId Id="7498" Count="0" />
       <LineId Id="7362" Count="1" />
-      <LineId Id="6870" Count="3" />
+      <LineId Id="6870" Count="0" />
+      <LineId Id="8004" Count="0" />
+      <LineId Id="6871" Count="2" />
       <LineId Id="7567" Count="0" />
       <LineId Id="7565" Count="0" />
       <LineId Id="7497" Count="0" />
       <LineId Id="7289" Count="0" />
-      <LineId Id="6874" Count="9" />
+      <LineId Id="6874" Count="8" />
+      <LineId Id="8073" Count="0" />
       <LineId Id="7294" Count="0" />
       <LineId Id="7291" Count="2" />
       <LineId Id="7290" Count="0" />
+      <LineId Id="7894" Count="0" />
+      <LineId Id="7784" Count="0" />
+      <LineId Id="7786" Count="40" />
+      <LineId Id="7785" Count="0" />
+      <LineId Id="7783" Count="0" />
       <LineId Id="7430" Count="0" />
-      <LineId Id="6885" Count="6" />
+      <LineId Id="6885" Count="0" />
+      <LineId Id="7710" Count="0" />
+      <LineId Id="6886" Count="0" />
+      <LineId Id="6888" Count="0" />
+      <LineId Id="7712" Count="0" />
+      <LineId Id="6890" Count="1" />
       <LineId Id="6893" Count="1" />
       <LineId Id="7709" Count="0" />
       <LineId Id="7708" Count="0" />
-      <LineId Id="6895" Count="11" />
+      <LineId Id="6895" Count="7" />
+      <LineId Id="7782" Count="0" />
+      <LineId Id="7781" Count="0" />
+      <LineId Id="6903" Count="3" />
       <LineId Id="7635" Count="2" />
       <LineId Id="7639" Count="1" />
       <LineId Id="7638" Count="0" />
