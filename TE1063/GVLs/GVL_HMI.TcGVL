@@ -34,12 +34,14 @@ VAR_GLOBAL
     bAutoCycleHoldReq        : BOOL;  // 1st STOP inside AUTO_CYCLE
     bAutoCycleHoldActive     : BOOL;  // TRUE while StateMachine is in PAUSE_STATE
     bAutoCycleHoldPopup      : BOOL;  // HMI shows the "Cancel / Continue" popup
+	bAutoCyclePrimeSolvents	 : BOOL;  // HMI flag for prime the solvents used on auto cycle before metering the rinse
 
     bAutoCycleContinueCmd    : BOOL;  // HMI "Continue" button
     bAutoCycleCancelCmd      : BOOL;  // HMI "Cancel Run" button
 	
-	bLightsToggleButton	: BOOL := FALSE; // Home screen toggle button for turn lights on or off on HMI 
-	rTimeCountingDown 	 : LREAL; //Count down time for shutdown or rebooting PLC
+	bLightsToggleButton	 : BOOL := FALSE; // Home screen toggle button for turn lights on or off on HMI 
+	rTimeCountingDown 	 : LREAL; 		  //Countdown time for shutdown or rebooting PLC
+	sCountdownPopupText	 : STRING(16);	  //Countdown Popup text for shutdown or rebooting PLC
 	
 	//Machine Mode Blinking
 	bMachineModeBlinking : BOOL := FALSE;	// Flashing variable to blink the state on HMI headbar

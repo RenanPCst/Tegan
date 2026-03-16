@@ -370,8 +370,9 @@ CASE CurrentState OF
     //  - On success → RECOVERY_PHASE, on error → ERROR_STATE.
     // ----------------------------------------------------------------------
     E_MachineStates.PRIME_SOLVENT:
-
-        // Execute PrimeSolvent FB
+	
+	IF GVL_HMI.bAutoCyclePrimeSolvents THEN
+		// Execute PrimeSolvent FB
         fbPrimeSolvent(bExecute := TRUE);
 
         // Capture FB outputs for clarity
@@ -388,6 +389,14 @@ CASE CurrentState OF
                 CurrentState := E_MachineStates.RECOVERY_PHASE;
             END_IF
         END_IF
+	ELSE
+		GVL_HMI.HMIAnimation.sLoadTextPrime  := 'Prime Skipped';
+        GVL_HMI.HMIAnimation.rLoadBarPrime   := 100.0;
+        GVL_HMI.HMIAnimation.eIconStatePrime := E_IconState.Completed;
+		CurrentState := E_MachineStates.RECOVERY_PHASE;
+	END_IF
+
+        
 
 
     // ----------------------------------------------------------------------
@@ -630,7 +639,17 @@ END_IF;]]></ST>
       <LineId Id="3855" Count="1" />
       <LineId Id="3550" Count="3" />
       <LineId Id="3857" Count="1" />
-      <LineId Id="3554" Count="193" />
+      <LineId Id="3554" Count="10" />
+      <LineId Id="3966" Count="1" />
+      <LineId Id="3970" Count="15" />
+      <LineId Id="3968" Count="0" />
+      <LineId Id="3986" Count="0" />
+      <LineId Id="3989" Count="1" />
+      <LineId Id="3988" Count="0" />
+      <LineId Id="3991" Count="0" />
+      <LineId Id="3969" Count="0" />
+      <LineId Id="3565" Count="0" />
+      <LineId Id="3582" Count="165" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_AutoCycle.Reset">
