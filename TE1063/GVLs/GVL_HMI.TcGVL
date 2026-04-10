@@ -20,8 +20,9 @@ VAR_GLOBAL
 	bIncoherenceDetected : BOOL := FALSE; //Incoherence Monitoring that could block master controll to enter in autoCycle
 	bIncoherenceAlert	 : BOOL := FALSE; //Incoherence alert to show an alert on HMI. Event trigger DesktopView 
 	
-	sDateAndTimeEventTriggered	: STRING(256);
-	sUserNameEventTriggered		: STRING(256);
+	sDateAndTimeEventTriggered	: STRING(256); //Linear Pumps save procedure gets the date and time from hmi
+	sUserNameEventTriggered		: STRING(256); //Linear Pumps save procedure gets the hmi username
+	
 	sActivatedRecipeHomeNaming  : STRING(256); // Recipe name shown on home screen when a recipe is active
 	
 	(* Auto Cycle Popup *) // ---------------------------------------------------------------------------------------------------------------------------------
@@ -138,7 +139,22 @@ VAR_GLOBAL
 	
 	// <\Calibration> ------------------------------------------------------------------------------------------------------------------------------------------
 	
-	//<Machine Settings> Variables to handle solvents insert in the settings screen ----------------------------------------------------------------------------
+	// <Reports Listing> ---------------------------------------------------------------------------------------------------------------------------------------
+	
+	aCalibrationReportList      : ARRAY[1..100] OF ST_CalibrationReportListItem;
+    stSelectedCalibReportHeader : ST_CalibrationReportHeader;
+    aSelectedCalibReportLines   : ARRAY[1..300] OF ST_CalibrationReportLine;
+
+    sSelectedReportId           : STRING(50);
+
+    bLoadCalibrationReportList  : BOOL;
+    bLoadSelectedCalibReport    : BOOL;
+    bSelectedReportReady        : BOOL;
+    bReportListReady            : BOOL;
+    bReportQueryBusy            : BOOL;
+    bReportQueryError           : BOOL;
+	
+	// <Machine Settings> Variables to handle solvents insert in the settings screen ----------------------------------------------------------------------------
 	HMIParameters		 : ST_HMIParameters; 					// Motion Parameters from HMI inputs
 	stHMICalibParameters : ST_CalibrationSettings;				// Calibration Parameters from HMI inputs
 	stHMIPumpParameters	 : ST_PumpSettings;						// Pump Parameters from HMI inputs

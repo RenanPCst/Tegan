@@ -4774,50 +4774,90 @@ Weight (g)" data-tchmi-top="57" data-tchmi-top-unit="px" data-tchmi-width="80" d
     "event": "TcHmiButton_14.onPressed",
     "actions": [
       {
-        "objectType": "JavaScript",
+        "objectType": "Condition",
         "active": true,
-        "sourceLines": [
-          "(function () {",
-          "  const H = TcHmi;",
-          "",
-          "  // Use legacy writeEx for your runtime",
-          "  const writeSym = (expr, val, cb) => H.Symbol.writeEx(expr, val, cb);",
-          "",
-          "  // 1) Get combobox and its VALUE (expected 1..6)",
-          "  const cb = H.Controls.get('TcHmiCombobox_AllValvesPosition');",
-          "  if (!cb) { alert('Valves: combobox not found.'); return; }",
-          "",
-          "  const val = cb.getSelectedValue?.();",
-          "  if (val === undefined || val === null || typeof val !== 'number') {",
-          "    alert('Please select a valve position first.');",
-          "    return;",
-          "  }",
-          "  if (val < 1 || val > 6) {",
-          "    alert('Invalid selection. Choose a position from 1 to 6.');",
-          "    return;",
-          "  }",
-          "",
-          "  // 2) Write target position (USINT 1..6)",
-          "  writeSym('%s%PLC1.GVL_HMI.iCalMoveValvesPosition%/s%', val, function (wPos) {",
-          "    if (wPos.error !== TcHmi.Errors.NONE) {",
-          "      alert('Failed to set valve position.');",
-          "      return;",
-          "    }",
-          "",
-          "    // 3) Trigger move flag (PLC will handle/reset as needed)",
-          "    writeSym('%s%PLC1.GVL_HMI.bCalMoveValves%/s%', true, function (wRun) {",
-          "      if (wRun.error !== TcHmi.Errors.NONE) {",
-          "        alert('Failed to trigger valve move.');",
-          "        return;",
-          "      }",
-          "    });",
-          "  });",
-          "})();",
-          ""
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Calibration.bStartCalibration%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": false
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "(function () {",
+                  "  const H = TcHmi;",
+                  "",
+                  "  // Use legacy writeEx for your runtime",
+                  "  const writeSym = (expr, val, cb) => H.Symbol.writeEx(expr, val, cb);",
+                  "",
+                  "  // 1) Get combobox and its VALUE (expected 1..6)",
+                  "  const cb = H.Controls.get('TcHmiCombobox_AllValvesPosition');",
+                  "  if (!cb) { alert('Valves: combobox not found.'); return; }",
+                  "",
+                  "  const val = cb.getSelectedValue?.();",
+                  "  if (val === undefined || val === null || typeof val !== 'number') {",
+                  "    alert('Please select a valve position first.');",
+                  "    return;",
+                  "  }",
+                  "  if (val < 1 || val > 6) {",
+                  "    alert('Invalid selection. Choose a position from 1 to 6.');",
+                  "    return;",
+                  "  }",
+                  "",
+                  "  // 2) Write target position (USINT 1..6)",
+                  "  writeSym('%s%PLC1.GVL_HMI.iCalMoveValvesPosition%/s%', val, function (wPos) {",
+                  "    if (wPos.error !== TcHmi.Errors.NONE) {",
+                  "      alert('Failed to set valve position.');",
+                  "      return;",
+                  "    }",
+                  "",
+                  "    // 3) Trigger move flag (PLC will handle/reset as needed)",
+                  "    writeSym('%s%PLC1.GVL_HMI.bCalMoveValves%/s%', true, function (wRun) {",
+                  "      if (wRun.error !== TcHmi.Errors.NONE) {",
+                  "        alert('Failed to trigger valve move.');",
+                  "        return;",
+                  "      }",
+                  "    });",
+                  "  });",
+                  "})();"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert('Valve Movement not allowed during calibration!');"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
         ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
+        "asyncWait": true
       }
     ]
   }

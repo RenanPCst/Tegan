@@ -10,7 +10,7 @@ FUNCTION_BLOCK FB_BuildCalReportJson
 VAR_INPUT
 	stReportInfo        : ST_ReportInfo;               			// GVL_Calibration.stPumpCalReportInfo
     stCalibrationInfo   : ST_CalibrationInfo;          			// GVL_Calibration.stPumpCalibrationInfo
-    aCalibrationData    : ARRAY[1..100] OF ST_CalibrationData; 	// GVL_Calibration.stPumpCalibrationData
+    aCalibrationData    : ARRAY[1..250] OF ST_CalibrationData; 	// GVL_Calibration.stPumpCalibrationData
     iDataCount          : INT;                         			// Quantos itens válidos em aCalibrationData (1..100)
 	sUser       		: STRING(64);							// Username used in file name
 	iCalNumber  		: INT;                  				// Calibration number used in file name
@@ -20,7 +20,7 @@ VAR_OUTPUT
     bBusy       : BOOL;
     bError      : BOOL;
     nErrId      : UDINT;
-    sJsonBuffer : STRING(16384);
+    sJsonBuffer : STRING(32767);
 	nJsonBytes  : UDINT;  // exact byte count (excludes trailing #0)
 	sFileNameOut: STRING(256); 
 END_VAR

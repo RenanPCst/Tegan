@@ -34,7 +34,7 @@
                 "objectType": "JavaScript",
                 "active": true,
                 "sourceLines": [
-                  "alert(\"Incoherence detected! Please Activate a Recipe.\");"
+                  "alert(\"Auto Cycle cannot start due to an active interlock.\\nPlease check the alarms list or the Reminders screen for more details.\");"
                 ],
                 "injectContextObject": false,
                 "asyncWait": true,
@@ -234,6 +234,31 @@
             "else": []
           }
         ],
+        "asyncWait": true
+      }
+    ]
+  },
+  {
+    "event": "%s%PLC1.GVL_HMI.bAutoCycleHoldPopup%/s%",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%TcHmiPopup_DialogPopup::TargetFile%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/TcHmi.Controls.System.TcHmiPopup.TargetFile",
+          "value": {
+            "path": "Contents/Dialog/Content_Popup_Dialog05_AutoCycle_Pause.content"
+          }
+        },
+        "asyncWait": true
+      },
+      {
+        "objectType": "ControlApiFunction",
+        "active": true,
+        "control": "TcHmiPopup_DialogPopup",
+        "fn": "open",
         "asyncWait": true
       }
     ]

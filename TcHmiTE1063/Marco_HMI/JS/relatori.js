@@ -663,13 +663,16 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         
         const calibData = calibDataArray;
         const calibHead = calibHeadArray;
-        let yPosicao = 80;
         let xPosition = 10;
+        let yPosicao = 80;
 
         // 2. Criar a instância jsPDF
         const doc = new jspdf.jsPDF();
         
         const drawHeader = (data = calibHeadArray) => {
+        
+        yPosicao = 80;
+
         // 3. Adicionar as informações do cabeçalho (reportInfo)
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
@@ -727,6 +730,11 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
         yPosicao += 5;
         doc.line(xPosition, yPosicao, 200, yPosicao);
         yPosicao += 5;
+
+        // Resets the font for writing the data
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+
         };
 
         drawHeader();
@@ -750,8 +758,11 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
             item.pumpRevs?.trim() !== ""
         );
 
+        const rowHeight = 5;
+        const pageBottom = 280;
+
         filteredData.forEach(item => {
-            if (yPosicao > 280) { // adjust for your margin
+            if (yPosicao + rowHeight > pageBottom) { // adjust for your margin
                 doc.addPage();
                 drawHeader();
             }
@@ -767,7 +778,7 @@ async function genPumpCalibrationReport(calibDataArray, calibHeadArray,  reportN
             doc.text(item.criteria, xPosition+163, yPosicao, { align: "center" });
             doc.text(item.pumpRevs, xPosition+179, yPosicao, { align: "center" });
             
-            yPosicao += 5; // Aumenta a posição vertical para a próxima linha
+            yPosicao += rowHeight; // Aumenta a posição vertical para a próxima linha
         });
 
         // 7. add page numbers after content

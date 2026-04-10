@@ -6738,7 +6738,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{93DFE16B-8A2C-44A5-BAD5-2F94D7DBEE9E}" Name="TE1063" PrjFilePath="TE1063\TE1063.plcproj" TmcFilePath="TE1063\TE1063.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{3461E518-236E-C0B6-40CC-BD1A5E567143}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TE1063\TE1063.tmc" TmcHash="{39C16138-2610-1548-0C5C-9AD2F43EF7EC}">
 					<Name>TE1063 Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -6855,16 +6855,6 @@ External Setpoint Generation:
 							<Type GUID="{540AF760-37DA-CDC1-4116-01C8E5A5DCF2}">ST_EL6631</Type>
 						</Var>
 						<Var>
-							<Name>GVL_IO.nEK1100T01State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL_IO.nEK1100T22State</Name>
-							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
-							<Type>UINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.stEL6910.iSafetyFBError</Name>
 							<Comment><![CDATA[ Terminal 3 At least one FB is in error condition]]></Comment>
 							<Type>BOOL</Type>
@@ -6903,6 +6893,16 @@ External Setpoint Generation:
 							<Name>GVL_IO.stEL6910.bEL6910State</Name>
 							<Comment><![CDATA[ EL6910 State from IO Terminal Info Data	]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEK1100T01State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data	]]></Comment>
+							<Type>UINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.nEK1100T22State</Name>
+							<Comment><![CDATA[Terminal State from IO Terminal Info Data]]></Comment>
+							<Type>UINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.nEL6070State</Name>
@@ -8767,14 +8767,14 @@ AX8000 M1 Drive Safety Error Ack and Run]]></Comment>
 					<Vars VarGrpType="2" AreaNo="1">
 						<Name>PlcTask Outputs</Name>
 						<Var>
-							<Name>GVL_IO.gRelayOutputs</Name>
-							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
-							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
-						</Var>
-						<Var>
 							<Name>GVL_IO.bInResetSignal</Name>
 							<Comment><![CDATA[ Reset input]]></Comment>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL_IO.gRelayOutputs</Name>
+							<Comment><![CDATA[Digital Relay Outputs at Terminal 23 	[EL2624]]]></Comment>
+							<Type GUID="{8E9860CD-371B-C932-CF47-99D2486AD983}">ST_EL2624</Type>
 						</Var>
 						<Var>
 							<Name>GVL_IO.gDigOutputs</Name>
@@ -9209,12 +9209,6 @@ M1 Motor Safety]]></Comment>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.iRunNumber</Name>
-							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
-							<Type>UDINT</Type>
-							<InOut>7</InOut>
-						</Var>
-						<Var>
 							<Name>GVL_Retain.rValveLastPosition</Name>
 							<Comment><![CDATA[Saves valves position to set the same position on startup [this is because we are using a single turn encoder and a 1:20 ratio gearbox]  ]]></Comment>
 							<Type GUID="{B65FA947-3EB1-EE48-F666-F2E3E352D3CD}">ARRAY [1..5] OF LREAL</Type>
@@ -9227,19 +9221,19 @@ M1 Motor Safety]]></Comment>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
+							<Name>GVL_Retain.iRunNumber</Name>
+							<Comment><![CDATA[Counting and stored info for reports and accountability]]></Comment>
+							<Type>UDINT</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
 							<Name>GVL_Retain.iCalibrationNumber</Name>
 							<Type>UDINT</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>
-							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
-							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
-							<Type>DATE</Type>
-							<InOut>7</InOut>
-						</Var>
-						<Var>
 							<Name>GVL_Retain.rLinearPumpOldPosition</Name>
-							<Comment><![CDATA[ Linear pumps old position.]]></Comment>
+							<Comment><![CDATA[ Linear pumps old position showed on HMI]]></Comment>
 							<Type GUID="{A119E8D1-4ED8-37FF-93A7-79A8DBEA2724}">ARRAY [1..10] OF LREAL</Type>
 							<InOut>7</InOut>
 						</Var>
@@ -9247,6 +9241,12 @@ M1 Motor Safety]]></Comment>
 							<Name>GVL_Retain.rLinearPumpsLastAdjustUser</Name>
 							<Comment><![CDATA[ Linear pumps last adjusted username]]></Comment>
 							<Type>STRING(128)</Type>
+							<InOut>7</InOut>
+						</Var>
+						<Var>
+							<Name>GVL_Retain.rLinearPumpsLastAdjustDate</Name>
+							<Comment><![CDATA[ Linear pumps last adjusted Date]]></Comment>
+							<Type>DATE</Type>
 							<InOut>7</InOut>
 						</Var>
 						<Var>

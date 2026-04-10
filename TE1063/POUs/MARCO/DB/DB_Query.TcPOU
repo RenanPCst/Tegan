@@ -435,6 +435,33 @@ E_DB_QUERY_STATE.SELECT_LINEAR_MOTORS:
 		bExecute:= FALSE;
 	END_IF
 	
+E_DB_QUERY_STATE.SELECT_CALIB_REPORT_LIST:
+    
+    cmdSlc := GVL_DB.slctCalibReportList;
+    FB_SelectArray(
+        sNetID:= ,
+        hDBID:= 1,
+        cbCmdSize:= SIZEOF(cmdSlc),
+        pCmdAddr:= ADR(cmdSlc),
+        nStartIndex:= 0,
+        nRecordCount:= 100,
+        cbRecordArraySize:= SIZEOF(GVL_DB.aCalibReportList),
+        pDestAddr:= ADR(GVL_DB.aCalibReportList),
+        bExecute:= TRUE,
+        tTimeout:= T#15S,
+        bBusy=> busy,
+        bError=> err,
+        nErrID=> errid,
+        sSQLState=> sqlstate,
+        nRecords=> recAnz
+    );
+
+    IF NOT FB_SelectArray.bBusy THEN
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+    ELSIF FB_SelectArray.bError THEN
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+    END_IF
+	
 E_DB_QUERY_STATE.ERROR_STATE:
 
 	bExecute:= FALSE;
@@ -643,7 +670,8 @@ VAR
 	stIOTerm32: STRING;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[stIOTerm23:= LREAL_TO_STRING(GVL_HMI.aCalibLinearPumps[1].rNewPosition);
+        <ST><![CDATA[
+stIOTerm23:= LREAL_TO_STRING(GVL_HMI.aCalibLinearPumps[1].rNewPosition);
 stIOTerm24:= LREAL_TO_STRING(GVL_HMI.aCalibLinearPumps[2].rNewPosition);
 stIOTerm25:= LREAL_TO_STRING(GVL_HMI.aCalibLinearPumps[3].rNewPosition);
 stIOTerm26:= LREAL_TO_STRING(GVL_HMI.aCalibLinearPumps[4].rNewPosition);
@@ -968,6 +996,25 @@ IF start THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="selectCalibHeader" Id="{558ec8d3-9932-4392-80ce-3f1afa50b396}">
+      <Declaration><![CDATA[METHOD selectCalibHeader : BOOL
+VAR_INPUT
+	start : BOOL;
+    calibrationNo : STRING;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF start THEN
+    FindAndReplace(
+        pSrcString := ADR(cmdSlc),
+        pDeleteString := ADR('#1#'),
+        pInsertString := ADR(calibrationNo),
+        pDstString := ADR(cmdSlc),
+        nDstSize := SIZEOF(cmdSlc)
+    );
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="selectMethod" Id="{3322be0a-de7d-4c5b-87cb-ab465ca0f5dd}">
       <Declaration><![CDATA[METHOD selectMethod : BOOL
 VAR_INPUT
@@ -1146,6 +1193,9 @@ END_IF]]></ST>
       <LineId Id="1060" Count="0" />
       <LineId Id="1062" Count="12" />
       <LineId Id="1061" Count="0" />
+      <LineId Id="1158" Count="0" />
+      <LineId Id="1160" Count="24" />
+      <LineId Id="1159" Count="0" />
       <LineId Id="1075" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
@@ -1206,6 +1256,7 @@ END_IF]]></ST>
       <LineId Id="44" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertLinearMotors">
+      <LineId Id="152" Count="0" />
       <LineId Id="53" Count="0" />
       <LineId Id="125" Count="8" />
       <LineId Id="57" Count="0" />
@@ -1310,6 +1361,10 @@ END_IF]]></ST>
       <LineId Id="47" Count="0" />
       <LineId Id="78" Count="6" />
       <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.selectCalibHeader">
+      <LineId Id="8" Count="7" />
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.selectMethod">
       <LineId Id="57" Count="0" />

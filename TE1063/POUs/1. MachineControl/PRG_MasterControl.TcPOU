@@ -187,7 +187,8 @@ IF rTriggerStopButton.Q AND NOT (GVL_HMI.eMachineMode = E_MachineMode.SYSTEM_INI
                 // First STOP press during Auto Cycle:
                 // request a soft hold; PRG_StateMachine
                 // will move to PAUSE_STATE at a safe boundary.
-                GVL_HMI.bAutoCycleHoldReq := TRUE;
+                GVL_HMI.bAutoCycleHoldReq 	:= TRUE;
+				GVL_HMI.bAutoCycleHoldPopup	:= TRUE;
             ELSE
                 // Second STOP press while hold is active:
                 // force a full STOP.
@@ -214,7 +215,9 @@ END_IF]]></ST>
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_MasterControl.ACT_StopMonitoring">
-      <LineId Id="2" Count="27" />
+      <LineId Id="2" Count="14" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="17" Count="12" />
       <LineId Id="1" Count="0" />
     </LineIds>
   </POU>

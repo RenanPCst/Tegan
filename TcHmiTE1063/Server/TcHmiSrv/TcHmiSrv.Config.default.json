@@ -4421,6 +4421,111 @@
             },
             "type": "object"
         },
+        "PLC1.ST_Reminders": {
+            "properties": {
+                "bAutoCicleReady": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 6
+                        }
+                    ]
+                },
+                "bCalBoxInPlace": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 9
+                        }
+                    ]
+                },
+                "bCalibrationReady": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 10
+                        }
+                    ]
+                },
+                "bRecipeActivated": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 4
+                        }
+                    ]
+                },
+                "bSolventLevels": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "bStagePlateHomePos": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 7
+                        }
+                    ]
+                },
+                "bThroatJigPresent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 5
+                        }
+                    ]
+                },
+                "bVialRackPresent": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 3
+                        }
+                    ]
+                },
+                "bVialRackRemoved": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 8
+                        }
+                    ]
+                },
+                "bWasteLevel": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/BOOL"
+                        },
+                        {
+                            "propertyOrder": 2
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "PLC1.ST_Results": {
             "properties": {
                 "Runs_ID": {
@@ -7824,6 +7929,16 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Calibration.bStartCalibration": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Calibration::bStartCalibration",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Calibration.bStartCreationCalJson": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -9948,6 +10063,57 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_HMI.bSaveSolventsBt": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bSaveSolventsBt",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Save Solvents change from HMI settings screen"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bSaveSolventsDone": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bSaveSolventsDone",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Save Solvents Done flag from HMI settings screen"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.bSaveSolventsError": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::bSaveSolventsError",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Save Solvents Error flag from HMI settings screen"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_HMI.bScaleFixed": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -10597,6 +10763,23 @@
                     },
                     {
                         "$ref": "tchmi:server#/definitions/PLC1.ST_RecipeInfo"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_HMI.stReminders": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_HMI::stReminders",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Reminders screen signals to be shown on HMI"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_Reminders"
                     }
                 ]
             },
@@ -12927,6 +13110,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.0.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[0]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.1.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -12940,6 +13143,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aPumps.1.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[1]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -12963,6 +13186,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.2.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[2]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.3.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -12976,6 +13219,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aPumps.3.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[3]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -12999,6 +13262,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.4.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[4]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.5.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13012,6 +13295,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aPumps.5.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[5]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -13035,6 +13338,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.6.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[6]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.7.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13048,6 +13371,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aPumps.7.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[7]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -13071,6 +13414,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aPumps.8.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[8]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aPumps.9.Linear.rActualPosition": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13084,6 +13447,46 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aPumps.9.Rotary.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aPumps[9]::Rotary::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aValves.0.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[0]::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -13128,6 +13531,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aValves.1.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[1]::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aValves.1.rActualPos": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13162,6 +13585,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aValves.2.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[2]::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -13206,6 +13649,26 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Motion.aValves.3.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[3]::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Motion.aValves.3.rActualPos": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13240,6 +13703,26 @@
                     {
                         "comment": "Show de actual motor position",
                         "propertyOrder": 8
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Motion.aValves.4.iNotMoving": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Motion::aValves[4]::iNotMoving",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "attributes": {
+                            "TcAddressType": "Input"
+                        },
+                        "propertyOrder": 16
                     }
                 ]
             },
@@ -15441,6 +15924,7 @@
                 "PLC1.GVL_Alarms.arrActiveEvents": 3,
                 "PLC1.GVL_Alarms.arrEventFlag": 3,
                 "PLC1.GVL_Alarms.arrEventLogs": 3,
+                "PLC1.GVL_Calibration.bStartCalibration": 3,
                 "PLC1.GVL_Calibration.bStartCreationCalJson": 3,
                 "PLC1.GVL_Calibration.sGlobalStatus": 3,
                 "PLC1.GVL_Constant.aIOList": 3,
@@ -15607,6 +16091,9 @@
                 "PLC1.GVL_HMI.bSaveParametersBt": 3,
                 "PLC1.GVL_HMI.bSaveParametersDone": 3,
                 "PLC1.GVL_HMI.bSaveParametersError": 3,
+                "PLC1.GVL_HMI.bSaveSolventsBt": 3,
+                "PLC1.GVL_HMI.bSaveSolventsDone": 3,
+                "PLC1.GVL_HMI.bSaveSolventsError": 3,
                 "PLC1.GVL_HMI.bScaleFixed": 3,
                 "PLC1.GVL_HMI.bScaleNeedsAtention": 3,
                 "PLC1.GVL_HMI.bSettingsCorrectLoaded": 3,
@@ -15663,6 +16150,7 @@
                 "PLC1.GVL_HMI.stInfo": 3,
                 "PLC1.GVL_HMI.stLeakTestParameters": 3,
                 "PLC1.GVL_HMI.stRecipeInfo": 3,
+                "PLC1.GVL_HMI.stReminders": 3,
                 "PLC1.GVL_HMIVariables.HMIDigInputs": 3,
                 "PLC1.GVL_HMIVariables.HMIDigOuputs": 3,
                 "PLC1.GVL_HMIVariables.HMIDigOuputs.aRinseLevel": 3,
@@ -15831,23 +16319,38 @@
                 "PLC1.GVL_Motion.M3Motor.rActualPosition": 3,
                 "PLC1.GVL_Motion.aPumps.0.Linear.iOperational": 3,
                 "PLC1.GVL_Motion.aPumps.0.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.0.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.1.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.1.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.2.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.2.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.3.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.3.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.4.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.4.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.5.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.5.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.6.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.6.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.7.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.7.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.8.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.8.Rotary.iNotMoving": 3,
                 "PLC1.GVL_Motion.aPumps.9.Linear.rActualPosition": 3,
+                "PLC1.GVL_Motion.aPumps.9.Rotary.iNotMoving": 3,
+                "PLC1.GVL_Motion.aValves.0.iNotMoving": 3,
                 "PLC1.GVL_Motion.aValves.0.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.0.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.1.iNotMoving": 3,
                 "PLC1.GVL_Motion.aValves.1.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.1.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.2.iNotMoving": 3,
                 "PLC1.GVL_Motion.aValves.2.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.2.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.3.iNotMoving": 3,
                 "PLC1.GVL_Motion.aValves.3.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.3.rActualPosition": 3,
+                "PLC1.GVL_Motion.aValves.4.iNotMoving": 3,
                 "PLC1.GVL_Motion.aValves.4.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.4.rActualPosition": 3,
                 "PLC1.GVL_Recipe.aAvailableFiles": 3,

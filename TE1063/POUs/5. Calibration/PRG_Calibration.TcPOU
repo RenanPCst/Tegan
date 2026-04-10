@@ -56,6 +56,7 @@ VAR
 	aLinearPumpsHoming 		: ARRAY[1..10] OF BOOL;
 	bLinearPumpsOldPosMove	: ARRAY[1..10] OF BOOL;
 	aLinearPumpsMoveDone 	: ARRAY[1..10] OF BOOL; // Tracks per-axis move completion
+	rtrigSaveLinearPumps	: R_TRIG;
 	
 	bCalPressureUpSystemBt: BOOL;
 	
@@ -201,7 +202,9 @@ IF fbSaveCalReport.bDone THEN
 ELSIF fbSaveCalReport.bError THEN
     GVL_Calibration.bCreationCalJsonDone  := FALSE;
     GVL_Calibration.bCreationCalJsonError := TRUE;
-    fbSaveCalReport.Reset();
+	GVL_Alarms.bCalJsonCreationError:= TRUE;
+	GVL_Alarms.nCalJsonCreationErrorId:= fbSaveCalReport.nErrId;
+    //fbSaveCalReport.Reset();
 END_IF
 
 (* Linear Pumps Enable *) //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -253,36 +256,10 @@ IF GVL_HMI.bCalLinearPumpsStopBt THEN
 END_IF
 
 (* Linear Pumps Save - Gets all new motors position and saves on old position | Disable all pumps that are enabled *)
-IF GVL_HMI.bCalLinearPumpsSaveBt THEN
-	FOR i := 1 TO 10 DO
-		IF GVL_Motion.aPumps[i].Linear.iOperational AND GVL_Motion.aPumps[i].Linear.iHomed THEN // if axis enabled then disables it
-			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Old Position changed - DB insert
-			GVL_Retain.rLinearPumpOldPosition[i] := GVL_Motion.aPumps[i].Linear.rActualPos; // Save the old axis position
-			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Motion.aPumps[i].Linear.rActualPos); // New Position changed - DB insert
-			IF NOT aLinearPumpsDisable[i] THEN
-				aLinearPumpsDisable[i] := GVL_Motion.aPumpsLinear[i].Disable(); // Disable the axis
-			END_IF
-		ELSE
-			aLinearPumpsDisable[i] := TRUE; // Fallback if motor is no operational
-			GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
-			GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(GVL_Retain.rLinearPumpOldPosition[i]); // Position not changed - DB insert
-		END_IF
-		GVL_Calibration.stLinearCalibrationData[i].sPumpNumber 	 := TO_STRING(i); // Pump Number - DB insert
-		GVL_Calibration.stLinearCalibrationData[i].sUserName 	 := GVL_HMI.sUserNameEventTriggered; // HMI User name when button pressed - DB insert
-		GVL_Calibration.stLinearCalibrationData[i].sDateOfChange := GVL_HMI.sDateAndTimeEventTriggered; // HMI Date and time when button pressed  - DB insert
-	END_FOR
-	IF 	aLinearPumpsDisable[1] AND aLinearPumpsDisable[2] AND aLinearPumpsDisable[3] AND aLinearPumpsDisable[4] AND aLinearPumpsDisable[5] AND 
-		aLinearPumpsDisable[6] AND aLinearPumpsDisable[7] AND aLinearPumpsDisable[8] AND aLinearPumpsDisable[9] AND aLinearPumpsDisable[10] THEN
-		
-		FOR i := 1 TO 10 DO
-			aLinearPumpsDisable[i] := FALSE; // Resets the disable motors flag
-		END_FOR
-		
-		GVL_HMI.bCalLinearPumpsSaveBt := FALSE;  // Resets the button trigger 
-		GVL_HMI.bCalLinearPumpsDirty := TRUE; 	 // Resets the Dirty flag that allow the popup closes
-		GVL_HMI.sUserNameEventTriggered := '';	 // Resets Username triggered from HMI
-		GVL_HMI.sDateAndTimeEventTriggered := '';// Resets Date and Time trigerred from HMI
-	END_IF
+rtrigSaveLinearPumps(CLK := GVL_HMI.bCalLinearPumpsSaveBt);
+
+IF rtrigSaveLinearPumps.Q THEN
+    SaveLinearPumpPositions();
 END_IF
 
 (* Valves Manual Movement *) //-----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -872,6 +849,8 @@ IF NOT bResetRequested THEN
         GVL_Calibration.stPumpCalibrationData[i].rTargetVolume := 0.0;
         GVL_Calibration.stPumpCalibrationData[i].sStep := '';
     END_FOR
+	
+	fbSaveCalReport.Reset();
 
     // IMPORTANT: Resets bResetDone here (1x)
     bResetDone := FALSE;
@@ -972,6 +951,78 @@ END_IF
 
 
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SaveLinearPumpPositions" Id="{c75d4578-e8f4-4689-bb5b-b55490b8c5a9}">
+      <Declaration><![CDATA[METHOD SaveLinearPumpPositions : BOOL
+VAR
+	i               : INT;
+    bAnyChange      : BOOL := FALSE;
+    bDisableDone    : BOOL;
+    rSavedPos       : LREAL;
+    rActualPos      : LREAL;
+    lrTolerance     : LREAL := 2;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[bAnyChange := FALSE;
+
+FOR i := 1 TO 10 DO
+
+    // Default metadata for all records
+    GVL_Calibration.stLinearCalibrationData[i].sPumpNumber   := TO_STRING(i);
+    GVL_Calibration.stLinearCalibrationData[i].sUserName     := GVL_HMI.sUserNameEventTriggered;
+    GVL_Calibration.stLinearCalibrationData[i].sDateOfChange := GVL_HMI.sDateAndTimeEventTriggered;
+
+    rSavedPos  := GVL_Retain.rLinearPumpOldPosition[i];
+    rActualPos := GVL_Motion.aPumps[i].Linear.rActualPos;
+
+    // Only trust actual position if axis is enabled + homed
+    IF GVL_Motion.aPumps[i].Linear.iOperational AND GVL_Motion.aPumps[i].Linear.iHomed THEN
+
+        // Compare saved vs actual to decide if there was a real position change
+        IF ABS(rActualPos - rSavedPos) > lrTolerance THEN
+
+            // Fill DB payload
+            GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(rSavedPos);
+            GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(rActualPos);
+
+			// Update HMI Values
+			GVL_HMI.aCalibLinearPumps[1].rOldPosition := rSavedPos;
+			GVL_HMI.aCalibLinearPumps[1].rNewPosition := rActualPos;
+			
+            // Update local retained reference
+            GVL_Retain.rLinearPumpOldPosition[i] := rActualPos;
+
+            bAnyChange := TRUE;
+
+        ELSE
+            // No real change
+            GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(rSavedPos);
+            GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(rSavedPos);
+        END_IF
+
+        // Disable axis after save check
+        bDisableDone := GVL_Motion.aPumpsLinear[i].Disable();
+
+    ELSE
+        // Axis not valid -> do not trust actual position, do not overwrite retain
+        GVL_Calibration.stLinearCalibrationData[i].sOldPosition := TO_STRING(rSavedPos);
+        GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(rSavedPos);
+    END_IF
+
+END_FOR
+
+// Trigger DB only if at least one pump actually changed
+IF bAnyChange THEN
+    DB_Query.state := E_DB_QUERY_STATE.INSERT_LINEAR_MOTORS;
+END_IF
+
+// Final housekeeping
+GVL_HMI.bCalLinearPumpsSaveBt := FALSE;		// Resets the button trigger 
+GVL_HMI.bCalLinearPumpsDirty := TRUE;		// Resets the Dirty flag that allow the popup closes
+GVL_HMI.sUserNameEventTriggered := '';		// Resets Username triggered from HMI
+GVL_HMI.sDateAndTimeEventTriggered := '';	// Resets Date and Time trigerred from HMI]]></ST>
       </Implementation>
     </Method>
     <Method Name="StopLeakTest" Id="{881665d9-2804-4b8d-9d93-9edb8f3e78d7}">
@@ -1182,7 +1233,9 @@ END_IF*)
       <LineId Id="383" Count="12" />
       <LineId Id="465" Count="1" />
       <LineId Id="496" Count="0" />
-      <LineId Id="396" Count="3" />
+      <LineId Id="396" Count="2" />
+      <LineId Id="1242" Count="1" />
+      <LineId Id="399" Count="0" />
       <LineId Id="376" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />
@@ -1206,27 +1259,8 @@ END_IF*)
       <LineId Id="282" Count="8" />
       <LineId Id="292" Count="1" />
       <LineId Id="262" Count="0" />
-      <LineId Id="833" Count="2" />
-      <LineId Id="841" Count="0" />
-      <LineId Id="844" Count="0" />
-      <LineId Id="868" Count="0" />
-      <LineId Id="845" Count="0" />
-      <LineId Id="864" Count="0" />
-      <LineId Id="848" Count="4" />
-      <LineId Id="867" Count="0" />
-      <LineId Id="865" Count="0" />
-      <LineId Id="842" Count="0" />
-      <LineId Id="934" Count="2" />
-      <LineId Id="843" Count="0" />
-      <LineId Id="853" Count="0" />
-      <LineId Id="857" Count="0" />
-      <LineId Id="854" Count="0" />
-      <LineId Id="860" Count="3" />
-      <LineId Id="859" Count="0" />
-      <LineId Id="931" Count="0" />
-      <LineId Id="937" Count="0" />
-      <LineId Id="858" Count="0" />
-      <LineId Id="855" Count="0" />
+      <LineId Id="833" Count="1" />
+      <LineId Id="1309" Count="3" />
       <LineId Id="838" Count="0" />
       <LineId Id="611" Count="0" />
       <LineId Id="610" Count="0" />
@@ -1359,7 +1393,9 @@ END_IF*)
     <LineIds Name="PRG_Calibration.Reset">
       <LineId Id="147" Count="39" />
       <LineId Id="234" Count="1" />
-      <LineId Id="187" Count="43" />
+      <LineId Id="187" Count="26" />
+      <LineId Id="239" Count="1" />
+      <LineId Id="214" Count="16" />
       <LineId Id="141" Count="0" />
       <LineId Id="140" Count="0" />
       <LineId Id="9" Count="1" />
@@ -1398,6 +1434,15 @@ END_IF*)
       <LineId Id="123" Count="0" />
       <LineId Id="126" Count="0" />
       <LineId Id="34" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_Calibration.SaveLinearPumpPositions">
+      <LineId Id="12" Count="20" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="34" Count="30" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.StopLeakTest">

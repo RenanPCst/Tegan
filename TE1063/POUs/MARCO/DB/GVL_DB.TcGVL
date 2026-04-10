@@ -20,6 +20,7 @@ VAR_GLOBAL
 //RUN CMDS	
 isrtRun: STRING(5000) := 'INSERT INTO [dbo].[RUNS] ( [analyst], [comment], [softwareVersion], [sysMasterRevision], [sysSettingsRevision], [meterVelocity], [runVelocity], [emptyTubesFactor], [fillTubesFactor], [solvent1NameRevision], [solvent2NameRevision], [solvent3NameRevision], [solvent4NameRevision], [timeEventStarted], [timeEventCompleted], [methodID], [CalibrationNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', $'#12#$', $'#13#$', $'#14#$', $'#15#$', #16#, #17#) ';
 slctLastRun: STRING(1000) := 'SELECT TOP 1 [runNo], [analyst], [comment], [softwareVersion], [sysMasterRevision], [sysSettingsRevision], [meterVelocity], [runVelocity], [emptyTubesFactor], [fillTubesFactor], [solvent1NameRevision], [solvent2NameRevision], [solvent3NameRevision], [solvent4NameRevision], [timeEventStarted], [timeEventCompleted], [methodID], [CalibrationNo] FROM [dbo].[RUNS] ORDER BY [runNo] DESC;';
+
 //METHOD CMDS
 slctAllMethods: STRING(5000) := 'SELECT [methodName], [methodRevision] FROM [dbo].[METHODS] ';
 slctAllActvMethod: STRING(5000) := 'SELECT [methodName], [methodRevision] FROM [dbo].[METHODS] WHERE [methodStatus] = $'activated$'';
@@ -29,26 +30,37 @@ slctMethodID: STRING(5000) := 'SELECT TOP 1 [methodID] FROM [dbo].[METHODS] WHER
 isrtNewMethod: STRING(5000) := 'INSERT INTO [dbo].[METHODS] ( [methodName], [methodRevision], [methodCreatedBy], [methodCreatedOn], [solvent_R1], [solvent_R2], [solvent_W1], [solvent_W2], [time_R1], [time_R2], [time_W1], [time_W2], [velocity_R1], [velocity_R2], [velocity_W1], [velocity_W2], [soakTime], [agitate_1_Time], [agitate_2_Time], [vialsToFill], [vialPrimeVol], [vial_1_FillVol], [vial_2_4_FillVol], [airDryTime], [methodStatus]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', $'#12#$', $'#13#$', $'#14#$', $'#15#$', $'#16#$', $'#17#$', $'#18#$', $'#19#$', $'#20#$', $'#21#$', $'#22#$', $'#23#$', $'#24#$', $'#25#$') ';
 isrtVD: string(5000) := 'INSERT INTO [dbo].[VOLUME_DATA] ( [pump], [stage], [rinse1], [rinse2], [wash1], [wash2], [methodID]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', #7#) ';
 updtDactvMethod: STRING(5000) := 'UPDATE [dbo].[METHODS] SET [methodStatus] = $'deactivated$' WHERE [methodName] = $'#1#$' AND [methodRevision] = $'#2#$'';
+
 //CALIBRATION CMD
 slctLastCalibID: T_Maxstring := 'SELECT TOP 1 [calibrationNo] FROM [dbo].[CALIBRATION_HEAD] ORDER BY [calibrationNo] DESC;';
 slctLastCalib: STRING(5000) := 'SELECT TOP 1 [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo] FROM [dbo].[CALIBRATION] ORDER BY [calibrationNo] DESC; ';
 isrtCalib: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION_HEAD] ( [userID], [density], [solventNo], [solventRevision], [allowableFail], [replicates], [callInterval], [sysRevisionNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', #8#) ';
 isrtCalibValues: STRING(5000) := 'INSERT INTO [dbo].[CALIBRATION] ( [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs], [CalibrationNo]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', #12#) ';
+
 //SYSTEM CMD
 slctLastSys: STRING(5000) := 'SELECT TOP 1 [gen_SealAndPump], [cal_AcceptanceCriteria], [cal_AllowableFail], [cal_Replicates], [cal_PumpCallIntervalDays], [cal_CloseAppOnCompletation], [AirDryTimeOnCompletation], [lkt_AllowableLeakTestFail], [lkt_LeakTestBuildupTime], [lkt_LeakTestHoldTime], [lkt_LeakTestPressure], [mec_PlatesClosedPosition], [mec_PlatesDryPosition], [mec_PlatesVelocity], [mec_MaxCurrentFastDown], [mec_MaxCurrentSlowDown], [mec_MaxCurrentSlowUp], [pmp_MeterVelocity], [pmp_RunVelocity], [pmp_EmptyFactor], [pmp_FillSolventTubesFactor], [smp_AboveCalibration], [smp_VialSetSpacing], [smp_IntoResBottom], [smp_IntoResDispense], [smp_IntoResWeigh], [smp_IntoVials], [sec_DisplayManualControl], [sec_CheckLogonEachRun], [createdBy], [createdDate], [sysRevisionNo], [smp_AboveVialSet1], [smp_IntoWaste] FROM [dbo].[SYSTEM] ORDER BY [sysRevisionNo] DESC; ';
 slctAllSys: STRING(5000) := 'SELECT [gen_SealAndPump], [cal_AcceptanceCriteria], [cal_AllowableFail], [cal_Replicates], [cal_PumpCallIntervalDays], [cal_CloseAppOnCompletation], [AirDryTimeOnCompletation], [lkt_AllowableLeakTestFail], [lkt_LeakTestBuildupTime], [lkt_LeakTestHoldTime], [lkt_LeakTestPressure], [mec_PlatesClosedPosition], [mec_PlatesDryPosition], [mec_PlatesVelocity], [mec_MaxCurrentFastDown], [mec_MaxCurrentSlowDown], [mec_MaxCurrentSlowUp], [pmp_MeterVelocity], [pmp_RunVelocity], [pmp_EmptyFactor], [pmp_FillSolventTubesFactor], [smp_AboveCalibration], [smp_VialSetSpacing], [smp_IntoResBottom], [smp_IntoResDispense], [smp_IntoResWeigh], [smp_IntoVials], [sec_DisplayManualControl], [sec_CheckLogonEachRun], [createdBy], [createdDate], [sysRevisionNo], [smp_AboveVialSet1], [smp_IntoWaste] FROM [dbo].[SYSTEM] ORDER BY [sysRevisionNo] DESC; ';
 isrtSys: STRING(5000) := 'INSERT INTO [dbo].[SYSTEM] ( [gen_SealAndPump], [cal_AcceptanceCriteria], [cal_AllowableFail], [cal_Replicates], [cal_PumpCallIntervalDays], [cal_CloseAppOnCompletation], [AirDryTimeOnCompletation], [lkt_AllowableLeakTestFail], [lkt_LeakTestBuildupTime], [lkt_LeakTestHoldTime], [lkt_LeakTestPressure], [mec_PlatesClosedPosition], [mec_PlatesDryPosition], [mec_PlatesVelocity], [mec_MaxCurrentFastDown], [mec_MaxCurrentSlowDown], [mec_MaxCurrentSlowUp], [pmp_MeterVelocity], [pmp_RunVelocity], [pmp_EmptyFactor], [pmp_FillSolventTubesFactor], [smp_AboveCalibration], [smp_VialSetSpacing], [smp_IntoResBottom], [smp_IntoResDispense], [smp_IntoResWeigh], [smp_IntoVials], [sec_DisplayManualControl], [sec_CheckLogonEachRun], [createdBy], [createdDate], [smp_AboveVialSet1], [smp_IntoWaste]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$', $'#11#$', $'#12#$', $'#13#$', $'#14#$', $'#15#$', $'#16#$', $'#17#$', $'#18#$', $'#19#$', $'#20#$', $'#21#$', $'#22#$', $'#23#$', $'#24#$', $'#25#$', $'#26#$', $'#27#$', $'#28#$', $'#29#$', $'#30#$', $'#31#$', $'#32#$', $'#33#$') ';
+
 //USERS CMD
 isrtUser: STRING(5000) := 'INSERT INTO [dbo].[USERS] ( [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$') ';
 slctCurrentUser: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy] FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY [userID] ORDER BY TRY_CONVERT(datetime, [transactionDate], 113) DESC, [ID_user] DESC) AS rn FROM [dbo].[USERS] WHERE [transactionType] = $'Added$') t WHERE rn = 1 AND NOT EXISTS (SELECT 1 FROM [dbo].[USERS] r WHERE r.[userID] = t.[userID] AND r.[transactionType] = $'Removed$' AND TRY_CONVERT(datetime, r.[transactionDate], 113) > TRY_CONVERT(datetime, t.[transactionDate], 113));';
 slctAllUsers: STRING(5000) := 'SELECT [ID_user], [userID], [acessLevel], [transactionType], [transactionDate], [transactedBy], [addDate], [enteredBy] FROM [dbo].[USERS] ';
+
 //SOLVENTS
 isrtSolvent: STRING(1000) := 'INSERT INTO [dbo].[SOLVENTS] ( [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$') ';
 slctSolvent: STRING(1000) := 'SELECT TOP 1 [SOLVENT_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ORDER BY [SOLVENT_ID] DESC; ';
 slctAllSolvents: STRING(1000) := 'SELECT [SOLVENT_ID], [solventName1], [solventName2], [solventName3], [solventName4], [density1], [density2], [density3], [density4], [addedBy], [addedDate] FROM [dbo].[SOLVENTS] ';
+
 //LINEAR MOTORS
 isrtLinear: STRING(1000) := 'INSERT INTO [dbo].[LINEAR] ( [pump1], [pump2], [pump3], [pump4], [pump5], [pump6], [pump7], [pump8], [pump9], [pump10]) VALUES ( $'#1#$', $'#2#$', $'#3#$', $'#4#$', $'#5#$', $'#6#$', $'#7#$', $'#8#$', $'#9#$', $'#10#$') ';
 slctLinear: STRING(1000) := 'SELECT TOP 1 [ID_Linear], [pump1], [pump2], [pump3], [pump4], [pump5], [pump6], [pump7], [pump8], [pump9], [pump10] FROM [dbo].[LINEAR] ORDER BY [ID_Linear] DESC; ';
+
+//PUMP CALIBRATION REPORT / HISTORY CMD
+slctCalibReportList: STRING(5000) := 'SELECT TOP 50 [CalibrationNo], [userID], [solventNo], [sysRevisionNo] FROM [dbo].[PumpCalibrationHeader] ORDER BY [CalibrationNo] DESC;';
+slctPumpCalibHeaderByNo: STRING(5000) := 'SELECT TOP 1 [CalibrationNo], [userID], [density], [solventNo], [solventRevision], [allowableFail], [replicates], [callInterval], [sysRevisionNo] FROM [dbo].[PumpCalibrationHeader] WHERE [CalibrationNo] = #1#;';
+slctPumpCalibValuesByNo: STRING(5000) := 'SELECT [CalibrationNo], [dateTime], [pumpNo], [step], [tareWt], [grossWt], [netVolume], [netWt], [targetVolume], [differencePercent], [criteria], [pumpRevs] FROM [dbo].[PumpCalibrationValues] WHERE [CalibrationNo] = #1# ORDER BY [ID] ASC;';
+
 
 (******************************************************************************************************)
 
@@ -117,6 +129,12 @@ listSolvents	: ARRAY[0..500] OF ST_Solvents;
 (***** Linear Motors Variables *****************************************************************************)
 
 stLinearMotors	: ST_LinearMotors;
+
+(******************************************************************************************************)
+
+(***** List Reports hmi *****************************************************************************)
+
+aCalibReportList : ARRAY[1..100] OF ST_CalibrationReportListItem;
 
 (******************************************************************************************************)
 

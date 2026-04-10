@@ -495,6 +495,13 @@ IF NOT GVL_IO.gDigInputs.bUPSReady THEN
 		GVL_Alarms.arrEventFlag[166]:= FALSE;	
 END_IF
 
+(*PW-167: Term. 9 EL1809 Dig Input Error*)
+IF GVL_IO.nEL1809T09State <> 8 THEN
+		GVL_Alarms.arrEventFlag[167]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[167]:= FALSE;	
+END_IF
+
 
 //*********************************************************END SECTION****************************************************************
 
@@ -555,6 +562,18 @@ IF 	GVL_Alarms.bTCPCLientCloseError THEN
 		GVL_Alarms.arrEventFlag[215]:= TRUE;
 	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
 		GVL_Alarms.arrEventFlag[215]:= FALSE;	
+END_IF
+
+//*********************************************************END SECTION****************************************************************
+
+//------_________________________-----------------------------------------------------------------------------------------------------
+//----- Related to Process Fails -----------------------------------------------------------------------------------------------------
+
+(* SF-323: CALIBRATION - Calibration JSON File creation Error *)
+IF 	GVL_Alarms.bCalJsonCreationError THEN
+		GVL_Alarms.arrEventFlag[323]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[323]:= FALSE;	
 END_IF
 
 //*********************************************************END SECTION****************************************************************
@@ -648,7 +667,12 @@ END_IF
       <LineId Id="774" Count="0" />
       <LineId Id="782" Count="0" />
       <LineId Id="785" Count="4" />
-      <LineId Id="783" Count="1" />
+      <LineId Id="783" Count="0" />
+      <LineId Id="1098" Count="0" />
+      <LineId Id="1097" Count="0" />
+      <LineId Id="1100" Count="3" />
+      <LineId Id="1099" Count="0" />
+      <LineId Id="784" Count="0" />
       <LineId Id="654" Count="4" />
       <LineId Id="855" Count="0" />
       <LineId Id="760" Count="0" />
@@ -674,7 +698,12 @@ END_IF
       <LineId Id="951" Count="0" />
       <LineId Id="963" Count="5" />
       <LineId Id="962" Count="0" />
-      <LineId Id="662" Count="4" />
+      <LineId Id="662" Count="1" />
+      <LineId Id="995" Count="3" />
+      <LineId Id="1087" Count="4" />
+      <LineId Id="1017" Count="0" />
+      <LineId Id="1054" Count="1" />
+      <LineId Id="664" Count="2" />
       <LineId Id="54" Count="0" />
     </LineIds>
   </POU>

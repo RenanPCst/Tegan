@@ -4386,9 +4386,9 @@
           "      .replace(',', ''); // \"12 Nov 2025 10:02:15\"",
           "    const timestamp = formatted.replace(/ /g, '-').replace('-', ' ').replace('-', '-'); // \"12-Nov-2025 10:02:15\"",
           "",
-          "    // 3) Get current logged user (HMI native symbol)",
-          "    const user = await READ('UserManagement::CurrentUser::Name');",
-          "    const userName = (typeof user === 'string' && user.length > 0) ? user : 'UnknownUser';",
+          "    // 3) Get current logged user from TcHmi server",
+          "\tconst currentUser = TcHmi.Server.getCurrentUser();",
+          "\tconst userName = (typeof currentUser === 'string' && currentUser.length > 0) ? currentUser : 'UnknownUser';",
           "",
           "    // 4) Write metadata to PLC",
           "    await WRITE('PLC1.GVL_HMI.sDateAndTimeEventTriggered', timestamp);",
@@ -4435,7 +4435,7 @@
     "actions": [
       {
         "objectType": "JavaScript",
-        "active": true,
+        "active": false,
         "sourceLines": [
           "// Content_Popup_LinearPumps -> onDetached",
           "(async () => {",
@@ -4478,6 +4478,64 @@
         "injectContextObject": false,
         "asyncWait": true,
         "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "Condition",
+        "active": true,
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "symbolExpression": "%s%PLC1.GVL_HMI.bCalLinearPumpsDirty%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"You have unsaved changes. Please Save or Discard before closing.\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              },
+              {
+                "objectType": "WriteToSymbol",
+                "active": true,
+                "symbolExpression": "%ctrl%TcHmiPopup_LargeCenter::TargetFile%/ctrl%",
+                "value": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:framework#/definitions/TcHmi.Controls.System.TcHmiPopup.TargetFile",
+                  "value": null
+                },
+                "asyncWait": true
+              },
+              {
+                "objectType": "ControlApiFunction",
+                "active": true,
+                "control": "TcHmiPopup_LargeCenter",
+                "fn": "open",
+                "asyncWait": true
+              }
+            ]
+          },
+          {
+            "else": []
+          }
+        ],
+        "asyncWait": true
       }
     ]
   }

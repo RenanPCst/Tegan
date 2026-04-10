@@ -636,52 +636,218 @@
     "event": "TcHmiButton_MoveValvesBt.onPressed",
     "actions": [
       {
-        "objectType": "JavaScript",
+        "objectType": "Condition",
         "active": true,
-        "sourceLines": [
-          "console.log(\"Button 'MoveValves' pressed.\");",
-          "",
-          "let allValid = true;",
-          "let valveValues = [];",
-          "",
-          "// Loop through all 5 valve controls",
-          "for (let i = 1; i <= 5; i++) {",
-          "    const combo = TcHmi.Controls.get(`TcHmiCombobox_Valve${i}Position`);",
-          "",
-          "    if (!combo) {",
-          "        console.warn(`Valve ${i} combobox not found.`);",
-          "        allValid = false;",
-          "        break;",
-          "    }",
-          "",
-          "    const selectedValue = combo.getSelectedValue();",
-          "    console.log(`Valve ${i} selected value: ${selectedValue}`);",
-          "",
-          "    if (selectedValue === null || selectedValue === undefined || selectedValue <= 0) {",
-          "        allValid = false;",
-          "        break;",
-          "    }",
-          "",
-          "    valveValues.push(selectedValue);",
-          "}",
-          "",
-          "// Validation failed",
-          "if (!allValid) {",
-          "    alert(\"Please select a valid position for all 5 valves before proceeding.\");",
-          "} else {",
-          "    console.log(\"Validation OK. Writing values to PLC...\");",
-          "",
-          "    for (let i = 0; i < 5; i++) {",
-          "        console.log(`→ Valve ${i + 1} write: pos=${valveValues[i]}`);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualValvesCmd[${i}]::iTargetPos%/s%`, valveValues[i]);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualValvesCmd[${i}]::bMove%/s%`, true);",
-          "    }",
-          "}",
-          ""
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.0.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.1.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.2.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.3.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.4.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.5.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.6.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.7.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.8.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aPumps.9.Rotary.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "console.log(\"Button 'MoveValves' pressed.\");",
+                  "",
+                  "let allValid = true;",
+                  "let valveValues = [];",
+                  "",
+                  "// Loop through all 5 valve controls",
+                  "for (let i = 1; i <= 5; i++) {",
+                  "    const combo = TcHmi.Controls.get(`TcHmiCombobox_Valve${i}Position`);",
+                  "",
+                  "    if (!combo) {",
+                  "        console.warn(`Valve ${i} combobox not found.`);",
+                  "        allValid = false;",
+                  "        break;",
+                  "    }",
+                  "",
+                  "    const selectedValue = combo.getSelectedValue();",
+                  "    console.log(`Valve ${i} selected value: ${selectedValue}`);",
+                  "",
+                  "    if (selectedValue === null || selectedValue === undefined || selectedValue <= 0) {",
+                  "        allValid = false;",
+                  "        break;",
+                  "    }",
+                  "",
+                  "    valveValues.push(selectedValue);",
+                  "}",
+                  "",
+                  "// Validation failed",
+                  "if (!allValid) {",
+                  "    alert(\"Please select a valid position for all 5 valves before proceeding.\");",
+                  "} else {",
+                  "    console.log(\"Validation OK. Writing values to PLC...\");",
+                  "",
+                  "    for (let i = 0; i < 5; i++) {",
+                  "        console.log(`→ Valve ${i + 1} write: pos=${valveValues[i]}`);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualValvesCmd[${i}]::iTargetPos%/s%`, valveValues[i]);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualValvesCmd[${i}]::bMove%/s%`, true);",
+                  "    }",
+                  "}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Valve movement is not allowed while pumps are running!\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
         ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
+        "asyncWait": true
       }
     ]
   }
@@ -996,74 +1162,171 @@
     "event": "TcHmiButton_MovePumpsBySpeed.onPressed",
     "actions": [
       {
-        "objectType": "JavaScript",
+        "objectType": "Condition",
         "active": true,
-        "sourceLines": [
-          "console.log(\"Button 'RunPumpsBySpeed' pressed.\");",
-          "",
-          "let valid = true;",
-          "let atLeastOneActive = false;",
-          "let pumpData = [];",
-          "",
-          "// Loop through all 10 pumps",
-          "for (let i = 0; i < 10; i++) {",
-          "    const index = i + 1;",
-          "",
-          "    // Get control references",
-          "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
-          "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
-          "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
-          "",
-          "    // Read values",
-          "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
-          "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
-          "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
-          "    const active = (rawState === 'Active');",
-          "",
-          "    // Debug info",
-          "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
-          "    console.log(`Pump ${index}: active=${active}, speed=${speed}, dir=${direction}`);",
-          "",
-          "    // Store info for later",
-          "    pumpData.push({ active, speed, direction });",
-          "",
-          "    if (active) {",
-          "        atLeastOneActive = true;",
-          "",
-          "        // Validate speed and direction",
-          "        if (speed <= 0 || speed > 900 || direction == null) {",
-          "            alert(`Pump ${index} has invalid speed or direction.`);",
-          "            valid = false;",
-          "        }",
-          "    }",
-          "}",
-          "",
-          "// If no pump is selected, show alert",
-          "if (!atLeastOneActive) {",
-          "    alert('Please activate at least one pump before running the command.');",
-          "}",
-          "// If validation is OK, write values to PLC",
-          "else if (valid) {",
-          "    console.log(\"Validation OK. Writing values to PLC...\");",
-          "",
-          "    for (let i = 0; i < 10; i++) {",
-          "        const { active, speed, direction } = pumpData[i];",
-          "        console.log(`* Pump ${i + 1} write: active=${active}, speed=${speed}, dir=${direction}`);",
-          "",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
-          "        //TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bBusy%/s%`, active);",
-          "    }",
-          "",
-          "    // Trigger the execution signal",
-          "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsBySpeedBt%/s%`, true);",
-          "    console.log(\"Execution signal sent: bRunPumpsBySpeedBt = true\");",
-          "}"
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "console.log(\"Button 'RunPumpsBySpeed' pressed.\");",
+                  "",
+                  "let valid = true;",
+                  "let atLeastOneActive = false;",
+                  "let pumpData = [];",
+                  "",
+                  "// Loop through all 10 pumps",
+                  "for (let i = 0; i < 10; i++) {",
+                  "    const index = i + 1;",
+                  "",
+                  "    // Get control references",
+                  "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
+                  "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
+                  "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
+                  "",
+                  "    // Read values",
+                  "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
+                  "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
+                  "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
+                  "    const active = (rawState === 'Active');",
+                  "",
+                  "    // Debug info",
+                  "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
+                  "    console.log(`Pump ${index}: active=${active}, speed=${speed}, dir=${direction}`);",
+                  "",
+                  "    // Store info for later",
+                  "    pumpData.push({ active, speed, direction });",
+                  "",
+                  "    if (active) {",
+                  "        atLeastOneActive = true;",
+                  "",
+                  "        // Validate speed and direction",
+                  "        if (speed <= 0 || speed > 900 || direction == null) {",
+                  "            alert(`Pump ${index} has invalid speed or direction.`);",
+                  "            valid = false;",
+                  "        }",
+                  "    }",
+                  "}",
+                  "",
+                  "// If no pump is selected, show alert",
+                  "if (!atLeastOneActive) {",
+                  "    alert('Please activate at least one pump before running the command.');",
+                  "}",
+                  "// If validation is OK, write values to PLC",
+                  "else if (valid) {",
+                  "    console.log(\"Validation OK. Writing values to PLC...\");",
+                  "",
+                  "    for (let i = 0; i < 10; i++) {",
+                  "        const { active, speed, direction } = pumpData[i];",
+                  "        console.log(`* Pump ${i + 1} write: active=${active}, speed=${speed}, dir=${direction}`);",
+                  "",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
+                  "        //TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bBusy%/s%`, active);",
+                  "    }",
+                  "",
+                  "    // Trigger the execution signal",
+                  "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsBySpeedBt%/s%`, true);",
+                  "    console.log(\"Execution signal sent: bRunPumpsBySpeedBt = true\");",
+                  "}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Pump movement is not allowed while the valves are positioning!\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
         ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
+        "asyncWait": true
       }
     ]
   }
@@ -1892,77 +2155,174 @@
     "event": "TcHmiButton_MovePumpsByVolume.onPressed",
     "actions": [
       {
-        "objectType": "JavaScript",
+        "objectType": "Condition",
         "active": true,
-        "sourceLines": [
-          "console.log(\"Button 'RunPumpsByVolume' pressed.\");",
-          "",
-          "let valid = true;",
-          "let atLeastOneActive = false;",
-          "let pumpData = [];",
-          "",
-          "// Loop through all 10 pumps",
-          "for (let i = 0; i < 10; i++) {",
-          "    const index = i + 1;",
-          "",
-          "    // Get control references",
-          "    const volCtrl = TcHmi.Controls.get(`TcHmiNumericInput_volumePump${index}`);",
-          "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
-          "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
-          "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
-          "",
-          "    // Read values",
-          "    const volume = volCtrl ? volCtrl.getValue() : 0;",
-          "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
-          "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
-          "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
-          "    const active = (rawState === 'Active');",
-          "",
-          "    // Debug info",
-          "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
-          "    console.log(`Pump ${index}: active=${active}, volume=${volume}, speed=${speed}, dir=${direction}`);",
-          "",
-          "    // Store info for later",
-          "    pumpData.push({ active, volume, speed, direction });",
-          "",
-          "    if (active) {",
-          "        atLeastOneActive = true;",
-          "",
-          "        // Validate volume, speed and direction",
-          "        if (volume <= 0 || speed <= 0 || speed > 900 || direction == null) {",
-          "            alert(`Pump ${index} has invalid volume, speed or direction.`);",
-          "            valid = false;",
-          "        }",
-          "    }",
-          "}",
-          "",
-          "// If no pump is selected, show alert",
-          "if (!atLeastOneActive) {",
-          "    alert('Please activate at least one pump before running the command.');",
-          "}",
-          "// If validation is OK, write values to PLC",
-          "else if (valid) {",
-          "    console.log(\"Validation OK. Writing values to PLC...\");",
-          "",
-          "    for (let i = 0; i < 10; i++) {",
-          "        const { active, volume, speed, direction } = pumpData[i];",
-          "        console.log(`* Pump ${i + 1} write: active=${active}, volume=${volume}, speed=${speed}, dir=${direction}`);",
-          "",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rVolume%/s%`, volume);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
-          "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
-          "        //TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bBusy%/s%`, active);",
-          "    }",
-          "",
-          "    // Trigger the execution signal",
-          "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsByVolumeBt%/s%`, true);",
-          "    console.log(\"Execution signal sent: bRunPumpsByVolumeBt = true\");",
-          "}"
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "console.log(\"Button 'RunPumpsByVolume' pressed.\");",
+                  "",
+                  "let valid = true;",
+                  "let atLeastOneActive = false;",
+                  "let pumpData = [];",
+                  "",
+                  "// Loop through all 10 pumps",
+                  "for (let i = 0; i < 10; i++) {",
+                  "    const index = i + 1;",
+                  "",
+                  "    // Get control references",
+                  "    const volCtrl = TcHmi.Controls.get(`TcHmiNumericInput_volumePump${index}`);",
+                  "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
+                  "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
+                  "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
+                  "",
+                  "    // Read values",
+                  "    const volume = volCtrl ? volCtrl.getValue() : 0;",
+                  "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
+                  "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
+                  "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
+                  "    const active = (rawState === 'Active');",
+                  "",
+                  "    // Debug info",
+                  "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
+                  "    console.log(`Pump ${index}: active=${active}, volume=${volume}, speed=${speed}, dir=${direction}`);",
+                  "",
+                  "    // Store info for later",
+                  "    pumpData.push({ active, volume, speed, direction });",
+                  "",
+                  "    if (active) {",
+                  "        atLeastOneActive = true;",
+                  "",
+                  "        // Validate volume, speed and direction",
+                  "        if (volume <= 0 || speed <= 0 || speed > 900 || direction == null) {",
+                  "            alert(`Pump ${index} has invalid volume, speed or direction.`);",
+                  "            valid = false;",
+                  "        }",
+                  "    }",
+                  "}",
+                  "",
+                  "// If no pump is selected, show alert",
+                  "if (!atLeastOneActive) {",
+                  "    alert('Please activate at least one pump before running the command.');",
+                  "}",
+                  "// If validation is OK, write values to PLC",
+                  "else if (valid) {",
+                  "    console.log(\"Validation OK. Writing values to PLC...\");",
+                  "",
+                  "    for (let i = 0; i < 10; i++) {",
+                  "        const { active, volume, speed, direction } = pumpData[i];",
+                  "        console.log(`* Pump ${i + 1} write: active=${active}, volume=${volume}, speed=${speed}, dir=${direction}`);",
+                  "",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rVolume%/s%`, volume);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
+                  "        TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
+                  "        //TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bBusy%/s%`, active);",
+                  "    }",
+                  "",
+                  "    // Trigger the execution signal",
+                  "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsByVolumeBt%/s%`, true);",
+                  "    console.log(\"Execution signal sent: bRunPumpsByVolumeBt = true\");",
+                  "}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Pump movement is not allowed while the valves are positioning!\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
         ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
+        "asyncWait": true
       }
     ]
   }
@@ -4201,85 +4561,182 @@
     "event": "TcHmiButton_MovePumpsByDistance.onPressed",
     "actions": [
       {
-        "objectType": "JavaScript",
+        "objectType": "Condition",
         "active": true,
-        "sourceLines": [
-          "console.log(\"Button 'RunPumpsByDistance' pressed.\");",
-          "",
-          "let valid = true;",
-          "let atLeastOneActive = false;",
-          "let pumpData = [];",
-          "",
-          "// Loop through all 10 pumps",
-          "for (let i = 0; i < 10; i++) {",
-          "    const index = i + 1;",
-          "",
-          "    // Get control references",
-          "    const distCtrl = TcHmi.Controls.get(`TcHmiNumericInput_distancePump${index}`);",
-          "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
-          "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
-          "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
-          "",
-          "    // Read values",
-          "    const distanceRaw = distCtrl ? distCtrl.getValue() : 0;",
-          "    const distance = Math.floor(distanceRaw); // Ensure UINT-compatible value",
-          "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
-          "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
-          "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
-          "    const active = (rawState === 'Active');",
-          "",
-          "    // Debug info",
-          "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
-          "    console.log(`Pump ${index}: active=${active}, distance=${distance}, speed=${speed}, dir=${direction}`);",
-          "",
-          "    // Store info for later",
-          "    pumpData.push({ active, distance, speed, direction });",
-          "",
-          "    // Validate if active",
-          "    if (active) {",
-          "        atLeastOneActive = true;",
-          "",
-          "        if (",
-          "            distance <= 0 || distance > 65535 ||",
-          "            speed <= 0 || speed > 900 ||",
-          "            direction == null",
-          "        ) {",
-          "            alert(`Pump ${index} has invalid distance, speed or direction.`);",
-          "            valid = false;",
-          "            break;",
-          "        }",
-          "    }",
-          "}",
-          "",
-          "// If no pump is selected, show alert",
-          "if (!atLeastOneActive) {",
-          "    alert('Please activate at least one pump before running the command.');",
-          "} ",
-          "// If validation is OK, write values to PLC",
-          "else if (valid) {",
-          "    console.log(\"Validation OK. Writing values to PLC...\");",
-          "",
-          "    for (let i = 0; i < 10; i++) {",
-          "\t    const { active, distance, speed, direction } = pumpData[i];",
-          "\t    const distSafe = Math.min(Math.max(parseInt(distance), 0), 65535);",
-          "\t",
-          "\t    console.log(`* Pump ${i + 1} write: active=${active}, distance=${distSafe}, speed=${speed}, dir=${direction}`);",
-          "\t",
-          "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::iDistance%/s%`, distSafe);",
-          "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
-          "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
-          "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
-          "\t}",
-          "",
-          "",
-          "    // Trigger the execution signal",
-          "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsByDistanceBt%/s%`, true);",
-          "    console.log(\"Execution signal sent: bRunPumpsByDistanceBt = true\");",
-          "}"
+        "parts": [
+          {
+            "if": [
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.0.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": null
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.1.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.2.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.3.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              },
+              {
+                "compare1": {
+                  "objectType": "Symbol",
+                  "valueType": "tchmi:general#/definitions/String",
+                  "symbolExpression": "%s%PLC1.GVL_Motion.aValves.4.iNotMoving%/s%"
+                },
+                "compare2": {
+                  "objectType": "StaticValue",
+                  "valueType": "tchmi:general#/definitions/BOOL",
+                  "value": true
+                },
+                "compareOperator": "==",
+                "logic": "AND"
+              }
+            ],
+            "then": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "console.log(\"Button 'RunPumpsByDistance' pressed.\");",
+                  "",
+                  "let valid = true;",
+                  "let atLeastOneActive = false;",
+                  "let pumpData = [];",
+                  "",
+                  "// Loop through all 10 pumps",
+                  "for (let i = 0; i < 10; i++) {",
+                  "    const index = i + 1;",
+                  "",
+                  "    // Get control references",
+                  "    const distCtrl = TcHmi.Controls.get(`TcHmiNumericInput_distancePump${index}`);",
+                  "    const speedCtrl = TcHmi.Controls.get(`TcHmiNumericInput_speedPump${index}`);",
+                  "    const dirCtrl = TcHmi.Controls.get(`TcHmiCombobox_FwdOrBwdPump${index}`);",
+                  "    const chkCtrl = TcHmi.Controls.get(`TcHmiCheckbox_ActivatePump${index}`);",
+                  "",
+                  "    // Read values",
+                  "    const distanceRaw = distCtrl ? distCtrl.getValue() : 0;",
+                  "    const distance = Math.floor(distanceRaw); // Ensure UINT-compatible value",
+                  "    const speed = speedCtrl ? speedCtrl.getValue() : 0;",
+                  "    const direction = dirCtrl ? dirCtrl.getSelectedValue() : null;",
+                  "    const rawState = chkCtrl ? chkCtrl.getToggleState() : 'Normal';",
+                  "    const active = (rawState === 'Active');",
+                  "",
+                  "    // Debug info",
+                  "    console.log(`Pump ${index} checkbox raw state: ${rawState}`);",
+                  "    console.log(`Pump ${index}: active=${active}, distance=${distance}, speed=${speed}, dir=${direction}`);",
+                  "",
+                  "    // Store info for later",
+                  "    pumpData.push({ active, distance, speed, direction });",
+                  "",
+                  "    // Validate if active",
+                  "    if (active) {",
+                  "        atLeastOneActive = true;",
+                  "",
+                  "        if (",
+                  "            distance <= 0 || distance > 65535 ||",
+                  "            speed <= 0 || speed > 900 ||",
+                  "            direction == null",
+                  "        ) {",
+                  "            alert(`Pump ${index} has invalid distance, speed or direction.`);",
+                  "            valid = false;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "}",
+                  "",
+                  "// If no pump is selected, show alert",
+                  "if (!atLeastOneActive) {",
+                  "    alert('Please activate at least one pump before running the command.');",
+                  "} ",
+                  "// If validation is OK, write values to PLC",
+                  "else if (valid) {",
+                  "    console.log(\"Validation OK. Writing values to PLC...\");",
+                  "",
+                  "    for (let i = 0; i < 10; i++) {",
+                  "\t    const { active, distance, speed, direction } = pumpData[i];",
+                  "\t    const distSafe = Math.min(Math.max(parseInt(distance), 0), 65535);",
+                  "\t",
+                  "\t    console.log(`* Pump ${i + 1} write: active=${active}, distance=${distSafe}, speed=${speed}, dir=${direction}`);",
+                  "\t",
+                  "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::iDistance%/s%`, distSafe);",
+                  "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::rSpeed%/s%`, speed);",
+                  "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::eDirection%/s%`, direction);",
+                  "\t    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.aManualPumpsCmd[${i}]::bActive%/s%`, active);",
+                  "\t}",
+                  "",
+                  "",
+                  "    // Trigger the execution signal",
+                  "    TcHmi.Symbol.writeEx(`%s%PLC1.GVL_HMI.bRunPumpsByDistanceBt%/s%`, true);",
+                  "    console.log(\"Execution signal sent: bRunPumpsByDistanceBt = true\");",
+                  "}"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          },
+          {
+            "else": [
+              {
+                "objectType": "JavaScript",
+                "active": true,
+                "sourceLines": [
+                  "alert(\"Pump movement is not allowed while the valves are positioning!\");"
+                ],
+                "injectContextObject": false,
+                "asyncWait": true,
+                "waitMode": "Synchronous"
+              }
+            ]
+          }
         ],
-        "injectContextObject": false,
-        "asyncWait": true,
-        "waitMode": "Synchronous"
+        "asyncWait": true
       }
     ]
   }

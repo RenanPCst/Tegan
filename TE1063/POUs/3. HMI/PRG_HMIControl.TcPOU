@@ -143,9 +143,9 @@ GVL_IO.gRelayOutputs.bStageCollectionRightLight := GVL_HMI.bLightsToggleButton;
 // display linear pumps old position saved on persistent memory when in Calibration Mode
 IF GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION THEN
 	FOR i := 1 TO 10 DO
-		//GVL_HMI.aCalibLinearPumps[i].rOldPosition := GVL_Retain.rLinearPumpOldPosition[i];
-		//pump factor
-		GVL_HMI.aCalibLinearPumps[i].rPumpFactor := GVL_Motion.aPumps[1].Rotary.rActualPos;
+		IF GVL_Motion.aPumps[i].Linear.iHomed THEN
+			GVL_HMI.aCalibLinearPumps[1].rNewPosition := GVL_Motion.aPumps[i].Linear.rActualPos;
+		END_IF
 	END_FOR
 END_IF
 
@@ -423,14 +423,54 @@ IF tonInterlockReleaseM3.Q THEN
 	GVL_HMI.bM3MoveNotAllowedTrigger := FALSE;
 END_IF
 
+(* <HMI Report Listing> ******************************************************************************************************* *)
+
+IF GVL_HMI.bLoadCalibrationReportList THEN
+    // executa SELECT no banco
+    // preenche aCalibrationReportList
+    // seta bReportListReady := TRUE
+    // limpa trigger
+END_IF
+
+(* <\HMI Report Listing> ******************************************************************************************************* *)
+
 (* <HMI Reminders> ******************************************************************************************************* *)
 
 GVL_HMI.stReminders.bRecipeActivated 	:= GVL_Recipe.bIsThereRecipeActivated;
-GVL_HMI.stReminders.bSolventLevels 		:= GVL_Alarms.aSolventLowLevel[1] OR GVL_Alarms.aSolventLowLevel[2] OR GVL_Alarms.aSolventLowLevel[3] OR GVL_Alarms.aSolventLowLevel[4]; // TODO - only evaluate the levels used on recipe
+//GVL_HMI.stReminders.bSolventLevels 		:= GVL_Recipe.bIsThereRecipeActivated OR GVL_Alarms.aSolventLowLevel[1] OR GVL_Alarms.aSolventLowLevel[2] OR GVL_Alarms.aSolventLowLevel[3] OR GVL_Alarms.aSolventLowLevel[4]; // TODO - only evaluate the levels used on recipe
 GVL_HMI.stReminders.bWasteLevel 		:= GVL_Alarms.bWasteHighLevel;
 GVL_HMI.stReminders.bThroatJigPresent	:= GVL_IO.gDigInputs.bThroatJigPresent;
 GVL_HMI.stReminders.bVialRackPresent	:= GVL_IO.bVialRackPresent;
 GVL_HMI.stReminders.bVialRackRemoved	:= NOT GVL_IO.bVialRackPresent;
+GVL_HMI.stReminders.bCalBoxInPlace		:= GVL_IO.gDigInputs.bCalibrationBoxPresent;
+GVL_HMI.stReminders.bStagePlateHomePos	:= (GVL_Motion.M1Motor.rActualPos > -10 AND GVL_Motion.M1Motor.rActualPos < 10);
+
+GVL_HMI.stReminders.bSolventLevels :=
+    GVL_Recipe.bIsThereRecipeActivated
+    AND
+    (
+        (GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1] = 0
+         OR_ELSE NOT GVL_Alarms.aSolventLowLevel[GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[1]])
+    )
+    AND
+    (
+        (GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2] = 0
+         OR_ELSE NOT GVL_Alarms.aSolventLowLevel[GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[2]])
+    )
+    AND
+    (
+        (GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3] = 0
+         OR_ELSE NOT GVL_Alarms.aSolventLowLevel[GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[3]])
+    )
+    AND
+    (
+        (GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[4] = 0
+         OR_ELSE NOT GVL_Alarms.aSolventLowLevel[GVL_Recipe.stActiveRecipe.stSolventsTimes.aSolventN[4]])
+    );
+
+
+GVL_HMI.stReminders.bAutoCicleReady		:= GVL_HMI.stReminders.bRecipeActivated AND GVL_HMI.stReminders.bSolventLevels AND GVL_HMI.stReminders.bWasteLevel  AND GVL_HMI.stReminders.bThroatJigPresent AND GVL_HMI.stReminders.bVialRackPresent;
+GVL_HMI.stReminders.bCalibrationReady	:= GVL_HMI.stReminders.bVialRackRemoved AND GVL_HMI.stReminders.bCalBoxInPlace AND GVL_HMI.stReminders.bStagePlateHomePos;
 
 
 (* <\HMI Reminders> ******************************************************************************************************* *)
@@ -1097,8 +1137,9 @@ END_IF]]></ST>
       <LineId Id="817" Count="1" />
       <LineId Id="825" Count="0" />
       <LineId Id="820" Count="1" />
-      <LineId Id="823" Count="0" />
-      <LineId Id="862" Count="1" />
+      <LineId Id="2243" Count="0" />
+      <LineId Id="863" Count="0" />
+      <LineId Id="2244" Count="0" />
       <LineId Id="859" Count="0" />
       <LineId Id="822" Count="0" />
       <LineId Id="899" Count="0" />
@@ -1277,8 +1318,22 @@ END_IF]]></ST>
       <LineId Id="1243" Count="1" />
       <LineId Id="1247" Count="2" />
       <LineId Id="1245" Count="0" />
+      <LineId Id="2016" Count="1" />
+      <LineId Id="2020" Count="0" />
+      <LineId Id="2022" Count="4" />
+      <LineId Id="2021" Count="0" />
+      <LineId Id="2019" Count="0" />
+      <LineId Id="2018" Count="0" />
       <LineId Id="1807" Count="3" />
-      <LineId Id="1817" Count="5" />
+      <LineId Id="1817" Count="4" />
+      <LineId Id="2120" Count="0" />
+      <LineId Id="2122" Count="0" />
+      <LineId Id="2128" Count="21" />
+      <LineId Id="2127" Count="0" />
+      <LineId Id="2124" Count="1" />
+      <LineId Id="2123" Count="0" />
+      <LineId Id="2121" Count="0" />
+      <LineId Id="1822" Count="0" />
       <LineId Id="1816" Count="0" />
       <LineId Id="1806" Count="0" />
       <LineId Id="577" Count="0" />
