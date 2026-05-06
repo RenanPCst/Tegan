@@ -66,6 +66,17 @@ VAR
 	bMoveM1Slow	: BOOL := FALSE;
 	
 	bResetDone	: BOOL := FALSE;
+	
+	// Temp Dosing Test
+	bDosingTestEnable  : BOOL := FALSE;
+	aDosingPumps	   : ARRAY[1..10] OF BOOL := [FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE];
+	bSetDosingPumps	   : BOOL := FALSE;
+	fbDosingTest	   : FB_DosingTest;
+	bDosingTestReset   : BOOL := FALSE;
+	bDosingTestResults  : BOOL := FALSE;
+	iReplicates			: USINT := 3;
+	rTargetVolume		: LREAL := 50.0;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -304,6 +315,42 @@ IF GVL_HMI.bCalMoveM1Motor AND GVL_IO.gDigInputs.bThroatJigPresent THEN
 
 END_IF
 
+// Temp ## Dosing Test ## -----------------------------------------------
+
+IF bSetDosingPumps THEN
+	aDosingPumps[1] := FALSE;
+	aDosingPumps[2] := FALSE;
+	aDosingPumps[3] := FALSE;
+	aDosingPumps[4] := FALSE;
+	aDosingPumps[5] := FALSE;
+	aDosingPumps[6] := FALSE;
+	aDosingPumps[7] := FALSE;
+	aDosingPumps[8] := FALSE;
+	aDosingPumps[9] := FALSE;
+	aDosingPumps[10] := FALSE;
+END_IF
+
+IF GVL_Calibration.bDosingTestEnable THEN
+	fbDosingTest (	iReplicate := iReplicates,
+					bExecute := GVL_Calibration.bDosingTestEnable,
+					rVolumeTesting := rTargetVolume,
+					aPumps := aDosingPumps
+				  );
+END_IF
+
+IF fbDosingTest.bDone THEN
+	GVL_Calibration.bDosingTestEnable := FALSE;
+END_IF
+
+IF bDosingTestReset THEN
+	bDosingTestReset := NOT fbDosingTest.Reset();
+	bDosingTestReset := FALSE;
+END_IF
+
+IF bDosingTestResults THEN
+	bDosingTestResults := NOT fbDosingTest.ResetResults();
+	bDosingTestResults := FALSE;
+END_IF
 ]]></ST>
     </Implementation>
     <Method Name="EnableLinearPumps" Id="{22115b95-e372-40ed-a15e-77965f9e6360}">
@@ -988,8 +1035,8 @@ FOR i := 1 TO 10 DO
             GVL_Calibration.stLinearCalibrationData[i].sNewPosition := TO_STRING(rActualPos);
 
 			// Update HMI Values
-			GVL_HMI.aCalibLinearPumps[1].rOldPosition := rSavedPos;
-			GVL_HMI.aCalibLinearPumps[1].rNewPosition := rActualPos;
+			GVL_HMI.aCalibLinearPumps[i].rOldPosition := rSavedPos;
+			GVL_HMI.aCalibLinearPumps[i].rNewPosition := rActualPos;
 			
             // Update local retained reference
             GVL_Retain.rLinearPumpOldPosition[i] := rActualPos;
@@ -1290,8 +1337,27 @@ END_IF*)
       <LineId Id="1036" Count="1" />
       <LineId Id="956" Count="0" />
       <LineId Id="648" Count="0" />
+      <LineId Id="1379" Count="0" />
       <LineId Id="617" Count="0" />
+      <LineId Id="1407" Count="0" />
+      <LineId Id="1396" Count="0" />
+      <LineId Id="1411" Count="8" />
+      <LineId Id="1409" Count="1" />
+      <LineId Id="1380" Count="0" />
       <LineId Id="616" Count="0" />
+      <LineId Id="1385" Count="0" />
+      <LineId Id="1388" Count="2" />
+      <LineId Id="1392" Count="0" />
+      <LineId Id="1386" Count="0" />
+      <LineId Id="1430" Count="3" />
+      <LineId Id="1424" Count="0" />
+      <LineId Id="1423" Count="0" />
+      <LineId Id="1425" Count="0" />
+      <LineId Id="1511" Count="0" />
+      <LineId Id="1426" Count="3" />
+      <LineId Id="1512" Count="0" />
+      <LineId Id="1421" Count="0" />
+      <LineId Id="1420" Count="0" />
     </LineIds>
     <LineIds Name="PRG_Calibration.EnableLinearPumps">
       <LineId Id="68" Count="10" />

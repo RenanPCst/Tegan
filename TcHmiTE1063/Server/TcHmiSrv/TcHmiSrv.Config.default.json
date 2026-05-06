@@ -122,6 +122,24 @@
             "minItems": 100,
             "type": "array"
         },
+        "PLC1.ARRAY_1..1000_OF-ST_Data_CUL": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Data_CUL"
+            },
+            "maxItems": 1000,
+            "minItems": 1000,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..1000_OF-ST_SysParameters": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_SysParameters"
+            },
+            "maxItems": 1000,
+            "minItems": 1000,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..100_OF-ST_CompleteMethod": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_CompleteMethod"
@@ -134,6 +152,15 @@
         "PLC1.ARRAY_1..100_OF-ST_Data_PCR": {
             "items": {
                 "$ref": "#/definitions/PLC1.ST_Data_PCR"
+            },
+            "maxItems": 100,
+            "minItems": 100,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..100_OF-ST_ReportListItem": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_ReportListItem"
             },
             "maxItems": 100,
             "minItems": 100,
@@ -230,6 +257,24 @@
             "startOffset": 1,
             "type": "array"
         },
+        "PLC1.ARRAY_1..1_OF-ST_CalibrationReportHeader": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_CalibrationReportHeader"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..1_OF-ST_SystemSettingsReport": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_SystemSettingsReport"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "startOffset": 1,
+            "type": "array"
+        },
         "PLC1.ARRAY_1..2_OF-BOOL": {
             "items": {
                 "$ref": "tchmi:general#/definitions/BOOL"
@@ -254,6 +299,15 @@
             },
             "maxItems": 2,
             "minItems": 2,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..300_OF-ST_CalibrationReportLine": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_CalibrationReportLine"
+            },
+            "maxItems": 300,
+            "minItems": 300,
             "startOffset": 1,
             "type": "array"
         },
@@ -344,6 +398,15 @@
             },
             "maxItems": 4,
             "minItems": 4,
+            "startOffset": 1,
+            "type": "array"
+        },
+        "PLC1.ARRAY_1..500_OF-ST_Data_CUL": {
+            "items": {
+                "$ref": "#/definitions/PLC1.ST_Data_CUL"
+            },
+            "maxItems": 500,
+            "minItems": 500,
             "startOffset": 1,
             "type": "array"
         },
@@ -818,6 +881,48 @@
             ],
             "type": "integer"
         },
+        "PLC1.E_ReportType": {
+            "attributes": {
+                "generate_implicit_init_function": "",
+                "qualified_only": "",
+                "strict": ""
+            },
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "options": [
+                {
+                    "label": "None",
+                    "value": 0
+                },
+                {
+                    "label": "PumpCalibration",
+                    "value": 1
+                },
+                {
+                    "label": "SystemSettings",
+                    "value": 2
+                },
+                {
+                    "label": "PostRun",
+                    "value": 3
+                },
+                {
+                    "label": "LinearMotors",
+                    "value": 4
+                },
+                {
+                    "label": "Recipe",
+                    "value": 5
+                }
+            ],
+            "type": "integer"
+        },
         "PLC1.ST_AL1333": {
             "properties": {
                 "bQualifierIOLink": {
@@ -1218,6 +1323,258 @@
                         {
                             "comment": "Target Volume",
                             "propertyOrder": 1
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_CalibrationReportHeader": {
+            "properties": {
+                "sAllowableFail": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalibrationNo": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCallInterval": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 10
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCreatedAt": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 11
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sDensity": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sReplicates": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 9
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sReportId": {
+                    "allOf": [
+                        {
+                            "maxLength": 50,
+                            "propertyOrder": 1
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSolventNo": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSolventRevision": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSysRevisionNo": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sUserId": {
+                    "allOf": [
+                        {
+                            "maxLength": 50,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_CalibrationReportLine": {
+            "properties": {
+                "sCriteria": {
+                    "allOf": [
+                        {
+                            "maxLength": 20,
+                            "propertyOrder": 10
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sDateTime": {
+                    "allOf": [
+                        {
+                            "maxLength": 40,
+                            "propertyOrder": 1
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sDifferencePercent": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 9
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sGrossWt": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sNetVolume": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sNetWt": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPumpNo": {
+                    "allOf": [
+                        {
+                            "maxLength": 10,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPumpRevs": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 11
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sStep": {
+                    "allOf": [
+                        {
+                            "maxLength": 20,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sTareWt": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sTargetVolume": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
                         }
                     ]
                 }
@@ -3057,6 +3414,131 @@
             },
             "type": "object"
         },
+        "PLC1.ST_LinearMotors": {
+            "properties": {
+                "ID_Linear": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/INT"
+                        },
+                        {
+                            "propertyOrder": 1
+                        }
+                    ]
+                },
+                "pump1": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump10": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 11
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump2": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump3": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump4": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump5": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump6": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump7": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump8": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 9
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "pump9": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 10
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
         "PLC1.ST_LinearPumpCalibration": {
             "properties": {
                 "bActivate": {
@@ -4221,17 +4703,6 @@
                         }
                     ]
                 },
-                "tAgitade2Time": {
-                    "allOf": [
-                        {
-                            "$ref": "tchmi:general#/definitions/TIME"
-                        },
-                        {
-                            "comment": "Time in seconds for the Rinse 1 recirculation",
-                            "propertyOrder": 3
-                        }
-                    ]
-                },
                 "tAgitate1Time": {
                     "allOf": [
                         {
@@ -4240,6 +4711,17 @@
                         {
                             "comment": "Time in seconds for the Rinse 1 recirculation",
                             "propertyOrder": 2
+                        }
+                    ]
+                },
+                "tAgitate2Time": {
+                    "allOf": [
+                        {
+                            "$ref": "tchmi:general#/definitions/TIME"
+                        },
+                        {
+                            "comment": "Time in seconds for the Rinse 1 recirculation",
+                            "propertyOrder": 3
                         }
                     ]
                 },
@@ -4520,6 +5002,82 @@
                         },
                         {
                             "propertyOrder": 2
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_ReportListItem": {
+            "properties": {
+                "CreatedBy": {
+                    "allOf": [
+                        {
+                            "comment": "Ex: Renan, Admin",
+                            "maxLength": 50,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "CreatedOn": {
+                    "allOf": [
+                        {
+                            "comment": "Ex: 2026-04-15 10:35",
+                            "maxLength": 30,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "Description": {
+                    "allOf": [
+                        {
+                            "comment": "Ex: Pump 3 calibration - Solvent 2",
+                            "maxLength": 200,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "ReportID": {
+                    "allOf": [
+                        {
+                            "comment": "Ex: CalibrationNo, RunID, Revision",
+                            "maxLength": 50,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "ReportType": {
+                    "allOf": [
+                        {
+                            "comment": "Ex: Pump Calibration, System Settings, Post Run",
+                            "maxLength": 50,
+                            "propertyOrder": 1
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPrimaryKey": {
+                    "allOf": [
+                        {
+                            "maxLength": 50,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
                         }
                     ]
                 }
@@ -5184,6 +5742,17 @@
                         }
                     ]
                 },
+                "smp_AboveVialSet1": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 33
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
                 "smp_IntoResBottom": {
                     "allOf": [
                         {
@@ -5228,6 +5797,17 @@
                         }
                     ]
                 },
+                "smp_IntoWaste": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 34
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
                 "smp_VialSetSpacing": {
                     "allOf": [
                         {
@@ -5246,6 +5826,377 @@
                         },
                         {
                             "propertyOrder": 32
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "PLC1.ST_SystemSettingsReport": {
+            "attributes": {
+                "pack_mode": "1"
+            },
+            "properties": {
+                "sAirDryTimeOnCompletion": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 7
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalAcceptanceCriteria": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 2
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalAllowableFail": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 3
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalCloseAppOnCompletion": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 6
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalPumpCallIntervalDays": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 5
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCalReplicates": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 4
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCreatedBy": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 31
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sCreatedDate": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 32
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sGenSealAndPump": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 1
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sLktAllowableLeakTestFail": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 8
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sLktLeakTestBuildUpTime": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 9
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sLktLeakTestHoldTime": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 10
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sLktLeakTestPressure": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 11
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecMaxCurrentFastDown": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 15
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecMaxCurrentSlowDown": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 16
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecMaxCurrentSlowUp": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 17
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecPlatesClosedPosition": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 12
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecPlatesDryPosition": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 13
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sMecPlatesVelocity": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 14
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPmpEmptyFactor": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 20
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPmpFillSolventTubesFactor": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 21
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPmpMeterVelocity": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 18
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sPmpRunVelocity": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 19
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSecCheckLogonEachRun": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 30
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSecDisplayManualControl": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 29
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpAboveCalibration": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 22
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpIntoResBottom": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 24
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpIntoResDispense": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 25
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpIntoResWeigh": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 26
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpIntoVials": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 27
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpIntoWaste": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 28
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSmpVialSetSpacing": {
+                    "allOf": [
+                        {
+                            "maxLength": 100,
+                            "propertyOrder": 23
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
+                        }
+                    ]
+                },
+                "sSysRevisionNo": {
+                    "allOf": [
+                        {
+                            "maxLength": 30,
+                            "propertyOrder": 33
+                        },
+                        {
+                            "$ref": "tchmi:general#/definitions/String"
                         }
                     ]
                 }
@@ -8000,6 +8951,40 @@
             "MAPPING": "PLC1::GVL_Constant::aSolventsAvailable",
             "SCHEMA": {
                 "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..5_OF-STRING-80"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Constant.sDatabaseName": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Constant::sDatabaseName",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 16
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Constant.sSystemID": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Constant::sSystemID",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 16
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
             },
             "USEMAPPING": true
         },
@@ -13767,6 +14752,23 @@
             },
             "USEMAPPING": true
         },
+        "PLC1.GVL_Recipe.bIsThereRecipeActivated": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Recipe::bIsThereRecipeActivated",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "Flag to identify if there is a recipe activated before start the autocycle."
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
         "PLC1.GVL_Recipe.sSelectedRecipeName": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -13782,6 +14784,769 @@
                         "$ref": "tchmi:general#/definitions/String"
                     }
                 ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Recipe.stActiveRecipe": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Recipe::stActiveRecipe",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "Applied in the process"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_Recipe"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aCurrentUsers": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aCurrentUsers",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..500_OF-ST_Data_CUL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aMethodVolumeData": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aMethodVolumeData",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-ST_VolumeData"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aPumpCalibValues": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aPumpCalibValues",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "formato compativel com o fluxo atual do relatori.js"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..100_OF-ST_Data_PCR"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aReportSearchResult": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aReportSearchResult",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** Search Screen - Datagrid **********************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..100_OF-ST_ReportListItem"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aRunVolumeData": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aRunVolumeData",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..10_OF-ST_VolumeData"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aSelectedCalibReportHeader": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aSelectedCalibReportHeader",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..1_OF-ST_CalibrationReportHeader"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aSelectedCalibReportLines": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aSelectedCalibReportLines",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..300_OF-ST_CalibrationReportLine"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aSelectedSystemSettingsBuf": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aSelectedSystemSettingsBuf",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** System Reports Buffers ************************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..1_OF-ST_SystemSettingsReport"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aSystemHistory": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aSystemHistory",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..1000_OF-ST_SysParameters"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.aUserHistory": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::aUserHistory",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** User Reports Buffers **************************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ARRAY_1..1000_OF-ST_Data_CUL"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bBuildCurrentLinearReport": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bBuildCurrentLinearReport",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bClearDateFilters": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bClearDateFilters",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bClearSearchScreen": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bClearSearchScreen",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bListLast100Request": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bListLast100Request",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bLoadBusy": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bLoadBusy",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bLoadDone": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bLoadDone",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bLoadError": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bLoadError",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bLoadReportByID": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bLoadReportByID",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bLoadSelectedReport": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bLoadSelectedReport",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "**** Detail Load / PDF Generation ******************************************************"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bPdfConsumed": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bPdfConsumed",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bPdfDataReady": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bPdfDataReady",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bPdfRequest": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bPdfRequest",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bSearchBusy": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bSearchBusy",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bSearchByDateRequest": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bSearchByDateRequest",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bSearchDone": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bSearchDone",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bSearchError": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bSearchError",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bSearchRequest": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bSearchRequest",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/BOOL"
+                    },
+                    {
+                        "comment": "**** Search Screen - Filters / Commands ***********************************************"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.bUseDateFilter": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::bUseDateFilter",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/BOOL"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.dtDateFrom": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::dtDateFrom",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 30
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.dtDateTo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::dtDateTo",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 30
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.eSelectedReportType": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::eSelectedReportType",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.E_ReportType"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.iPumpCalibNo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::iPumpCalibNo",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/DINT"
+                    },
+                    {
+                        "comment": "header copiado campo a campo para casar com o PDF atual"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.iSelectedRow": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::iSelectedRow",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/INT"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sDateFromFilter": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sDateFromFilter",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 30
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sDateToFilter": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sDateToFilter",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 30
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sLoadStatus": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sLoadStatus",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 100
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibAllowFail": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibAllowFail",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibCallInterval": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibCallInterval",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibDensity": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibDensity",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibReplicates": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibReplicates",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibSolventNo": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibSolventNo",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibSolventRev": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibSolventRev",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibSysRev": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibSysRev",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sPumpCalibUserID": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sPumpCalibUserID",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sSearchStatus": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sSearchStatus",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 100
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sSelectedPrimaryID": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sSelectedPrimaryID",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 50
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.sSelectedReportName": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::sSelectedReportName",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "maxLength": 100
+                    },
+                    {
+                        "$ref": "tchmi:general#/definitions/String"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stCurrentSystem": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stCurrentSystem",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** System Reports Buffers ************************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_SysParameters"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stLinearReport": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stLinearReport",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** Linear Report Buffers *************************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_LinearMotors"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stMethodHeader": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stMethodHeader",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** Method / Recipe Report Buffers ****************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_Parameters_MR"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stRunHeader": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stRunHeader",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** Post Run Report Buffers ***********************************************************"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_PostRunReport"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stRunMethodHeader": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stRunMethodHeader",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_Parameters_MR"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stSelectedCalibReportHeader": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stSelectedCalibReportHeader",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "comment": "**** Pump Calibration Report Buffers ***************************************************\r\n formato generico para tela de pesquisa / selecao"
+                    },
+                    {
+                        "$ref": "tchmi:server#/definitions/PLC1.ST_CalibrationReportHeader"
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.stSelectedSystemSettings": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::stSelectedSystemSettings",
+            "SCHEMA": {
+                "$ref": "tchmi:server#/definitions/PLC1.ST_SystemSettingsReport"
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.GVL_Reports.uiReportSearchCount": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::GVL_Reports::uiReportSearchCount",
+            "SCHEMA": {
+                "$ref": "tchmi:general#/definitions/UDINT"
             },
             "USEMAPPING": true
         },
@@ -14903,9 +16668,9 @@
     "USERGROUPS": {
         "MANAGEMENT": {
             "ENABLED": true,
-            "FILEACCESS": 3,
+            "FILEACCESS": 1,
             "FILES": {},
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 0,
             "SYMBOLS": {
                 "AddOrChangeUser": 0,
                 "ChangeUserSettings": 0,
@@ -15212,9 +16977,9 @@
         },
         "OPERATORS": {
             "ENABLED": true,
-            "FILEACCESS": 3,
+            "FILEACCESS": 1,
             "FILES": {},
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 0,
             "SYMBOLS": {
                 "AddOrChangeUser": 0,
                 "ChangeUserSettings": 0,
@@ -15523,7 +17288,7 @@
             "ENABLED": true,
             "FILEACCESS": 3,
             "FILES": {},
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 1,
             "SYMBOLS": {
                 "AddOrChangeUser": 0,
                 "ChangeUserSettings": 0,
@@ -15887,11 +17652,11 @@
         },
         "__SystemUsers": {
             "ENABLED": false,
-            "FILEACCESS": 3,
+            "FILEACCESS": 1,
             "FILES": {
                 "/Config": 1
             },
-            "SYMBOLACCESS": 3,
+            "SYMBOLACCESS": 1,
             "SYMBOLS": {
                 "ADS.AdsSyncReadDeviceInfoReq": 3,
                 "ADS.AdsSyncReadStateReq": 3,
@@ -15930,6 +17695,8 @@
                 "PLC1.GVL_Constant.aIOList": 3,
                 "PLC1.GVL_Constant.aIOPageStarts": 3,
                 "PLC1.GVL_Constant.aSolventsAvailable": 3,
+                "PLC1.GVL_Constant.sDatabaseName": 3,
+                "PLC1.GVL_Constant.sSystemID": 3,
                 "PLC1.GVL_DB.arrCompleteMethod": 3,
                 "PLC1.GVL_DB.astData_CUL": 3,
                 "PLC1.GVL_DB.astData_PCR": 3,
@@ -16354,9 +18121,66 @@
                 "PLC1.GVL_Motion.aValves.4.rActualPos": 3,
                 "PLC1.GVL_Motion.aValves.4.rActualPosition": 3,
                 "PLC1.GVL_Recipe.aAvailableFiles": 3,
+                "PLC1.GVL_Recipe.bIsThereRecipeActivated": 3,
                 "PLC1.GVL_Recipe.sSelectedRecipeName": 3,
+                "PLC1.GVL_Recipe.stActiveRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe": 3,
                 "PLC1.GVL_Recipe.stCurrentRecipe.stVolumes.aS0_Volume": 3,
+                "PLC1.GVL_Reports.aCurrentUsers": 3,
+                "PLC1.GVL_Reports.aMethodVolumeData": 3,
+                "PLC1.GVL_Reports.aPumpCalibValues": 3,
+                "PLC1.GVL_Reports.aReportSearchResult": 3,
+                "PLC1.GVL_Reports.aRunVolumeData": 3,
+                "PLC1.GVL_Reports.aSelectedCalibReportHeader": 3,
+                "PLC1.GVL_Reports.aSelectedCalibReportLines": 3,
+                "PLC1.GVL_Reports.aSelectedSystemSettingsBuf": 3,
+                "PLC1.GVL_Reports.aSystemHistory": 3,
+                "PLC1.GVL_Reports.aUserHistory": 3,
+                "PLC1.GVL_Reports.bBuildCurrentLinearReport": 3,
+                "PLC1.GVL_Reports.bClearDateFilters": 3,
+                "PLC1.GVL_Reports.bClearSearchScreen": 3,
+                "PLC1.GVL_Reports.bListLast100Request": 3,
+                "PLC1.GVL_Reports.bLoadBusy": 3,
+                "PLC1.GVL_Reports.bLoadDone": 3,
+                "PLC1.GVL_Reports.bLoadError": 3,
+                "PLC1.GVL_Reports.bLoadReportByID": 3,
+                "PLC1.GVL_Reports.bLoadSelectedReport": 3,
+                "PLC1.GVL_Reports.bPdfConsumed": 3,
+                "PLC1.GVL_Reports.bPdfDataReady": 3,
+                "PLC1.GVL_Reports.bPdfRequest": 3,
+                "PLC1.GVL_Reports.bSearchBusy": 3,
+                "PLC1.GVL_Reports.bSearchByDateRequest": 3,
+                "PLC1.GVL_Reports.bSearchDone": 3,
+                "PLC1.GVL_Reports.bSearchError": 3,
+                "PLC1.GVL_Reports.bSearchRequest": 3,
+                "PLC1.GVL_Reports.bUseDateFilter": 3,
+                "PLC1.GVL_Reports.dtDateFrom": 3,
+                "PLC1.GVL_Reports.dtDateTo": 3,
+                "PLC1.GVL_Reports.eSelectedReportType": 3,
+                "PLC1.GVL_Reports.iPumpCalibNo": 3,
+                "PLC1.GVL_Reports.iSelectedRow": 3,
+                "PLC1.GVL_Reports.sDateFromFilter": 3,
+                "PLC1.GVL_Reports.sDateToFilter": 3,
+                "PLC1.GVL_Reports.sLoadStatus": 3,
+                "PLC1.GVL_Reports.sPumpCalibAllowFail": 3,
+                "PLC1.GVL_Reports.sPumpCalibCallInterval": 3,
+                "PLC1.GVL_Reports.sPumpCalibDensity": 3,
+                "PLC1.GVL_Reports.sPumpCalibReplicates": 3,
+                "PLC1.GVL_Reports.sPumpCalibSolventNo": 3,
+                "PLC1.GVL_Reports.sPumpCalibSolventRev": 3,
+                "PLC1.GVL_Reports.sPumpCalibSysRev": 3,
+                "PLC1.GVL_Reports.sPumpCalibUserID": 3,
+                "PLC1.GVL_Reports.sSearchStatus": 3,
+                "PLC1.GVL_Reports.sSelectedPrimaryID": 3,
+                "PLC1.GVL_Reports.sSelectedReportName": 3,
+                "PLC1.GVL_Reports.stCurrentSystem": 3,
+                "PLC1.GVL_Reports.stLinearReport": 3,
+                "PLC1.GVL_Reports.stMethodHeader": 3,
+                "PLC1.GVL_Reports.stRunHeader": 3,
+                "PLC1.GVL_Reports.stRunMethodHeader": 3,
+                "PLC1.GVL_Reports.stSelectedCalibReportHeader": 3,
+                "PLC1.GVL_Reports.stSelectedSystemSettings": 3,
+                "PLC1.GVL_Reports.uiReportSearchCount": 3,
                 "PLC1.GVL_Settings.bDisplayManualControl": 3,
                 "PLC1.GVL_Settings.stMachineParam.aM1Position": 3,
                 "PLC1.GVL_Settings.stMachineParam.aM2Position": 3,

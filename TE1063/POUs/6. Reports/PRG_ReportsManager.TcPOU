@@ -1,29 +1,155 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="PRG_ReportsManager" Id="{425548c3-5dc9-40cc-99a5-02604507aa06}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PRG_ReportsManager
 VAR
+	rTrigPdfConsumed : R_TRIG;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[// Calibration Reports
+      <ST><![CDATA[rTrigPdfConsumed(CLK := GVL_Reports.bPdfConsumed);
+
+IF rTrigPdfConsumed.Q THEN
+    GVL_Reports.bLoadDone      := FALSE;
+    GVL_Reports.bLoadBusy      := FALSE;
+    GVL_Reports.bLoadError     := FALSE;
+    GVL_Reports.bPdfDataReady  := FALSE;
+    GVL_Reports.bPdfConsumed   := FALSE;
+    GVL_Reports.sLoadStatus    := 'Idle';
+END_IF
+
+IF GVL_Reports.bClearSearchScreen THEN
+    GVL_Reports.bClearSearchScreen := FALSE;
+    Clear_ReportsListing();
+END_IF
+
+IF GVL_Reports.bBuildCurrentLinearReport THEN
+    GVL_Reports.bBuildCurrentLinearReport := FALSE;
+	GVL_Reports.eSelectedReportType := E_ReportType.LinearMotors;
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_LINEAR_REPORT;
+END_IF
+
+IF GVL_Reports.bLoadSelectedReport THEN
+    GVL_Reports.bLoadSelectedReport := FALSE;
+
+    CASE GVL_Reports.eSelectedReportType OF
+        E_ReportType.PumpCalibration:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_CALIB_REPORT_BY_ID;
+
+        E_ReportType.SystemSettings:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_SYSTEM_SETTINGS_BY_ID;
+
+        E_ReportType.Recipe:
+            // Recipe reports load by methodID stored in sSelectedPrimaryID.
+            // NOTE: Add SELECT_RECIPE_REPORT_BY_ID to E_DB_QUERY_STATE and
+            // implement the state in DB_Query if detailed recipe PDF is needed.
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_RECIPE_HEADER_BY_ID;
+            GVL_Reports.bPdfDataReady := TRUE;
+            GVL_Reports.bPdfConsumed  := FALSE;
+
+        E_ReportType.PostRun:
+            // PostRun reports load by runNo stored in sSelectedPrimaryID.
+            // NOTE: Add SELECT_RUN_REPORT_BY_ID to E_DB_QUERY_STATE and
+            // implement the state in DB_Query if detailed run PDF is needed.
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_POSTRUN_RUN_BY_ID;
+            GVL_Reports.bPdfDataReady := TRUE;
+            GVL_Reports.bPdfConsumed  := FALSE;
+		
+		E_ReportType.LinearMotors:
+  			DB_Query.state := E_DB_QUERY_STATE.SELECT_LINEAR_BY_ID;
+
+    ELSE
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.sLoadStatus := 'Invalid report type selected';
+    END_CASE
+END_IF
 
 
-// AutoCycle Reports
+IF GVL_Reports.bSearchRequest THEN
+    GVL_Reports.bSearchRequest := FALSE;
 
+    DB_Query.Clear_ReportSearchResult();
 
-// Pumps Reports
+    CASE GVL_Reports.eSelectedReportType OF
+        E_ReportType.PumpCalibration:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_CALIB_REPORT_LIST;
 
-]]></ST>
+        E_ReportType.SystemSettings:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_SYSTEM_SETTINGS_REPORT_LIST;
+
+        E_ReportType.Recipe:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_METHOD_REPORT_SEARCH;
+
+        E_ReportType.PostRun:
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_RUN_REPORT_LIST;
+		
+		E_ReportType.LinearMotors:
+			
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_LINEAR_REPORT_SEARCH;
+
+    ELSE
+        GVL_Reports.bSearchBusy   := FALSE;
+        GVL_Reports.bSearchDone   := FALSE;
+        GVL_Reports.bSearchError  := TRUE;
+        GVL_Reports.sSearchStatus := 'Could not prepare report search.';
+    END_CASE
+END_IF]]></ST>
     </Implementation>
+    <Method Name="Clear_ReportsListing" Id="{9fe54633-393e-4617-ac4e-f22051528ea0}">
+      <Declaration><![CDATA[METHOD Clear_ReportsListing : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[GVL_Reports.bClearSearchScreen := FALSE;
+
+DB_Query.Clear_ReportSearchResult();
+
+GVL_Reports.eSelectedReportType := E_ReportType.None;
+GVL_Reports.sSelectedPrimaryID  := '';
+GVL_Reports.sSelectedReportName := '';
+
+GVL_Reports.uiReportSearchCount := 0;
+GVL_Reports.bSearchRequest      := FALSE;
+GVL_Reports.bSearchBusy         := FALSE;
+GVL_Reports.bSearchDone         := FALSE;
+GVL_Reports.bSearchError        := FALSE;
+GVL_Reports.sSearchStatus       := 'Idle';
+
+GVL_Reports.bLoadSelectedReport := FALSE;
+GVL_Reports.bLoadBusy           := FALSE;
+GVL_Reports.bLoadDone           := FALSE;
+GVL_Reports.bLoadError          := FALSE;
+GVL_Reports.bPdfDataReady       := FALSE;
+GVL_Reports.bPdfConsumed        := FALSE;
+GVL_Reports.sLoadStatus         := 'Idle';]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="PRG_ReportsManager">
+      <LineId Id="180" Count="14" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="273" Count="1" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="195" Count="14" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="210" Count="6" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="217" Count="1" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="219" Count="26" />
+      <LineId Id="263" Count="3" />
+      <LineId Id="246" Count="6" />
+      <LineId Id="60" Count="0" />
+    </LineIds>
+    <LineIds Name="PRG_ReportsManager.Clear_ReportsListing">
+      <LineId Id="6" Count="20" />
       <LineId Id="5" Count="0" />
-      <LineId Id="7" Count="1" />
-      <LineId Id="6" Count="0" />
-      <LineId Id="10" Count="1" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="12" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

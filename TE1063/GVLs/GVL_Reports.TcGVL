@@ -3,9 +3,97 @@
   <GVL Name="GVL_Reports" Id="{fce83d18-e016-4afe-968f-698c4f5b5535}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
-	
-	
-	
+
+(***** Search Screen - Filters / Commands ************************************************)
+
+bSearchRequest          	: BOOL;
+bSearchBusy             	: BOOL;
+bSearchDone             	: BOOL;
+bSearchError            	: BOOL;
+bClearSearchScreen 			: BOOL;
+bBuildCurrentLinearReport 	: BOOL;
+sSearchStatus           	: STRING(100);
+
+sDateFromFilter 		: STRING(30);
+sDateToFilter   		: STRING(30);
+bUseDateFilter  		: BOOL;
+bClearDateFilters 		: BOOL;
+
+eSelectedReportType     : E_ReportType;
+
+iSelectedRow            : INT := 0;
+sSelectedPrimaryID      : STRING(50);
+sSelectedReportName     : STRING(100);
+
+(***** Search Screen - Datagrid ***********************************************************)
+
+aReportSearchResult     : ARRAY[1..100] OF ST_ReportListItem;
+uiReportSearchCount     : UDINT;
+
+(***** Detail Load / PDF Generation *******************************************************)
+
+bLoadSelectedReport     : BOOL;
+bLoadBusy               : BOOL;
+bLoadDone               : BOOL;
+bLoadError              : BOOL;
+sLoadStatus             : STRING(100);
+
+bPdfRequest             : BOOL;
+bPdfDataReady           : BOOL;
+bPdfConsumed            : BOOL;
+
+bListLast100Request 	: BOOL;
+bSearchByDateRequest 	: BOOL;
+bLoadReportByID 		: BOOL;
+
+(***** Pump Calibration Report Buffers ****************************************************)
+
+// formato generico para tela de pesquisa / selecao
+stSelectedCalibReportHeader : ST_CalibrationReportHeader;
+aSelectedCalibReportHeader : ARRAY[1..1] OF ST_CalibrationReportHeader;
+aSelectedCalibReportLines   : ARRAY[1..300] OF ST_CalibrationReportLine;
+
+// formato compativel com o fluxo atual do relatori.js
+aPumpCalibValues        : ARRAY[1..100] OF ST_Data_PCR;
+
+// header copiado campo a campo para casar com o PDF atual
+iPumpCalibNo            : DINT;
+sPumpCalibUserID        : STRING(50);
+sPumpCalibDensity       : STRING(50);
+sPumpCalibSolventNo     : STRING(50);
+sPumpCalibSolventRev    : STRING(50);
+sPumpCalibAllowFail     : STRING(50);
+sPumpCalibReplicates    : STRING(50);
+sPumpCalibCallInterval  : STRING(50);
+sPumpCalibSysRev        : STRING(50);
+
+(***** Method / Recipe Report Buffers *****************************************************)
+
+stMethodHeader          : ST_Parameters_MR;
+aMethodVolumeData       : ARRAY[1..10] OF ST_VolumeData;
+
+(***** Post Run Report Buffers ************************************************************)
+
+stRunHeader             : ST_PostRunReport;
+stRunMethodHeader       : ST_Parameters_MR;
+aRunVolumeData          : ARRAY[1..10] OF ST_VolumeData;
+
+(***** System Reports Buffers *************************************************************)
+
+aSelectedSystemSettingsBuf 	: ARRAY[1..1] OF ST_SystemSettingsReport;
+stSelectedSystemSettings 	: ST_SystemSettingsReport;
+stCurrentSystem         	: ST_SysParameters;
+aSystemHistory          	: ARRAY[1..1000] OF ST_SysParameters;
+
+(***** Linear Report Buffers **************************************************************)
+
+stLinearReport 			: ST_LinearReport;
+
+(***** User Reports Buffers ***************************************************************)
+
+aUserHistory            : ARRAY[1..1000] OF ST_Data_CUL;
+aCurrentUsers           : ARRAY[1..500] OF ST_Data_CUL;
+
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

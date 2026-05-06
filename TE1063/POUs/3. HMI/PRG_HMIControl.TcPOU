@@ -289,9 +289,9 @@ IF GVL_HMI.bSaveParametersBt THEN // Save Settings button from HMI
 	GVL_Settings.stCalibParameters 		:= GVL_HMI.stHMICalibParameters; // Calibration Settings
 	GVL_Settings.stPumpParameters 		:= GVL_HMI.stHMIPumpParameters;	 // Pump Settings
 	GVL_Settings.stLeakTestParameters 	:= GVL_HMI.stLeakTestParameters; // Leak Test Settings
+	DB_Query.state:= E_DB_QUERY_STATE.INSERT_SYS_PARAMETERS;	// DB writing
 	GVL_HMI.bSaveParametersBt 	:= FALSE;
 	GVL_HMI.bSaveParametersDone := TRUE;
-	DB_Query.state:= E_DB_QUERY_STATE.INSERT_SYS_PARAMETERS;
 END_IF
 
 IF GVL_HMI.bReloadHMIParameters OR (GVL_HMI.eMachineMode = E_MachineMode.CALIBRATION) THEN
@@ -425,12 +425,7 @@ END_IF
 
 (* <HMI Report Listing> ******************************************************************************************************* *)
 
-IF GVL_HMI.bLoadCalibrationReportList THEN
-    // executa SELECT no banco
-    // preenche aCalibrationReportList
-    // seta bReportListReady := TRUE
-    // limpa trigger
-END_IF
+
 
 (* <\HMI Report Listing> ******************************************************************************************************* *)
 
@@ -1245,8 +1240,8 @@ END_IF]]></ST>
       <LineId Id="493" Count="0" />
       <LineId Id="496" Count="1" />
       <LineId Id="995" Count="2" />
+      <LineId Id="2437" Count="0" />
       <LineId Id="499" Count="1" />
-      <LineId Id="1604" Count="0" />
       <LineId Id="498" Count="0" />
       <LineId Id="502" Count="0" />
       <LineId Id="501" Count="0" />
@@ -1320,8 +1315,7 @@ END_IF]]></ST>
       <LineId Id="1245" Count="0" />
       <LineId Id="2016" Count="1" />
       <LineId Id="2020" Count="0" />
-      <LineId Id="2022" Count="4" />
-      <LineId Id="2021" Count="0" />
+      <LineId Id="2343" Count="0" />
       <LineId Id="2019" Count="0" />
       <LineId Id="2018" Count="0" />
       <LineId Id="1807" Count="3" />

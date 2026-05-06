@@ -73,6 +73,7 @@ VAR
     bMoveMotorM3     : BOOL := FALSE; // Motion trigger M3
 	bSetSolenoids	 : BOOL := FALSE; // SetSolenoids flag
     bMoveValve       : ARRAY[1..5] OF BOOL; // Valve position tracking
+	bDataBaseSeq	 : BOOL := FALSE;
 	
 
     i                : USINT;// Loop index helper
@@ -282,7 +283,7 @@ CASE eStep OF
 			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(GVL_Settings.stMachineParam.aM3Position[4], GVL_Settings.stMachineParam.rM3Velocity, GVL_Settings.stMachineParam.rM3Accleration, GVL_Settings.stMachineParam.rM3Deceleration);
 		END_IF
 		IF NOT bMoveMotorM2 AND bMoveMotorM3 THEN
-			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[4], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
+			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[5], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
 		END_IF
 	
 		IF bMoveMotorM2 AND bMoveMotorM3 THEN
@@ -595,8 +596,12 @@ CASE eStep OF
 		
 	E_CalibStep.PUMPFACTOR_ADJUST: // Calculate the new factor
 	
+		IF NOT DB_Query.FB_Insert.bBusy AND bDataBaseSeq THEN
+			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
+			eStep := E_CalibStep.RETURN_FORWARD;
+			bDataBaseSeq := FALSE;
 		
-		IF NOT DB_Query.FB_Insert.bBusy THEN
+		ELSIF NOT DB_Query.FB_Insert.bBusy AND NOT bDataBaseSeq THEN
 			
 			// Mirror the pump status to HMI
 			GVL_HMI.aCalPumpResults[iPumpIndex].eStatus := E_CalibrationStatus.ADJUSTMENT_NEEDED;
@@ -640,8 +645,7 @@ CASE eStep OF
 			iReplicate := 0;
 			
 			DB_Query.state:= E_DB_QUERY_STATE.INSERT_CALIBRATION_VALUES; //Insert new register of data on DB.
-			GVL_Calibration.iResultIndex := GVL_Calibration.iResultIndex + 1;
-			eStep := E_CalibStep.RETURN_FORWARD;
+			bDataBaseSeq := TRUE;
 		END_IF
 		
 		
@@ -908,7 +912,17 @@ CASE eStep OF
         bBusy := FALSE;
         bDone := FALSE;
         sStatus := 'Calibration aborted due to error. Press Stop button to start over';
-        // Remains here till external reset
+		
+		// FIX: The header row was already inserted into [CALIBRATION_HEAD] at
+		// calibration start. If no measurements were recorded (iResultIndex <= 1),
+		// that header row is now orphaned — it appears in the view with NULL
+		// date columns because [CALIBRATION] has no matching rows.
+		// Delete the orphaned header row so the view stays clean.
+		IF iResultIndex <= 1 AND DB_Query.state = E_DB_QUERY_STATE.IDLE_STATE THEN
+			DB_Query.state := E_DB_QUERY_STATE.DELETE_CALIBRATION_HEAD;
+		END_IF
+		
+		// Remains here till external reset
 
 END_CASE
 
@@ -1090,6 +1104,8 @@ bWeightReady          := FALSE;
 bMovePump             := FALSE;
 bMoveMotorM2          := FALSE;
 bMoveMotorM3          := FALSE;
+bDataBaseSeq 		  := FALSE;
+
 FOR iLocal := 1 TO 5 DO
     bMoveValve[iLocal] := FALSE;
 END_FOR
@@ -1173,10 +1189,13 @@ Reset := TRUE;]]></ST>
       <LineId Id="6119" Count="0" />
       <LineId Id="4904" Count="14" />
       <LineId Id="5438" Count="0" />
+      <LineId Id="6231" Count="1" />
+      <LineId Id="6234" Count="1" />
       <LineId Id="5442" Count="0" />
       <LineId Id="5441" Count="0" />
       <LineId Id="5447" Count="0" />
-      <LineId Id="4919" Count="44" />
+      <LineId Id="4919" Count="42" />
+      <LineId Id="4963" Count="0" />
       <LineId Id="5443" Count="1" />
       <LineId Id="4964" Count="50" />
       <LineId Id="5445" Count="0" />
@@ -1218,7 +1237,11 @@ Reset := TRUE;]]></ST>
       <LineId Id="5783" Count="0" />
       <LineId Id="5781" Count="1" />
       <LineId Id="5779" Count="1" />
-      <LineId Id="5151" Count="32" />
+      <LineId Id="5151" Count="30" />
+      <LineId Id="6357" Count="0" />
+      <LineId Id="6348" Count="8" />
+      <LineId Id="6347" Count="0" />
+      <LineId Id="5183" Count="0" />
       <LineId Id="9" Count="0" />
       <LineId Id="5557" Count="0" />
       <LineId Id="5556" Count="0" />
@@ -1253,7 +1276,9 @@ Reset := TRUE;]]></ST>
       <LineId Id="202" Count="6" />
       <LineId Id="276" Count="0" />
       <LineId Id="323" Count="0" />
-      <LineId Id="209" Count="21" />
+      <LineId Id="209" Count="13" />
+      <LineId Id="366" Count="1" />
+      <LineId Id="223" Count="7" />
       <LineId Id="303" Count="0" />
       <LineId Id="231" Count="6" />
       <LineId Id="295" Count="0" />

@@ -1,0 +1,442 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_DosingTest" Id="{c1522e1a-f45d-47ae-acf1-32f787f348f1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DosingTest
+VAR_INPUT
+ 	iReplicate 		: USINT;
+	bExecute		: BOOL;
+	rVolumeTesting	: REAL;
+	aPumps			: ARRAY[1..10] OF BOOL;
+END_VAR
+VAR_OUTPUT
+	bDone 	: BOOL;
+	bError 	: BOOL;
+	bBusy 	: BOOL;
+END_VAR
+VAR
+	eState 			: (Idle, MoveLinearMotors, MoveValvesSolvent, RunForward, MoveValveNeedles, RunBackwards, WeightRequest, NextPump, Done);
+	rDistanceByVol	: ARRAY[1..10] OF LREAL;
+	bValvesMove		: ARRAY[1..5]  OF BOOL;
+	bPumpsMove		: BOOL;
+	rScaleWeight	: LREAL;
+	rWeightBefore	: LREAL;
+	bWeightDone 	: BOOL := FALSE;
+	bStartDosing	: BOOL := FALSE;
+	bMoveMotorM3 	: BOOL := FALSE;
+	bMoveMotorM2 	: BOOL := FALSE;
+	
+	RTrigExecutePulse   : R_TRIG;
+	tonMotorsDelay		: TON;
+	
+	i			: USINT;
+	iResults 	: USINT := 1;
+	iResultRow	: USINT := 1;
+	iPumpIndex	: USINT := 1;
+	iRevs		: LREAL;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Triggering pulse
+RTrigExecutePulse(CLK := bExecute);
+
+// FB Trigger
+IF RTrigExecutePulse.Q AND eState = Idle THEN
+    bStartDosing := TRUE;
+END_IF
+
+CASE eState OF
+
+Idle:
+    	bBusy := FALSE;
+		bDone := FALSE;
+		IF bStartDosing THEN
+			iResults   := 1;
+			iResultRow := 1;
+			iPumpIndex := 1;
+			rWeightBefore := 0;
+			tonMotorsDelay(in := FALSE);
+			bMoveMotorM2 := FALSE;
+			bMoveMotorM3 := FALSE;
+			bBusy  := TRUE;
+			eState := MoveLinearMotors;
+			bStartDosing := FALSE;
+		END_IF
+		
+// Positioning Motors	
+MoveLinearMotors:		
+// Positioning motors M2 and M3 to calibration position 
+		IF NOT bMoveMotorM3 THEN
+			bMoveMotorM3 := GVL_Motion.aMotors[3].MoveAbsolute(GVL_Settings.stMachineParam.aM3Position[4], GVL_Settings.stMachineParam.rM3Velocity, GVL_Settings.stMachineParam.rM3Accleration, GVL_Settings.stMachineParam.rM3Deceleration);
+		END_IF
+		IF NOT bMoveMotorM2 AND bMoveMotorM3 THEN
+			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[5], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
+		END_IF
+	
+		IF bMoveMotorM2 AND bMoveMotorM3 THEN
+			tonMotorsDelay(in := TRUE, pt := T#200MS);
+		END_IF
+		
+		IF tonMotorsDelay.Q THEN
+			bMoveMotorM2 := FALSE;
+			bMoveMotorM3 := FALSE;
+			eState := MoveValvesSolvent;
+		END_IF
+
+
+// Positioning valves pos 1
+MoveValvesSolvent:
+	tonMotorsDelay(in := FALSE);
+	FOR i := 1 TO 5 DO
+		IF NOT bValvesMove[i] THEN
+			bValvesMove[i] := GVL_Motion.aValvesObj[i].MoveValve(	iPosition := 1, 
+																	rVelocity := GVL_Motion.aValves[i].rTargetVel, 
+																	rAcc := GVL_Motion.aValves[i].rAcceleration, 
+																	rDec := GVL_Motion.aValves[i].rDeceleration
+																);
+		END_IF
+	END_FOR
+	
+	IF bValvesMove[1] AND bValvesMove[2] AND bValvesMove[3] AND bValvesMove[4] AND bValvesMove[5] THEN
+		bPumpsMove := FALSE;
+		eState := RunForward;
+	END_IF
+	
+
+// pumps forward by volume
+RunForward:
+	
+	IF NOT bMoveMotorM2 THEN
+		bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[5], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
+	END_IF
+
+	IF bMoveMotorM2 THEN
+		IF aPumps[iPumpIndex] THEN
+			rDistanceByVol[iPumpIndex] := F_VolumeToSteps_Path(rVolume := rVolumeTesting + GVL_Motion.aPumps[iPumpIndex].Rotary.rDeadVolume, iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+			
+			iRevs := rDistanceByVol[iPumpIndex]/360;
+			
+			IF NOT bPumpsMove THEN
+				bPumpsMove :=	GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(	Distance := rDistanceByVol[iPumpIndex], 
+																					Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+																					Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
+																					Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6
+																				);
+			END_IF
+		ELSE
+			iPumpIndex := iPumpIndex + 1;
+			//bPumpsMove := TRUE;
+		END_IF
+	END_IF
+	
+	IF bPumpsMove THEN
+		FOR i := 1 TO 5 DO
+			bValvesMove[i] := FALSE;
+		END_FOR
+		bMoveMotorM2 := FALSE; 
+		eState := MoveValveNeedles;
+	END_IF
+
+// positioning valves pos6
+MoveValveNeedles:
+	FOR i := 1 TO 5 DO
+		IF NOT bValvesMove[i] THEN
+			bValvesMove[i] := GVL_Motion.aValvesObj[i].MoveValve(	iPosition := 6, 
+																	rVelocity := GVL_Motion.aValves[i].rTargetVel, 
+																	rAcc := GVL_Motion.aValves[i].rAcceleration, 
+																	rDec := GVL_Motion.aValves[i].rDeceleration
+																);
+		END_IF
+	END_FOR
+	
+	IF bValvesMove[1] AND bValvesMove[2] AND bValvesMove[3] AND bValvesMove[4] AND bValvesMove[5] THEN
+		bPumpsMove := FALSE;
+		eState := RunBackwards;
+	END_IF
+
+// pumps backward by volume
+RunBackwards:
+	IF aPumps[iPumpIndex] THEN
+		
+			rDistanceByVol[iPumpIndex] := F_VolumeToSteps_Path(rVolume := (rVolumeTesting + GVL_Motion.aPumps[iPumpIndex].Rotary.rDeadVolume) * 1.6, iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox);
+			
+			IF NOT bPumpsMove THEN
+				bPumpsMove := GVL_Motion.aPumpsRotary[iPumpIndex].MoveRelative(		Distance := - rDistanceByVol[iPumpIndex], 
+																					Velocity := GVL_Settings.stPumpParameters.iMeterVelocity * 6,
+																					Acc := GVL_Settings.stPumpParameters.iMeterVelocity * 6, 
+																					Dec := GVL_Settings.stPumpParameters.iMeterVelocity * 6
+																			  );
+			END_IF
+	ELSE
+		 bPumpsMove := TRUE;
+	END_IF
+	
+	IF bPumpsMove THEN
+		FOR i := 1 TO 5 DO
+			bValvesMove[i] := FALSE;
+		END_FOR
+		eState := WeightRequest;
+	END_IF
+
+// Scale eight request
+WeightRequest:
+	
+	IF NOT bMoveMotorM2 THEN
+		bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[6], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
+	END_IF
+	
+	IF bMoveMotorM2 THEN
+		rScaleWeight := GVL_Calibration.fbScaleDevice.RequestWeight();
+	END_IF
+	
+	IF GVL_Calibration.fbScaleDevice.bWeightReady AND bMoveMotorM2 THEN
+		// Fillup Results Array
+		GVL_calibration.aDosingResults[iResultRow].iPump	:= iPumpIndex;
+		GVL_calibration.aDosingResults[iResultRow].iCheck 	:= iResults;
+		GVL_calibration.aDosingResults[iResultRow].rResult 	:= (rScaleWeight - rWeightBefore) / 0.9972;
+		GVL_calibration.aDosingResults[iResultRow].iRevs 	:= iRevs;
+		rWeightBefore := rScaleWeight;
+		rScaleWeight := 0;
+		iRevs := 0;
+		iResultRow := iResultRow + 1;
+		bWeightDone := GVL_Calibration.fbScaleDevice.Reset();
+	END_IF
+	
+	IF bWeightDone THEN
+		IF iResults >= iReplicate THEN
+			iPumpIndex := iPumpIndex + 1;
+			eState := NextPump;
+		ELSE
+			iResults := iResults + 1;
+			eState := MoveValvesSolvent;
+		END_IF
+	bWeightDone := FALSE;
+	bMoveMotorM2 := FALSE;
+	END_IF
+
+// Next Pump
+NextPump:
+	IF iPumpIndex > 10 THEN
+		eState := Done;
+	ELSE
+		IF aPumps[iPumpIndex] THEN
+			FOR i := 1 TO 5 DO
+				bValvesMove[i] := FALSE;
+			END_FOR
+			iResults := 1;
+			eState := MoveValvesSolvent;
+		ELSE
+			iPumpIndex := iPumpIndex + 1;
+		END_IF	
+	END_IF
+
+// Done	
+Done:
+	bDone := TRUE;
+    bBusy := FALSE;
+    IF NOT bExecute THEN
+        bDone := FALSE;
+        eState := Idle;
+    END_IF
+	
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="Reset" Id="{443ece1a-fe2c-4ebd-8257-573766e2da88}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR
+	i : USINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Outputs
+bDone := FALSE;
+bError := FALSE;
+bBusy := FALSE;
+
+// Internal control flags
+bStartDosing := FALSE;
+bWeightDone := FALSE;
+bPumpsMove := FALSE;
+
+// Internal indexes / counters
+iResults := 1;
+iResultRow := 1;
+iPumpIndex := 1;
+
+bMoveMotorM2 := FALSE;
+bMoveMotorM3 := FALSE;
+bExecute := FALSE;
+
+RTrigExecutePulse(CLK := FALSE);
+
+// Internal values
+rScaleWeight := 0;
+
+FOR i := 1 TO 5 DO
+	bValvesMove[i] := FALSE;
+END_FOR
+
+FOR i := 1 TO 10 DO
+	rDistanceByVol[i] := 0;
+END_FOR
+
+// Return to initial state
+eState := Idle;
+
+Reset := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ResetResults" Id="{3154ee45-aa1b-4b91-94cb-a4397f023204}">
+      <Declaration><![CDATA[METHOD ResetResults : BOOL
+VAR
+	i : USINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR i := 1 TO 100 DO
+	GVL_Calibration.aDosingResults[i].iPump 	:= 0;
+	GVL_Calibration.aDosingResults[i].iCheck 	:= 0;
+	GVL_Calibration.aDosingResults[i].rResult 	:= 0;
+	GVL_Calibration.aDosingResults[i].iRevs 	:= 0;
+END_FOR
+
+ResetResults := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_DosingTest">
+      <LineId Id="24" Count="0" />
+      <LineId Id="213" Count="4" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="223" Count="1" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="253" Count="1" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="322" Count="2" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="282" Count="12" />
+      <LineId Id="300" Count="1" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="280" Count="1" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="50" Count="1" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="91" Count="1" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="56" Count="1" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="58" Count="1" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="315" Count="2" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="328" Count="1" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="330" Count="8" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="326" Count="1" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="103" Count="1" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="116" Count="10" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="133" Count="7" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="143" Count="8" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="343" Count="1" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="176" Count="1" />
+      <LineId Id="184" Count="2" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="258" Count="2" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="241" Count="3" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="245" Count="2" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="233" Count="1" />
+      <LineId Id="272" Count="4" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="39" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DosingTest.Reset">
+      <LineId Id="11" Count="13" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="44" Count="1" />
+      <LineId Id="25" Count="14" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_DosingTest.ResetResults">
+      <LineId Id="8" Count="3" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
