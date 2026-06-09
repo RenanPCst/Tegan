@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_SaveSolvents" Id="{b265a1d7-ec69-4aee-91d7-607240a77c17}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_SaveSolvents
+VAR
+	rtSaveSolvents : R_TRIG;
+
+	eState : (
+		Idle,
+		ValidateData,
+		PrepareInsert,
+		StartInsert,
+		WaitInsertDone,
+		Done,
+		Error
+	);
+
+	i : INT;
+	bValidationOk : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rtSaveSolvents(CLK := GVL_HMI.bSaveSolventsBt);
+
+CASE eState OF
+
+	Idle:
+		GVL_HMI.bSaveSolventsDone  := FALSE;
+		GVL_HMI.bSaveSolventsError := FALSE;
+
+		IF rtSaveSolvents.Q THEN
+			eState := ValidateData;
+		END_IF
+
+
+	ValidateData:
+		bValidationOk := TRUE;
+
+		FOR i := 1 TO 4 DO
+
+			IF GVL_HMI.stHMISolventsInfo[i].sSolventName = '' THEN
+				bValidationOk := FALSE;
+			END_IF
+
+			IF GVL_HMI.stHMISolventsInfo[i].rDensity <= 0.0 THEN
+				bValidationOk := FALSE;
+			END_IF
+
+		END_FOR
+
+		IF bValidationOk THEN
+			eState := PrepareInsert;
+		ELSE
+			eState := Error;
+		END_IF
+
+
+	PrepareInsert:
+		GVL_DB.stSolvents.solventName1 := GVL_HMI.stHMISolventsInfo[1].sSolventName;
+		GVL_DB.stSolvents.solventName2 := GVL_HMI.stHMISolventsInfo[2].sSolventName;
+		GVL_DB.stSolvents.solventName3 := GVL_HMI.stHMISolventsInfo[3].sSolventName;
+		GVL_DB.stSolvents.solventName4 := GVL_HMI.stHMISolventsInfo[4].sSolventName;
+
+		GVL_DB.stSolvents.density1 := LREAL_TO_STRING(GVL_HMI.stHMISolventsInfo[1].rDensity);
+		GVL_DB.stSolvents.density2 := LREAL_TO_STRING(GVL_HMI.stHMISolventsInfo[2].rDensity);
+		GVL_DB.stSolvents.density3 := LREAL_TO_STRING(GVL_HMI.stHMISolventsInfo[3].rDensity);
+		GVL_DB.stSolvents.density4 := LREAL_TO_STRING(GVL_HMI.stHMISolventsInfo[4].rDensity);
+
+		GVL_DB.stSolvents.addedBy   := GVL_HMI.sUserNameEventTriggered;
+		GVL_DB.stSolvents.addedDate := GVL_HMI.sDateAndTimeEventTriggered;
+
+		eState := StartInsert;
+
+
+	StartInsert:
+		IF DB_Query.state = E_DB_QUERY_STATE.IDLE_STATE THEN
+			DB_Query.state := E_DB_QUERY_STATE.INSERT_SOLVENT;
+			eState := WaitInsertDone;
+		END_IF
+
+
+	WaitInsertDone:
+		IF DB_Query.state = E_DB_QUERY_STATE.ERROR_STATE THEN
+			eState := Error;
+
+		ELSIF (DB_Query.state = E_DB_QUERY_STATE.IDLE_STATE) AND NOT DB_Query.bBusyDb THEN
+
+			// Update the runtime settings only after successful DB insert
+			GVL_Settings.stSolventsInfo := GVL_HMI.stHMISolventsInfo;
+
+			GVL_HMI.bSaveSolventsDone := TRUE;
+			GVL_HMI.bSaveSolventsBt   := FALSE;
+
+			eState := Done;
+		END_IF
+
+
+	Done:
+		eState := Idle;
+
+
+	Error:
+		GVL_HMI.bSaveSolventsError := TRUE;
+		GVL_HMI.bSaveSolventsBt    := FALSE;
+		eState := Idle;
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_SaveSolvents">
+      <LineId Id="20" Count="83" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

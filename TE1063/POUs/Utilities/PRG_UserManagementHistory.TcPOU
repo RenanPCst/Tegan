@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="PRG_UserManagementHistory" Id="{f20d4dd3-7ac2-42ef-a831-5f44bc128ffb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_UserManagementHistory
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF GVL_HMI.stUserMgmtHistoryEvent.bExecute 
+AND DB_Query.state = E_DB_QUERY_STATE.IDLE_STATE THEN
+
+    GVL_HMI.stUserMgmtHistoryEvent.bBusy := TRUE;
+    GVL_HMI.stUserMgmtHistoryEvent.bDone := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.bError := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.sErrorText := '';
+
+    DB_Query.state := E_DB_QUERY_STATE.INSERT_USER_MGMT_HISTORY;
+
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PRG_UserManagementHistory">
+      <LineId Id="6" Count="9" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

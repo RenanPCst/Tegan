@@ -2,6 +2,16 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="DB_Query" Id="{041a0fa5-6dba-4aa5-91f2-97a1fbd1ea5d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM DB_Query
+VAR_INPUT
+	state: E_DB_QUERY_STATE;
+	i: INT;
+	j: INT;
+END_VAR
+
+VAR_OUTPUT
+	bBusyDb : BOOL := FALSE;
+END_VAR
+
 VAR
 	FB_SelectArray: FB_DBRecordArraySelect;
 	FB_Insert: FB_DBRecordInsert_EX;
@@ -48,14 +58,17 @@ VAR
 	bInitSelectPostRunVolumeByMethodID 	: BOOL := FALSE;
 	bInitSelectLinearReportSearch 		: BOOL := FALSE;
 	bInitSelectLastLinearReport 		: BOOL := FALSE;
+	bInitSelectLastPostRunRun 			: BOOL := FALSE;
+	bInitSelectLastPumpCalibration 		: BOOL := FALSE;
+	bInitSelectSystemHistoryReport 		: BOOL := FALSE;
+	bInitSelectLinearHistoryReport 		: BOOL := FALSE;
+	bInitSelectCompleteMethodReport 	: BOOL := FALSE;
+	bInitSelectCompleteMethodVolumes 	: BOOL := FALSE;
+	iCompleteMethodIndex            	: INT := 1;
+	sCompleteMethodID               	: STRING(20);
 	
 	sPostRunMethodID : STRING(20) := '';
-END_VAR
-
-VAR_INPUT
-	state: E_DB_QUERY_STATE;
-	i: INT;
-	j: INT;
+	lastCalibID 	 : ARRAY[0..1] OF INT;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[//FindAndReplace(pSrcString:= ADR(insertString), pDeleteString:= ADR('#1#'), pInsertString:= ADR(nome), pDstString:= ADR(cmdIn), nDstSize:= SIZEOF(cmdIn));	
@@ -63,6 +76,8 @@ timerVD();
 Fill_Calibration_Data();
 Fill_Method_Data();
 DB_Load_CompleteMethod(start:= start);
+
+bBusyDb := (state <> E_DB_QUERY_STATE.IDLE_STATE) AND (state <> E_DB_QUERY_STATE.ERROR_STATE);
 
 IF timerVD.Q THEN
 	state:= E_DB_QUERY_STATE.SELECT_VOLUME_DATA;
@@ -355,20 +370,81 @@ E_DB_QUERY_STATE.INSERT_VOLUME_DATA:
 	
 E_DB_QUERY_STATE.INSERT_USER:
 
-	cmdIn:= GVL_DB.isrtUser;
-	insertUser(start:=TRUE, line:= i);
-	FB_Insert(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdIn), pCmdAddr:= ADR(cmdIn), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate);
-	
-	IF NOT FB_Insert.bBusy THEN
-		state:= E_DB_QUERY_STATE.IDLE_STATE;
-		bExecuteIn:= FALSE;
-	ELSIF FB_Insert.bError THEN	
-		state:= E_DB_QUERY_STATE.ERROR_STATE;
-	ELSE
-		state:= E_DB_QUERY_STATE.INSERT_USER;
-		//bExecuteIn:= FALSE;
-	END_IF	
-	
+    cmdIn := GVL_DB.isrtUser;
+    insertUser(start := TRUE, line := i);
+
+    FB_Insert(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdIn),
+        pCmdAddr := ADR(cmdIn),
+        bExecute := TRUE,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate
+    );
+
+    IF NOT FB_Insert.bBusy THEN
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+        bExecuteIn := FALSE;
+    ELSIF FB_Insert.bError THEN
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+    ELSE
+        state := E_DB_QUERY_STATE.INSERT_USER;
+    END_IF
+(*	
+E_DB_QUERY_STATE.INSERT_USER_MGMT_HISTORY:
+
+    cmdIn := GVL_DB.isrtUserMgmtHistory;
+    insertUserMgmtHistory(start := TRUE);
+
+    GVL_HMI.stUserMgmtHistoryEvent.bBusy := TRUE;
+    GVL_HMI.stUserMgmtHistoryEvent.bDone := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.bError := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.sErrorText := '';
+
+    FB_Insert(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdIn),
+        pCmdAddr := ADR(cmdIn),
+        bExecute := TRUE,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate
+    );
+
+    IF NOT FB_Insert.bBusy THEN
+
+        GVL_HMI.stUserMgmtHistoryEvent.bExecute := FALSE;
+        GVL_HMI.stUserMgmtHistoryEvent.bBusy := FALSE;
+        GVL_HMI.stUserMgmtHistoryEvent.bDone := TRUE;
+        GVL_HMI.stUserMgmtHistoryEvent.bError := FALSE;
+
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+        bExecuteIn := FALSE;
+
+    ELSIF FB_Insert.bError THEN
+
+        GVL_HMI.stUserMgmtHistoryEvent.bExecute := FALSE;
+        GVL_HMI.stUserMgmtHistoryEvent.bBusy := FALSE;
+        GVL_HMI.stUserMgmtHistoryEvent.bDone := FALSE;
+        GVL_HMI.stUserMgmtHistoryEvent.bError := TRUE;
+        GVL_HMI.stUserMgmtHistoryEvent.sErrorText := 'Error inserting user management history.';
+
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSE
+
+        state := E_DB_QUERY_STATE.INSERT_USER_MGMT_HISTORY;
+        bExecuteIn := FALSE;
+
+    END_IF
+*)
 E_DB_QUERY_STATE.SELECT_ALL_CURRENT_USERS:
 	
 	cmdSlc:= GVL_DB.slctCurrentUser;
@@ -402,13 +478,32 @@ E_DB_QUERY_STATE.SELECT_ALL_USERS:
 E_DB_QUERY_STATE.SELECT_LAST_SOLVENT:
 	
 	cmdSlc:= GVL_DB.slctSolvent;
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.stSolvents), pDestAddr:= ADR(GVL_DB.stSolvents), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+
+	FB_SelectArray(
+		sNetID:= ,
+		hDBID:= 1,
+		cbCmdSize:= SIZEOF(cmdSlc),
+		pCmdAddr:= ADR(cmdSlc),
+		nStartIndex:= 0,
+		nRecordCount:= 1,
+		cbRecordArraySize:= SIZEOF(GVL_DB.stSolvents),
+		pDestAddr:= ADR(GVL_DB.stSolvents),
+		bExecute:= TRUE,
+		tTimeout:= T#15S,
+		bBusy=> busy,
+		bError=> err,
+		nErrID=> errid,
+		sSQLState=> sqlstate,
+		nRecords=> recAnz
+	);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= E_DB_QUERY_STATE.IDLE_STATE;
 		bExecute:= FALSE;
+
 	ELSIF FB_SelectArray.bError THEN	
 		state:= E_DB_QUERY_STATE.ERROR_STATE;
+
 	ELSE
 		state:= E_DB_QUERY_STATE.SELECT_LAST_SOLVENT;
 		bExecute:= FALSE;
@@ -462,7 +557,7 @@ E_DB_QUERY_STATE.INSERT_LINEAR_MOTORS:
 E_DB_QUERY_STATE.SELECT_LINEAR_MOTORS:
 	
 	cmdSlc:= GVL_DB.slctLinear;
-	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 1, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.stLinearMotors), pDestAddr:= ADR(GVL_DB.stLinearMotors), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
+	FB_SelectArray(sNetID:= , hDBID:= 1, cbCmdSize:= SIZEOF(cmdSlc), pCmdAddr:= ADR(cmdSlc), nStartIndex:= 0, nRecordCount:= 500, cbRecordArraySize:= SIZEOF(GVL_DB.stLinearMotors), pDestAddr:= ADR(GVL_DB.stLinearMotors), bExecute:= TRUE, tTimeout:= T#15S, bBusy=> busy, bError=> err, nErrID=> errid, sSQLState=> sqlstate, nRecords=> recAnz);
 	
 	IF NOT FB_SelectArray.bBusy THEN
 		state:= E_DB_QUERY_STATE.IDLE_STATE;
@@ -1455,7 +1550,450 @@ E_DB_QUERY_STATE.SELECT_LAST_LINEAR_REPORT:
     ELSE
         state := E_DB_QUERY_STATE.SELECT_LAST_LINEAR_REPORT;
     END_IF	
+	
+E_DB_QUERY_STATE.SELECT_LAST_POSTRUN_RUN:
 
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading last post-run report...';
+
+    IF NOT bInitSelectLastPostRunRun THEN
+        bInitSelectLastPostRunRun := TRUE;
+
+        Clear_PostRunBuffers();
+        cmdSlc := GVL_DB.slctLastRun;
+        bExecute := TRUE;
+    ELSE
+        bExecute := FALSE;
+    END_IF
+
+    FB_SelectArray(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdSlc),
+        pCmdAddr := ADR(cmdSlc),
+        nStartIndex := 0,
+        nRecordCount := 1,
+        cbRecordArraySize := SIZEOF(GVL_Reports.stRunHeader),
+        pDestAddr := ADR(GVL_Reports.stRunHeader),
+        bExecute := bExecute,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate,
+        nRecords => recAnz
+    );
+
+    IF FB_SelectArray.bError THEN
+        bInitSelectLastPostRunRun := FALSE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.sLoadStatus := 'Error loading last post-run report';
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSIF NOT FB_SelectArray.bBusy AND bInitSelectLastPostRunRun THEN
+        bInitSelectLastPostRunRun := FALSE;
+
+        IF recAnz > 0 THEN
+            sPostRunMethodID := INT_TO_STRING(GVL_Reports.stRunHeader.methodID);
+            state := E_DB_QUERY_STATE.SELECT_POSTRUN_METHOD_BY_RUN_ID;
+        ELSE
+            GVL_Reports.bLoadBusy   := FALSE;
+            GVL_Reports.bLoadDone   := FALSE;
+            GVL_Reports.bLoadError  := TRUE;
+            GVL_Reports.sLoadStatus := 'No post-run report found';
+            state := E_DB_QUERY_STATE.IDLE_STATE;
+        END_IF
+
+    ELSE
+        state := E_DB_QUERY_STATE.SELECT_LAST_POSTRUN_RUN;
+    END_IF
+
+E_DB_QUERY_STATE.SELECT_LAST_PUMP_CALIBRATION:
+
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading last pump calibration report...';
+
+    IF NOT bInitSelectLastPumpCalibration THEN
+        bInitSelectLastPumpCalibration := TRUE;
+
+        cmdSlc := GVL_DB.slctLastCalibID;
+        bExecute := TRUE;
+    ELSE
+        bExecute := FALSE;
+    END_IF
+
+    FB_SelectArray(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdSlc),
+        pCmdAddr := ADR(cmdSlc),
+        nStartIndex := 0,
+        nRecordCount := 1,
+        cbRecordArraySize := SIZEOF(lastCalibID),
+        pDestAddr := ADR(lastCalibID),
+        bExecute := bExecute,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate,
+        nRecords => recAnz
+    );
+
+    IF FB_SelectArray.bError THEN
+        bInitSelectLastPumpCalibration := FALSE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.sLoadStatus := 'Error loading last pump calibration report';
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSIF NOT FB_SelectArray.bBusy AND bInitSelectLastPumpCalibration THEN
+        bInitSelectLastPumpCalibration := FALSE;
+
+        IF recAnz > 0 AND lastCalibID[0] > 0 THEN
+            GVL_Reports.sSelectedPrimaryID := INT_TO_STRING(lastCalibID[0]);
+            DB_Query.state := E_DB_QUERY_STATE.SELECT_CALIB_REPORT_BY_ID;
+        ELSE
+            GVL_Reports.bLoadBusy   := FALSE;
+            GVL_Reports.bLoadDone   := FALSE;
+            GVL_Reports.bLoadError  := TRUE;
+            GVL_Reports.sLoadStatus := 'No pump calibration report found';
+            state := E_DB_QUERY_STATE.IDLE_STATE;
+        END_IF
+
+    ELSE
+        state := E_DB_QUERY_STATE.SELECT_LAST_PUMP_CALIBRATION;
+    END_IF
+
+E_DB_QUERY_STATE.SELECT_SYSTEM_HISTORY_REPORT:
+
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading system settings history report...';
+
+    IF NOT bInitSelectSystemHistoryReport THEN
+        bInitSelectSystemHistoryReport := TRUE;
+
+        cmdSlc := GVL_DB.slctAllSys;
+        bExecute := TRUE;
+    ELSE
+        bExecute := FALSE;
+    END_IF
+
+    FB_SelectArray(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdSlc),
+        pCmdAddr := ADR(cmdSlc),
+        nStartIndex := 0,
+        nRecordCount := 500,
+        cbRecordArraySize := SIZEOF(GVL_Reports.aSystemHistory),
+        pDestAddr := ADR(GVL_Reports.aSystemHistory),
+        bExecute := bExecute,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate,
+        nRecords => recAnz
+    );
+
+    IF FB_SelectArray.bError THEN
+        bInitSelectSystemHistoryReport := FALSE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.sLoadStatus := 'Error loading system settings history report';
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSIF NOT FB_SelectArray.bBusy AND bInitSelectSystemHistoryReport THEN
+        bInitSelectSystemHistoryReport := FALSE;
+        GVL_Reports.bLoadBusy      := FALSE;
+        GVL_Reports.bLoadDone      := TRUE;
+        GVL_Reports.bLoadError     := FALSE;
+        GVL_Reports.bPdfDataReady  := TRUE;
+        GVL_Reports.bPdfConsumed   := FALSE;
+        GVL_Reports.sLoadStatus    := 'System settings history report loaded';
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+
+    ELSE
+        state := E_DB_QUERY_STATE.SELECT_SYSTEM_HISTORY_REPORT;
+    END_IF
+	
+E_DB_QUERY_STATE.SELECT_LINEAR_HISTORY_REPORT:
+
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading linear pumps history report...';
+
+    IF NOT bInitSelectLinearHistoryReport THEN
+        bInitSelectLinearHistoryReport := TRUE;
+
+        cmdSlc := GVL_DB.slctLinearHistoryReport;
+        bExecute := TRUE;
+    ELSE
+        bExecute := FALSE;
+    END_IF
+
+    FB_SelectArray(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdSlc),
+        pCmdAddr := ADR(cmdSlc),
+        nStartIndex := 0,
+        nRecordCount := 200,
+        cbRecordArraySize := SIZEOF(GVL_Reports.aLinearHistory),
+        pDestAddr := ADR(GVL_Reports.aLinearHistory),
+        bExecute := bExecute,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate,
+        nRecords => recAnz
+    );
+
+    IF FB_SelectArray.bError THEN
+        bInitSelectLinearHistoryReport := FALSE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.sLoadStatus := 'Error loading linear pumps history report';
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSIF NOT FB_SelectArray.bBusy AND bInitSelectLinearHistoryReport THEN
+        bInitSelectLinearHistoryReport := FALSE;
+        GVL_Reports.bLoadBusy      := FALSE;
+        GVL_Reports.bLoadDone      := TRUE;
+        GVL_Reports.bLoadError     := FALSE;
+        GVL_Reports.bPdfDataReady  := TRUE;
+        GVL_Reports.bPdfConsumed   := FALSE;
+        GVL_Reports.sLoadStatus    := 'Linear pumps history report loaded';
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+
+    ELSE
+        state := E_DB_QUERY_STATE.SELECT_LINEAR_HISTORY_REPORT;
+    END_IF
+	
+E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT:
+
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading complete method history report...';
+
+    IF NOT bInitSelectCompleteMethodReport THEN
+        bInitSelectCompleteMethodReport := TRUE;
+        bInitSelectCompleteMethodVolumes := FALSE;
+        iCompleteMethodIndex := 1;
+
+        Clear_CompleteMethodHeaderBuffer();
+        Clear_CompleteMethodReportBuffer();
+
+        cmdSlc := GVL_DB.slctAllMethodsForCompleteReport;
+        bExecute := TRUE;
+    ELSE
+        bExecute := FALSE;
+    END_IF
+
+    FB_SelectArray(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdSlc),
+        pCmdAddr := ADR(cmdSlc),
+        nStartIndex := 0,
+        nRecordCount := 50,
+        cbRecordArraySize := SIZEOF(GVL_Reports.aCompleteMethodHeader),
+        pDestAddr := ADR(GVL_Reports.aCompleteMethodHeader),
+        bExecute := bExecute,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate,
+        nRecords => recAnz
+    );
+
+    IF FB_SelectArray.bError THEN
+        bInitSelectCompleteMethodReport := FALSE;
+        GVL_Reports.bLoadBusy   := FALSE;
+        GVL_Reports.bLoadDone   := FALSE;
+        GVL_Reports.bLoadError  := TRUE;
+        GVL_Reports.sLoadStatus := 'Error loading complete method history report';
+        state := E_DB_QUERY_STATE.ERROR_STATE;
+
+    ELSIF NOT FB_SelectArray.bBusy AND bInitSelectCompleteMethodReport THEN
+        bInitSelectCompleteMethodReport := FALSE;
+
+        IF recAnz > 0 THEN
+            iCompleteMethodIndex := 1;
+            state := E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT_VOLUMES;
+        ELSE
+            GVL_Reports.bLoadBusy   := FALSE;
+            GVL_Reports.bLoadDone   := FALSE;
+            GVL_Reports.bLoadError  := TRUE;
+            GVL_Reports.sLoadStatus := 'No method history records found';
+            state := E_DB_QUERY_STATE.IDLE_STATE;
+        END_IF
+
+    ELSE
+        state := E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT;
+    END_IF
+
+E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT_VOLUMES:
+
+    GVL_Reports.bLoadBusy   := TRUE;
+    GVL_Reports.bLoadDone   := FALSE;
+    GVL_Reports.bLoadError  := FALSE;
+    GVL_Reports.sLoadStatus := 'Loading method volume data...';
+
+    IF iCompleteMethodIndex > 50 OR GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodID = 0 THEN
+        GVL_Reports.bLoadBusy      := FALSE;
+        GVL_Reports.bLoadDone      := TRUE;
+        GVL_Reports.bLoadError     := FALSE;
+        GVL_Reports.bPdfDataReady  := TRUE;
+        GVL_Reports.bPdfConsumed   := FALSE;
+        GVL_Reports.sLoadStatus    := 'Complete method history report loaded';
+        state := E_DB_QUERY_STATE.IDLE_STATE;
+
+    ELSE
+        // Copy flat header into final struct
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodName := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodName;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodRevision := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodRevision;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodCreatedBy := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodCreatedBy;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodCreatedOn := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodCreatedOn;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].solvent_R1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].solvent_R1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].solvent_R2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].solvent_R2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].solvent_W1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].solvent_W1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].solvent_W2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].solvent_W2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].time_R1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].time_R1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].time_R2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].time_R2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].time_W1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].time_W1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].time_W2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].time_W2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].velocity_R1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].velocity_R1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].velocity_R2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].velocity_R2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].velocity_W1 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].velocity_W1;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].velocity_W2 := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].velocity_W2;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].soakTime := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].soakTime;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].agitate_1_Time := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].agitate_1_Time;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].agitate_2_Time := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].agitate_2_Time;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].vialsToFill := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].vialsToFill;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].vialPrimeVol := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].vialPrimeVol;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].vial_1_FillVol := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].vial_1_FillVol;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].vial_2_4_FillVol := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].vial_2_4_FillVol;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].airDryTime := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].airDryTime;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodID := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodID;
+        GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].methodStatus := GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodStatus;
+
+        sCompleteMethodID := INT_TO_STRING(GVL_Reports.aCompleteMethodHeader[iCompleteMethodIndex].methodID);
+
+        IF NOT bInitSelectCompleteMethodVolumes THEN
+            bInitSelectCompleteMethodVolumes := TRUE;
+
+            selectRecipeVolumeByID(start := TRUE, methodID := sCompleteMethodID);
+            bExecute := TRUE;
+        ELSE
+            bExecute := FALSE;
+        END_IF
+
+        FB_SelectArray(
+            sNetID := ,
+            hDBID := 1,
+            cbCmdSize := SIZEOF(cmdSlc),
+            pCmdAddr := ADR(cmdSlc),
+            nStartIndex := 0,
+            nRecordCount := 10,
+            cbRecordArraySize := SIZEOF(GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].volumeData),
+            pDestAddr := ADR(GVL_Reports.aCompleteMethodReport[iCompleteMethodIndex].volumeData),
+            bExecute := bExecute,
+            tTimeout := T#15S,
+            bBusy => busy,
+            bError => err,
+            nErrID => errid,
+            sSQLState => sqlstate,
+            nRecords => recAnz
+        );
+
+        IF FB_SelectArray.bError THEN
+            bInitSelectCompleteMethodVolumes := FALSE;
+            GVL_Reports.bLoadBusy   := FALSE;
+            GVL_Reports.bLoadDone   := FALSE;
+            GVL_Reports.bLoadError  := TRUE;
+            GVL_Reports.sLoadStatus := 'Error loading method volume data';
+            state := E_DB_QUERY_STATE.ERROR_STATE;
+
+        ELSIF NOT FB_SelectArray.bBusy AND bInitSelectCompleteMethodVolumes THEN
+            bInitSelectCompleteMethodVolumes := FALSE;
+            iCompleteMethodIndex := iCompleteMethodIndex + 1;
+            state := E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT_VOLUMES;
+
+        ELSE
+            state := E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT_VOLUMES;
+        END_IF
+    END_IF
+
+E_DB_QUERY_STATE.INSERT_USER_MGMT_HISTORY:
+
+    cmdIn := GVL_DB.isrtUserMgmtHistory;
+
+    insertUserMgmtHistory(start := TRUE);
+
+    GVL_HMI.stUserMgmtHistoryEvent.bBusy := TRUE;
+    GVL_HMI.stUserMgmtHistoryEvent.bDone := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.bError := FALSE;
+    GVL_HMI.stUserMgmtHistoryEvent.sErrorText := '';
+
+    FB_Insert(
+        sNetID := ,
+        hDBID := 1,
+        cbCmdSize := SIZEOF(cmdIn),
+        pCmdAddr := ADR(cmdIn),
+        bExecute := TRUE,
+        tTimeout := T#15S,
+        bBusy => busy,
+        bError => err,
+        nErrID => errid,
+        sSQLState => sqlstate
+    );
+
+    IF FB_Insert.bError THEN
+
+		GVL_HMI.stUserMgmtHistoryEvent.bExecute := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.bBusy := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.bDone := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.bError := TRUE;
+		GVL_HMI.stUserMgmtHistoryEvent.sErrorText := CONCAT('DB insert error. SQLState: ', sqlstate.sSQLState);
+	
+		state := E_DB_QUERY_STATE.ERROR_STATE;
+		bExecuteIn := FALSE;
+	
+	ELSIF NOT FB_Insert.bBusy THEN
+	
+		GVL_HMI.stUserMgmtHistoryEvent.bExecute := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.bBusy := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.bDone := TRUE;
+		GVL_HMI.stUserMgmtHistoryEvent.bError := FALSE;
+		GVL_HMI.stUserMgmtHistoryEvent.sErrorText := '';
+	
+		state := E_DB_QUERY_STATE.IDLE_STATE;
+		bExecuteIn := FALSE;
+	
+	ELSE
+	
+		state := E_DB_QUERY_STATE.INSERT_USER_MGMT_HISTORY;
+		bExecuteIn := FALSE;
+	
+	END_IF
+	
 E_DB_QUERY_STATE.ERROR_STATE:
 
 	bExecute:= FALSE;
@@ -1464,6 +2002,93 @@ E_DB_QUERY_STATE.ERROR_STATE:
 		
 END_CASE]]></ST>
     </Implementation>
+    <Method Name="Clear_CompleteMethodHeaderBuffer" Id="{2f8bb988-d7e1-469f-a1fc-6646f8c6affb}">
+      <Declaration><![CDATA[METHOD Clear_CompleteMethodHeaderBuffer : BOOL
+VAR_INPUT
+END_VAR
+VAR
+    i : INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR i := 1 TO 50 DO
+    GVL_Reports.aCompleteMethodHeader[i].methodName := '';
+    GVL_Reports.aCompleteMethodHeader[i].methodRevision := '';
+    GVL_Reports.aCompleteMethodHeader[i].methodCreatedBy := '';
+    GVL_Reports.aCompleteMethodHeader[i].methodCreatedOn := '';
+    GVL_Reports.aCompleteMethodHeader[i].solvent_R1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].solvent_R2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].solvent_W1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].solvent_W2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].time_R1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].time_R2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].time_W1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].time_W2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].velocity_R1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].velocity_R2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].velocity_W1 := '';
+    GVL_Reports.aCompleteMethodHeader[i].velocity_W2 := '';
+    GVL_Reports.aCompleteMethodHeader[i].soakTime := '';
+    GVL_Reports.aCompleteMethodHeader[i].agitate_1_Time := '';
+    GVL_Reports.aCompleteMethodHeader[i].agitate_2_Time := '';
+    GVL_Reports.aCompleteMethodHeader[i].vialsToFill := '';
+    GVL_Reports.aCompleteMethodHeader[i].vialPrimeVol := '';
+    GVL_Reports.aCompleteMethodHeader[i].vial_1_FillVol := '';
+    GVL_Reports.aCompleteMethodHeader[i].vial_2_4_FillVol := '';
+    GVL_Reports.aCompleteMethodHeader[i].airDryTime := '';
+    GVL_Reports.aCompleteMethodHeader[i].methodID := 0;
+    GVL_Reports.aCompleteMethodHeader[i].methodStatus := '';
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Clear_CompleteMethodReportBuffer" Id="{d2f17349-0b16-4940-8a87-9cb150e41fac}">
+      <Declaration><![CDATA[METHOD Clear_CompleteMethodReportBuffer : BOOL
+VAR
+	i, j : INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[FOR i := 1 TO 50 DO
+    GVL_Reports.aCompleteMethodReport[i].methodName := '';
+    GVL_Reports.aCompleteMethodReport[i].methodRevision := '';
+    GVL_Reports.aCompleteMethodReport[i].methodCreatedBy := '';
+    GVL_Reports.aCompleteMethodReport[i].methodCreatedOn := '';
+    GVL_Reports.aCompleteMethodReport[i].solvent_R1 := '';
+    GVL_Reports.aCompleteMethodReport[i].solvent_R2 := '';
+    GVL_Reports.aCompleteMethodReport[i].solvent_W1 := '';
+    GVL_Reports.aCompleteMethodReport[i].solvent_W2 := '';
+    GVL_Reports.aCompleteMethodReport[i].time_R1 := '';
+    GVL_Reports.aCompleteMethodReport[i].time_R2 := '';
+    GVL_Reports.aCompleteMethodReport[i].time_W1 := '';
+    GVL_Reports.aCompleteMethodReport[i].time_W2 := '';
+    GVL_Reports.aCompleteMethodReport[i].velocity_R1 := '';
+    GVL_Reports.aCompleteMethodReport[i].velocity_R2 := '';
+    GVL_Reports.aCompleteMethodReport[i].velocity_W1 := '';
+    GVL_Reports.aCompleteMethodReport[i].velocity_W2 := '';
+    GVL_Reports.aCompleteMethodReport[i].soakTime := '';
+    GVL_Reports.aCompleteMethodReport[i].agitate_1_Time := '';
+    GVL_Reports.aCompleteMethodReport[i].agitate_2_Time := '';
+    GVL_Reports.aCompleteMethodReport[i].vialsToFill := '';
+    GVL_Reports.aCompleteMethodReport[i].vialPrimeVol := '';
+    GVL_Reports.aCompleteMethodReport[i].vial_1_FillVol := '';
+    GVL_Reports.aCompleteMethodReport[i].vial_2_4_FillVol := '';
+    GVL_Reports.aCompleteMethodReport[i].airDryTime := '';
+    GVL_Reports.aCompleteMethodReport[i].methodID := 0;
+    GVL_Reports.aCompleteMethodReport[i].methodStatus := '';
+
+    FOR j := 1 TO 10 DO
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].VD_ID := 0;
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].pump := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].stage := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].rinse1 := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].rinse2 := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].wash1 := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].wash2 := '';
+        GVL_Reports.aCompleteMethodReport[i].volumeData[j].methodID := 0;
+    END_FOR
+END_FOR]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Clear_LinearReportBuffer" Id="{13bb2410-af00-4faf-9658-d248d62d1734}">
       <Declaration><![CDATA[METHOD Clear_LinearReportBuffer : BOOL
 VAR_INPUT
@@ -1649,9 +2274,11 @@ END_VAR
 END_FOR
 
 GVL_Reports.uiReportSearchCount := 0;
-GVL_Reports.sDateFromFilter := '';
-GVL_Reports.sDateToFilter   := '';
-GVL_Reports.bUseDateFilter  := FALSE;
+GVL_Reports.sDateFromFilter  := '';
+GVL_Reports.sQuickReportName := '';
+GVL_Reports.sDateToFilter    := '';
+GVL_Reports.sQuickReportName := '';
+GVL_Reports.bUseDateFilter   := FALSE;
 
 bInitSelectCalibReportList := FALSE;
 bInitSelectSystemSettingsReportList := FALSE;
@@ -1672,6 +2299,13 @@ bInitSelectPostRunMethodByID 		  := FALSE;
 bInitSelectPostRunVolumeByMethodID 	  := FALSE;
 bInitSelectLinearReportSearch 		  := FALSE;
 bInitSelectLastLinearReport 		  := FALSE;
+bInitSelectLastPostRunRun  			  := FALSE;
+bInitSelectLastPumpCalibration  	  := FALSE;
+bInitSelectSystemHistoryReport 		  := FALSE;
+bInitSelectLinearHistoryReport 		  := FALSE;
+bInitSelectCompleteMethodReport 	  := FALSE;
+bInitSelectCompleteMethodVolumes 	  := FALSE;
+iCompleteMethodIndex := 1;
 
 
 GVL_Reports.sDateFromFilter := '';
@@ -2351,6 +2985,96 @@ IF start THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="insertUserMgmtHistory" Id="{75d095ba-0b46-45e1-8ab8-13663351d9ac}">
+      <Declaration><![CDATA[METHOD insertUserMgmtHistory : BOOL
+VAR_INPUT
+	start : BOOL := FALSE;
+END_VAR
+VAR
+    sOldAutoLogoutMin : STRING(20);
+    sNewAutoLogoutMin : STRING(20);
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[sOldAutoLogoutMin := INT_TO_STRING(GVL_HMI.stUserMgmtHistoryEvent.iOldAutoLogoutMin);
+sNewAutoLogoutMin := INT_TO_STRING(GVL_HMI.stUserMgmtHistoryEvent.iNewAutoLogoutMin);
+
+IF start THEN
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#1#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sTargetUser), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#2#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sEventType), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#3#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sOldGroup), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#4#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sNewGroup), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#5#'), 
+        pInsertString := ADR(sOldAutoLogoutMin), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#6#'), 
+        pInsertString := ADR(sNewAutoLogoutMin), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#7#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sPerformedBy), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#8#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sSourceScreen), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+    FindAndReplace(
+        pSrcString := ADR(cmdIn), 
+        pDeleteString := ADR('#9#'), 
+        pInsertString := ADR(GVL_HMI.stUserMgmtHistoryEvent.sEventComment), 
+        pDstString := ADR(cmdIn), 
+        nDstSize := SIZEOF(cmdIn)
+    );
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="insertVD" Id="{df3eedca-543a-4b76-a0dd-55698bdfc8eb}">
       <Declaration><![CDATA[METHOD insertVD : BOOL
 VAR_INPUT
@@ -2799,6 +3523,8 @@ END_IF]]></ST>
       <LineId Id="805" Count="0" />
       <LineId Id="836" Count="0" />
       <LineId Id="1011" Count="0" />
+      <LineId Id="3044" Count="0" />
+      <LineId Id="3043" Count="0" />
       <LineId Id="846" Count="3" />
       <LineId Id="804" Count="0" />
       <LineId Id="96" Count="0" />
@@ -2883,8 +3609,11 @@ END_IF]]></ST>
       <LineId Id="644" Count="9" />
       <LineId Id="639" Count="0" />
       <LineId Id="654" Count="0" />
-      <LineId Id="685" Count="13" />
+      <LineId Id="4036" Count="24" />
       <LineId Id="684" Count="0" />
+      <LineId Id="4061" Count="0" />
+      <LineId Id="4063" Count="47" />
+      <LineId Id="4062" Count="0" />
       <LineId Id="699" Count="0" />
       <LineId Id="702" Count="2" />
       <LineId Id="706" Count="9" />
@@ -2893,7 +3622,8 @@ END_IF]]></ST>
       <LineId Id="719" Count="12" />
       <LineId Id="718" Count="0" />
       <LineId Id="716" Count="0" />
-      <LineId Id="933" Count="12" />
+      <LineId Id="933" Count="0" />
+      <LineId Id="3527" Count="30" />
       <LineId Id="932" Count="0" />
       <LineId Id="947" Count="0" />
       <LineId Id="949" Count="12" />
@@ -2975,13 +3705,43 @@ END_IF]]></ST>
       <LineId Id="2967" Count="0" />
       <LineId Id="2969" Count="63" />
       <LineId Id="2776" Count="0" />
+      <LineId Id="3046" Count="0" />
+      <LineId Id="3048" Count="58" />
+      <LineId Id="3047" Count="0" />
+      <LineId Id="3108" Count="0" />
+      <LineId Id="3110" Count="57" />
       <LineId Id="2968" Count="0" />
+      <LineId Id="3232" Count="0" />
+      <LineId Id="3350" Count="53" />
+      <LineId Id="3231" Count="0" />
+      <LineId Id="3109" Count="0" />
+      <LineId Id="3408" Count="53" />
+      <LineId Id="3405" Count="0" />
+      <LineId Id="3407" Count="0" />
+      <LineId Id="3815" Count="62" />
+      <LineId Id="3623" Count="0" />
+      <LineId Id="3751" Count="0" />
+      <LineId Id="3878" Count="89" />
+      <LineId Id="3624" Count="0" />
+      <LineId Id="4111" Count="0" />
+      <LineId Id="4113" Count="23" />
+      <LineId Id="4164" Count="26" />
+      <LineId Id="3752" Count="0" />
+      <LineId Id="4112" Count="0" />
       <LineId Id="136" Count="0" />
       <LineId Id="389" Count="0" />
       <LineId Id="137" Count="1" />
       <LineId Id="140" Count="0" />
       <LineId Id="139" Count="0" />
       <LineId Id="99" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.Clear_CompleteMethodHeaderBuffer">
+      <LineId Id="9" Count="26" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.Clear_CompleteMethodReportBuffer">
+      <LineId Id="7" Count="37" />
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.Clear_LinearReportBuffer">
       <LineId Id="22" Count="11" />
@@ -3003,11 +3763,20 @@ END_IF]]></ST>
     </LineIds>
     <LineIds Name="DB_Query.Clear_ReportSearchResult">
       <LineId Id="6" Count="9" />
-      <LineId Id="27" Count="4" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="29" Count="2" />
       <LineId Id="25" Count="0" />
       <LineId Id="71" Count="0" />
       <LineId Id="73" Count="14" />
       <LineId Id="72" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="107" Count="1" />
+      <LineId Id="106" Count="0" />
       <LineId Id="69" Count="0" />
       <LineId Id="53" Count="0" />
       <LineId Id="55" Count="2" />
@@ -3190,6 +3959,10 @@ END_IF]]></ST>
       <LineId Id="78" Count="5" />
       <LineId Id="101" Count="0" />
       <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="DB_Query.insertUserMgmtHistory">
+      <LineId Id="29" Count="76" />
+      <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="DB_Query.insertVD">
       <LineId Id="53" Count="0" />

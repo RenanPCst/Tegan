@@ -32,13 +32,13 @@ VAR_GLOBAL
 	bSystemReady_ReqAutoCycle 	: BOOL := FALSE; // One-shot request to go to AUTO_CYCLE from SystemReady
 	
 	// --- Auto cycle soft-stop / hold control ---
-    bAutoCycleHoldReq        : BOOL;  // 1st STOP inside AUTO_CYCLE
-    bAutoCycleHoldActive     : BOOL;  // TRUE while StateMachine is in PAUSE_STATE
-    bAutoCycleHoldPopup      : BOOL;  // HMI shows the "Cancel / Continue" popup
-	bAutoCyclePrimeSolvents	 : BOOL;  // HMI flag for prime the solvents used on auto cycle before metering the rinse
+    bAutoCycleHoldReq        : BOOL	:= FALSE;  // 1st STOP inside AUTO_CYCLE
+    bAutoCycleHoldActive     : BOOL	:= FALSE;  // TRUE while StateMachine is in PAUSE_STATE
+    bAutoCycleHoldPopup      : BOOL := FALSE;  // HMI shows the "Cancel / Continue" popup
+	bAutoCyclePrimeSolvents	 : BOOL	:= FALSE;  // HMI flag for prime the solvents used on auto cycle before metering the rinse
 
-    bAutoCycleContinueCmd    : BOOL;  // HMI "Continue" button
-    bAutoCycleCancelCmd      : BOOL;  // HMI "Cancel Run" button
+    bAutoCycleContinueCmd    : BOOL	:= FALSE;  // HMI "Continue" button
+    bAutoCycleCancelCmd      : BOOL	:= FALSE;  // HMI "Cancel Run" button
 	
 	bLightsToggleButton	 : BOOL := FALSE; // Home screen toggle button for turn lights on or off on HMI 
 	rTimeCountingDown 	 : LREAL; 		  //Countdown time for shutdown or rebooting PLC
@@ -50,10 +50,11 @@ VAR_GLOBAL
 	bHomeScreenLoaded	 : BOOL := FALSE;	// Flag to tell when the home screen is loaded or not
 	
 	//User Management
-	stUsers          : ARRAY[1..50] OF ST_User;  // users list | max 50 users
-    iLoggedUserID    : INT := -1;                // -1 = no one logged in
-    dtCurrentLogin   : DT;
-    tSessionStart    : TIME;
+	stUserMgmtHistoryEvent  : ST_UserMgmtHistoryEvent;
+	stUsers          		: ARRAY[1..50] OF ST_User;  // users list | max 50 users
+    iLoggedUserID    		: INT := -1;                // -1 = no one logged in
+    dtCurrentLogin   		: DT;
+    tSessionStart    		: TIME;
 
 	// <Recipe> Variables needed to handle recipe --------------------------------------------------------------------------------------------------------------
 	aAvailableFiles         : ARRAY[0..99] OF ST_RecipeFileInfo;
@@ -114,6 +115,8 @@ VAR_GLOBAL
 	aCalibPumps         	: ARRAY[1..10] OF ST_CalibrationPump;		// Calibration rotary Pumps settings
 	aCalibLinearPumps		: ARRAY[1..10] OF ST_LinearPumpCalibration; // Calibration linear Pumps settings
 	aCalPumpResults    		: ARRAY[1..10] OF ST_CalibrationPumpResult; // Rotary Pumps result structure
+	
+	iSelectedCalibrationSolvent : USINT := 0; // Solvent Selection - 0 = None, 1 = Solvent 1, 2 = Solvent 2, etc.
 	
 	rLinearPumpsLastAdjustUser	: STRING(128);		 // Linear pumps last adjusted username
 	rLinearPumpsLastAdjustDate	: DATE;				 // Linear pumps last adjusted Date

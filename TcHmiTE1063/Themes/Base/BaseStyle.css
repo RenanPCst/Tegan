@@ -14,6 +14,7 @@
 * 
 * The font usage is defined in the main CSS file of the active theme (for example Themes/Base/Style.css).
 */
+
 html {
     font-family: RobotoCondensed, 'Microsoft YaHei', '微软雅黑', 'Hiragino Sans GB', '冬青黑体', 'STXihei', '华文细黑', 'WenQuanYi Micro Hei', 'Meiryo', 'メイリオ', 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ ProN', 'Noto Sans CJK SC', 'Noto Sans CJK TC', 'Noto Sans CJK JP', 'Noto Sans CJK KR', sans-serif;
     font-size: 12px;
@@ -23,15 +24,7 @@ html {
     height: 100%;
 }
 
-/* Is defined in html tag of runtime html only. */
-.tchmi-html-runtime {
-}
-
-/* Is defined in body tag of runtime html only. */
-.tchmi-body-runtime {
-}
-
-/*  Views */
+/* Views */
 div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
     background-image: url(Images/Background.png);
     background-size: 100% 100%;
@@ -51,7 +44,6 @@ div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
     overflow: auto;
     display: flex;
 }
-
 
 @media screen and (min-width: 800px) {
 
@@ -291,9 +283,6 @@ div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
 * View Loading Spinner
 * Usage: <div class="tchmi-view-loading-spinner-container"><div class="tchmi-view-loading-spinner"><div></div><div></div><div></div><div></div></div></div>
 */
-:root {
-    --tchmi-view-loading-spinner-color: #4c6374;
-}
 
 @keyframes tchmi-view-loading-spinner {
     0% {
@@ -306,7 +295,7 @@ div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
 }
 
 .tchmi-view-loading-spinner-container {
-    display: none; /** DEBUG ONLY */
+    display: none; /* DEBUG ONLY */
     position: relative;
     width: 100%;
     height: 100%;
@@ -334,10 +323,10 @@ div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
         width: 51px;
         height: 51px;
         margin: 6px;
-        border: 6px solid var(--tchmi-view-loading-spinner-color);
+        border: 6px solid #4c6374;
         border-radius: 50%;
         animation: tchmi-view-loading-spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-        border-color: var(--tchmi-view-loading-spinner-color) transparent transparent transparent;
+        border-color: #4c6374 transparent transparent transparent;
     }
 
         .tchmi-view-loading-spinner div:nth-child(1) {
@@ -351,3 +340,45 @@ div[data-tchmi-type="TcHmi.Controls.System.TcHmiView"] {
         .tchmi-view-loading-spinner div:nth-child(3) {
             animation-delay: -0.15s;
         }
+
+/* ========================================================================== */
+/* Custom style - Popup TcHmiDatagrid focused/selected row                     */
+/* ========================================================================== */
+
+/* Full selected row */
+#TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr.focused > td,
+#TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr.focused > td {
+    background: rgba(0, 82, 137, 0.75) !important;
+    color: #ffffff !important;
+}
+
+    /* Remove overlay above the text in the selected row */
+    #TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr.focused > td::before,
+    #TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr.focused > td::before {
+        background: transparent !important;
+    }
+
+    /* Keep the clicked/focused cell in the same color as the selected row */
+    #TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr.focused > td.focused,
+    #TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr.focused > td.focused {
+        background: rgba(0, 82, 137, 0.75) !important;
+        color: #ffffff !important;
+    }
+
+    /* Force internal cell content to remain white */
+    #TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr.focused > td *,
+    #TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr.focused > td * {
+        color: #ffffff !important;
+    }
+
+/* Hover effect on NON-selected rows */
+#TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr:not(.focused):hover > td::before,
+#TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr:not(.focused):hover > td::before {
+    background: rgba(0, 82, 137, 0.25) !important;
+}
+
+/* Hover effect on cells inside NON-selected rows */
+#TcHmiDatagrid .tchmi-datagrid-template-data-scroll tr:not(.focused):hover > td:hover::before,
+#TcHmiDatagrid .TcHmi_Controls_Beckhoff_TcHmiDatagrid-template-data-scroll tr:not(.focused):hover > td:hover::before {
+    background: rgba(0, 82, 137, 0.25) !important;
+}

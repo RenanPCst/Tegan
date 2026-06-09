@@ -129,6 +129,7 @@ async function getReportHeaderInfo() {
     };
 }
 
+
 async function genPostRunReport(runDataArray, methodDataArray, volumeDataArray, reportName) {
     try {
         const headerInfo = await getReportHeaderInfo();
@@ -559,7 +560,7 @@ async function genMethodReport(methodDataArray, volumeDataArray, reportName) {
     }
 };
 
-async function genCompleteMethodReport(allRevisions, reportName) {
+async function genCompleteMethodReportOld(allRevisions, reportName) {
     try {
         const doc = new jspdf.jsPDF();
 
@@ -1164,6 +1165,7 @@ async function genUserHistoryReport(userDataArray, reportName) {
 
 async function genSysHistoryReport(sysDataArray, reportName) {
     try {
+        const headerInfo = await getReportHeaderInfo();
 
         const sysData = sysDataArray;
         let yPosicao = 65;
@@ -1181,10 +1183,10 @@ async function genSysHistoryReport(sysDataArray, reportName) {
             doc.text(reportName, 10, 25);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
-            doc.text(`Report Date: `, 10, 35);
-            doc.text(`System ID: `, 10, 40);
-            doc.text(`Database Name: `, 100, 35);
-            doc.text(`Printed by: `, 100, 40);
+            doc.text(`Report Date: ${headerInfo.reportDate}`, 10, 35);
+            doc.text(`System ID: ${headerInfo.systemId}`, 10, 40);
+            doc.text(`Database Name: ${headerInfo.databaseName}`, 100, 35);
+            doc.text(`Printed by: ${headerInfo.printedBy}`, 100, 40);
             // line
             doc.line(10, 50, 215, 50);
             // table header
@@ -1499,6 +1501,133 @@ async function genSysHistoryReport(sysDataArray, reportName) {
         alert("An Error Occured! Verify the console for more details.");
     }
 };
+
+async function genUsersAndGroupsReport(users, groups, reportName) {
+    try {
+        const headerInfo = await getReportHeaderInfo();
+        const doc = new jspdf.jsPDF();
+
+        let y = 60;
+
+        function drawHeader(pageNumber) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text('TEGAN 1063 - Automated Sample Recovery System', 10, 15);
+            doc.text(reportName, 10, 25);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Report Date: ${headerInfo.reportDate}`, 10, 35);
+            doc.text(`System ID: ${headerInfo.systemId}`, 100, 35);
+            doc.text(`Database Name: ${headerInfo.databaseName}`, 100, 40);
+            doc.text(`Printed by: ${headerInfo.printedBy}`, 100, 45);
+
+            doc.setFontSize(8);
+            doc.text(`Page ${pageNumber}`, 200, 5, { align: "center" });
+
+            doc.line(10, 50, 200, 50);
+        }
+
+        function ensurePageSpace(extra = 10) {
+            if (y + extra > 280) {
+                doc.addPage();
+                pageNumber++;
+                drawHeader(pageNumber);
+                y = 60;
+            }
+        }
+
+        let pageNumber = 1;
+        drawHeader(pageNumber);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text('Current Users', 10, y);
+        y += 8;
+
+        doc.setFontSize(10);
+        doc.text('Username', 15, y);
+        doc.text('Groups', 80, y);
+        doc.line(10, y + 2, 190, y + 2);
+        y += 8;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+
+        (users || []).forEach(function (user) {
+            ensurePageSpace(6);
+            doc.text(String(user.username || ''), 15, y);
+            doc.text(String(user.groups || ''), 80, y);
+            y += 6;
+        });
+
+        y += 8;
+        ensurePageSpace(16);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text('Current Groups', 10, y);
+        y += 8;
+
+        doc.setFontSize(10);
+        doc.text('Group Name', 15, y);
+        doc.line(10, y + 2, 100, y + 2);
+        y += 8;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+
+        (groups || []).forEach(group => {
+            ensurePageSpace(6);
+            doc.text(String(group || ''), 15, y);
+            y += 6;
+        });
+
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.text(`Page ${i} of ${totalPages}`, 200, 5, { align: "center" });
+        }
+
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Back";
+        backButton.style = `
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            align-self: flex-start;
+        `;
+        backButton.onclick = () => window.location.reload();
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+
+    } catch (erro) {
+        console.error("Falha ao gerar o PDF de usuários e grupos:", erro);
+        alert("An Error Occured! Verify the console for more details.");
+    }
+}
 
 async function genCurrentSysReport(sysDataArray, reportName) {
     try {
@@ -1939,6 +2068,335 @@ async function genLinearReport(linearDataArray, reportName) {
 
     } catch (erro) {
         console.error("Generate PDF Failed:", erro);
+        alert("An Error Occured! Verify the console for more details.");
+    }
+}
+
+async function genCompleteMethodReport(allRevisions, reportName) {
+    try {
+        const headerInfo = await getReportHeaderInfo();
+        const doc = new jspdf.jsPDF();
+        const validMethods = (allRevisions || []).filter(m =>
+            m &&
+            m.methodName &&
+            String(m.methodName).trim() !== ""
+        );
+
+        if (validMethods.length === 0) {
+            alert('No method history records found.');
+            return;
+        }
+
+        validMethods.forEach((methodData, index) => {
+            if (index > 0) doc.addPage();
+
+            let xPosition = 10;
+            let yPosicao = 80;
+
+            // Header
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("TEGAN 1063 - Automated Sample Recovery System", 10, 15);
+            doc.text(`${reportName} - Revision ${methodData.methodRevision}`, 10, 25);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Report Date: ${headerInfo.reportDate}`, 10, 35);
+            doc.text(`System ID: ${headerInfo.systemId}`, 100, 35);
+            doc.text(`Database Name: ${headerInfo.databaseName}`, 100, 40);
+            doc.text(`Printed by: ${headerInfo.printedBy}`, 100, 45);
+
+            doc.line(10, 50, 200, 50);
+
+            // Method info
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text("Method Name:", 35, 55, { align: "right" });
+            doc.text("Revision:", 35, 60, { align: "right" });
+            doc.text("Created By:", 35, 65, { align: "right" });
+            doc.text("On:", 35, 70, { align: "right" });
+
+            doc.setFont("helvetica", "normal");
+            doc.text(String(methodData.methodName || ''), 35, 55);
+            doc.text(String(methodData.methodRevision || ''), 35, 60);
+            doc.text(String(methodData.methodCreatedBy || ''), 35, 65);
+            doc.text(String(methodData.methodCreatedOn || ''), 35, 70);
+
+            // Step Parameters
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("Step Parameters", xPosition, yPosicao, { align: "left" });
+            doc.text("Rinse 1", xPosition + 60, yPosicao, { align: "center" });
+            doc.text("Rinse 2", xPosition + 80, yPosicao, { align: "center" });
+            doc.text("Wash 1", xPosition + 100, yPosicao, { align: "center" });
+            doc.text("Wash 2", xPosition + 120, yPosicao, { align: "center" });
+            doc.text("Solvent #", xPosition + 35, yPosicao + 10, { align: "right" });
+            doc.text("Time (sec)", xPosition + 35, yPosicao + 15, { align: "right" });
+            doc.text("Velocity (RPM)", xPosition + 35, yPosicao + 20, { align: "right" });
+
+            yPosicao += 5;
+            doc.line(xPosition, yPosicao, 145, yPosicao);
+            yPosicao += 5;
+            doc.line(50, 75, 50, 105);
+            doc.line(xPosition, 105, 145, 105);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.text(String(methodData.solvent_R1 || ''), xPosition + 60, yPosicao, { align: "center" });
+            doc.text(String(methodData.solvent_R2 || ''), xPosition + 80, yPosicao, { align: "center" });
+            doc.text(String(methodData.solvent_W1 || ''), xPosition + 100, yPosicao, { align: "center" });
+            doc.text(String(methodData.solvent_W2 || ''), xPosition + 120, yPosicao, { align: "center" });
+
+            yPosicao += 5;
+            doc.text(timeToSecondsString(methodData.time_R1), xPosition + 60, yPosicao, { align: "center" });
+            doc.text(timeToSecondsString(methodData.time_R2), xPosition + 80, yPosicao, { align: "center" });
+            doc.text(timeToSecondsString(methodData.time_W1), xPosition + 100, yPosicao, { align: "center" });
+            doc.text(timeToSecondsString(methodData.time_W2), xPosition + 120, yPosicao, { align: "center" });
+
+            yPosicao += 5;
+            doc.text(String(methodData.velocity_R1 || ''), xPosition + 60, yPosicao, { align: "center" });
+            doc.text(String(methodData.velocity_R2 || ''), xPosition + 80, yPosicao, { align: "center" });
+            doc.text(String(methodData.velocity_W1 || ''), xPosition + 100, yPosicao, { align: "center" });
+            doc.text(String(methodData.velocity_W2 || ''), xPosition + 120, yPosicao, { align: "center" });
+
+            // Misc Parameters
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text("Misc. Parameters", 170, 80, { align: "center" });
+
+            doc.setFont("helvetica", "normal");
+            doc.text(`Soak Time: `, 180, 85, { align: "right" });
+            doc.text(` ${timeToSecondsString(methodData.soakTime)} sec`, 180, 85, { align: "left" });
+            doc.text(`Agitate 1 Time: `, 180, 90, { align: "right" });
+            doc.text(` ${timeToSecondsString(methodData.agitate_1_Time)} sec`, 180, 90, { align: "left" });
+            doc.text(`Agitate 2 Time: `, 180, 95, { align: "right" });
+            doc.text(` ${timeToSecondsString(methodData.agitate_2_Time)} sec`, 180, 95, { align: "left" });
+            doc.text(`Vials to Fill: `, 180, 100, { align: "right" });
+            doc.text(` ${String(methodData.vialsToFill || '')}`, 180, 100, { align: "left" });
+            doc.text(`Vial Prime Vol: `, 180, 105, { align: "right" });
+            doc.text(` ${String(methodData.vialPrimeVol || '')} ml`, 180, 105, { align: "left" });
+            doc.text(`Vial 1 Fill Vol: `, 180, 110, { align: "right" });
+            doc.text(` ${String(methodData.vial_1_FillVol || '')} ml`, 180, 110, { align: "left" });
+            doc.text(`Vial 2-4 Fill Vol: `, 180, 115, { align: "right" });
+            doc.text(` ${String(methodData.vial_2_4_FillVol || '')} ml`, 180, 115, { align: "left" });
+            doc.text(`Air Dry Time: `, 180, 120, { align: "right" });
+            doc.text(` ${timeToSecondsString(methodData.airDryTime)} sec`, 180, 120, { align: "left" });
+
+            yPosicao += 25;
+
+            // Volume Data Table
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text("Volume Data", xPosition + 15, yPosicao, { align: "center" });
+            doc.setFontSize(8);
+            doc.text("Pump", xPosition + 15, yPosicao + 5, { align: "center" });
+            doc.text("Stage", xPosition + 35, yPosicao + 5, { align: "center" });
+            doc.text("Rinse 1", xPosition + 47, yPosicao + 5, { align: "center" });
+            doc.text("Rinse 2", xPosition + 67, yPosicao + 5, { align: "center" });
+            doc.text("Wash 1", xPosition + 83, yPosicao + 5, { align: "center" });
+            doc.text("Wash 2", xPosition + 99, yPosicao + 5, { align: "center" });
+
+            yPosicao += 10;
+            doc.line(xPosition, yPosicao, 200, yPosicao);
+            yPosicao += 5;
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+
+            const volumeData = (methodData.volumeData || []).filter(v =>
+                v &&
+                String(v.pump || '').trim() !== ''
+            );
+
+            volumeData.forEach(v => {
+                doc.text(String(v.pump || ''), xPosition + 15, yPosicao, { align: "center" });
+                doc.text(String(v.stage || ''), xPosition + 35, yPosicao, { align: "center" });
+                doc.text(String(v.rinse1 || ''), xPosition + 47, yPosicao, { align: "center" });
+                doc.text(String(v.rinse2 || ''), xPosition + 67, yPosicao, { align: "center" });
+                doc.text(String(v.wash1 || ''), xPosition + 83, yPosicao, { align: "center" });
+                doc.text(String(v.wash2 || ''), xPosition + 99, yPosicao, { align: "center" });
+                yPosicao += 5;
+            });
+
+            doc.line(xPosition, yPosicao, 200, yPosicao);
+        });
+
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setFontSize(8);
+            doc.text(`Page ${p}/${totalPages}`, 200, 5, { align: "center" });
+        }
+
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Back";
+        backButton.style = `
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            align-self: flex-start;
+        `;
+        backButton.onclick = () => {
+            window.location.reload();
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+
+    } catch (erro) {
+        console.error("Falha ao gerar o Complete Method Report:", erro);
+        alert("An Error Occured! Verify the console for more details.");
+    }
+}
+
+async function genLinearHistoryReport(historyArray, reportName) {
+    try {
+        const headerInfo = await getReportHeaderInfo();
+        const doc = new jspdf.jsPDF('landscape');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const rows = (historyArray || []).filter(item =>
+            item &&
+            String(item.ID_Linear || '').trim() !== ''
+        );
+
+        let y = 64;
+        const rowHeight = 6;
+
+        function drawHeader(pageNumber) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("TEGAN 1063 - Automated Sample Recovery System", 10, 15);
+            doc.text(reportName, 10, 25);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Report Date: ${headerInfo.reportDate}`, 10, 35);
+            doc.text(`System ID: ${headerInfo.systemId}`, 90, 35);
+            doc.text(`Database Name: ${headerInfo.databaseName}`, 90, 40);
+            doc.text(`Printed by: ${headerInfo.printedBy}`, 90, 45);
+
+            doc.setFontSize(8);
+            doc.text(`Page ${pageNumber}`, pageWidth - 10, 8, { align: "right" });
+
+            doc.line(10, 52, pageWidth - 10, 52);
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+
+            let x = 10;
+            doc.text("ID", x + 6, 56, { align: "center" }); x += 12;
+            doc.text("Changed On", x + 18, 56, { align: "center" }); x += 36;
+            doc.text("Changed By", x + 18, 56, { align: "center" }); x += 36;
+
+            for (let i = 1; i <= 10; i++) {
+                doc.text(`P${i}`, x + 9, 56, { align: "center" });
+                x += 18;
+            }
+
+            doc.line(10, 58, pageWidth - 10, 58);
+        }
+
+        function drawRow(item, yPos) {
+            let x = 10;
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+
+            const id = String(item.ID_Linear ?? '');
+            const changedOn = String(item.changedOn ?? '');
+            const changedBy = String(item.changedBy ?? '');
+
+            doc.text(id, x + 6, yPos, { align: "center" }); x += 12;
+            doc.text(changedOn, x + 1, yPos); x += 36;
+            doc.text(changedBy, x + 1, yPos); x += 36;
+
+            for (let i = 1; i <= 10; i++) {
+                const value = String(item[`pump${i}`] ?? '');
+                doc.text(value, x + 9, yPos, { align: "center" });
+                x += 18;
+            }
+        }
+
+        let pageNumber = 1;
+        drawHeader(pageNumber);
+
+        if (rows.length === 0) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text("No linear pumps history records found.", 10, y + 5);
+        } else {
+            rows.forEach((item) => {
+                if (y > pageHeight - 15) {
+                    doc.addPage('landscape');
+                    pageNumber++;
+                    drawHeader(pageNumber);
+                    y = 64;
+                }
+
+                drawRow(item, y);
+                y += rowHeight;
+            });
+        }
+
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const container = document.createElement('div');
+        container.style.width = "100%";
+        container.style.height = "100vh";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+
+        const backButton = document.createElement('button');
+        backButton.textContent = "← Back";
+        backButton.style = `
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            align-self: flex-start;
+        `;
+        backButton.onclick = () => {
+            window.location.reload();
+        };
+
+        const iframe = document.createElement('iframe');
+        iframe.src = pdfUrl;
+        iframe.style.width = "100%";
+        iframe.style.flex = "1";
+        iframe.style.border = "none";
+
+        container.appendChild(backButton);
+        container.appendChild(iframe);
+        document.body.innerHTML = "";
+        document.body.appendChild(container);
+
+    } catch (erro) {
+        console.error("Falha ao gerar o PDF de histórico das linear pumps:", erro);
         alert("An Error Occured! Verify the console for more details.");
     }
 }

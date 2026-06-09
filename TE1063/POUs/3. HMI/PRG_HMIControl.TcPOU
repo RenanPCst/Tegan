@@ -289,6 +289,9 @@ IF GVL_HMI.bSaveParametersBt THEN // Save Settings button from HMI
 	GVL_Settings.stCalibParameters 		:= GVL_HMI.stHMICalibParameters; // Calibration Settings
 	GVL_Settings.stPumpParameters 		:= GVL_HMI.stHMIPumpParameters;	 // Pump Settings
 	GVL_Settings.stLeakTestParameters 	:= GVL_HMI.stLeakTestParameters; // Leak Test Settings
+	GVL_Settings.sLastSysSettingsChangedBy 	:= GVL_HMI.sUserNameEventTriggered;
+	GVL_Settings.sLastSysSettingsChangedOn 	:= GVL_HMI.sDateAndTimeEventTriggered;
+	GVL_Settings.sysRevNumber 				:= GVL_Settings.sysRevNumber + 1;
 	DB_Query.state:= E_DB_QUERY_STATE.INSERT_SYS_PARAMETERS;	// DB writing
 	GVL_HMI.bSaveParametersBt 	:= FALSE;
 	GVL_HMI.bSaveParametersDone := TRUE;
@@ -303,11 +306,13 @@ IF GVL_HMI.bReloadHMIParameters OR (GVL_HMI.eMachineMode = E_MachineMode.CALIBRA
 END_IF
 
 // Solvents Section [Database insert done via HMI]
+PRG_SaveSolvents();
+(*
 IF GVL_HMI.bSaveSolventsBt THEN
 	GVL_Settings.stSolventsInfo := GVL_HMI.stHMISolventsInfo;	// Solvents info snapshot
 	GVL_HMI.bSaveSolventsBt := FALSE;
 END_IF
-
+*)
 (* <\Machine Settings> ************************************************************************************************** *)
 
 (* <HMI Alerts> ********************************************************************************************************* *)
@@ -1240,6 +1245,7 @@ END_IF]]></ST>
       <LineId Id="493" Count="0" />
       <LineId Id="496" Count="1" />
       <LineId Id="995" Count="2" />
+      <LineId Id="2534" Count="2" />
       <LineId Id="2437" Count="0" />
       <LineId Id="499" Count="1" />
       <LineId Id="498" Count="0" />
@@ -1250,7 +1256,10 @@ END_IF]]></ST>
       <LineId Id="998" Count="0" />
       <LineId Id="506" Count="0" />
       <LineId Id="504" Count="0" />
-      <LineId Id="1917" Count="3" />
+      <LineId Id="1917" Count="1" />
+      <LineId Id="2533" Count="0" />
+      <LineId Id="2531" Count="0" />
+      <LineId Id="1919" Count="1" />
       <LineId Id="1922" Count="0" />
       <LineId Id="1921" Count="0" />
       <LineId Id="1916" Count="0" />

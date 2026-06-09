@@ -2,200 +2,316 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
   <POU Name="DB_Load_SysParameters" Id="{b300a1c3-5439-4a2b-a404-0e54d95758d7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM DB_Load_SysParameters
-VAR
-	state: INT;
-	timer: ton;
-	timer2: Ton;
+VAR_INPUT
+    bExecute : BOOL;
+    bReset   : BOOL;
 END_VAR
 
-VAR_INPUT
-	start: BOOL;
+VAR_OUTPUT
+    bBusy    : BOOL;
+    bDone    : BOOL;
+    bError   : BOOL;
+    nErrorId : UDINT;
+    nState   : INT;
+END_VAR
+
+VAR
+   	state         : INT := 0;
+    rExecute      : R_TRIG;
+    tonTimeout    : TON;
+    tTimeout      : TIME := T#10S;
+
+    bQueryStarted : BOOL;
+    bDbBusySeen   : BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[timer();
-timer2();
+      <ST><![CDATA[rExecute(CLK := bExecute);
+
+nState := state;
+
+IF bReset THEN
+    state := 0;
+    bBusy := FALSE;
+    bDone := FALSE;
+    bError := FALSE;
+    nErrorId := 0;
+    bQueryStarted := FALSE;
+    tonTimeout(IN := FALSE);
+    RETURN;
+END_IF
+
 
 CASE state OF
-	
-0:
-	IF NOT start THEN
-		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_SYSTEM_ID;
-		timer(in:=TRUE, pt:=T#3S);
-		state:= 10;
-	ELSE
-		state:= 0;
-	END_IF
-	
-10:
 
-	IF NOT DB_Query.FB_SelectArray.bBusy AND timer.Q THEN
-		timer(in:=FALSE);
-		GVL_Settings.sysRevNumber										:= GVL_DB.stSysParameters.sysRevisionNo;
-		GVL_Settings.stCalibParameters.rAcceptanceCriteria				:= STRING_TO_LREAL(GVL_DB.stSysParameters.cal_AcceptanceCriteria);
-		GVL_Settings.stCalibParameters.iAllowableFailures				:= STRING_TO_USINT(GVL_DB.stSysParameters.cal_AllowableFail);
-		GVL_Settings.stCalibParameters.iReplicatesSetpoint				:= STRING_TO_INT(GVL_DB.stSysParameters.cal_Replicates);
-		GVL_Settings.stCalibParameters.iCalIntervalDays					:= STRING_TO_UINT(GVL_DB.stSysParameters.cal_PumpCallIntervalDays);
-		// Close app on Completation
-		GVL_Settings.stCalibParameters.iAirDryTimeSec					:= STRING_TO_UINT(GVL_DB.stSysParameters.AirDryTimeOnCompletation);
-		GVL_Settings.bGeneralSealAndPump								:= STRING_TO_BOOL(GVL_DB.stSysParameters.gen_SealAndPump);
-		GVL_Settings.stLeakTestParameters.iAllowableLeakTestFailures	:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_AllowableLeakTestFail);
-		GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestBuildupTime);
-		GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime			:= STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestHoldTime);
-		GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit		:= STRING_TO_REAL(GVL_DB.stSysParameters.lkt_LeakTestPressure);
-		GVL_Settings.stMachineParam.aM1Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesClosedPosition);
-		GVL_Settings.stMachineParam.aM1Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesDryPosition);
-		GVL_Settings.stMachineParam.rM1Velocity							:= STRING_TO_LREAL(gvl_DB.stSysParameters.mec_PlatesVelocity);
-		// Max current fast down
-		// Max current slow down
-		// Max current slow up
-		GVL_Settings.stPumpParameters.iMeterVelocity					:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_MeterVelocity);
-		GVL_Settings.stPumpParameters.iRunVelocity						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_RunVelocity);
-		GVL_Settings.stPumpParameters.iEmptyFactor						:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_EmptyFactor);
-		GVL_Settings.stPumpParameters.iFillolventTubesFactor			:= STRING_TO_UINT(GVL_DB.stSysParameters.pmp_FillSolventTubesFactor);
-		GVL_Settings.stMachineParam.aM3Position[4]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveCalibration);// Above Calibration
-		GVL_Settings.stMachineParam.aM3Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveVialSet1);// Above vial set 1
-		GVL_Settings.stMachineParam.aM3Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_VialSetSpacing);// Vial set spacing
-		GVL_Settings.stMachineParam.aM2Position[4]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResBottom);// into res bottom
-		GVL_Settings.stMachineParam.aM2Position[5]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResDispense);// Into res dispense
-		GVL_Settings.stMachineParam.aM2Position[6]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResWeigh);// Into res weigh
-		GVL_Settings.stMachineParam.aM2Position[3]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoVials);// Into vials
-		GVL_Settings.stMachineParam.aM2Position[2]						:= STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoWaste);// Into waste
-		GVL_Settings.bDisplayManualControl								:= STRING_TO_BOOL(GVL_DB.stSysParameters.sec_DisplayManualControl);// Display Manual Control
-		GVL_Settings.bCheckLogonEachRun									:= STRING_TO_BOOL(GVL_DB.stSysParameters.sec_CheckLogonEachRun);// Check Logon Each Run
-		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID;
-		timer2(in:= TRUE, pt:= T#3S);
-		state:= 20;
-	ELSE
-		state:= 10;
-	END_IF
-	
-20:
-	IF timer2.Q THEN
-		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LINEAR_MOTORS;
-		timer2(in:=FALSE);
-		timer(in:= TRUE, pt:= T#3S);
-		state:= 30;
-	ELSE
-		state:= 20;
-	END_IF
-	
-30:
-	IF timer.Q THEN
-		DB_Query.state:= E_DB_QUERY_STATE.SELECT_LAST_SOLVENT;
-		timer(in:=FALSE);
-		timer2(in:= TRUE, pt:= T#3S);
-		GVL_HMI.aCalibLinearPumps[1].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump1);
-		GVL_HMI.aCalibLinearPumps[2].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump2);
-		GVL_HMI.aCalibLinearPumps[3].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump3);
-		GVL_HMI.aCalibLinearPumps[4].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump4);
-		GVL_HMI.aCalibLinearPumps[5].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump5);
-		GVL_HMI.aCalibLinearPumps[6].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump6);
-		GVL_HMI.aCalibLinearPumps[7].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump7);
-		GVL_HMI.aCalibLinearPumps[8].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump8);
-		GVL_HMI.aCalibLinearPumps[9].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump9);
-		GVL_HMI.aCalibLinearPumps[10].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump10);
-		
-		GVL_HMI.aCalibLinearPumps[1].rOldPosition := GVL_Retain.rLinearPumpOldPosition[1];
-		GVL_HMI.aCalibLinearPumps[2].rOldPosition := GVL_Retain.rLinearPumpOldPosition[2];
-		GVL_HMI.aCalibLinearPumps[3].rOldPosition := GVL_Retain.rLinearPumpOldPosition[3];
-		GVL_HMI.aCalibLinearPumps[4].rOldPosition := GVL_Retain.rLinearPumpOldPosition[4];
-		GVL_HMI.aCalibLinearPumps[5].rOldPosition := GVL_Retain.rLinearPumpOldPosition[5];
-		GVL_HMI.aCalibLinearPumps[6].rOldPosition := GVL_Retain.rLinearPumpOldPosition[6];
-		GVL_HMI.aCalibLinearPumps[7].rOldPosition := GVL_Retain.rLinearPumpOldPosition[7];
-		GVL_HMI.aCalibLinearPumps[8].rOldPosition := GVL_Retain.rLinearPumpOldPosition[8];
-		GVL_HMI.aCalibLinearPumps[9].rOldPosition := GVL_Retain.rLinearPumpOldPosition[9];
-		GVL_HMI.aCalibLinearPumps[10].rOldPosition := GVL_Retain.rLinearPumpOldPosition[10];
-		state:= 40;
-	ELSE
-		state:= 30;
-	END_IF
+    0: // IDLE
+        bBusy := FALSE;
+        
+        IF NOT bDone THEN
+            bError := FALSE;
+            nErrorId := 0;
+        END_IF
 
-40:
-	IF timer2.Q THEN
-		// Solvents Assignment | Renan 25Jan2025
-		GVL_HMI.stHMISolventsInfo[1].sSolventName := GVL_DB.stSolvents.solventName1;
-		GVL_HMI.stHMISolventsInfo[2].sSolventName := GVL_DB.stSolvents.solventName2;
-		GVL_HMI.stHMISolventsInfo[3].sSolventName := GVL_DB.stSolvents.solventName3;
-		GVL_HMI.stHMISolventsInfo[4].sSolventName := GVL_DB.stSolvents.solventName4;
-		GVL_HMI.stHMISolventsInfo[1].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density1);
-		GVL_HMI.stHMISolventsInfo[2].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density2);
-		GVL_HMI.stHMISolventsInfo[3].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density3);
-		GVL_HMI.stHMISolventsInfo[4].rDensity 	  := STRING_TO_LREAL(GVL_DB.stSolvents.density4);
-		GVL_Settings.stSolventsInfo := GVL_HMI.stHMISolventsInfo;
-		
-		timer2(in:=FALSE);
-		start:= TRUE;
-		state:= 0;
-	ELSE
-		state:= 40;
-	END_IF
-	
+        tonTimeout(IN := FALSE);
+        bQueryStarted := FALSE;
+
+        IF rExecute.Q THEN
+            bBusy := TRUE;
+            bDone := FALSE;
+            bError := FALSE;
+            nErrorId := 0;
+            state := 10;
+        END_IF
 
 
+    10: // REQUEST_LAST_SYSTEM_ID
+		bBusy := TRUE;
 	
+		IF NOT bQueryStarted THEN
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_SYSTEM_ID;
+			bQueryStarted := TRUE;
+			bDbBusySeen := FALSE;
+			tonTimeout(IN := TRUE, PT := tTimeout);
+		END_IF
+	
+		tonTimeout(IN := TRUE, PT := tTimeout);
+	
+		IF DB_Query.FB_SelectArray.bBusy THEN
+			bDbBusySeen := TRUE;
+		END_IF
+	
+		IF bDbBusySeen AND NOT DB_Query.FB_SelectArray.bBusy THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 20;
+	
+		ELSIF tonTimeout.Q THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 900;
+			nErrorId := 1001;
+		END_IF
+
+
+    20: // APPLY_SYSTEM_PARAMETERS
+        GVL_Settings.sysRevNumber                                      := GVL_DB.stSysParameters.sysRevisionNo;
+        GVL_Settings.sLastSysSettingsChangedBy                         := GVL_DB.stSysParameters.createdBy;
+        GVL_Settings.sLastSysSettingsChangedOn                         := GVL_DB.stSysParameters.createdDate;
+
+        GVL_Settings.stCalibParameters.rAcceptanceCriteria             := STRING_TO_LREAL(GVL_DB.stSysParameters.cal_AcceptanceCriteria);
+        GVL_Settings.stCalibParameters.iAllowableFailures              := STRING_TO_USINT(GVL_DB.stSysParameters.cal_AllowableFail);
+        GVL_Settings.stCalibParameters.iReplicatesSetpoint             := STRING_TO_INT(GVL_DB.stSysParameters.cal_Replicates);
+        GVL_Settings.stCalibParameters.iCalIntervalDays                := STRING_TO_UINT(GVL_DB.stSysParameters.cal_PumpCallIntervalDays);
+        GVL_Settings.stCalibParameters.iAirDryTimeSec                  := STRING_TO_UINT(GVL_DB.stSysParameters.AirDryTimeOnCompletation);
+
+        GVL_Settings.bGeneralSealAndPump                               := STRING_TO_BOOL(GVL_DB.stSysParameters.gen_SealAndPump);
+
+        GVL_Settings.stLeakTestParameters.iAllowableLeakTestFailures   := STRING_TO_UINT(GVL_DB.stSysParameters.lkt_AllowableLeakTestFail);
+        GVL_Settings.stLeakTestParameters.tLeakTestBuildUpTime         := STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestBuildupTime);
+        GVL_Settings.stLeakTestParameters.tLeakTestMonitorTime         := STRING_TO_UINT(GVL_DB.stSysParameters.lkt_LeakTestHoldTime);
+        GVL_Settings.stLeakTestParameters.rLeakTestPressureLimit       := STRING_TO_REAL(GVL_DB.stSysParameters.lkt_LeakTestPressure);
+
+        GVL_Settings.stMachineParam.aM1Position[2]                     := STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesClosedPosition);
+        GVL_Settings.stMachineParam.aM1Position[3]                     := STRING_TO_INT(GVL_DB.stSysParameters.mec_PlatesDryPosition);
+        GVL_Settings.stMachineParam.rM1Velocity                        := STRING_TO_LREAL(GVL_DB.stSysParameters.mec_PlatesVelocity);
+
+        GVL_Settings.stPumpParameters.iMeterVelocity                   := STRING_TO_UINT(GVL_DB.stSysParameters.pmp_MeterVelocity);
+        GVL_Settings.stPumpParameters.iRunVelocity                     := STRING_TO_UINT(GVL_DB.stSysParameters.pmp_RunVelocity);
+        GVL_Settings.stPumpParameters.iEmptyFactor                     := STRING_TO_UINT(GVL_DB.stSysParameters.pmp_EmptyFactor);
+        GVL_Settings.stPumpParameters.iFillolventTubesFactor           := STRING_TO_UINT(GVL_DB.stSysParameters.pmp_FillSolventTubesFactor);
+
+        GVL_Settings.stMachineParam.aM3Position[4]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveCalibration);
+        GVL_Settings.stMachineParam.aM3Position[2]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_AboveVialSet1);
+        GVL_Settings.stMachineParam.aM3Position[3]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_VialSetSpacing);
+
+        GVL_Settings.stMachineParam.aM2Position[4]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResBottom);
+        GVL_Settings.stMachineParam.aM2Position[5]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResDispense);
+        GVL_Settings.stMachineParam.aM2Position[6]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoResWeigh);
+        GVL_Settings.stMachineParam.aM2Position[3]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoVials);
+        GVL_Settings.stMachineParam.aM2Position[2]                     := STRING_TO_INT(GVL_DB.stSysParameters.smp_IntoWaste);
+
+        GVL_Settings.bDisplayManualControl                             := STRING_TO_BOOL(GVL_DB.stSysParameters.sec_DisplayManualControl);
+        GVL_Settings.bCheckLogonEachRun                                := STRING_TO_BOOL(GVL_DB.stSysParameters.sec_CheckLogonEachRun);
+
+        state := 30;
+
+
+    30: // REQUEST_LAST_CALIBRATION_ID
+    bBusy := TRUE;
+
+		IF NOT bQueryStarted THEN
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_CALIBRATION_ID;
+			bQueryStarted := TRUE;
+			bDbBusySeen := FALSE;
+			tonTimeout(IN := TRUE, PT := tTimeout);
+		END_IF
+	
+		tonTimeout(IN := TRUE, PT := tTimeout);
+	
+		IF DB_Query.FB_SelectArray.bBusy THEN
+			bDbBusySeen := TRUE;
+		END_IF
+	
+		IF bDbBusySeen AND NOT DB_Query.FB_SelectArray.bBusy THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 40;
+	
+		ELSIF tonTimeout.Q THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 900;
+			nErrorId := 1002;
+		END_IF
+
+
+    40: // REQUEST_LINEAR_MOTORS
+		bBusy := TRUE;
+	
+		IF NOT bQueryStarted THEN
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_LINEAR_MOTORS;
+			bQueryStarted := TRUE;
+			bDbBusySeen := FALSE;
+			tonTimeout(IN := TRUE, PT := tTimeout);
+		END_IF
+	
+		tonTimeout(IN := TRUE, PT := tTimeout);
+	
+		IF DB_Query.FB_SelectArray.bBusy THEN
+			bDbBusySeen := TRUE;
+		END_IF
+	
+		IF bDbBusySeen AND NOT DB_Query.FB_SelectArray.bBusy THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 50;
+	
+		ELSIF tonTimeout.Q THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 900;
+			nErrorId := 1003;
+		END_IF
+
+
+    50: // APPLY_LINEAR_MOTORS
+        GVL_HMI.aCalibLinearPumps[1].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump1);
+        GVL_HMI.aCalibLinearPumps[2].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump2);
+        GVL_HMI.aCalibLinearPumps[3].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump3);
+        GVL_HMI.aCalibLinearPumps[4].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump4);
+        GVL_HMI.aCalibLinearPumps[5].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump5);
+        GVL_HMI.aCalibLinearPumps[6].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump6);
+        GVL_HMI.aCalibLinearPumps[7].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump7);
+        GVL_HMI.aCalibLinearPumps[8].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump8);
+        GVL_HMI.aCalibLinearPumps[9].rNewPosition  := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump9);
+        GVL_HMI.aCalibLinearPumps[10].rNewPosition := STRING_TO_LREAL(GVL_DB.stLinearMotors.pump10);
+
+        GVL_HMI.aCalibLinearPumps[1].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[1];
+        GVL_HMI.aCalibLinearPumps[2].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[2];
+        GVL_HMI.aCalibLinearPumps[3].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[3];
+        GVL_HMI.aCalibLinearPumps[4].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[4];
+        GVL_HMI.aCalibLinearPumps[5].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[5];
+        GVL_HMI.aCalibLinearPumps[6].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[6];
+        GVL_HMI.aCalibLinearPumps[7].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[7];
+        GVL_HMI.aCalibLinearPumps[8].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[8];
+        GVL_HMI.aCalibLinearPumps[9].rOldPosition  := GVL_Retain.rLinearPumpOldPosition[9];
+        GVL_HMI.aCalibLinearPumps[10].rOldPosition := GVL_Retain.rLinearPumpOldPosition[10];
+
+        state := 60;
+
+
+    60: // REQUEST_LAST_SOLVENT
+		bBusy := TRUE;
+	
+		IF NOT bQueryStarted THEN
+			DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_SOLVENT;
+			bQueryStarted := TRUE;
+			bDbBusySeen := FALSE;
+			tonTimeout(IN := TRUE, PT := tTimeout);
+		END_IF
+	
+		tonTimeout(IN := TRUE, PT := tTimeout);
+	
+		IF DB_Query.FB_SelectArray.bBusy THEN
+			bDbBusySeen := TRUE;
+		END_IF
+	
+		IF bDbBusySeen AND NOT DB_Query.FB_SelectArray.bBusy THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 70;
+	
+		ELSIF tonTimeout.Q THEN
+			tonTimeout(IN := FALSE);
+			bQueryStarted := FALSE;
+			bDbBusySeen := FALSE;
+			state := 900;
+			nErrorId := 1004;
+		END_IF
+
+
+    70: // APPLY_SOLVENTS
+        GVL_HMI.stHMISolventsInfo[1].sSolventName := GVL_DB.stSolvents.solventName1;
+        GVL_HMI.stHMISolventsInfo[2].sSolventName := GVL_DB.stSolvents.solventName2;
+        GVL_HMI.stHMISolventsInfo[3].sSolventName := GVL_DB.stSolvents.solventName3;
+        GVL_HMI.stHMISolventsInfo[4].sSolventName := GVL_DB.stSolvents.solventName4;
+
+        GVL_HMI.stHMISolventsInfo[1].rDensity     := STRING_TO_LREAL(GVL_DB.stSolvents.density1);
+        GVL_HMI.stHMISolventsInfo[2].rDensity     := STRING_TO_LREAL(GVL_DB.stSolvents.density2);
+        GVL_HMI.stHMISolventsInfo[3].rDensity     := STRING_TO_LREAL(GVL_DB.stSolvents.density3);
+        GVL_HMI.stHMISolventsInfo[4].rDensity     := STRING_TO_LREAL(GVL_DB.stSolvents.density4);
+
+        GVL_Settings.stSolventsInfo := GVL_HMI.stHMISolventsInfo;
+
+        state := 100;
+
+
+    100: // DONE
+        bBusy := FALSE;
+        bDone := TRUE;
+        bError := FALSE;
+        tonTimeout(IN := FALSE);
+
+        IF NOT bExecute THEN
+            state := 0;
+        END_IF
+
+
+    900: // ERROR
+        bBusy := FALSE;
+        bDone := FALSE;
+        bError := TRUE;
+        tonTimeout(IN := FALSE);
+
+        IF bReset THEN
+            state := 0;
+            bError := FALSE;
+            nErrorId := 0;
+        END_IF
+
+
+ELSE
+    state := 900;
+    nErrorId := 9999;
+
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="DB_Load_SysParameters">
-      <LineId Id="6" Count="0" />
-      <LineId Id="96" Count="0" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="5" Count="0" />
-      <LineId Id="7" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="12" Count="0" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="22" Count="0" />
-      <LineId Id="56" Count="2" />
-      <LineId Id="13" Count="1" />
-      <LineId Id="16" Count="0" />
-      <LineId Id="15" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="80" Count="0" />
-      <LineId Id="23" Count="6" />
-      <LineId Id="31" Count="4" />
-      <LineId Id="145" Count="0" />
-      <LineId Id="37" Count="7" />
-      <LineId Id="146" Count="8" />
-      <LineId Id="54" Count="0" />
-      <LineId Id="93" Count="1" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="19" Count="1" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="89" Count="1" />
-      <LineId Id="92" Count="0" />
-      <LineId Id="101" Count="2" />
-      <LineId Id="97" Count="0" />
-      <LineId Id="99" Count="1" />
-      <LineId Id="98" Count="0" />
-      <LineId Id="91" Count="0" />
-      <LineId Id="104" Count="1" />
-      <LineId Id="112" Count="0" />
-      <LineId Id="111" Count="0" />
-      <LineId Id="113" Count="0" />
-      <LineId Id="126" Count="9" />
-      <LineId Id="186" Count="0" />
-      <LineId Id="188" Count="8" />
-      <LineId Id="187" Count="0" />
-      <LineId Id="106" Count="0" />
-      <LineId Id="108" Count="1" />
-      <LineId Id="107" Count="0" />
-      <LineId Id="114" Count="0" />
-      <LineId Id="110" Count="0" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="164" Count="1" />
-      <LineId Id="167" Count="3" />
-      <LineId Id="166" Count="0" />
-      <LineId Id="173" Count="1" />
-      <LineId Id="176" Count="0" />
-      <LineId Id="171" Count="0" />
-      <LineId Id="125" Count="0" />
-      <LineId Id="120" Count="0" />
-      <LineId Id="122" Count="2" />
-      <LineId Id="121" Count="0" />
-      <LineId Id="116" Count="0" />
-      <LineId Id="118" Count="1" />
-      <LineId Id="117" Count="0" />
+      <LineId Id="261" Count="37" />
+      <LineId Id="517" Count="27" />
+      <LineId Id="317" Count="45" />
+      <LineId Id="545" Count="27" />
+      <LineId Id="379" Count="2" />
+      <LineId Id="573" Count="27" />
+      <LineId Id="398" Count="28" />
+      <LineId Id="601" Count="27" />
+      <LineId Id="443" Count="46" />
       <LineId Id="8" Count="0" />
     </LineIds>
   </POU>

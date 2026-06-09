@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="MAIN_Control" Id="{cebf6aa5-5e58-48d5-8759-1298446923a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN_Control
+
+VAR		
+	bValveTest  : BOOL := FALSE;
+	timerOnInit : TON;
+    bLoadSysParametersExecute : BOOL;
+    bLoadSysParametersReset   : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timerOnInit(IN := TRUE, PT := T#10S);
+
+//Main Controll
+DB_Query();
+PRG_MasterControl();
+PRG_UpdateVariablesMoving();
+PRG_SafetyHandle();
+PRG_AxisAssignment();
+
+//MainEvents
+POU_EventTest();
+POU_FaultHandler();
+PRG_MasterSystemTime();
+
+//MainHMI
+PRG_HMIControl();
+PRG_TowerAlarmLamps();
+PRG_LevelHandler();
+PRG_ValvePositionRecovery();
+
+//MainServices
+PRG_ReportsManager();
+PRG_ShutdownPLC();
+PRG_RecipeManager();
+PRG_SystemInfo();
+PRG_UserManagementHistory();
+
+IF timerOnInit.Q
+AND NOT DB_Load_SysParameters.bBusy
+AND NOT DB_Load_SysParameters.bDone
+AND NOT DB_Load_SysParameters.bError THEN
+    bLoadSysParametersExecute := TRUE;
+END_IF
+
+DB_Load_SysParameters(
+    bExecute := bLoadSysParametersExecute,
+    bReset   := bLoadSysParametersReset
+);
+
+IF DB_Load_SysParameters.bDone OR DB_Load_SysParameters.bError THEN
+    bLoadSysParametersExecute := FALSE;
+END_IF
+
+// Valve testing
+IF bValveTest THEN
+	PRG_ValveTest();
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN_Control">
+      <LineId Id="8396" Count="0" />
+      <LineId Id="8432" Count="0" />
+      <LineId Id="8397" Count="1" />
+      <LineId Id="8400" Count="3" />
+      <LineId Id="8435" Count="0" />
+      <LineId Id="8404" Count="0" />
+      <LineId Id="8437" Count="1" />
+      <LineId Id="8436" Count="0" />
+      <LineId Id="8439" Count="0" />
+      <LineId Id="8433" Count="0" />
+      <LineId Id="8441" Count="2" />
+      <LineId Id="8440" Count="0" />
+      <LineId Id="8445" Count="0" />
+      <LineId Id="8444" Count="0" />
+      <LineId Id="8447" Count="3" />
+      <LineId Id="8446" Count="0" />
+      <LineId Id="8451" Count="0" />
+      <LineId Id="8455" Count="13" />
+      <LineId Id="8348" Count="0" />
+      <LineId Id="8363" Count="0" />
+      <LineId Id="7636" Count="1" />
+      <LineId Id="7639" Count="1" />
+      <LineId Id="7063" Count="0" />
+      <LineId Id="3172" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

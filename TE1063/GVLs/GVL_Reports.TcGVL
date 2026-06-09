@@ -12,6 +12,8 @@ bSearchDone             	: BOOL;
 bSearchError            	: BOOL;
 bClearSearchScreen 			: BOOL;
 bBuildCurrentLinearReport 	: BOOL;
+bBuildLastPostRunReport 	: BOOL;
+bBuildLastPumpCalibrationReport : BOOL;
 sSearchStatus           	: STRING(100);
 
 sDateFromFilter 		: STRING(30);
@@ -72,6 +74,12 @@ sPumpCalibSysRev        : STRING(50);
 stMethodHeader          : ST_Parameters_MR;
 aMethodVolumeData       : ARRAY[1..10] OF ST_VolumeData;
 
+(***** Complete Method Report Buffers *****************************************************)
+
+aCompleteMethodHeader : ARRAY[1..50] OF ST_CompleteMethodHeader;
+aCompleteMethodReport : ARRAY[1..50] OF ST_CompleteMethod;
+bBuildCompleteMethodReport : BOOL;
+
 (***** Post Run Report Buffers ************************************************************)
 
 stRunHeader             : ST_PostRunReport;
@@ -83,7 +91,11 @@ aRunVolumeData          : ARRAY[1..10] OF ST_VolumeData;
 aSelectedSystemSettingsBuf 	: ARRAY[1..1] OF ST_SystemSettingsReport;
 stSelectedSystemSettings 	: ST_SystemSettingsReport;
 stCurrentSystem         	: ST_SysParameters;
-aSystemHistory          	: ARRAY[1..1000] OF ST_SysParameters;
+aSystemHistory          	: ARRAY[1..600] OF ST_SysParameters;
+bBuildSystemHistoryReport   : BOOL;
+sQuickReportName 			: STRING(50);
+bBuildLinearHistoryReport   : BOOL;
+aLinearHistory           	: ARRAY[1..200] OF ST_LinearReport;
 
 (***** Linear Report Buffers **************************************************************)
 

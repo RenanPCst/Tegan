@@ -4,7 +4,7 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FB_CalibrationManager
 VAR_INPUT
     bExecute         : BOOL; // Trigger to start calibration
-    eSolvent         : E_SolventType; // Selected solvent type
+    iSolvent         : USINT; // Selected solvent type
 	rSolventDensity  : LREAL; //Solvent Density
     aPumpSettings    : ARRAY[1..10] OF ST_CalibrationPump; // Pump input settings
     tDelayStart      : TIME; // Optional delay before calibration starts
@@ -711,12 +711,15 @@ CASE eStep OF
 		IF NOT bMoveMotorM2 THEN
 			bMoveMotorM2 := GVL_Motion.aMotors[2].MoveAbsolute(GVL_Settings.stMachineParam.aM2Position[5], GVL_Settings.stMachineParam.rM2Velocity, GVL_Settings.stMachineParam.rM2Accleration, GVL_Settings.stMachineParam.rM2Deceleration);
 		END_IF
-		
+		(*
 		IF iPumpIndex = 1 THEN
 			rEmptyJarTotalVol := aVolumeSetpoint[iPumpIndex] + GVL_Settings.stPumpParameters.iEmptyFactor;
 		ELSE
 			rEmptyJarTotalVol := GVL_Settings.stPumpParameters.iEmptyFactor;
 		END_IF
+		*)
+		
+		rEmptyJarTotalVol := aVolumeSetpoint[iPumpIndex] + GVL_Settings.stPumpParameters.iEmptyFactor;
 		
 		rDistanceByVol := F_VolumeToSteps_Path(rVolume := rEmptyJarTotalVol, iPumpIndex := iPumpIndex, ePath := E_PumpPath.FromCalBox );
 		
@@ -838,7 +841,7 @@ CASE eStep OF
 		GVL_Calibration.stPumpCalibrationInfo.iAllowableFailures := GVL_Calibration.iAllowableFailures;
 		GVL_Calibration.stPumpCalibrationInfo.iCalIntervalDays := 0;
 		GVL_Calibration.stPumpCalibrationInfo.iReplicates := GVL_Calibration.iReplicatesSetpoint;
-		GVL_Calibration.stPumpCalibrationInfo.iSolventID := '1';
+		GVL_Calibration.stPumpCalibrationInfo.iSolventID := GVL_Settings.stSolventsInfo[iSolvent].sSolventName;
 		GVL_Calibration.stPumpCalibrationInfo.iSysMasterListRev := 0;
 		GVL_Calibration.stPumpCalibrationInfo.iSysSettingsRev := 0;
 		GVL_Calibration.stPumpCalibrationInfo.iUserID := 'vd24';
@@ -957,9 +960,13 @@ END_FOR
         <ST><![CDATA[// --- 1) Detecta troca de sStatus e define PT com base real ---
 IF sStatus <> sPrev THEN
     tPT := T#0MS; // default: sem barra
-
+	
+	// START DELAY
+    IF (eStep = E_CalibStep.DELAY) OR (FIND(sStatus, 'Waiting delay') = 1) THEN
+        tPT := tDelayStart;
+	
     // POSITION_MOTORS  (usa |alvo - atual| / vel e pega o mais lento + 200ms)
-    IF FIND(sStatus, 'Positioning motors M2 and M3') = 1 THEN
+    ELSIF FIND(sStatus, 'Positioning motors M2 and M3') = 1 THEN
         rDeltaM2 := ABS(GVL_Settings.stMachineParam.aM2Position[4] - GVL_Motion.M2Motor.rActualPos);
         rDeltaM3 := ABS(GVL_Settings.stMachineParam.aM3Position[4] - GVL_Motion.M3Motor.rActualPos); 
         rVM2 := MAX(0.1, GVL_Settings.stMachineParam.rM2Velocity);
@@ -1038,7 +1045,6 @@ IF GVL_HMI.bCalibStepLoading AND (tPT > T#0MS) THEN
 
     IF tonProgress.Q THEN
         GVL_HMI.rCalibStepPercent := 100.0;
-        // se quiser apagar a barra no fim:
         // GVL_HMI.bCalibStepLoading := FALSE;
         // tonProgress(IN := FALSE);
     END_IF
@@ -1199,7 +1205,10 @@ Reset := TRUE;]]></ST>
       <LineId Id="5443" Count="1" />
       <LineId Id="4964" Count="50" />
       <LineId Id="5445" Count="0" />
-      <LineId Id="5015" Count="31" />
+      <LineId Id="5015" Count="16" />
+      <LineId Id="6471" Count="0" />
+      <LineId Id="6469" Count="1" />
+      <LineId Id="5032" Count="14" />
       <LineId Id="5446" Count="0" />
       <LineId Id="5047" Count="42" />
       <LineId Id="5325" Count="1" />
@@ -1256,7 +1265,11 @@ Reset := TRUE;]]></ST>
       <LineId Id="13" Count="0" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.ACT_ProgressUI_Real">
-      <LineId Id="102" Count="91" />
+      <LineId Id="102" Count="3" />
+      <LineId Id="196" Count="1" />
+      <LineId Id="194" Count="1" />
+      <LineId Id="106" Count="79" />
+      <LineId Id="187" Count="6" />
     </LineIds>
     <LineIds Name="FB_CalibrationManager.Reset">
       <LineId Id="189" Count="1" />

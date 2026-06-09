@@ -30,20 +30,102 @@
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_CUL%/s%', function (data) {",
-          "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let plcArrayData = data.value; // value from PLC (array)",
-          "                  // Function Call",
-          "                  genCurrentUserList(plcArrayData,'401 - Current Users List');                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
-          "              }",
-          "          });"
+          "(function () {",
+          "",
+          "    function loadUsers() {",
+          "        return new Promise(function (resolve, reject) {",
+          "            TcHmi.Server.UserManagement.listUsernames(function (data) {",
+          "                if (data.error === TcHmi.Errors.NONE) {",
+          "                    const userList = data.userList || [];",
+          "                    const usersExcluded = [\"__SystemAdministrator\"];",
+          "",
+          "                    const usersFiltered = userList.filter(function (username) {",
+          "                        return !usersExcluded.includes(username);",
+          "                    });",
+          "",
+          "                    resolve(usersFiltered);",
+          "                } else {",
+          "                    reject('Error loading users: ' + data.error);",
+          "                }",
+          "            });",
+          "        });",
+          "    }",
+          "",
+          "    function loadGroups() {",
+          "        return new Promise(function (resolve, reject) {",
+          "            TcHmi.Server.UserManagement.listUserGroups(function (data) {",
+          "                if (data.error === TcHmi.Errors.NONE) {",
+          "                    const groupDetailsList = data.groupDetailsList || {};",
+          "",
+          "                    const groupsExcluded = [",
+          "                        \"__SystemAdministrators\",",
+          "                        \"__SystemGuests\",",
+          "                        \"__SystemMaintenanceUsers\",",
+          "                        \"__SystemUsers\"",
+          "                    ];",
+          "",
+          "                    const groupNames = Object.keys(groupDetailsList).filter(function (groupname) {",
+          "                        return !groupsExcluded.includes(groupname);",
+          "                    });",
+          "",
+          "                    resolve(groupNames);",
+          "                } else {",
+          "                    reject('Error loading groups: ' + data.error);",
+          "                }",
+          "            });",
+          "        });",
+          "    }",
+          "",
+          "    function loadUserDetails() {",
+          "        return new Promise(function (resolve, reject) {",
+          "            TcHmi.Server.UserManagement.listUsersEx(",
+          "                null,",
+          "                { timeout: 2000 },",
+          "                function (data) {",
+          "                    if (data.error === TcHmi.Errors.NONE) {",
+          "                        resolve(data.userDetails || {});",
+          "                    } else {",
+          "                        reject('Error loading user details: ' + data.error);",
+          "                    }",
+          "                }",
+          "            );",
+          "        });",
+          "    }",
+          "",
+          "    Promise.all([loadUsers(), loadGroups(), loadUserDetails()])",
+          "        .then(function ([users, groups, userDetails]) {",
+          "            const userRows = users.map(function (username) {",
+          "                const details = userDetails[username] || {};",
+          "                const groupsExcluded = [",
+          "\t\t\t\t    \"__SystemAdministrators\",",
+          "\t\t\t\t    \"__SystemGuests\",",
+          "\t\t\t\t    \"__SystemMaintenanceUsers\",",
+          "\t\t\t\t    \"__SystemUsers\"",
+          "\t\t\t\t];",
+          "\t\t\t\t",
+          "\t\t\t\tconst userGroups = Array.isArray(details.groups)",
+          "\t\t\t\t    ? details.groups.filter(function (groupName) {",
+          "\t\t\t\t        return !groupsExcluded.includes(groupName);",
+          "\t\t\t\t    })",
+          "\t\t\t\t    : [];",
+          "",
+          "                return {",
+          "                    username: username,",
+          "                    groups: userGroups.join(', ')",
+          "                };",
+          "            });",
+          "",
+          "            console.log('User rows for report:', userRows);",
+          "            console.log('Groups for report:', groups);",
+          "",
+          "            genUsersAndGroupsReport(userRows, groups || [], '401 - Current Users and Groups');",
+          "        })",
+          "        .catch(function (err) {",
+          "            console.error('Could not load current users and groups:', err);",
+          "            alert('Could not load current users and groups: ' + err);",
+          "        });",
+          "",
+          "})();"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -70,7 +152,7 @@
 
 </div>
 <div id="btnDownloadPDF_11" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="320" data-tchmi-left-unit="px" data-tchmi-text="System Settings
-History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
+History" data-tchmi-top="442" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -80,20 +162,12 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.listAllSystem%/s%', function (data) {",
-          "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let sysDataArray = data.value; // value from PLC (array)",
-          "                  // Function Call",
-          "                  genSysHistoryReport(sysDataArray, '502 - System Settings Report History');                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
-          "              }",
-          "          });"
+          "TcHmi.Symbol.writeEx('%s%PLC1.GVL_Reports.bBuildSystemHistoryReport%/s%', true, function (res) {",
+          "    if (res.error !== TcHmi.Errors.NONE) {",
+          "        console.error('Error requesting system settings history report:', res.error);",
+          "        alert('Could not start system settings history report.');",
+          "    }",
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -119,7 +193,7 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
 
 
 </div>
-<div id="btnDownloadPDF_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="80" data-tchmi-left-unit="px" data-tchmi-text="Users History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
+<div id="btnDownloadPDF_12" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="80" data-tchmi-left-unit="px" data-tchmi-text="Users History" data-tchmi-top="442" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -217,7 +291,7 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
 
 
 </div>
-<div id="btnDownloadPDF_15" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="568" data-tchmi-left-unit="px" data-tchmi-text="Method Report" data-tchmi-top="110" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
+<div id="btnDownloadPDF_15" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="568" data-tchmi-left-unit="px" data-tchmi-text="Activated Method Report" data-tchmi-top="110" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -465,7 +539,7 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
 
 
 </div>
-<div id="btnDownloadPDF_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="568" data-tchmi-left-unit="px" data-tchmi-text="Linear Pumps Position History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
+<div id="btnDownloadPDF_16" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="568" data-tchmi-left-unit="px" data-tchmi-text="Linear Pumps Position History" data-tchmi-top="442" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -475,20 +549,12 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.arrCompleteMethod%/s%', function (data) {",
-          "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let allRevisions = data.value; // value from PLC (array)",
-          "                  // Function Call",
-          "                  genCompleteMethodReport(allRevisions, '203 - Complete Method Report');                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
-          "              }",
-          "          });"
+          "TcHmi.Symbol.writeEx('%s%PLC1.GVL_Reports.bBuildLinearHistoryReport%/s%', true, function (res) {",
+          "    if (res.error !== TcHmi.Errors.NONE) {",
+          "        console.error('Error requesting linear pumps history report:', res.error);",
+          "        alert('Could not start linear pumps history report.');",
+          "    }",
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -621,26 +687,12 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "function showMessageFromPLC(message) {",
-          "\talert(\"Mensagem do PLC: \" + message);",
-          "}",
-          "",
-          "// Wrinting the PLC variable",
-          "TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stPostRunInfo%/s%', function (data1) {",
-          "if (data1.error === TcHmi.Errors.NONE) {",
-          "\tTcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stParameter_MR%/s%', function (data2) {",
-          "\tif (data2.error === TcHmi.Errors.NONE) {",
-          "\t\tTcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astVolData%/s%', function (data3) {",
-          "\t\tif (data3.error === TcHmi.Errors.NONE) {",
-          "\t\t\tlet volumeDataArray = data3.value;",
-          "\t\t\tlet methodDataArray = data2.value;",
-          "\t\t\tlet runDataArray = data1.value; // value from PLC (array)",
-          "\t\t\t// Function Call",
-          "\t\t\tgenPostRunReport(runDataArray, methodDataArray, volumeDataArray,  '001 - Post-Run Report')",
-          "    \t}else {console.error(\"Error to read volumeData from PLC: \", data3.error);}});",
-          "\t}else {console.error(\"Error to read methodData fromPLC: \", data2.error);}});",
-          "}else {console.error(\"Error to read runData from PLC: \", data1.error);}});"
+          "TcHmi.Symbol.writeEx('%s%PLC1.GVL_Reports.bBuildLastPostRunReport%/s%', true, function (res) {",
+          "    if (res.error !== TcHmi.Errors.NONE) {",
+          "        console.error('Error requesting last post-run report:', res.error);",
+          "        alert('Could not start last post-run report.');",
+          "    }",
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -1797,27 +1849,12 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.astData_PCR%/s%', function (data1) {",
-          "              if (data1.error === TcHmi.Errors.NONE) {",
-          "                        TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.stParameter_PCR%/s%', function (data2) {",
-          "              \t\t\tif (data2.error === TcHmi.Errors.NONE) {",
-          "                        let sysHeadArray = data2.value;",
-          "                  \t\tlet sysDataArray = data1.value; // value from PLC (array)",
-          "                  \t\t// Function Call",
-          "                 \t\t genPumpCalibrationReport(sysDataArray, sysHeadArray, 'Pump Calibration Report');                  ",
-          "              \t\t} else {",
-          "                 \t\t console.error(\"Erro ao ler variável do PLC: \", data2.error);",
-          "              \t\t}",
-          "          \t\t});                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data1.error);",
-          "              }",
-          "          });"
+          "TcHmi.Symbol.writeEx('%s%PLC1.GVL_Reports.bBuildLastPumpCalibrationReport%/s%', true, function (res) {",
+          "    if (res.error !== TcHmi.Errors.NONE) {",
+          "        console.error('Error requesting last pump calibration report:', res.error);",
+          "        alert('Could not start last pump calibration report.');",
+          "    }",
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,
@@ -1920,7 +1957,7 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
 }
 </script>
 </div>
-<div id="btnDownloadPDF_22" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="812" data-tchmi-left-unit="px" data-tchmi-text="Complete Method Report" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
+<div id="btnDownloadPDF_22" data-tchmi-type="TcHmi.Controls.Beckhoff.TcHmiButton" data-tchmi-height="80" data-tchmi-height-unit="px" data-tchmi-left="812" data-tchmi-left-unit="px" data-tchmi-text="Complete Method Report" data-tchmi-top="442" data-tchmi-top-unit="px" data-tchmi-width="180" data-tchmi-width-unit="px" data-tchmi-word-wrap="True" data-tchmi-zindex="60" data-tchmi-text-font-size="16" data-tchmi-text-font-weight="Normal">
 <script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
 [
   {
@@ -1930,20 +1967,12 @@ History" data-tchmi-top="446" data-tchmi-top-unit="px" data-tchmi-width="180" da
         "objectType": "JavaScript",
         "active": true,
         "sourceLines": [
-          "// Call the PDF generator function",
-          "          function showMessageFromPLC(message) {",
-          "          \t\talert(\"Mensagem do PLC: \" + message);",
-          "          }",
-          "          // Wrinting the PLC variable",
-          "          TcHmi.Symbol.readEx2('%s%PLC1.GVL_DB.arrCompleteMethod%/s%', function (data) {",
-          "              if (data.error === TcHmi.Errors.NONE) {",
-          "                  let allRevisions = data.value; // value from PLC (array)",
-          "                  // Function Call",
-          "                  genCompleteMethodReport(allRevisions, '203 - Complete Method Report');                  ",
-          "              } else {",
-          "                  console.error(\"Erro ao ler variável do PLC: \", data.error);",
-          "              }",
-          "          });"
+          "TcHmi.Symbol.writeEx('%s%PLC1.GVL_Reports.bBuildCompleteMethodReport%/s%', true, function (res) {",
+          "    if (res.error !== TcHmi.Errors.NONE) {",
+          "        console.error('Error requesting complete method history report:', res.error);",
+          "        alert('Could not start complete method history report.');",
+          "    }",
+          "});"
         ],
         "injectContextObject": false,
         "asyncWait": true,

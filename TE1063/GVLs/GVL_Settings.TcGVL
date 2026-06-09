@@ -5,17 +5,21 @@
 VAR_GLOBAL PERSISTENT
 	
 	(* System Settings *) //---------------------------------------------------------------------------------------------- 
-	sysRevNumber			: INT;
-	stMachineParam			: ST_HMIParameters;						// Motion Parameters to be used on the software
-	stCalibParameters 		: ST_CalibrationSettings;				// Calibration Parameters to be used on the software
-	stPumpParameters		: ST_PumpSettings;						// Pump Parameters to be used on the software
-	stLeakTestParameters	: ST_LeakTestSettings;					// Leak Test Parameters to be used on the software
-	stSolventsInfo	 		: ARRAY[1..4] OF ST_SolventsSettings;	// Solvents name and density to be used on the software
-	bGeneralSealAndPump		: BOOL := FALSE;						// General Settings only parameter SealAndPump
-	bDisplayManualControl	: BOOL := FALSE;						// Security Setting parameter Display Manual Control
-	bCheckLogonEachRun		: BOOL := FALSE;						// Security Setting parameter Check Logon Each Run
+	sysRevNumber				: INT;
+	sLastSysSettingsChangedBy 	: STRING(256);
+	sLastSysSettingsChangedOn 	: STRING(256);
 	
-	bMeteringSolvent1Done 	: BOOL := FALSE;
+	stMachineParam				: ST_HMIParameters;						// Motion Parameters to be used on the software
+	stCalibParameters 			: ST_CalibrationSettings;				// Calibration Parameters to be used on the software
+	stPumpParameters			: ST_PumpSettings;						// Pump Parameters to be used on the software
+	stLeakTestParameters		: ST_LeakTestSettings;					// Leak Test Parameters to be used on the software
+	stSolventsInfo	 			: ARRAY[1..4] OF ST_SolventsSettings;	// Solvents name and density to be used on the software
+	
+	bGeneralSealAndPump			: BOOL := FALSE;						// General Settings only parameter SealAndPump
+	bDisplayManualControl		: BOOL := FALSE;						// Security Setting parameter Display Manual Control
+	bCheckLogonEachRun			: BOOL := FALSE;						// Security Setting parameter Check Logon Each Run
+	
+	bMeteringSolvent1Done 		: BOOL := FALSE;
 	
 	(* Scale/Balance comunication *) //-----------------------------------------------------------------------------------
 	aBalanceIP		: T_IPv4Addr 	:= '192.168.1.100';	// Scale TCP IP Adress

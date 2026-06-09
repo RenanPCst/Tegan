@@ -37,6 +37,9 @@ VAR
 	bStopLeakTestSolenoids 	: BOOL := FALSE;
 	tonLeakTestStateDelay	: TON;
 	
+	iSelectedSolvent 		: USINT;
+	rSelectedSolventDensity : LREAL;
+	bValidSelectedSolvent 	: BOOL;
 	
 	bMoveIssued     : BOOL := FALSE;
 	bNeedsSet 		: BOOL := FALSE;
@@ -158,64 +161,139 @@ END_IF
 
 
 (* Calibration Procedure *) //---------------------------------------------------------------------------------------------------------------------------------------------
-//Calibration procedure trigger
+
+// Calibration procedure trigger
 IF GVL_HMI.bStartCalibrationBt THEN
-	GVL_Calibration.bStartCalibration := TRUE;
-	GVL_Calibration.aCalibPumps := GVL_HMI.aCalibPumps;
-	GVL_Calibration.iReplicatesSetpoint := GVL_Settings.stCalibParameters.iReplicatesSetpoint; //Modifided 10/11/2025 //GVL_HMI.stHMICalibParameters.iReplicatesSetpoint;
-	GVL_Calibration.rAcceptanceCriteria := GVL_Settings.stCalibParameters.rAcceptanceCriteria; //Modifided 10/11/2025 //GVL_HMI.stHMICalibParameters.rAcceptanceCriteria;
-	GVL_Calibration.iAllowableFailures	:= GVL_HMI.stHMICalibParameters.iAllowableFailures;
-	GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60); //int convertion from minutes to ms
+
+	// Always consume the HMI button request
 	GVL_HMI.bStartCalibrationBt := FALSE;
-	GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := 0.9972; //TODO
-	DB_Create_Calibration.start:= TRUE;	//Create a new calibration inside the DB.
+
+	// Reset start validation feedback
+	GVL_Alarms.bInvalidSolventSelection := FALSE;
+	GVL_Alarms.sStartCalibrationBlockedReason := '';
+
+	iSelectedSolvent := GVL_HMI.iSelectedCalibrationSolvent;
+
+	// Validate selected solvent number first
+	IF (iSelectedSolvent >= 1) AND (iSelectedSolvent <= 4) THEN
+		rSelectedSolventDensity := GVL_Settings.stSolventsInfo[iSelectedSolvent].rDensity;
+	ELSE
+		rSelectedSolventDensity := 0.0;
+	END_IF
+
+	// Validate solvent number and density range
+	bValidSelectedSolvent :=
+		(iSelectedSolvent >= 1) AND
+		(iSelectedSolvent <= 4) AND
+		(rSelectedSolventDensity > 0.0) AND
+		(rSelectedSolventDensity <= 5.0);
+
+	IF bValidSelectedSolvent THEN
+
+		GVL_Calibration.bStartCalibration 	:= TRUE;
+		GVL_Calibration.aCalibPumps 		:= GVL_HMI.aCalibPumps;
+		GVL_Calibration.iReplicatesSetpoint := GVL_Settings.stCalibParameters.iReplicatesSetpoint;
+		GVL_Calibration.rAcceptanceCriteria := GVL_Settings.stCalibParameters.rAcceptanceCriteria;
+		GVL_Calibration.iAllowableFailures 	:= GVL_HMI.stHMICalibParameters.iAllowableFailures;
+		
+		IF GVL_HMI.stHMICalibParameters.bDelayStart THEN
+			GVL_Calibration.tDelayStart := DINT_TO_TIME(INT_TO_DINT(GVL_HMI.stHMICalibParameters.iDelayTimeMin) * 1000 * 60 * 60); // hours to ms
+		ELSE
+			GVL_Calibration.tDelayStart := T#0MS;
+		END_IF
+
+		GVL_Calibration.stPumpCalibrationInfo.rSolventDensity := rSelectedSolventDensity;
+
+		// Solvent name - was created as ID but actually is solvent name description
+		GVL_Calibration.stPumpCalibrationInfo.iSolventID := GVL_Settings.stSolventsInfo[iSelectedSolvent].sSolventName;
+
+		DB_Create_Calibration.start := TRUE; // Create a new calibration inside the DB.
+
+	ELSE
+
+		// Do not start calibration
+		GVL_Calibration.bStartCalibration := FALSE;
+		DB_Create_Calibration.start := FALSE;
+
+		GVL_Alarms.bInvalidSolventSelection := TRUE;
+
+		IF (iSelectedSolvent < 1) OR (iSelectedSolvent > 4) THEN
+			GVL_Alarms.sStartCalibrationBlockedReason :=
+				'Calibration start blocked: selected solvent must be between 1 and 4.';
+		ELSIF (rSelectedSolventDensity <= 0.0) OR (rSelectedSolventDensity > 5.0) THEN
+			GVL_Alarms.sStartCalibrationBlockedReason :=
+				'Calibration start blocked: selected solvent density must be greater than 0 and less than or equal to 5.';
+		ELSE
+			GVL_Alarms.sStartCalibrationBlockedReason :=
+				'Calibration start blocked: invalid solvent selection.';
+		END_IF
+
+	END_IF
+
 END_IF
 
-//calibration procedure calling
+// Calibration procedure calling
 fbCalibrationManager(
-    bExecute := GVL_Calibration.bStartCalibration,
-	rSolventDensity := GVL_Calibration.stPumpCalibrationInfo.rSolventDensity,
-    eSolvent := GVL_Calibration.eCalibSolvent, 
-    aPumpSettings := GVL_HMI.aCalibPumps, //Temp GVL_Calibration.aCalibPumps
-    tDelayStart := GVL_Calibration.tDelayStart,
-    bPrintReport := GVL_Calibration.bPrintWhenComplete,
-    aPumpResults => GVL_Calibration.aCalibPumps,
-    bDone => GVL_Calibration.bCalibrationDone,
-    bBusy => GVL_Calibration.bCalibrationRunning,
-    sStatus => GVL_Calibration.sGlobalStatus,
-	iDataCount => iDataCount
+	bExecute 		:= GVL_Calibration.bStartCalibration,
+	rSolventDensity := rSelectedSolventDensity,
+	iSolvent 		:= iSelectedSolvent,
+	aPumpSettings 	:= GVL_HMI.aCalibPumps,
+	tDelayStart 	:= GVL_Calibration.tDelayStart,
+	bPrintReport 	:= GVL_Calibration.bPrintWhenComplete,
+	aPumpResults 	=> GVL_Calibration.aCalibPumps,
+	bDone 			=> GVL_Calibration.bCalibrationDone,
+	bBusy 			=> GVL_Calibration.bCalibrationRunning,
+	sStatus 		=> GVL_Calibration.sGlobalStatus,
+	iDataCount 		=> iDataCount
 );
 
 GVL_Calibration.sGlobalStatus := fbCalibrationManager.sStatus;
 
 
+// Calibration done treatment
 IF fbCalibrationManager.bDone THEN
+
 	GVL_Calibration.bStartCalibration := FALSE;
 	GVL_Calibration.bStartCreationCalJson := TRUE;
+
 END_IF
 
+
+// Save calibration report JSON
 fbSaveCalReport(
-    bExecute          := GVL_Calibration.bStartCreationCalJson,
-    sUser             := GVL_Calibration.stPumpCalibrationInfo.iUserID,
-    stReportInfo      := GVL_Calibration.stPumpCalReportInfo,
-    stCalibrationInfo := GVL_Calibration.stPumpCalibrationInfo,
-    aCalibrationData  := GVL_Calibration.stPumpCalibrationData,
-    iDataCount        := iDataCount
+	bExecute          := GVL_Calibration.bStartCreationCalJson,
+	sUser             := GVL_Calibration.stPumpCalibrationInfo.iUserID,
+	stReportInfo      := GVL_Calibration.stPumpCalReportInfo,
+	stCalibrationInfo := GVL_Calibration.stPumpCalibrationInfo,
+	aCalibrationData  := GVL_Calibration.stPumpCalibrationData,
+	iDataCount        := iDataCount
 );
 
+
+// JSON creation done treatment
 IF fbSaveCalReport.bDone THEN
-    GVL_Calibration.bCreationCalJsonDone  := TRUE;
-    GVL_Calibration.bCreationCalJsonError := FALSE;
-    GVL_Calibration.bStartCreationCalJson := FALSE;  // auto-reset trigger
+
+	GVL_Calibration.bCreationCalJsonDone  := TRUE;
+	GVL_Calibration.bCreationCalJsonError := FALSE;
+	GVL_Calibration.bStartCreationCalJson := FALSE;
+
 	fbCalibrationManager.Reset(bHard := TRUE);
 	fbSaveCalReport.Reset();
+
 	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+
+
+// JSON creation error treatment
 ELSIF fbSaveCalReport.bError THEN
-    GVL_Calibration.bCreationCalJsonDone  := FALSE;
-    GVL_Calibration.bCreationCalJsonError := TRUE;
-	GVL_Alarms.bCalJsonCreationError:= TRUE;
-	GVL_Alarms.nCalJsonCreationErrorId:= fbSaveCalReport.nErrId;
-    //fbSaveCalReport.Reset();
+
+	GVL_Calibration.bCreationCalJsonDone  := FALSE;
+	GVL_Calibration.bCreationCalJsonError := TRUE;
+
+	GVL_Alarms.bCalJsonCreationError := TRUE;
+	GVL_Alarms.nCalJsonCreationErrorId := fbSaveCalReport.nErrId;
+
+	fbSaveCalReport.Reset();
+
 END_IF
 
 (* Linear Pumps Enable *) //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1250,40 +1328,23 @@ END_IF*)
       <LineId Id="645" Count="0" />
       <LineId Id="642" Count="0" />
       <LineId Id="189" Count="0" />
-      <LineId Id="65" Count="1" />
-      <LineId Id="156" Count="1" />
-      <LineId Id="159" Count="0" />
-      <LineId Id="161" Count="1" />
-      <LineId Id="715" Count="0" />
-      <LineId Id="163" Count="0" />
-      <LineId Id="348" Count="0" />
-      <LineId Id="435" Count="0" />
-      <LineId Id="774" Count="0" />
-      <LineId Id="158" Count="0" />
-      <LineId Id="82" Count="0" />
-      <LineId Id="81" Count="0" />
-      <LineId Id="131" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="434" Count="0" />
-      <LineId Id="72" Count="7" />
-      <LineId Id="401" Count="0" />
-      <LineId Id="80" Count="0" />
-      <LineId Id="344" Count="0" />
-      <LineId Id="129" Count="0" />
-      <LineId Id="128" Count="0" />
-      <LineId Id="152" Count="0" />
-      <LineId Id="68" Count="0" />
-      <LineId Id="153" Count="0" />
-      <LineId Id="403" Count="0" />
-      <LineId Id="154" Count="0" />
-      <LineId Id="377" Count="0" />
-      <LineId Id="383" Count="12" />
-      <LineId Id="465" Count="1" />
-      <LineId Id="496" Count="0" />
-      <LineId Id="396" Count="2" />
-      <LineId Id="1242" Count="1" />
-      <LineId Id="399" Count="0" />
+      <LineId Id="1602" Count="30" />
+      <LineId Id="1634" Count="0" />
+      <LineId Id="1636" Count="0" />
+      <LineId Id="1639" Count="0" />
+      <LineId Id="1642" Count="0" />
+      <LineId Id="1763" Count="0" />
+      <LineId Id="1758" Count="1" />
+      <LineId Id="1761" Count="1" />
+      <LineId Id="1645" Count="0" />
+      <LineId Id="1647" Count="1" />
+      <LineId Id="1654" Count="2" />
+      <LineId Id="1661" Count="20" />
+      <LineId Id="1685" Count="2" />
       <LineId Id="376" Count="0" />
+      <LineId Id="1689" Count="59" />
+      <LineId Id="1750" Count="2" />
+      <LineId Id="1688" Count="0" />
       <LineId Id="191" Count="0" />
       <LineId Id="190" Count="0" />
       <LineId Id="295" Count="6" />

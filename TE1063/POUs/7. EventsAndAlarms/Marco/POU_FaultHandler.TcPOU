@@ -420,6 +420,14 @@ IF GVL_HMI.bM1MoveNotAllowedTrigger THEN
 		GVL_Alarms.arrEventFlag[111]:= FALSE;	
 END_IF
 
+(* IE-112: Calibration Solvent Selection *)
+IF GVL_Alarms.bInvalidSolventSelection THEN
+		GVL_Alarms.arrEventFlag[112]:= TRUE;
+	ELSIF GVL_Safety.SafetyInputs.bMachineReset THEN
+		GVL_Alarms.arrEventFlag[112]:= FALSE;	
+END_IF
+
+
 //*********************************************************END SECTION****************************************************************
 
 //------____________________________--------------------------------------------------------------------------------------------------
@@ -643,6 +651,8 @@ END_IF
       <LineId Id="973" Count="0" />
       <LineId Id="975" Count="3" />
       <LineId Id="972" Count="0" />
+      <LineId Id="1111" Count="5" />
+      <LineId Id="1109" Count="1" />
       <LineId Id="647" Count="4" />
       <LineId Id="798" Count="0" />
       <LineId Id="806" Count="4" />

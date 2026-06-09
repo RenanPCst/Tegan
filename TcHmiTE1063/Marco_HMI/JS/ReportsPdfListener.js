@@ -28,6 +28,44 @@
     });
 
     async function buildPumpCalibHeader() {
+        const out = {};
+
+        out.CalibrationNo = await readSymbol('PLC1.GVL_Reports.iPumpCalibNo');
+        console.log('iPumpCalibNo ok');
+
+        out.userID = await readSymbol('PLC1.GVL_Reports.sPumpCalibUserID');
+        console.log('sPumpCalibUserID ok');
+
+        out.density = await readSymbol('PLC1.GVL_Reports.sPumpCalibDensity');
+        console.log('sPumpCalibDensity ok');
+
+        out.solventNo = await readSymbol('PLC1.GVL_Reports.sPumpCalibSolventNo');
+        console.log('sPumpCalibSolventNo ok');
+
+        out.solventRevision = await readSymbol('PLC1.GVL_Reports.sPumpCalibSolventRev');
+        console.log('sPumpCalibSolventRev ok');
+
+        out.allowableFail = await readSymbol('PLC1.GVL_Reports.sPumpCalibAllowFail');
+        console.log('sPumpCalibAllowFail ok');
+
+        out.replicates = await readSymbol('PLC1.GVL_Reports.sPumpCalibReplicates');
+        console.log('sPumpCalibReplicates ok');
+
+        out.callInterval = await readSymbol('PLC1.GVL_Reports.sPumpCalibCallInterval');
+        console.log('sPumpCalibCallInterval ok');
+
+        out.sysRevisionNo = await readSymbol('PLC1.GVL_Reports.sPumpCalibSysRev');
+        console.log('sPumpCalibSysRev ok');
+
+        return out;
+    }
+
+    async function buildCompleteMethodHistoryData() {
+        const methods = await readSymbol('PLC1.GVL_Reports.aCompleteMethodReport');
+        return methods || [];
+    }
+    
+    async function buildPumpCalibHeaderOld() {
         return {
             CalibrationNo: (await readSymbol('PLC1.GVL_Reports.iPumpCalibNo')) || '',
             userID: (await readSymbol('PLC1.GVL_Reports.sPumpCalibUserID')) || '',
@@ -111,10 +149,36 @@
         };
     }
 
+    async function buildLinearHistoryData() {
+        const linearHistory = await readSymbol('PLC1.GVL_Reports.aLinearHistory');
+        return linearHistory || [];
+    }
+
+    async function buildPumpCalibHeaderFromStruct() {
+        const st = await readSymbol('PLC1.GVL_Reports.stSelectedCalibReportHeader');
+
+        return {
+            CalibrationNo: st ?.sCalibrationNo || '',
+            userID: st ?.sUserId || '',
+            density: st ?.sDensity || '',
+            solventNo: st ?.sSolventNo || '',
+            solventRevision: st ?.sSolventRevision || '',
+            allowableFail: st ?.sAllowableFail || '',
+            replicates: st ?.sReplicates || '',
+            callInterval: st ?.sCallInterval || '',
+            sysRevisionNo: st ?.sSysRevisionNo || ''
+        };
+    }
+
     async function buildLinearData() {
         const linearReport = await readSymbol('PLC1.GVL_Reports.stLinearReport');
 
         return linearReport || {};
+    }
+
+    async function buildSystemHistoryData() {
+        const sysHistory = await readSymbol('PLC1.GVL_Reports.aSystemHistory');
+        return sysHistory || [];
     }
 
     async function processPdfIfReady() {
@@ -133,6 +197,32 @@
 
             const reportType = await readSymbol('PLC1.GVL_Reports.eSelectedReportType');
 
+            let quickReportName = '';
+            try {
+                quickReportName = await readSymbol('PLC1.GVL_Reports.sQuickReportName');
+            } catch (e) {
+                quickReportName = '';
+            }
+
+            if (quickReportName === 'SystemHistory') {
+                if (typeof genSysHistoryReport !== 'function') {
+                    throw new Error('System history PDF function was not found.');
+                }
+
+                let sysHistory = null;
+                try {
+                    sysHistory = await readSymbol('PLC1.GVL_Reports.aSystemHistory');
+                    console.log('aSystemHistory ok:', sysHistory);
+                } catch (e) {
+                    console.error('aSystemHistory failed:', e);
+                    throw new Error('aSystemHistory read failed: ' + e);
+                }
+
+                genSysHistoryReport(sysHistory || [], '502 - System Settings Report History');
+                await finishHandshakeAfterAttempt();
+                return;
+            }
+
             if (Number(reportType) === 2) {
                 const sysData = await buildSystemSettingsData();
                 const reportName = String(sysData.sysRevisionNo || '') + ' - System Settings Report';
@@ -149,19 +239,84 @@
                 return;
             }
 
+            if (quickReportName === 'LinearHistory') {
+                if (typeof genLinearHistoryReport !== 'function') {
+                    throw new Error('Linear history PDF function was not found.');
+                }
+
+                let linearHistory = null;
+                try {
+                    linearHistory = await readSymbol('PLC1.GVL_Reports.aLinearHistory');
+                    console.log('aLinearHistory ok:', linearHistory);
+                } catch (e) {
+                    console.error('aLinearHistory failed:', e);
+                    throw new Error('aLinearHistory read failed: ' + e);
+                }
+
+                genLinearHistoryReport(linearHistory || [], '602 - Linear Pumps Position History');
+                await finishHandshakeAfterAttempt();
+                return;
+            }
+
             if (Number(reportType) === 1) {
                 if (typeof genPumpCalibrationReport !== 'function') {
                     throw new Error('Pump calibration PDF function was not found.');
                 }
 
-                const header = await buildPumpCalibHeader();
-                const values = await readSymbol('PLC1.GVL_Reports.aPumpCalibValues');
-                const reportName = 'Pump Calibration Report - ID ' + String(header.CalibrationNo ?? '');
+                console.log('Pump Calibration: starting reads...');
 
-                console.log('Pump Calibration header:', header);
-                console.log('Pump Calibration values:', values);
+                let stHeader = null;
+                try {
+                    stHeader = await readSymbol('PLC1.GVL_Reports.stSelectedCalibReportHeader');
+                    console.log('stSelectedCalibReportHeader ok:', stHeader);
+                } catch (e) {
+                    console.error('stSelectedCalibReportHeader failed:', e);
+                    throw new Error('stSelectedCalibReportHeader read failed: ' + e);
+                }
+
+                let values = null;
+                try {
+                    values = await readSymbol('PLC1.GVL_Reports.aPumpCalibValues');
+                    console.log('aPumpCalibValues ok:', values);
+                } catch (e) {
+                    console.error('aPumpCalibValues failed:', e);
+                    throw new Error('aPumpCalibValues read failed: ' + e);
+                }
+
+                const header = {
+                    CalibrationNo: stHeader ?.sCalibrationNo || '',
+                    userID: stHeader ?.sUserId || '',
+                    density: stHeader ?.sDensity || '',
+                    solventNo: stHeader ?.sSolventNo || '',
+                    solventRevision: stHeader ?.sSolventRevision || '',
+                    allowableFail: stHeader ?.sAllowableFail || '',
+                    replicates: stHeader ?.sReplicates || '',
+                    callInterval: stHeader ?.sCallInterval || '',
+                    sysRevisionNo: stHeader ?.sSysRevisionNo || ''
+                };
+
+                const reportName = 'Pump Calibration Report - ID ' + String(header.CalibrationNo || '');
 
                 genPumpCalibrationReport(values || [], header, reportName);
+                await finishHandshakeAfterAttempt();
+                return;
+            }
+
+            if (quickReportName === 'CompleteMethodHistory') {
+                if (typeof genCompleteMethodReport !== 'function') {
+                    throw new Error('Complete method history PDF function was not found.');
+                }
+
+                let methodHistory = null;
+                try {
+                    methodHistory = await readSymbol('PLC1.GVL_Reports.aCompleteMethodReport');
+                    console.log('aCompleteMethodReport ok:', methodHistory);
+                } catch (e) {
+                    console.error('aCompleteMethodReport failed:', e);
+                    throw new Error('aCompleteMethodReport read failed: ' + e);
+                }
+
+                genCompleteMethodReport(methodHistory || [], '603 - Complete Method Report');
                 await finishHandshakeAfterAttempt();
                 return;
             }

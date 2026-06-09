@@ -105,6 +105,11 @@ VAR
     bEventDone     : BOOL := FALSE;          // TRUE when event handling is finished
     sSystem        : STRING(256);            // System / subsystem identifier for event log
     sMessage       : STRING(256);            // Human-readable event description
+	
+	// -----------------------------
+    // Database Interaction
+    // -----------------------------
+	bDBPostRunInsert : BOOL := FALSE;		//Insert Command sent flag 
 
 	
 END_VAR
@@ -491,13 +496,17 @@ CASE CurrentState OF
         GVL_DB.stPostRunInfo.sysMasterRevision    := '';
         GVL_DB.stPostRunInfo.sysSettingsRevision  := '';
 
-        // Request DB insert of the new run record
-        DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN;
-
-        // When finished, hand control back to STOPPED mode
-        GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
-
-
+  		// Database post run insert 
+		IF NOT DB_Query.bBusyDb THEN
+			// Request DB insert of the new run record
+        	DB_Query.state := E_DB_QUERY_STATE.INSERT_RUN;
+			bDBPostRunInsert := TRUE;
+		ELSIF NOT DB_Query.bBusyDb AND bDBPostRunInsert THEN
+			// When finished, hand control back to STOPPED mode
+        	GVL_HMI.eMachineMode := E_MachineMode.STOPPED;
+			bDBPostRunInsert := FALSE;
+		END_IF
+        
     // ----------------------------------------------------------------------
     // PAUSE_STATE
     //  - Neutral wait state when the auto-cycle is on HOLD.
@@ -606,6 +615,7 @@ bRecoveryError 		:= FALSE;
 bErrorFlag 			:= FALSE;
 bExecuteEvent 		:= FALSE;
 bEventDone 			:= FALSE;
+bDBPostRunInsert 	:= FALSE;
 
 // Auto Cycle FB's Reset	
 IF  fbSealStages.Reset() 
@@ -649,7 +659,14 @@ END_IF;]]></ST>
       <LineId Id="3991" Count="0" />
       <LineId Id="3969" Count="0" />
       <LineId Id="3565" Count="0" />
-      <LineId Id="3582" Count="165" />
+      <LineId Id="3582" Count="95" />
+      <LineId Id="3679" Count="0" />
+      <LineId Id="4100" Count="0" />
+      <LineId Id="4102" Count="1" />
+      <LineId Id="4109" Count="3" />
+      <LineId Id="4101" Count="0" />
+      <LineId Id="3680" Count="0" />
+      <LineId Id="3684" Count="63" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="PRG_AutoCycle.Reset">
@@ -662,7 +679,9 @@ END_IF;]]></ST>
       <LineId Id="126" Count="0" />
       <LineId Id="90" Count="2" />
       <LineId Id="86" Count="0" />
-      <LineId Id="57" Count="17" />
+      <LineId Id="57" Count="15" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="73" Count="1" />
       <LineId Id="114" Count="8" />
       <LineId Id="76" Count="0" />
       <LineId Id="96" Count="0" />

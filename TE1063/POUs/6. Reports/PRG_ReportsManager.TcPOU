@@ -10,12 +10,13 @@ END_VAR
       <ST><![CDATA[rTrigPdfConsumed(CLK := GVL_Reports.bPdfConsumed);
 
 IF rTrigPdfConsumed.Q THEN
-    GVL_Reports.bLoadDone      := FALSE;
-    GVL_Reports.bLoadBusy      := FALSE;
-    GVL_Reports.bLoadError     := FALSE;
-    GVL_Reports.bPdfDataReady  := FALSE;
-    GVL_Reports.bPdfConsumed   := FALSE;
-    GVL_Reports.sLoadStatus    := 'Idle';
+    GVL_Reports.bLoadDone      	 := FALSE;
+    GVL_Reports.bLoadBusy      	 := FALSE;
+    GVL_Reports.bLoadError     	 := FALSE;
+    GVL_Reports.bPdfDataReady  	 := FALSE;
+    GVL_Reports.bPdfConsumed   	 := FALSE;
+    GVL_Reports.sLoadStatus    	 := 'Idle';
+	GVL_Reports.sQuickReportName := '';
 END_IF
 
 IF GVL_Reports.bClearSearchScreen THEN
@@ -27,6 +28,41 @@ IF GVL_Reports.bBuildCurrentLinearReport THEN
     GVL_Reports.bBuildCurrentLinearReport := FALSE;
 	GVL_Reports.eSelectedReportType := E_ReportType.LinearMotors;
     DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_LINEAR_REPORT;
+END_IF
+
+IF GVL_Reports.bBuildLastPostRunReport THEN
+    GVL_Reports.bBuildLastPostRunReport := FALSE;
+    GVL_Reports.eSelectedReportType := E_ReportType.PostRun;
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_POSTRUN_RUN;
+END_IF
+
+IF GVL_Reports.bBuildLastPumpCalibrationReport THEN
+    GVL_Reports.bBuildLastPumpCalibrationReport := FALSE;
+    GVL_Reports.eSelectedReportType := E_ReportType.PumpCalibration;
+    GVL_Reports.sQuickReportName := '';
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_LAST_PUMP_CALIBRATION;
+END_IF
+
+IF GVL_Reports.bBuildSystemHistoryReport THEN
+    GVL_Reports.bBuildSystemHistoryReport := FALSE;
+    GVL_Reports.eSelectedReportType := E_ReportType.SystemSettings;
+    GVL_Reports.sQuickReportName := 'SystemHistory';
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_SYSTEM_HISTORY_REPORT;
+END_IF
+
+IF GVL_Reports.bBuildLinearHistoryReport THEN
+    GVL_Reports.bBuildLinearHistoryReport := FALSE;
+    GVL_Reports.eSelectedReportType := E_ReportType.LinearMotors;
+    GVL_Reports.sQuickReportName := 'LinearHistory';
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_LINEAR_HISTORY_REPORT;
+END_IF
+
+
+IF GVL_Reports.bBuildCompleteMethodReport THEN
+    GVL_Reports.bBuildCompleteMethodReport := FALSE;
+    GVL_Reports.eSelectedReportType := E_ReportType.Recipe;
+    GVL_Reports.sQuickReportName := 'CompleteMethodHistory';
+    DB_Query.state := E_DB_QUERY_STATE.SELECT_COMPLETE_METHOD_REPORT;
 END_IF
 
 IF GVL_Reports.bLoadSelectedReport THEN
@@ -128,12 +164,27 @@ GVL_Reports.sLoadStatus         := 'Idle';]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="PRG_ReportsManager">
-      <LineId Id="180" Count="14" />
+      <LineId Id="180" Count="8" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="189" Count="5" />
       <LineId Id="271" Count="0" />
       <LineId Id="273" Count="1" />
       <LineId Id="276" Count="0" />
       <LineId Id="275" Count="0" />
       <LineId Id="272" Count="0" />
+      <LineId Id="278" Count="4" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="305" Count="4" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="315" Count="4" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="321" Count="5" />
+      <LineId Id="320" Count="0" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="339" Count="5" />
+      <LineId Id="338" Count="0" />
       <LineId Id="195" Count="14" />
       <LineId Id="253" Count="0" />
       <LineId Id="210" Count="6" />

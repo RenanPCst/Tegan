@@ -26,9 +26,9 @@ CASE eStep OF
             // Se alguma ainda não terminou o movimento, AllDone fica FALSE
             IF NOT GVL_Motion.aValvesObj[i].MoveValve(
                     iPosition := 1,
-                    rVelocity := 600,
-                    rAcc      := 200,
-                    rDec      := 200)
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration)
             THEN
                 bAllDone := FALSE;
             END_IF
@@ -60,9 +60,9 @@ CASE eStep OF
         FOR i := 1 TO 5 DO
             IF NOT GVL_Motion.aValvesObj[i].MoveValve(
                     iPosition := 6,
-                    rVelocity := 600,
-                    rAcc      := 200,
-                    rDec      := 200)
+                    rVelocity := GVL_Motion.aValves[i].rTargetVel,
+                    rAcc      := GVL_Motion.aValves[i].rAcceleration,
+                    rDec      := GVL_Motion.aValves[i].rDeceleration)
             THEN
                 bAllDone := FALSE;
             END_IF
